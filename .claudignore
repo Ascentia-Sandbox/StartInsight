@@ -1,0 +1,1 @@
+**/package-lock.json\n**/pnpm-lock.yaml\n**/poetry.lock\n**/uv.lock\n**/__pycache__\n**/.git\n.DS_Store
