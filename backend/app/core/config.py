@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     reddit_client_id: str | None = None
     reddit_client_secret: str | None = None
     reddit_user_agent: str = "StartInsight Bot v1.0"
+    reddit_username: str | None = None
 
     # Task Scheduling
     scrape_interval_hours: int = 6
@@ -55,6 +56,29 @@ class Settings(BaseSettings):
     def async_database_url(self) -> str:
         """Get the async database URL string."""
         return str(self.database_url)
+
+    @property
+    def redis_host(self) -> str:
+        """Extract Redis host from redis_url."""
+        # Parse redis://host:port format
+        if "://" in self.redis_url:
+            url_parts = self.redis_url.split("://")[1]
+            host_port = url_parts.split("/")[0]
+            if ":" in host_port:
+                return host_port.split(":")[0]
+            return host_port
+        return "localhost"
+
+    @property
+    def redis_port(self) -> int:
+        """Extract Redis port from redis_url."""
+        # Parse redis://host:port format
+        if "://" in self.redis_url:
+            url_parts = self.redis_url.split("://")[1]
+            host_port = url_parts.split("/")[0]
+            if ":" in host_port:
+                return int(host_port.split(":")[1])
+        return 6379
 
 
 # Global settings instance
