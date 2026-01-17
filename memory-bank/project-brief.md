@@ -12,7 +12,7 @@ Data-Driven Intuition: Every insight must be backed by source data (e.g., specif
 Automated Intelligence: The "heavy lifting" of market research is offloaded to AI agents, leaving the user with high-level decision-making capability.
 
 3. Key Objectives
-Automated Trend Scouting: consistently aggregate data from high-signal sources (Reddit, X/Twitter, Product Hunt, Hacker News, Google Trends).
+Automated Trend Scouting: consistently aggregate data from high-signal sources. **Phase 1 MVP**: Reddit, Product Hunt, Google Trends. **Phase 4+ Expansion**: X/Twitter, Hacker News.
 
 AI Analysis Pipeline: Use LLMs to process raw unstructured text into structured "Insight Reports" (Problem, Solution, Market Size, Competitor Check).
 
@@ -36,14 +36,16 @@ StartInsight operates on three distinct, sequential processing loops that run co
 - **Purpose**: Extract raw market signals from high-signal sources.
 - **Trigger**: Runs on a scheduled basis (e.g., every 6 hours or daily).
 - **Process**:
-  - Scrapes content from Reddit, Twitter/X, Product Hunt, Hacker News, and Google Trends.
+  - **Phase 1 MVP**: Scrapes content from Reddit, Product Hunt, and Google Trends.
+  - **Phase 4+ Expansion**: Twitter/X and Hacker News (see Future Enhancements).
   - Uses Firecrawl to convert web pages into LLM-readable markdown.
   - Stores raw, unprocessed data in PostgreSQL with metadata (source, timestamp, URL).
 - **Output**: Raw text data (posts, comments, trends) stored in the `raw_signals` table.
 
 **Loop 2: Analysis (The Analyst)**
 - **Purpose**: Transform raw signals into actionable, structured insights.
-- **Trigger**: Runs immediately after data collection completes.
+- **Trigger**: Runs immediately after each data collection cycle completes (coupled execution).
+- **Frequency**: Every 6 hours (aligned with scraping schedule).
 - **Process**:
   - Fetches unprocessed raw signals from the database.
   - Uses LLM agents (LangChain/PydanticAI) to:

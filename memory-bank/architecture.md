@@ -48,11 +48,18 @@ graph TD
 |-----------|-----------|---------|----------|
 | **Frontend** | Next.js 14+ (App Router) | User-facing dashboard | `localhost:3000` |
 | **Backend** | FastAPI (Uvicorn ASGI) | REST API & business logic | `localhost:8000` |
-| **Database** | PostgreSQL 16+ | Primary data store | `localhost:5432` |
+| **Database** | PostgreSQL 16+ | Primary data store | `localhost:5433` (⚠️ Non-standard port to avoid system PostgreSQL conflicts) |
 | **Cache/Queue** | Redis 7+ | Task queue & caching | `localhost:6379` |
 | **Worker** | Arq (async task queue) | Background scraping & analysis | N/A (daemon) |
 | **LLM** | Claude 3.5 Sonnet (Anthropic) | AI analysis engine | API endpoint |
 | **Scraper** | Firecrawl + PRAW + pytrends | Web data extraction | API endpoints |
+
+**Local Development Setup:**
+- **PostgreSQL & Redis**: Run in Docker containers via `docker-compose up -d` (see `docker-compose.yml`)
+- **Backend (FastAPI)**: Runs locally via `uvicorn app.main:app --reload` (NOT Dockerized in Phase 1-3)
+  - Reason: Faster iteration during development, easier debugging with hot reload
+  - Production: Backend will be containerized and deployed to Railway/Render
+- **Frontend (Next.js)**: Runs locally via `pnpm dev` (NOT Dockerized in Phase 1-3)
 
 ---
 
@@ -609,6 +616,131 @@ StartInsight/
 - `GET /api/analytics/trends` - Trend data for charts
 - `GET /api/analytics/sources` - Source breakdown statistics
 
+### 6.2 API Response Schemas
+
+#### Success Response (200 OK)
+
+**GET /api/insights/{id}**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "title": "AI for Legal Document Review",
+  "problem": "Legal professionals spend 60% of their time on repetitive document review tasks, leading to burnout and high costs for clients.",
+  "solution": "AI-powered document analysis tool that automates initial contract review, highlighting key clauses and potential issues.",
+  "market_size": "Legal tech market: $28B+ globally, contract analysis segment growing 15% YoY",
+  "competitor_analysis": [
+    {
+      "name": "LawGeex",
+      "url": "https://lawgeex.com",
+      "description": "Contract review automation for enterprises",
+      "market_position": "Large"
+    },
+    {
+      "name": "Kira Systems",
+      "url": "https://kirasystems.com",
+      "description": "Machine learning for contract analysis",
+      "market_position": "Medium"
+    }
+  ],
+  "relevance_score": 0.87,
+  "raw_signal": {
+    "id": "raw-signal-uuid",
+    "source": "reddit",
+    "url": "https://reddit.com/r/lawyers/comments/xyz",
+    "content": "Original scraped content...",
+    "scraped_at": "2026-01-18T10:30:00Z"
+  },
+  "created_at": "2026-01-18T11:00:00Z"
+}
+```
+
+**GET /api/insights (Paginated)**
+```json
+{
+  "items": [
+    {
+      "id": "uuid-1",
+      "title": "AI for Legal Document Review",
+      "problem": "Legal professionals spend 60%...",
+      "solution": "AI-powered document analysis...",
+      "relevance_score": 0.87,
+      "created_at": "2026-01-18T11:00:00Z"
+    },
+    {
+      "id": "uuid-2",
+      "title": "SMB Inventory Management",
+      "problem": "Small retailers struggle with...",
+      "solution": "Cloud-based inventory tracker...",
+      "relevance_score": 0.82,
+      "created_at": "2026-01-18T09:30:00Z"
+    }
+  ],
+  "total": 47,
+  "limit": 20,
+  "offset": 0,
+  "has_more": true
+}
+```
+
+**GET /api/insights/daily-top**
+```json
+{
+  "date": "2026-01-18",
+  "insights": [
+    {
+      "id": "uuid-1",
+      "title": "AI for Legal Document Review",
+      "problem": "Legal professionals spend 60%...",
+      "relevance_score": 0.87
+    }
+  ],
+  "count": 5
+}
+```
+
+#### Error Responses
+
+**404 Not Found**
+```json
+{
+  "detail": "Insight not found",
+  "error_code": "INSIGHT_NOT_FOUND",
+  "timestamp": "2026-01-18T12:00:00Z"
+}
+```
+
+**422 Validation Error**
+```json
+{
+  "detail": [
+    {
+      "loc": ["query", "min_score"],
+      "msg": "value must be between 0.0 and 1.0",
+      "type": "value_error"
+    }
+  ],
+  "error_code": "VALIDATION_ERROR"
+}
+```
+
+**500 Internal Server Error**
+```json
+{
+  "detail": "Internal server error occurred",
+  "error_code": "INTERNAL_ERROR",
+  "request_id": "req-abc123"
+}
+```
+
+**503 Service Unavailable**
+```json
+{
+  "detail": "Database connection unavailable",
+  "error_code": "SERVICE_UNAVAILABLE",
+  "retry_after": 30
+}
+```
+
 ---
 
 ## 7. Deployment Architecture
@@ -689,6 +821,66 @@ NEXT_PUBLIC_ENV=production
 4. **Async I/O**: All database and API calls use async/await
 5. **Redis Caching**: Cache hot insights (top 5 daily) in Redis with 1-hour TTL
 
+### 8.3 Error Handling Strategy
+
+**Fail Gracefully Principle**: The system must degrade gracefully when external services fail, ensuring core functionality remains available.
+
+**1. External API Failures (Firecrawl, Reddit, Anthropic)**
+- **Pattern**: Exponential backoff with retries (using `tenacity` library)
+- **Retry Policy**: 3 attempts with 1s → 2s → 4s delays
+- **Circuit Breaker**: After 5 consecutive failures, pause scraping for 15 minutes
+- **Fallback**:
+  - If Claude API fails → fallback to GPT-4o
+  - If scraping fails → log error, continue with other sources
+- **Example**: See `implementation-plan.md` Phase 2.2 for concrete code
+
+**2. Database Connection Failures**
+- **Pattern**: Connection pooling with health checks
+- **Retry**: SQLAlchemy automatic retry on transient errors
+- **Graceful Degradation**: Return cached data from Redis if DB unavailable
+- **Response**: HTTP 503 Service Unavailable with `retry_after` header
+
+**3. LLM Validation Errors (Invalid JSON, Hallucinations)**
+- **Pattern**: Pydantic schema validation with retry on failure
+- **Handling**:
+  - ValidationError → retry with refined prompt (max 3 attempts)
+  - If all retries fail → mark signal as `processing_failed`, log for manual review
+  - Track validation failure rate in metrics
+- **Monitoring**: Alert if validation failure rate > 10%
+
+**4. Rate Limit Handling**
+- **Anthropic API**: 429 response → exponential backoff + switch to GPT-4o
+- **Reddit API**: 429 response → pause scraping for duration specified in `X-Ratelimit-Reset`
+- **Firecrawl**: 429 response → queue tasks for delayed retry
+- **Strategy**: Implement token bucket algorithm for proactive rate limiting
+
+**5. Timeout Management**
+- **Scraping Tasks**: 30s timeout per URL (Firecrawl default)
+- **LLM API Calls**: 60s timeout (sufficient for Claude 3.5 Sonnet)
+- **Database Queries**: 5s timeout (alert if exceeded)
+- **Frontend API Calls**: 10s timeout with loading states
+
+**6. Data Integrity Errors**
+- **Duplicate Detection**: Unique constraint on `raw_signals.url` field
+- **Handling**: On duplicate → log and skip (idempotent scraping)
+- **Partial Failures**: Batch processing commits after each successful item (not all-or-nothing)
+
+**7. Frontend Error Boundaries**
+- **Pattern**: React Error Boundaries for component-level failures
+- **User Experience**:
+  - Show friendly error message
+  - Provide "Retry" button
+  - Log error to monitoring service
+- **Example**: "Unable to load insights. Please try again."
+
+**8. Logging & Alerting**
+- **All Errors Logged**: Structured logs with context (request_id, user_id, timestamp)
+- **Critical Alerts**:
+  - Database connection down → immediate Slack/email alert
+  - LLM API quota exceeded → alert ops team
+  - Validation failure rate > 10% → investigate prompt quality
+- **Non-Critical**: Log and monitor (scraping individual URLs failing)
+
 ---
 
 ## 9. Monitoring & Observability
@@ -762,7 +954,7 @@ This architecture provides a solid foundation for StartInsight's MVP while remai
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: 2026-01-17
+**Document Version**: 1.1
+**Last Updated**: 2026-01-18
 **Author**: Lead Architect (Claude)
 **Status**: Production-Ready Blueprint

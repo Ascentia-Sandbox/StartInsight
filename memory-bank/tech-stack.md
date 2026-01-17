@@ -54,7 +54,10 @@ Caching/Queue: Redis - Task queue for scheduled scrapers and caching hot insight
     - Type-safe agent framework with built-in Pydantic validation.
     - Simpler API, better for structured output extraction.
     - Native async support.
-- **Decision**: Start with PydanticAI for MVP due to simplicity and strict typing. Migrate to LangChain if we need complex multi-agent workflows.
+- **✅ Decision (LOCKED)**: Use PydanticAI for MVP (Phases 1-3).
+  - **Reason**: Simpler API, native Pydantic validation, adequate for single-agent analysis tasks.
+  - **Migration Path**: If Phase 4+ requires complex multi-agent workflows or advanced tooling, evaluate LangChain migration at that time.
+  - **Current Status**: PydanticAI installed (`pydantic-ai>=0.0.13` in `pyproject.toml`).
 
 **LLM Provider**
 - **Primary**: Anthropic Claude 3.5 Sonnet (via `anthropic` Python SDK)
@@ -144,6 +147,53 @@ httpx>=0.26.0  # Async HTTP client
   }
 }
 ```
+
+**Notes on Frontend Dependencies:**
+- **`zod`**: Used for runtime type validation of API responses and form data. Ensures type safety between frontend TypeScript and backend Pydantic schemas.
+- **`shadcn/ui`**: NOT listed in `package.json` because it's installed via CLI (`npx shadcn-ui@latest add button card badge`). Components are copied directly into your codebase (`/components/ui/`), not installed as an npm package. See Phase 3.1 in `implementation-plan.md` for installation instructions.
+
+---
+
+## Environment Variable Conventions
+
+**Backend (Python with Pydantic Settings):**
+- **File Format**: Use UPPERCASE names in `.env` files
+- **Auto-Conversion**: Pydantic Settings automatically converts UPPERCASE → lowercase Python properties
+- **Example**:
+  ```bash
+  # .env file
+  DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5433/startinsight
+  REDIS_URL=redis://localhost:6379
+  ANTHROPIC_API_KEY=sk-ant-...
+  API_HOST=0.0.0.0
+  API_PORT=8000
+  ```
+  ```python
+  # backend/app/core/config.py (auto-mapped)
+  from pydantic_settings import BaseSettings
+
+  class Settings(BaseSettings):
+      database_url: PostgresDsn  # Maps from DATABASE_URL
+      redis_url: RedisDsn         # Maps from REDIS_URL
+      anthropic_api_key: str      # Maps from ANTHROPIC_API_KEY
+      api_host: str               # Maps from API_HOST
+      api_port: int               # Maps from API_PORT
+
+      class Config:
+          env_file = ".env"
+  ```
+- **Convention**: Always use UPPERCASE in `.env` files, lowercase in Python code
+
+**Frontend (Next.js):**
+- **Public Variables**: Prefix with `NEXT_PUBLIC_` to expose to browser
+- **Example**:
+  ```bash
+  # frontend/.env.local
+  NEXT_PUBLIC_API_URL=http://localhost:8000
+  ```
+- **Access**: Use `process.env.NEXT_PUBLIC_API_URL` in client components
+
+---
 
 6. Development Tools
 Package Manager:

@@ -74,8 +74,48 @@ This document breaks down the StartInsight project into **3 distinct implementat
     - `scrape_product_hunt_task()`
     - `scrape_trends_task()`
 - [ ] Create `backend/app/tasks/scheduler.py`:
-  - Schedule tasks to run every 6 hours
-  - Add cron-like scheduling logic
+  - **Implementation Pattern** (APScheduler with Arq integration):
+    ```python
+    from apscheduler.schedulers.asyncio import AsyncIOScheduler
+    from apscheduler.triggers.interval import IntervalTrigger
+    from arq import create_pool
+    from arq.connections import RedisSettings
+
+    scheduler = AsyncIOScheduler()
+
+    async def schedule_scraping_tasks():
+        """Schedule all scraping tasks to run every 6 hours."""
+        redis = await create_pool(RedisSettings())
+
+        # Schedule scraping tasks
+        scheduler.add_job(
+            func=redis.enqueue_job,
+            args=('scrape_reddit_task',),
+            trigger=IntervalTrigger(hours=6),
+            id='scrape_reddit',
+            replace_existing=True
+        )
+
+        scheduler.add_job(
+            func=redis.enqueue_job,
+            args=('scrape_product_hunt_task',),
+            trigger=IntervalTrigger(hours=6),
+            id='scrape_product_hunt',
+            replace_existing=True
+        )
+
+        scheduler.add_job(
+            func=redis.enqueue_job,
+            args=('scrape_trends_task',),
+            trigger=IntervalTrigger(hours=6),
+            id='scrape_trends',
+            replace_existing=True
+        )
+
+        scheduler.start()
+    ```
+  - **Dependencies**: Add `apscheduler>=3.10.0` to `pyproject.toml`
+  - **Startup**: Call `schedule_scraping_tasks()` in FastAPI `@app.on_event("startup")` hook
 - [ ] Test task execution:
   - Run worker: `arq app.worker.WorkerSettings`
   - Verify tasks execute and store data in DB
@@ -87,7 +127,7 @@ This document breaks down the StartInsight project into **3 distinct implementat
 - [ ] Create `backend/app/api/routes/signals.py`:
   - `GET /api/signals`: List all raw signals (with pagination)
   - `GET /api/signals/{id}`: Get single signal by ID
-  - Query params: `?source=reddit&limit=10&offset=0`
+  - Query params: `?source=reddit&limit=20&offset=0`
 - [ ] Create Pydantic response schemas in `backend/app/schemas/`:
   - `RawSignalResponse` (maps to database model)
   - `PaginatedResponse[T]` (generic pagination wrapper)
@@ -166,10 +206,96 @@ This document breaks down the StartInsight project into **3 distinct implementat
     Signal:
     {raw_content}
     ```
+  - **Competitor Schema** (Pydantic model for structured competitor data):
+    ```python
+    from pydantic import BaseModel, HttpUrl
+    from typing import Literal, Optional
+
+    class Competitor(BaseModel):
+        """Individual competitor entry in the analysis."""
+        name: str  # Competitor company/product name
+        url: HttpUrl  # Competitor website URL
+        description: str  # Brief description of what they do
+        market_position: Optional[Literal["Small", "Medium", "Large"]] = None  # Estimated market presence
+
+    class InsightSchema(BaseModel):
+        """Structured output from LLM analysis."""
+        problem_statement: str
+        proposed_solution: str
+        market_size_estimate: Literal["Small", "Medium", "Large"]
+        relevance_score: float  # 0.0 - 1.0
+        competitor_analysis: list[Competitor]  # Max 3 competitors
+        title: str  # Auto-generated from problem/solution
+    ```
 - [ ] Implement validation and error handling:
-  - Retry logic for API failures
-  - Fallback to GPT-4o if Claude fails
-  - Log all LLM interactions
+  - **Concrete Implementation Pattern**:
+    ```python
+    from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+    from pydantic import ValidationError
+    from anthropic import AnthropicError, RateLimitError
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_exception_type((AnthropicError, ValidationError)),
+        reraise=True
+    )
+    async def analyze_signal(raw_signal: RawSignal) -> Insight:
+        """
+        Analyze a raw signal and extract structured insights.
+        Retries up to 3 times with exponential backoff.
+        """
+        try:
+            # Call PydanticAI agent
+            result = await agent.run(raw_signal.content)
+
+            # Validate output schema
+            insight_data = InsightSchema.model_validate(result.data)
+
+            # Save to database
+            insight = Insight(
+                raw_signal_id=raw_signal.id,
+                problem_statement=insight_data.problem_statement,
+                proposed_solution=insight_data.proposed_solution,
+                market_size_estimate=insight_data.market_size_estimate,
+                relevance_score=insight_data.relevance_score,
+                competitor_analysis=insight_data.competitor_analysis,
+                title=insight_data.title
+            )
+
+            logger.info(f"Successfully analyzed signal {raw_signal.id}")
+            return insight
+
+        except ValidationError as e:
+            # LLM returned invalid JSON structure
+            logger.warning(f"LLM validation error for signal {raw_signal.id}: {e}")
+            raise  # Retry
+
+        except RateLimitError as e:
+            # Rate limit hit - fallback to GPT-4o
+            logger.warning(f"Claude rate limit hit, falling back to GPT-4o")
+            return await fallback_gpt4o_analysis(raw_signal)
+
+        except AnthropicError as e:
+            # Other Anthropic API errors
+            logger.error(f"Anthropic API error: {e}")
+            raise  # Retry
+
+        except Exception as e:
+            # Unexpected errors - log and skip
+            logger.error(f"Unexpected error analyzing signal {raw_signal.id}: {e}")
+            raise
+
+    async def fallback_gpt4o_analysis(raw_signal: RawSignal) -> Insight:
+        """Fallback to GPT-4o if Claude fails."""
+        # Similar implementation with OpenAI SDK
+        pass
+    ```
+  - **Dependencies**: Add `tenacity>=8.2.0` to `pyproject.toml`
+  - **Logging**: All LLM interactions logged with timestamps and token usage
 
 #### 2.3 Analysis Task Queue
 - [ ] Add analysis task to `backend/app/worker.py`:
@@ -185,7 +311,7 @@ This document breaks down the StartInsight project into **3 distinct implementat
   - `GET /api/insights`: List insights (sorted by relevance_score DESC)
   - `GET /api/insights/{id}`: Get single insight with related raw signal
   - `GET /api/insights/daily-top`: Top 5 insights of the day
-  - Query params: `?min_score=0.7&limit=10`
+  - Query params: `?min_score=0.7&limit=20&offset=0`
 - [ ] Create Pydantic schemas in `backend/app/schemas/insight.py`:
   - `InsightResponse` (includes related raw signal data)
   - `InsightListResponse` (paginated)
@@ -257,9 +383,51 @@ This document breaks down the StartInsight project into **3 distinct implementat
   - Show competitor analysis
   - Trend chart (if trend data available)
 - [ ] Create `frontend/components/filters.tsx`:
-  - Filter by date range
-  - Filter by minimum relevance score
-  - Search by keyword
+  - Filter by date range (last 7 days, 30 days, all time)
+  - Filter by minimum relevance score (0.5, 0.7, 0.9)
+  - Search by keyword (searches problem_statement and proposed_solution)
+  - **State Management Pattern**: URL Search Params
+    - Filters stored in URL: `?date_range=7d&min_score=0.7&search=AI`
+    - **Benefits**: Shareable links, browser back/forward support, server-side rendering compatibility
+    - **Implementation**:
+      ```typescript
+      // Use Next.js 14 App Router hooks
+      import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+
+      export function Filters() {
+        const searchParams = useSearchParams();
+        const router = useRouter();
+        const pathname = usePathname();
+
+        const updateFilter = (key: string, value: string) => {
+          const params = new URLSearchParams(searchParams.toString());
+          params.set(key, value);
+          router.push(`${pathname}?${params.toString()}`);
+        };
+
+        return (
+          <div>
+            <select onChange={(e) => updateFilter('date_range', e.target.value)}>
+              <option value="7d">Last 7 days</option>
+              <option value="30d">Last 30 days</option>
+              <option value="all">All time</option>
+            </select>
+            {/* More filters... */}
+          </div>
+        );
+      }
+      ```
+    - **API Integration**: Pass URL params to React Query fetch function
+      ```typescript
+      const { data } = useQuery({
+        queryKey: ['insights', searchParams.toString()],
+        queryFn: () => fetchInsights({
+          dateRange: searchParams.get('date_range'),
+          minScore: searchParams.get('min_score'),
+          search: searchParams.get('search')
+        })
+      });
+      ```
 
 #### 3.4 Pages & Routing
 - [ ] Create `frontend/app/page.tsx` (Home - Daily Top 5):
@@ -299,12 +467,100 @@ This document breaks down the StartInsight project into **3 distinct implementat
   - Set `NEXT_PUBLIC_API_URL` env variable
   - Deploy with auto-preview for PRs
 - [ ] Configure CORS on FastAPI to allow frontend domain
+- [ ] **Monitoring Setup**:
+  - **Development**: Structured logging to console using `loguru`
+    ```python
+    # backend/app/core/logging.py
+    from loguru import logger
+    import sys
+
+    logger.remove()  # Remove default handler
+    logger.add(
+        sys.stdout,
+        format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan> - <level>{message}</level>",
+        level="INFO"
+    )
+    ```
+  - **Production**: Export to Railway/Render logs dashboard (automatic)
+  - **Metrics**: Custom FastAPI middleware to track:
+    ```python
+    # backend/app/middleware/metrics.py
+    import time
+    from fastapi import Request
+
+    @app.middleware("http")
+    async def metrics_middleware(request: Request, call_next):
+        start_time = time.time()
+        response = await call_next(request)
+        duration = time.time() - start_time
+
+        logger.info(
+            "API Request",
+            extra={
+                "method": request.method,
+                "path": request.url.path,
+                "status_code": response.status_code,
+                "duration_ms": round(duration * 1000, 2)
+            }
+        )
+        return response
+    ```
+  - **LLM Cost Tracking**:
+    ```python
+    # Track token usage after each LLM call
+    logger.info(
+        "LLM Call",
+        extra={
+            "model": "claude-3.5-sonnet",
+            "tokens_used": result.usage.total_tokens,
+            "cost_usd": result.usage.total_tokens * 0.000003,  # $3 per 1M tokens
+            "request_id": result.id
+        }
+    )
+    ```
+  - **Alerting**: Set up Railway/Render alerts for:
+    - API response time > 1s (p95)
+    - Error rate > 5%
+    - Database connection failures
+  - **Dependencies**: Add `loguru>=0.7.0` to `pyproject.toml`
 
 #### 3.8 Testing & QA
 - [ ] End-to-end testing:
-  - User can view daily top insights
-  - User can filter and search insights
-  - User can view insight details
+  - **Framework**: Playwright (better TypeScript support, faster than Cypress, built-in test isolation)
+  - **Installation**:
+    ```bash
+    cd frontend
+    pnpm add -D @playwright/test
+    npx playwright install
+    ```
+  - **Test Data Setup**: Seed database with fixtures before tests
+    ```typescript
+    // frontend/tests/setup/seed.ts
+    import { test as setup } from '@playwright/test';
+
+    setup('seed database', async ({ request }) => {
+      await request.post('http://localhost:8000/api/test/seed', {
+        data: {
+          insights: [
+            { title: 'AI for Legal Docs', relevance_score: 0.87, /* ... */ },
+            { title: 'SMB Inventory', relevance_score: 0.82, /* ... */ }
+          ]
+        }
+      });
+    });
+    ```
+  - **Test Scenarios**:
+    - User can view daily top insights (`tests/daily-top.spec.ts`)
+    - User can filter and search insights (`tests/filters.spec.ts`)
+    - User can view insight details (`tests/insight-detail.spec.ts`)
+  - **CI/CD Integration**: Run on GitHub Actions (see Phase 3.7)
+    ```yaml
+    # .github/workflows/test.yml
+    - name: Run Playwright tests
+      run: |
+        cd frontend
+        pnpm exec playwright test
+    ```
 - [ ] Performance testing:
   - Lighthouse score > 90
   - API response time < 500ms

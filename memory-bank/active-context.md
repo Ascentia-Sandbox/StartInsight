@@ -4,39 +4,42 @@
 **Phase 1: The "Collector" (Data Collection Loop)**
 
 ## Current Focus
-**Step 1.1: Project Initialization**
+**Step 1.3: Firecrawl Integration**
 
 ## Objective
-Set up the foundational project structure, development environment, and core dependencies for the StartInsight backend.
+Integrate Firecrawl API for web scraping and implement source-specific scrapers for Reddit, Product Hunt, and Google Trends.
 
 ---
 
 ## What We're Building Right Now
-We are initializing the project repository and establishing the development environment for the FastAPI backend that will serve as the data collection layer.
+We are integrating Firecrawl for web scraping and building source-specific scrapers to collect market signals from Reddit, Product Hunt, and Google Trends.
 
 ### Immediate Tasks
-- [ ] Initialize Git repository with proper `.gitignore`
-- [ ] Create project directory structure (`backend/`, `frontend/`, `memory-bank/`)
-- [ ] Set up Python environment using `uv` or `poetry`
-- [ ] Create `backend/pyproject.toml` with Phase 1 dependencies
-- [ ] Verify Docker is installed for local PostgreSQL and Redis
+- [ ] Create database models (RawSignal, Insight) with SQLAlchemy 2.0 async syntax
+- [ ] Set up Alembic for database migrations
+- [ ] Integrate Firecrawl Python SDK for web scraping
+- [ ] Implement Reddit scraper (r/startups, r/SaaS)
+- [ ] Implement Product Hunt scraper (daily launches)
+- [ ] Implement Google Trends scraper (search volume data)
 
 ---
 
 ## Technical Context
 
 ### What Works
+- ✅ **Phase 1.1 Complete**: Git repository initialized, project structure created, Python environment with `uv` and 173 packages
+- ✅ **Phase 1.2 Complete**: PostgreSQL 16 (port 5433) and Redis 7 (port 6379) running in Docker, SQLAlchemy 2.0 async configured, database connection verified
 - Documentation is complete and production-ready:
   - `project-brief.md`: Defines the three core loops (Collection → Analysis → Presentation)
   - `tech-stack.md`: Lists all technologies, libraries, and dependencies
   - `implementation-plan.md`: Provides step-by-step roadmap for all 3 phases
 
 ### What's Next
-1. **Project Initialization** (Current)
-2. Database Setup (PostgreSQL + SQLAlchemy)
-3. Firecrawl Integration (Web Scraper)
-4. Task Queue Setup (Arq + Redis)
-5. FastAPI Endpoints (REST API for raw signals)
+1. **Database Models & Migrations** (Current - Part of Phase 1.3)
+2. **Firecrawl Integration** (Current - Phase 1.3)
+3. **Source-Specific Scrapers** (Current - Phase 1.3)
+4. Task Queue Setup (Arq + Redis) - Phase 1.4
+5. FastAPI Endpoints (REST API for raw signals) - Phase 1.5
 
 ---
 
@@ -64,12 +67,13 @@ We are initializing the project repository and establishing the development envi
 ---
 
 ## Environment Setup Checklist
-Before starting Phase 1.1, ensure you have:
-- [ ] Python 3.11+ installed
-- [ ] Docker Desktop installed and running
-- [ ] Git installed
-- [ ] `uv` package manager installed (`pip install uv`)
-- [ ] Text editor/IDE ready (VS Code recommended)
+Before starting Phase 1.3, ensure you have:
+- [x] Python 3.11+ installed
+- [x] Docker Desktop installed and running
+- [x] Git installed
+- [x] `uv` package manager installed
+- [x] PostgreSQL and Redis containers running (`docker-compose up -d`)
+- [x] Text editor/IDE ready (VS Code recommended)
 
 ---
 
@@ -83,18 +87,19 @@ Before starting Phase 1.1, ensure you have:
 ## Notes for Next Session
 When resuming work:
 1. Read this file first to understand current context
-2. Refer to `implementation-plan.md` Phase 1.1 for detailed steps
+2. Refer to `implementation-plan.md` Phase 1.3 for detailed steps
 3. Update this file after completing each major milestone
-4. Move to Phase 1.2 (Database Setup) only after 1.1 is fully complete
+4. Check `progress.md` to see completed work and avoid duplication
+5. Move to Phase 1.4 (Task Queue) only after 1.3 is fully complete
 
 ---
 
 ## Progress Tracking
 
-### Phase 1 Progress: 0% Complete
-- [ ] 1.1 Project Initialization
-- [ ] 1.2 Database Setup
-- [ ] 1.3 Firecrawl Integration
+### Phase 1 Progress: ~25% Complete (2/8 steps)
+- [x] 1.1 Project Initialization
+- [x] 1.2 Database Setup
+- [ ] 1.3 Firecrawl Integration (In Progress)
 - [ ] 1.4 Task Queue Setup
 - [ ] 1.5 FastAPI Endpoints
 - [ ] 1.6 Environment & Configuration
@@ -103,6 +108,6 @@ When resuming work:
 
 ---
 
-**Last Updated**: 2026-01-17
+**Last Updated**: 2026-01-18
 **Updated By**: Lead Architect (Claude)
-**Status**: Ready to begin Phase 1.1
+**Status**: Phase 1.3 in progress - Database models and Firecrawl integration
