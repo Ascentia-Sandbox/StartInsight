@@ -4,23 +4,22 @@
 **Phase 1: The "Collector" (Data Collection Loop)**
 
 ## Current Focus
-**Step 1.3: Firecrawl Integration**
+**Step 1.4: Task Queue Setup (Arq)**
 
 ## Objective
-Integrate Firecrawl API for web scraping and implement source-specific scrapers for Reddit, Product Hunt, and Google Trends.
+Set up Arq task queue with Redis for scheduling scraping tasks and create scheduler for automated execution every 6 hours.
 
 ---
 
 ## What We're Building Right Now
-We are integrating Firecrawl for web scraping and building source-specific scrapers to collect market signals from Reddit, Product Hunt, and Google Trends.
+We are setting up the Arq task queue with Redis to schedule automated scraping tasks and create the scheduler for running data collection every 6 hours.
 
 ### Immediate Tasks
-- [ ] Create database models (RawSignal, Insight) with SQLAlchemy 2.0 async syntax
-- [ ] Set up Alembic for database migrations
-- [ ] Integrate Firecrawl Python SDK for web scraping
-- [ ] Implement Reddit scraper (r/startups, r/SaaS)
-- [ ] Implement Product Hunt scraper (daily launches)
-- [ ] Implement Google Trends scraper (search volume data)
+- [ ] Create `backend/app/worker.py` with Arq WorkerSettings and scraper tasks
+- [ ] Create `backend/app/tasks/scheduler.py` with APScheduler integration
+- [ ] Register scraper tasks: scrape_reddit_task, scrape_product_hunt_task, scrape_trends_task
+- [ ] Configure scheduler to run tasks every 6 hours
+- [ ] Test task execution and verify data storage in database
 
 ---
 
@@ -29,17 +28,18 @@ We are integrating Firecrawl for web scraping and building source-specific scrap
 ### What Works
 - ✅ **Phase 1.1 Complete**: Git repository initialized, project structure created, Python environment with `uv` and 173 packages
 - ✅ **Phase 1.2 Complete**: PostgreSQL 16 (port 5433) and Redis 7 (port 6379) running in Docker, SQLAlchemy 2.0 async configured, database connection verified
+- ✅ **Phase 1.3 Complete**: RawSignal database model created, Alembic migrations configured, Firecrawl client wrapper with retry logic, 3 scrapers implemented (Reddit, Product Hunt, Google Trends)
 - Documentation is complete and production-ready:
   - `project-brief.md`: Defines the three core loops (Collection → Analysis → Presentation)
   - `tech-stack.md`: Lists all technologies, libraries, and dependencies
   - `implementation-plan.md`: Provides step-by-step roadmap for all 3 phases
 
 ### What's Next
-1. **Database Models & Migrations** (Current - Part of Phase 1.3)
-2. **Firecrawl Integration** (Current - Phase 1.3)
-3. **Source-Specific Scrapers** (Current - Phase 1.3)
-4. Task Queue Setup (Arq + Redis) - Phase 1.4
-5. FastAPI Endpoints (REST API for raw signals) - Phase 1.5
+1. **Task Queue Setup** (Current - Phase 1.4) - Arq worker with scraper tasks
+2. **Task Scheduler** (Current - Phase 1.4) - APScheduler for 6-hour intervals
+3. FastAPI Endpoints (REST API for raw signals) - Phase 1.5
+4. Environment & Configuration - Phase 1.6
+5. Testing & Validation - Phase 1.7
 
 ---
 
@@ -96,11 +96,11 @@ When resuming work:
 
 ## Progress Tracking
 
-### Phase 1 Progress: ~25% Complete (2/8 steps)
+### Phase 1 Progress: ~37% Complete (3/8 steps)
 - [x] 1.1 Project Initialization
 - [x] 1.2 Database Setup
-- [ ] 1.3 Firecrawl Integration (In Progress)
-- [ ] 1.4 Task Queue Setup
+- [x] 1.3 Firecrawl Integration
+- [ ] 1.4 Task Queue Setup (In Progress)
 - [ ] 1.5 FastAPI Endpoints
 - [ ] 1.6 Environment & Configuration
 - [ ] 1.7 Testing & Validation
@@ -110,4 +110,4 @@ When resuming work:
 
 **Last Updated**: 2026-01-18
 **Updated By**: Lead Architect (Claude)
-**Status**: Phase 1.3 in progress - Database models and Firecrawl integration
+**Status**: Phase 1.4 in progress - Task queue and scheduler setup
