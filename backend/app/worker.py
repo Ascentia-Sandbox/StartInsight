@@ -176,6 +176,93 @@ async def scrape_all_sources_task(ctx: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+async def analyze_signals_task(ctx: dict[str, Any]) -> dict[str, Any]:
+    """
+    Background task to analyze unprocessed raw signals.
+
+    Processes signals in batches using PydanticAI analyzer.
+    Marks signals as processed after successful analysis.
+
+    Args:
+        ctx: Arq context dictionary
+
+    Returns:
+        Task result with count of analyzed signals
+    """
+    from sqlalchemy import select
+
+    from app.agents.analyzer import analyze_signal_with_retry
+    from app.models.insight import Insight
+    from app.models.raw_signal import RawSignal
+
+    logger.info("Starting signal analysis task")
+
+    batch_size = settings.analysis_batch_size
+
+    try:
+        async with AsyncSessionLocal() as session:
+            # Get unprocessed signals
+            result = await session.execute(
+                select(RawSignal)
+                .where(RawSignal.processed == False)  # noqa: E712
+                .limit(batch_size)
+            )
+            signals = result.scalars().all()
+
+            if not signals:
+                logger.info("No unprocessed signals to analyze")
+                return {
+                    "status": "success",
+                    "analyzed": 0,
+                    "total": 0,
+                }
+
+            analyzed_count = 0
+            failed_count = 0
+
+            for signal in signals:
+                try:
+                    # Analyze signal with retry logic
+                    insight = await analyze_signal_with_retry(signal)
+                    session.add(insight)
+
+                    # Mark signal as processed
+                    signal.processed = True
+
+                    analyzed_count += 1
+                    logger.info(
+                        f"Analyzed signal {signal.id} from {signal.source}"
+                    )
+
+                except Exception as e:
+                    failed_count += 1
+                    logger.error(
+                        f"Failed to analyze signal {signal.id}: {type(e).__name__} - {e}"
+                    )
+                    # Don't mark as processed - will retry later
+
+            await session.commit()
+
+        logger.info(
+            f"Analysis task complete: {analyzed_count} analyzed, "
+            f"{failed_count} failed out of {len(signals)} signals"
+        )
+
+        return {
+            "status": "success",
+            "analyzed": analyzed_count,
+            "failed": failed_count,
+            "total": len(signals),
+        }
+
+    except Exception as e:
+        logger.error(f"Analysis task failed: {type(e).__name__} - {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+        }
+
+
 async def startup(ctx: dict[str, Any]) -> None:
     """
     Startup hook for Arq worker.
@@ -214,6 +301,7 @@ class WorkerSettings:
         scrape_product_hunt_task,
         scrape_trends_task,
         scrape_all_sources_task,
+        analyze_signals_task,
     ]
 
     # Cron jobs (scheduled tasks)

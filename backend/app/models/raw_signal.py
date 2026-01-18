@@ -6,7 +6,7 @@ from typing import Any
 
 from sqlalchemy import Boolean, String, Text, func
 from sqlalchemy.dialects.postgresql import JSON, UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
@@ -76,6 +76,14 @@ class RawSignal(Base):
         default=False,
         index=True,
         comment="Flag indicating if signal has been analyzed"
+    )
+
+    # Relationships
+    insights: Mapped[list["Insight"]] = relationship(
+        "Insight",
+        back_populates="raw_signal",
+        cascade="all, delete-orphan",
+        doc="AI-analyzed insights derived from this raw signal",
     )
 
     def __repr__(self) -> str:

@@ -45,11 +45,22 @@ async def schedule_scraping_tasks() -> None:
         name="Scrape All Sources (Reddit, Product Hunt, Google Trends)",
     )
 
+    # Schedule analysis tasks (run shortly after scraping)
+    # Analysis runs 10 minutes after each scraping interval
+    scheduler.add_job(
+        func=redis.enqueue_job,
+        args=("analyze_signals_task",),
+        trigger=IntervalTrigger(hours=settings.scrape_interval_hours),
+        id="analyze_signals",
+        replace_existing=True,
+        name="Analyze Raw Signals (PydanticAI)",
+    )
+
     # Start the scheduler
     scheduler.start()
 
     logger.info(
-        f"Task scheduler started. Scraping will run every "
+        f"Task scheduler started. Scraping and analysis will run every "
         f"{settings.scrape_interval_hours} hours"
     )
 

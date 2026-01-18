@@ -97,6 +97,7 @@ async def root():
 
 
 # Import and include routers
-from app.api.routes import signals  # noqa: E402
+from app.api.routes import insights, signals  # noqa: E402
 
 app.include_router(signals.router, prefix="/api", tags=["Signals"])
+app.include_router(insights.router, tags=["Insights"])
