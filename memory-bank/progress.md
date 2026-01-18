@@ -6,6 +6,11 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ## Recent Changes
 
+- [2026-01-18] [BUGFIX-DATETIME]: Fixed Zod datetime validation error for raw_signal.created_at
+  - Files modified: `frontend/lib/types.ts`
+  - Technical notes: Fixed Zod datetime validation error preventing insights from displaying in browser. Backend returns datetime strings without 'Z' suffix for raw_signal.created_at field ("2026-01-18T04:30:26.732592"), but Zod's `.datetime()` validator requires ISO datetime with Z suffix by default. Updated RawSignalSummarySchema in types.ts line 15: changed `created_at: z.string().datetime()` to `created_at: z.string().datetime({ offset: false })`. The `offset: false` option allows Zod to accept ISO datetime strings without timezone offset (no Z or ±HH:MM required). This makes the schema more lenient and compatible with the backend's datetime format. InsightSchema.created_at unchanged (line 27) since it correctly receives Z suffix from backend. Verified fix by running view-insights.js script - browser loaded successfully without validation errors, all 5 insights displayed correctly, no error messages in console. Root cause: Backend SQLAlchemy datetime serialization formats raw_signal.created_at without timezone indicator, while insight.created_at includes Z suffix. Frontend-side fix chosen over backend fix to maintain compatibility with existing API responses without requiring backend code changes or database migrations. Fix ensures proper datetime validation while accepting both formats (with/without Z).
+  - Status: ✓ Complete
+
 - [2026-01-18] [MCP-PLAYWRIGHT]: Configured Playwright MCP server for Claude Code browser automation
   - Files created: `.claude/mcp-playwright-guide.md` (comprehensive configuration documentation)
   - Files modified: `memory-bank/active-context.md` (added MCP guide reference)
