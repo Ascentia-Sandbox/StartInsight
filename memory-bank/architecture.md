@@ -465,6 +465,9 @@ backend/
 ├── .env.example                   # Example environment variables
 ├── pyproject.toml                 # Python dependencies (uv/poetry)
 ├── Dockerfile                     # Production Docker image
+├── .dockerignore                  # Docker build context exclusions
+├── railway.toml                   # Railway deployment config
+├── render.yaml                    # Render deployment config
 └── README.md                      # Backend setup instructions
 ```
 
@@ -520,11 +523,19 @@ frontend/
 │   ├── favicon.ico
 │   └── images/
 │
+├── tests/                         # Playwright E2E tests
+│   ├── daily-top.spec.ts          # Homepage tests (10 scenarios)
+│   ├── filters.spec.ts            # Filtering tests (10 scenarios)
+│   ├── insight-detail.spec.ts     # Detail page tests (12 scenarios)
+│   └── theme-responsive.spec.ts   # Dark mode, responsive, a11y (15 scenarios)
+│
 ├── .env.local.example             # Example env vars
+├── playwright.config.ts           # Playwright test configuration
 ├── next.config.js                 # Next.js configuration
 ├── tailwind.config.ts             # Tailwind CSS config
 ├── tsconfig.json                  # TypeScript config
 ├── package.json                   # Node dependencies (pnpm)
+├── vercel.json                    # Vercel deployment config
 └── README.md                      # Frontend setup instructions
 ```
 
@@ -544,9 +555,25 @@ StartInsight/
 │   ├── architecture.md            # THIS FILE
 │   └── progress.md                # Phase completion tracking
 │
+├── test-results/                  # Test documentation & results
+│   ├── phase-3/                   # Phase 3 test documentation
+│   │   ├── test_phase_3_1.md      # Phase 3.1: Next.js Setup
+│   │   ├── test_phase_3_5.md      # Phase 3.5: Data Visualization
+│   │   ├── test_phase_3_6.md      # Phase 3.6: Dark Mode & Error Boundaries
+│   │   ├── test_phase_3_7.md      # Phase 3.7: Deployment Configuration
+│   │   ├── test_phase_3_8.md      # Phase 3.8: E2E Testing (Playwright)
+│   │   ├── test_phase_3_9.md      # Phase 3.9: Documentation
+│   │   └── test_phase_3_complete.md # Phase 3.1-3.5 Summary
+│   └── README.md                  # Test results documentation
+│
+├── .github/                       # GitHub configuration
+│   └── workflows/
+│       └── ci-cd.yml              # GitHub Actions CI/CD pipeline
+│
 ├── docker-compose.yml             # Local dev environment
 ├── .gitignore                     # Git ignore rules
 ├── README.md                      # Project overview
+├── DEPLOYMENT.md                  # Production deployment guide
 └── CLAUDE.md                      # Claude Code guidelines
 ```
 
