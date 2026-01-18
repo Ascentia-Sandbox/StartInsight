@@ -93,16 +93,12 @@ Guidelines:
 Output Format:
 Return a structured JSON object matching the InsightSchema format."""
 
-# Create PydanticAI agent (will be initialized with API key at runtime)
+# Create PydanticAI agent (API key read from ANTHROPIC_API_KEY environment variable)
 def get_agent() -> Agent:
-    """Get PydanticAI agent with API key from settings."""
-    from pydantic_ai.models.anthropic import AnthropicProvider
-
+    """Get PydanticAI agent (API key from environment)."""
+    # PydanticAI automatically reads ANTHROPIC_API_KEY from environment
     return Agent(
-        model=AnthropicProvider(
-            model_name="claude-3-5-sonnet-20241022",
-            api_key=settings.anthropic_api_key if hasattr(settings, 'anthropic_api_key') and settings.anthropic_api_key else None,
-        ),
+        model="anthropic:claude-3-5-sonnet-20241022",
         system_prompt=SYSTEM_PROMPT,
         result_type=InsightSchema,
     )

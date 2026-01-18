@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
+import { TrendChart } from '@/components/trend-chart';
 
 export default function InsightDetailPage() {
   const params = useParams();
@@ -157,6 +158,16 @@ export default function InsightDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Trend Chart */}
+      {insight.raw_signal && (
+        <div className="mt-6">
+          <TrendChart
+            data={insight.raw_signal.extra_metadata}
+            source={insight.raw_signal.source}
+          />
+        </div>
+      )}
     </div>
   );
 }

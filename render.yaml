@@ -1,0 +1,55 @@
+# Render.com Deployment Configuration
+# https://render.com/docs/infrastructure-as-code
+
+services:
+  # FastAPI Backend
+  - type: web
+    name: startinsight-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    region: oregon
+    plan: starter
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: DATABASE_URL
+        fromDatabase:
+          name: startinsight-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: startinsight-redis
+          type: redis
+          property: connectionString
+      - key: ANTHROPIC_API_KEY
+        sync: false  # Set manually in dashboard
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: FIRECRAWL_API_KEY
+        sync: false
+      - key: REDDIT_CLIENT_ID
+        sync: false
+      - key: REDDIT_CLIENT_SECRET
+        sync: false
+      - key: REDDIT_USER_AGENT
+        value: StartInsight Bot v1.0
+      - key: SCRAPE_INTERVAL_HOURS
+        value: 6
+      - key: ANALYSIS_BATCH_SIZE
+        value: 10
+
+databases:
+  # PostgreSQL Database
+  - name: startinsight-db
+    databaseName: startinsight
+    plan: starter
+    region: oregon
+    user: startinsight
+
+# Redis (use Render's Redis addon or external service like Upstash)
+# Note: Configure REDIS_URL manually in dashboard
