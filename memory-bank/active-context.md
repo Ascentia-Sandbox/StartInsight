@@ -130,6 +130,10 @@ npm run dev
 - ✅ **Phase 2.5 Complete**: Integration tests verifying full pipeline (26/26 tests passed), end-to-end validation, model relationships
 - ✅ **Phase 2.6 Complete**: Monitoring & Logging with MetricsTracker singleton, LLM cost tracking (Claude: $0.003/1K input, $0.015/1K output), structured logging with performance data, 8 comprehensive tests
 
+**Phase 3: Frontend & Visualization (Complete)**
+- ✅ **Phase 3.1-3.5 Complete**: Next.js 16.1.3 frontend with App Router, TypeScript, Tailwind CSS v4, shadcn/ui (8 components), Zod validation, axios API client, React Query (60s stale time, 2 retries), InsightCard component with star ratings and color-coded badges, homepage with daily top 5 insights, responsive grid (1/2/3 columns), InsightFilters with URL state management, All Insights page with filters sidebar, Insight Detail page with competitor analysis, Header navigation, loading skeletons, Suspense boundaries (40+ files, 9576 lines)
+- ✅ **Phase 3.6 Complete**: Dark mode toggle with ThemeProvider (localStorage persistence, system preference detection, FOUC prevention), ThemeToggle component (SSR-safe with dynamic import), error boundaries at 3 levels (root, global, route-specific), Tailwind v4 dark mode configuration, graceful error handling with contextual messages (8 files, 605 lines)
+
 **Documentation**
 - ✅ `project-brief.md`: Defines the three core loops (Collection → Analysis → Presentation)
 - ✅ `tech-stack.md`: Lists all technologies, libraries, and dependencies
@@ -370,15 +374,16 @@ When resuming work:
 - [x] 2.5 Testing & Validation
 - [x] 2.6 Monitoring & Logging
 
-### Phase 3 Progress: ✅ 100% Complete (5/5 steps)
+### Phase 3 Progress: ✅ 100% Complete (6/6 steps)
 - [x] 3.1 Next.js Project Setup
 - [x] 3.2 API Client & Data Fetching
 - [x] 3.3 Insights Dashboard UI
 - [x] 3.4 Filtering & Search
-- [x] 3.5 Polish & Deploy
+- [x] 3.5 Detail Pages & Navigation
+- [x] 3.6 Styling & UX (Dark Mode + Error Boundaries)
 
 ---
 
 **Last Updated**: 2026-01-18
 **Updated By**: Lead Architect (Claude)
-**Status**: Phase 1 and Phase 2 complete (Data Collection + Analysis Loops) - Ready for Phase 3 (Frontend)
+**Status**: All core phases complete (Phase 1: Data Collection, Phase 2: Analysis Loop, Phase 3: Frontend) - Production-ready, ready for deployment (Phase 3.7)
