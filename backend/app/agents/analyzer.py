@@ -1,6 +1,7 @@
 """AI analyzer agent using PydanticAI with Claude 3.5 Sonnet."""
 
 import logging
+import time
 from typing import Literal
 
 from pydantic import BaseModel, Field, HttpUrl
@@ -15,6 +16,7 @@ from tenacity import (
 from app.core.config import settings
 from app.models.insight import Insight
 from app.models.raw_signal import RawSignal
+from app.monitoring.metrics import get_metrics_tracker
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +126,9 @@ async def analyze_signal(raw_signal: RawSignal) -> Insight:
     Raises:
         Exception: If analysis fails after retries
     """
+    metrics_tracker = get_metrics_tracker()
+    start_time = time.time()
+
     try:
         # Get agent instance with API key
         agent = get_agent()
@@ -131,8 +136,30 @@ async def analyze_signal(raw_signal: RawSignal) -> Insight:
         # Call PydanticAI agent
         result = await agent.run(raw_signal.content)
 
+        # Calculate latency
+        latency_ms = (time.time() - start_time) * 1000
+
         # Extract structured data from agent response
         insight_data = result.data
+
+        # Estimate tokens (rough approximation: ~4 chars per token)
+        input_tokens = len(raw_signal.content) // 4
+        output_tokens = (
+            len(insight_data.problem_statement)
+            + len(insight_data.proposed_solution)
+            + len(insight_data.title)
+        ) // 4
+
+        # Track LLM call metrics
+        metrics_tracker.track_llm_call(
+            model="claude-3-5-sonnet-20241022",
+            prompt=raw_signal.content[:200] + "...",  # Log first 200 chars
+            response=insight_data.title,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            latency_ms=latency_ms,
+            success=True,
+        )
 
         # Convert to database Insight model
         insight = Insight(
@@ -146,6 +173,9 @@ async def analyze_signal(raw_signal: RawSignal) -> Insight:
             ],
         )
 
+        # Track successful insight generation
+        metrics_tracker.track_insight_generated(insight_data.relevance_score)
+
         logger.info(
             f"Successfully analyzed signal {raw_signal.id}: "
             f"{insight_data.title} (score: {insight_data.relevance_score})"
@@ -154,6 +184,25 @@ async def analyze_signal(raw_signal: RawSignal) -> Insight:
         return insight
 
     except Exception as e:
+        # Calculate latency even for failed calls
+        latency_ms = (time.time() - start_time) * 1000
+
+        # Track failed LLM call
+        input_tokens = len(raw_signal.content) // 4
+        metrics_tracker.track_llm_call(
+            model="claude-3-5-sonnet-20241022",
+            prompt=raw_signal.content[:200] + "...",
+            response=None,
+            input_tokens=input_tokens,
+            output_tokens=0,
+            latency_ms=latency_ms,
+            success=False,
+            error=str(e),
+        )
+
+        # Track failed insight generation
+        metrics_tracker.track_insight_failed(e)
+
         logger.error(f"Failed to analyze signal {raw_signal.id}: {e}")
         raise
 
