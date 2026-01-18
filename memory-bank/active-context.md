@@ -312,6 +312,7 @@ Before starting Phase 1.3, ensure you have:
 - **Implementation Plan**: `memory-bank/implementation-plan.md`
 - **Test Code**: `tests/` (all test code - backend pytest, frontend playwright)
 - **Test Results**: `test-results/phase-3/` (all Phase 3 test documentation)
+- **MCP Playwright Guide**: `.claude/mcp-playwright-guide.md` (browser automation with Claude Code)
 
 ---
 
