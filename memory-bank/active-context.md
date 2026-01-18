@@ -310,6 +310,7 @@ Before starting Phase 1.3, ensure you have:
 - **Project Brief**: `memory-bank/project-brief.md`
 - **Tech Stack**: `memory-bank/tech-stack.md`
 - **Implementation Plan**: `memory-bank/implementation-plan.md`
+- **Test Code**: `tests/` (all test code - backend pytest, frontend playwright)
 - **Test Results**: `test-results/phase-3/` (all Phase 3 test documentation)
 
 ---

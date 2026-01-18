@@ -456,12 +456,6 @@ backend/
 │   ├── env.py
 │   └── alembic.ini
 │
-├── tests/                         # Unit & integration tests
-│   ├── __init__.py
-│   ├── test_scrapers.py
-│   ├── test_agents.py
-│   └── test_api.py
-│
 ├── .env.example                   # Example environment variables
 ├── pyproject.toml                 # Python dependencies (uv/poetry)
 ├── Dockerfile                     # Production Docker image
@@ -469,6 +463,8 @@ backend/
 ├── railway.toml                   # Railway deployment config
 ├── render.yaml                    # Render deployment config
 └── README.md                      # Backend setup instructions
+
+Note: Backend tests moved to centralized tests/backend/ directory (see Root Structure below)
 ```
 
 ---
@@ -523,20 +519,15 @@ frontend/
 │   ├── favicon.ico
 │   └── images/
 │
-├── tests/                         # Playwright E2E tests
-│   ├── daily-top.spec.ts          # Homepage tests (10 scenarios)
-│   ├── filters.spec.ts            # Filtering tests (10 scenarios)
-│   ├── insight-detail.spec.ts     # Detail page tests (12 scenarios)
-│   └── theme-responsive.spec.ts   # Dark mode, responsive, a11y (15 scenarios)
-│
 ├── .env.local.example             # Example env vars
-├── playwright.config.ts           # Playwright test configuration
 ├── next.config.js                 # Next.js configuration
 ├── tailwind.config.ts             # Tailwind CSS config
 ├── tsconfig.json                  # TypeScript config
 ├── package.json                   # Node dependencies (pnpm)
 ├── vercel.json                    # Vercel deployment config
 └── README.md                      # Frontend setup instructions
+
+Note: Frontend E2E tests moved to centralized tests/frontend/ directory (see Root Structure below)
 ```
 
 ---
@@ -555,7 +546,34 @@ StartInsight/
 │   ├── architecture.md            # THIS FILE
 │   └── progress.md                # Phase completion tracking
 │
-├── test-results/                  # Test documentation & results
+├── tests/                         # Centralized testing infrastructure
+│   ├── backend/                   # Backend tests (Python/Pytest)
+│   │   ├── conftest.py            # Pytest fixtures & configuration
+│   │   ├── unit/                  # Unit tests (isolated components)
+│   │   │   └── test_scrapers.py   # Scraper unit tests
+│   │   ├── integration/           # Integration tests (multiple components)
+│   │   │   ├── test_api.py        # API endpoint tests
+│   │   │   └── test_phase_2_5_integration.py  # Phase 2.5 full pipeline
+│   │   └── validation/            # Phase validation tests (9 files)
+│   │       ├── test_phase_1_4.py  # Task Queue & Scheduler
+│   │       ├── test_phase_1_5.py  # FastAPI Endpoints
+│   │       ├── test_phase_1_6.py  # Environment & Config
+│   │       ├── test_phase_1_8.py  # Documentation
+│   │       ├── test_phase_2_1.py  # Database Schema Extension
+│   │       ├── test_phase_2_2.py  # AI Analyzer Agent
+│   │       ├── test_phase_2_3.py  # Analysis Task Queue
+│   │       ├── test_phase_2_4.py  # Insights API Endpoints
+│   │       └── test_phase_2_6.py  # Monitoring & Logging
+│   ├── frontend/                  # Frontend tests (TypeScript/Playwright)
+│   │   ├── playwright.config.ts   # Playwright configuration
+│   │   └── e2e/                   # E2E tests (47 scenarios)
+│   │       ├── daily-top.spec.ts          # Homepage tests (10 scenarios)
+│   │       ├── filters.spec.ts            # Filtering tests (10 scenarios)
+│   │       ├── insight-detail.spec.ts     # Detail page tests (12 scenarios)
+│   │       └── theme-responsive.spec.ts   # Dark mode, responsive, a11y (15 scenarios)
+│   └── README.md                  # Testing infrastructure documentation
+│
+├── test-results/                  # Test execution documentation
 │   ├── phase-3/                   # Phase 3 test documentation
 │   │   ├── test_phase_3_1.md      # Phase 3.1: Next.js Setup
 │   │   ├── test_phase_3_5.md      # Phase 3.5: Data Visualization

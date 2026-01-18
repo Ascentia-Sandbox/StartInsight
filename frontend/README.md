@@ -116,10 +116,10 @@ frontend/
 │   ├── types.ts               # TypeScript types & Zod schemas
 │   ├── query-client.ts        # React Query config
 │   └── utils.ts               # Utility functions
-├── tests/                      # Playwright E2E tests
 ├── .env.local                 # Environment variables (not in git)
-├── playwright.config.ts       # Playwright configuration
 └── package.json               # Dependencies & scripts
+
+Note: E2E tests moved to centralized ../tests/frontend/ directory
 ```
 
 ---
