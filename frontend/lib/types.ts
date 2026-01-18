@@ -12,7 +12,14 @@ export const RawSignalSummarySchema = z.object({
   id: z.string().uuid(),
   source: z.string(),
   url: z.string().url(),
-  created_at: z.string().datetime({ offset: false }), // Backend returns datetime without Z suffix
+  created_at: z.string().refine(
+    (val) => {
+      // Accept both ISO datetime with Z (2020-01-01T00:00:00Z) and without Z (2020-01-01T00:00:00)
+      const isoDatetimeRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/;
+      return isoDatetimeRegex.test(val);
+    },
+    { message: 'Invalid datetime format' }
+  ),
   extra_metadata: z.record(z.string(), z.any()).nullable().optional(), // Flexible metadata (varies by source)
 });
 
