@@ -103,7 +103,7 @@ Caching/Queue: Redis - Task queue for scheduled scrapers and caching hot insight
   - Use if we need advanced features (task retries, priority queues).
 
 **Core Python Dependencies (Backend)**
-```
+```txt
 # API Framework
 fastapi>=0.109.0
 uvicorn[standard]>=0.27.0
@@ -639,7 +639,7 @@ NEXT_PUBLIC_POSTHOG_KEY=phc_...  # PostHog analytics
 
 ### Semantic Versioning Policy
 
-```
+```txt
 Major.Minor.Patch (e.g., 2.5.3)
 
 - Major: Breaking changes (manual upgrade required)
