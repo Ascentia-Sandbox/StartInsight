@@ -1,3 +1,12 @@
+---
+**Memory Bank Protocol**
+**Reading Priority:** CRITICAL
+**Read When:** Before every task to understand current phase status
+**Dependencies:** Read project-brief.md first for context
+**Purpose:** Current phase tracking, immediate tasks, blockers, what's working/next
+**Last Updated:** 2026-01-25
+---
+
 # Active Context: StartInsight Development
 
 ## Current Phase

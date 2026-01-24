@@ -1,3 +1,12 @@
+---
+**Memory Bank Protocol**
+**Reading Priority:** CRITICAL
+**Read When:** When planning implementation steps, checking phase requirements
+**Dependencies:** Read active-context.md to know current phase, architecture.md for system design
+**Purpose:** Phases 1-7 detailed roadmap with week-by-week tasks, testing requirements, success criteria
+**Last Updated:** 2026-01-25
+---
+
 # Implementation Plan: StartInsight
 
 ## Overview

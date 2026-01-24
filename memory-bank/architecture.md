@@ -1,3 +1,12 @@
+---
+**Memory Bank Protocol**
+**Reading Priority:** CRITICAL
+**Read When:** Before implementing features, designing database models, creating APIs
+**Dependencies:** Read active-context.md for current phase, implementation-plan.md for step-by-step tasks
+**Purpose:** System architecture, database schema (9 tables planned), API endpoints (35+), SSE, authentication, admin portal
+**Last Updated:** 2026-01-25
+---
+
 # System Architecture: StartInsight
 
 ## Overview

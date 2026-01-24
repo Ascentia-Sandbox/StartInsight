@@ -1,3 +1,12 @@
+---
+**Memory Bank Protocol**
+**Reading Priority:** HIGH
+**Read When:** At the start of any new session, before proposing architectural changes
+**Dependencies:** None (this is the entry point)
+**Purpose:** Executive summary, business objectives, 3 core loops, competitive positioning
+**Last Updated:** 2026-01-25
+---
+
 Project Brief: StartInsight
 1. Executive Summary
 StartInsight is a daily, AI-powered business intelligence engine designed to discover, validate, and present data-driven startup ideas. Unlike traditional brainstorming tools, StartInsight relies on real-time market signalsscraped from social discussions, search trends, and product launchesto identify genuine market gaps and consumer pain points.

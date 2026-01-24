@@ -1,3 +1,12 @@
+---
+**Memory Bank Protocol**
+**Reading Priority:** MEDIUM
+**Read When:** After completing tasks (for logging), before starting work (to avoid duplication)
+**Dependencies:** Read active-context.md to know what phase you're in before logging
+**Purpose:** Completion log (Phase 1-3 complete, 4.1 active), recent changes, upcoming tasks
+**Last Updated:** 2026-01-25
+---
+
 # StartInsight - Progress Log
 
 This file tracks all significant changes made to the project. Each entry follows the format defined in CLAUDE.md Workflows section.

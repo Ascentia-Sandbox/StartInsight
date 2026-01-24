@@ -1,3 +1,12 @@
+---
+**Memory Bank Protocol**
+**Reading Priority:** CRITICAL
+**Read When:** When choosing libraries, verifying dependencies, resolving conflicts, cost planning
+**Dependencies:** Read project-brief.md for "Glue Coding" philosophy
+**Purpose:** Phase 1-7 dependencies, cost analysis ($639/mo at 10K users), revenue projections ($59K MRR)
+**Last Updated:** 2026-01-25
+---
+
 Tech Stack: StartInsight
 1. High-Level Architecture
 Architecture Type: Modular Monolith (separate Frontend/Backend repos or Monorepo)
