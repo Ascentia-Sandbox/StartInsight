@@ -43,6 +43,40 @@ All 9 sub-phases of Phase 3 are complete! The modern Next.js frontend now displa
 - ❌ Migration execution (alembic upgrade head)
 - ❌ Frontend implementation (0%)
 
+## Upcoming: Phase 4.5 Supabase Migration
+
+<!-- Phase 4.5 planning added on 2026-01-25 -->
+
+**Timeline:** Week 1 after Phase 4.4 complete (estimated Q1 2026)
+
+**Goal:** Migrate from self-hosted PostgreSQL to Supabase Cloud (Singapore)
+
+**Why Now:**
+1. **Cost Efficiency**: Supabase $25/mo vs Neon $69/mo at 10K users (64% savings)
+2. **APAC Market**: Singapore region for 50ms latency (vs 180ms US-based)
+3. **Scalability**: Auto-scaling, 500 concurrent connections (vs 15 current)
+4. **Phase 5+ Enablement**: Real-time subscriptions, Storage, Edge Functions
+
+**Migration Approach:**
+- **Week 1**: Planning & Setup (Supabase project, schema migration, RLS config)
+- **Week 2**: Backend Integration (dual-write service, read path migration)
+- **Week 3**: Testing & Validation (performance benchmarks, load tests)
+- **Week 4**: Cutover & Cleanup (production deployment, PostgreSQL deprecation)
+
+**Success Criteria:**
+- Zero downtime during cutover
+- <100ms p95 latency (target: <78ms current)
+- 100% data integrity (row counts, checksums)
+- Rollback plan tested (<30 minute recovery)
+
+**Preparation Tasks:**
+- [ ] Create Supabase Pro account ($25/mo)
+- [ ] Document current PostgreSQL schema (Alembic migrations)
+- [ ] Set up staging environment for testing
+- [ ] Review RLS policies (see architecture.md Section 10.2)
+
+---
+
 ### Next Steps
 
 **Immediate: Complete Phase 4.1 Backend Integration (1 hour)**
