@@ -825,3 +825,148 @@ Why FastAPI over Django? StartInsight is an AI-heavy app. We need excellent asyn
 Why PostgreSQL over Supabase? To maintain vendor independence and control over our data layer. Running a standard Postgres container ensures we can host this anywhere (AWS, GCP, DigitalOcean) without being locked into a BaaS ecosystem.
 
 Why Firecrawl? Writing custom CSS selectors for scraping is brittle (websites change). Firecrawl uses AI/Heuristics to turn web pages into Markdown, which is the native language of our LLM agents.
+
+---
+
+<!-- Supabase migration dependencies added on 2026-01-25 for Phase 4.5 -->
+
+## 9. Phase 4.5: Database Migration (PostgreSQL → Supabase Cloud)
+
+### 9.1 Migration Rationale
+
+**Timeline:** Week 1 after Phase 4.4 complete (Q1 2026)
+
+**Decision:** Migrate from self-hosted PostgreSQL to Supabase Cloud (Singapore ap-southeast-1)
+
+**Why Supabase:**
+- **Cost Efficiency**: $25/mo (Pro) vs $69/mo (Neon Scale) at 10K users = 64% savings
+- **APAC Market**: Singapore region = 50ms latency for SEA users (vs 180ms US-based)
+- **Built-in Features**: Real-time subscriptions, Storage, Edge Functions (Phase 5+)
+- **Developer Experience**: Auto-migrations, RLS policies, built-in auth option
+- **Scalability**: Auto-scaling, connection pooling (up to 500 concurrent connections)
+
+### 9.2 Backend Dependencies (Added)
+
+| Package | Version | Purpose | Installation |
+|---------|---------|---------|--------------|
+| `supabase` | >=2.0.0 | Python client for Supabase | `uv add supabase` |
+| `postgrest-py` | >=0.10.0 | PostgREST client (included in supabase) | Auto-installed |
+
+**Note:** Keep SQLAlchemy + asyncpg during transition period (dual-write strategy)
+
+### 9.3 Frontend Dependencies (Added)
+
+| Package | Version | Purpose | Installation |
+|---------|---------|---------|--------------|
+| `@supabase/supabase-js` | >=2.38.0 | Supabase client for Next.js | `pnpm add @supabase/supabase-js` |
+| `@supabase/ssr` | >=0.0.10 | Server-side rendering utilities | `pnpm add @supabase/ssr` |
+
+### 9.4 Environment Variables (Updated)
+
+**New Variables:**
+```bash
+# Supabase Cloud (Singapore ap-southeast-1)
+SUPABASE_URL=https://[project-ref].supabase.co
+SUPABASE_ANON_KEY=eyJhbGc...  # Public key (client-side)
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...  # Private key (server-side only)
+
+# Keep during transition
+DATABASE_URL=postgresql+asyncpg://startinsight:password@localhost:5433/startinsight
+```
+
+### 9.5 Migration Strategy (3 Options)
+
+#### Option 1: Conservative (Recommended for Phase 4.5)
+- **Approach**: SQLAlchemy wrapper around Supabase
+- **Pros**: Minimal code changes, gradual migration, easy rollback
+- **Cons**: Doesn't leverage Supabase features (RLS, real-time)
+- **Timeline**: 1 week
+
+#### Option 2: Progressive (Recommended for Phase 5+)
+- **Approach**: Dual-write (PostgreSQL + Supabase), gradual cutover
+- **Pros**: Zero downtime, incremental feature adoption, safe rollback
+- **Cons**: Temporary complexity, data consistency overhead
+- **Timeline**: 4 weeks
+
+#### Option 3: Full Supabase
+- **Approach**: Replace SQLAlchemy with Supabase client
+- **Pros**: Full Supabase feature access, simplified stack
+- **Cons**: Major refactor, higher risk, difficult rollback
+- **Timeline**: 8 weeks
+
+**Chosen Approach:** Option 2 (Progressive) - See implementation-plan.md Phase 4.5
+
+### 9.6 Cost Analysis (Updated)
+
+**Supabase Pricing Tiers:**
+
+| Tier | Monthly Cost | Database Size | Users | Bandwidth | Functions |
+|------|--------------|---------------|-------|-----------|-----------|
+| Free | $0 | 500MB | Unlimited | 5GB | 500K invocations |
+| Pro | $25 | 8GB | Unlimited | 50GB | 2M invocations |
+| Team | $599 | 100GB | Unlimited | 250GB | 10M invocations |
+| Enterprise | Custom | Custom | Unlimited | Custom | Custom |
+
+**StartInsight Cost Comparison:**
+
+| Users | Current (Neon) | Supabase Pro | Savings | Profit Margin |
+|-------|----------------|--------------|---------|---------------|
+| 100 | $19/mo | $25/mo | -$6/mo | 96.2% (vs 97.6%) |
+| 1,000 | $39/mo | $25/mo | +$14/mo | 98.3% (vs 97.3%) |
+| 10,000 | $69/mo | $25/mo | +$44/mo | 99.5% (vs 98.6%) |
+
+**Break-even:** 340 users (Supabase becomes cheaper)
+
+**At 10K users:**
+- Revenue: $59K MRR (avg $5.90/user)
+- Supabase cost: $25/mo (0.04% of revenue)
+- Profit margin: 99.5% (vs 98.6% with Neon = +0.9pp improvement)
+
+### 9.7 Singapore Region Configuration
+
+**Region:** `ap-southeast-1` (AWS Singapore)
+
+**Justification:**
+- **APAC Market Growth**: 30% YoY SaaS adoption in SEA
+- **Latency**: 50ms (Singapore) vs 180ms (US) for SEA users
+- **Compliance**: Data residency for APAC customers
+- **Expansion**: Gateway to Australia (120ms), India (85ms), Japan (110ms)
+
+**Configuration:**
+```typescript
+// frontend/lib/supabase.ts
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!  // Singapore region
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  db: { schema: 'public' },
+  auth: { persistSession: true },
+  global: { headers: { 'x-application-name': 'startinsight' } }
+})
+```
+
+### 9.8 Future Features Enabled (Phase 5+)
+
+**Real-time Subscriptions** (Phase 5.1):
+- Live insight updates as scraper processes data
+- Multi-user collaboration (shared workspaces)
+- Admin dashboard live metrics
+
+**Storage** (Phase 5.2):
+- User avatar uploads
+- Generated report PDFs
+- Landing page assets (logos, images)
+
+**Edge Functions** (Phase 5.3):
+- PDF generation (reportlab → Deno edge function)
+- Image resizing (brand package logos)
+- Webhook handlers (Stripe, Clerk)
+
+**PostgREST API** (Phase 5.4):
+- Auto-generated REST API from schema
+- Reduce custom FastAPI routes
+- GraphQL option (pg_graphql extension)
+
+---
