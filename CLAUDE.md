@@ -5,27 +5,27 @@
 ### CRITICAL: Always Read These Files First
 Before answering ANY complex question or starting ANY implementation task, you MUST read the relevant memory-bank files in this order:
 
-1. **`memory-bank/project-brief.md`** (125 lines)
+1. **`memory-bank/project-brief.md`** (179 lines)
    - Purpose: Executive summary, business objectives, 3 core loops, competitive positioning vs IdeaBrowser
    - When to read: At the start of any new session, before proposing architectural changes
 
-2. **`memory-bank/active-context.md`** (450 lines)
+2. **`memory-bank/active-context.md`** (444 lines)
    - Purpose: Current phase (Phase 4.1 active - 60% complete), immediate tasks, blockers, what's working/what's next
    - When to read: Before every task to understand current state
 
-3. **`memory-bank/implementation-plan.md`** (3,428 lines)
+3. **`memory-bank/implementation-plan.md`** (4,173 lines)
    - Purpose: Phases 1-7 detailed roadmap with step-by-step instructions, Phase 4-7 comprehensive implementation guide
    - When to read: When planning implementation steps, checking phase requirements
 
-4. **`memory-bank/architecture.md`** (2,767 lines)
+4. **`memory-bank/architecture.md`** (3,027 lines)
    - Purpose: System architecture, 9 tables, 35+ API endpoints, SSE architecture, authentication, admin portal, enhanced scoring
    - When to read: Before implementing features, designing database models, creating APIs
 
-5. **`memory-bank/tech-stack.md`** (827 lines)
+5. **`memory-bank/tech-stack.md`** (972 lines)
    - Purpose: Phase 1-7 dependencies, cost analysis ($80-$674/mo), revenue projections ($59K MRR at 10K users)
    - When to read: When choosing libraries, verifying dependencies, resolving conflicts, cost planning
 
-6. **`memory-bank/progress.md`** (200 lines)
+6. **`memory-bank/progress.md`** (215 lines)
    - Purpose: Completion log (Phase 1-3 complete, 4.1 active), upcoming tasks
    - When to read: After completing tasks (for logging), before starting work (to avoid duplication)
 
