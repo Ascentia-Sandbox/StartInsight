@@ -6,6 +6,49 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ## Recent Changes
 
+- [2026-01-25] [PHASE-4.5-PLANNING]: Supabase Cloud migration documentation added
+  - Files modified:
+    - `memory-bank/implementation-plan.md` (+1,020 lines: Phase 4.5 week-by-week plan)
+    - `memory-bank/architecture.md` (+430 lines: Section 5.10 blue-green deployment, Section 10 Supabase architecture)
+    - `memory-bank/tech-stack.md` (+220 lines: Supabase dependencies, Singapore region, cost analysis)
+    - `memory-bank/active-context.md` (+70 lines: Phase 4.5 timeline, preparation tasks)
+    - `memory-bank/project-brief.md` (+35 lines: Competitive positioning, APAC market focus)
+    - `memory-bank/progress.md` (+20 lines: this entry)
+  - Technical notes:
+    - Migration strategy: Blue-green deployment with dual-write (4 weeks)
+    - Region: Singapore ap-southeast-1 (50ms latency for SEA)
+    - Cost savings: $44/mo at 10K users (Supabase $25 vs Neon $69)
+    - RLS policies: 6 policies for multi-tenant isolation
+    - Phase 4.5 features: Week 1 (Setup: Supabase project, schema migration, RLS config, data sync design, historical migration script, validation script, monitoring, rollback plan), Week 2 (Backend: Install deps, Supabase client init, dual-write service, read path migration, sync service/backfill, frontend client), Week 3 (Testing: Performance benchmarks <100ms p95, data integrity, load testing 100 users, rollback testing, security/RLS testing), Week 4 (Cutover: Production deployment zero downtime, data sync verification, documentation update, PostgreSQL deprecation)
+    - Testing: 28 tests (15 unit, 10 integration, 3 load tests)
+    - Success criteria: 100% data integrity, <100ms p95 latency, zero downtime, rollback tested
+  - Status: ✓ Complete (documentation only, code implementation pending Phase 4.1-4.4 completion)
+
+- [2026-01-24] [PHASE-4-INTEGRATION]: Phase 4-7 addendum files integrated into core memory-bank
+  - Files modified:
+    - `memory-bank/implementation-plan.md` (+2,817 lines: 611→3,428 lines - Phase 4-7 detailed roadmap)
+    - `memory-bank/architecture.md` (+1,762 lines: 1,005→2,767 lines - 7 tables, 30+ endpoints, SSE architecture)
+    - `memory-bank/tech-stack.md` (+609 lines: 218→827 lines - Phase 4+ dependencies, cost analysis, revenue projections)
+    - `memory-bank/active-context.md` (+85 lines: Phase 4.1 60% complete status update)
+    - `memory-bank/project-brief.md` (+21 lines: 104→125 lines - competitive positioning vs IdeaBrowser)
+  - Files deleted:
+    - `memory-bank/implementation-plan-phase4-detailed.md` (2,934 lines)
+    - `memory-bank/architecture-phase4-addendum.md` (1,828 lines)
+    - `memory-bank/tech-stack-phase4-addendum.md` (644 lines)
+    - `memory-bank/active-context-phase4.md` (621 lines)
+    - `memory-bank/ideabrowser-analysis.md` (650 lines)
+  - Technical notes: Successfully merged ~90K words Phase 4-7 documentation into core memory-bank files, transforming vague "Post-MVP" placeholders into detailed implementation roadmap. Implementation-plan.md now contains complete Phase 4 specifications: 4.1 User Authentication (8 endpoints, 3 tables, Clerk integration), 4.2 Admin Portal (SSE + Redis, 7 tables, 15+ endpoints), 4.3 Multi-Dimensional Scoring (8 dimensions, Value Ladder framework), 4.4 User Workspace (status tracking, sharing, Idea of the Day). Architecture.md expanded with authentication architecture (Clerk + JWT flow), admin portal architecture (SSE + Redis state management), enhanced scoring architecture (8-dimension system), 7 new database tables (users, saved_insights, user_ratings, admin_users, agent_execution_logs, system_metrics, insight_interactions), 30+ new API endpoints (user profile, workspace, admin control), real-time communication (SSE), security (JWT verification, RBAC), performance (caching, rate limiting). Tech-stack.md now includes Phase 4+ dependencies (clerk-backend-api, sse-starlette, reportlab, stripe, resend, tiktoken, @clerk/nextjs), technology decisions (why Clerk, why SSE, why serial scoring), cost analysis (100 users: $80/mo, 1K users: $144/mo, 10K users: $674/mo), revenue projections (10K users = $59K MRR with 4-tier pricing). Active-context.md updated to reflect Phase 4.1 active development (60% complete: backend models/schemas/routes done, Clerk config/migration/frontend pending). Project-brief.md enhanced with IdeaBrowser competitive analysis ($499-$2,999/year vs our $19-$299/mo = 50-70% cheaper), feature parity (8-dimension scoring, Value Ladder, AI analysis), unique features (admin portal, real-time updates, public API). Added HTML traceability comments to all merged sections marking integration date (2026-01-24). Memory-bank structure now consolidated: 6 core files contain complete Phase 1-7 documentation (8,978 lines total, up from 2,178 lines = +312% growth), 5 addendum files removed (6,677 lines deleted), documentation remains clean and maintainable with single source of truth per topic.
+  - Status: ✓ Complete
+
+- [2026-01-24] [PHASE-4-DOCS]: Comprehensive Phase 4-7+ implementation plan documentation complete
+  - Files created:
+    - `memory-bank/implementation-plan-phase4-detailed.md` (52,000+ words)
+    - `memory-bank/architecture-phase4-addendum.md` (25,000+ words)
+    - `memory-bank/tech-stack-phase4-addendum.md` (12,000+ words)
+    - `memory-bank/active-context-phase4.md` (current development status)
+  - Technical notes: Created comprehensive implementation guide for Phases 4-7+ (User Authentication through API Marketplace & White-Label). Extended original implementation plan with exact code snippets, database schemas, API endpoints, testing requirements, and architectural patterns. Phase 4.1 (User Authentication): Complete Clerk integration guide with JWT flow, auto-user creation, 8 API endpoints (user profile, saved insights, ratings), 3 database tables (users, saved_insights, user_ratings), 19 backend tests + 6 frontend E2E tests. Phase 4.2 (Admin Portal - CRITICAL): Comprehensive agent monitoring and control system using SSE for real-time updates, Redis-based agent state management, 7 new tables (admin_users, agent_execution_logs, system_metrics, etc.), 15+ admin endpoints for dashboard, agent control, insight QC, scraper config, metrics tracking. Phase 4.3 (Multi-Dimensional Scoring): 8-dimension scoring system (Opportunity, Problem, Feasibility, Why Now, Revenue Potential, Execution Difficulty, Go-To-Market, Founder Fit) with Value Ladder framework (4-tier pricing per insight), market gap analysis, proof signals, execution plans - enhanced Pydantic schema with single-prompt serial approach ($0.05 vs $0.20 parallel). Phase 4.4 (User Workspace): Status tracking (Interested/Saved/Building/Not Interested), sharing features (Twitter, LinkedIn, Email), "Idea of the Day" spotlight, filter tabs, claim/pursue tracking. Architecture decisions documented: SSE vs WebSocket (chose SSE for simpler one-way streaming), serial vs parallel scoring (chose serial for cost efficiency), Redis for agent state management, multi-step migrations for zero-downtime. Technology stack fully documented: clerk-backend-api for auth (10K MAU free), sse-starlette for real-time, reportlab for PDF, stripe for payments, resend for email (3K free). Cost analysis at scale: $80/mo (100 users) → $144/mo (1K users) → $674/mo (10K users). Revenue projections: $59K/mo at 10K users with 4-tier pricing (Free/$19/$49/$299). Testing strategy: 115+ new tests across all Phase 4 features (unit, integration, E2E). Current status: Phase 4.1 is 60% complete (backend models/API done, frontend pending - 6 hours remaining). Total documentation: ~90,000 words (200+ pages) transforming vague phase descriptions into actionable implementation plan with file paths, code snippets, schemas, endpoints, tests, security patterns, performance optimization, and monitoring strategies.
+  - Status: ✓ Complete
+
 - [2026-01-18] [BUGFIX-DATETIME-V2]: Fixed datetime validation with custom refine() - v0.1 Release Ready
   - Files modified: `frontend/lib/types.ts`
   - Technical notes: Final fix for Zod datetime validation error. Previous attempt using `z.string().datetime({ offset: false })` didn't work because Zod's datetime() method always requires 'Z' suffix even with offset: false parameter. Replaced with custom z.string().refine() validation using ISO datetime regex: `/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/`. This regex accepts: (1) datetime without timezone: "2026-01-18T04:30:26.732592" (backend format), (2) datetime with Z suffix: "2026-01-18T04:33:54.240197Z", (3) datetime with timezone offset: "2020-01-01T00:00:00+02:00", (4) optional fractional seconds. Tested with actual backend API responses and verified in incognito browser - all 5 insights displayed correctly without validation errors. Custom refine provides clear error message "Invalid datetime format" for malformed inputs while accepting all valid ISO datetime variants. This approach is more robust than Zod's built-in datetime() validator for handling real-world API responses where timezone format may vary. Committed as final fix for v0.1 release (commit 16843aa).
