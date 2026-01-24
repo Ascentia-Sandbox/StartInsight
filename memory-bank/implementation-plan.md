@@ -592,6 +592,11 @@ This document breaks down the StartInsight project into **3 distinct implementat
 **Objective:** User authentication, admin monitoring, enhanced scoring, workspace
 **Priority:** CRITICAL (foundation for all future features)
 
+**Phase 4 Overview:**
+- **Phase 4.1-4.4**: User authentication, admin portal, enhanced scoring, workspace features (Weeks 1-12)
+- **Phase 4.5**: Supabase Cloud migration (Weeks 13-16, see Section 4.5 below for detailed 4-week plan)
+- **Phase 4++**: IdeaBrowser feature parity (optional, 12 weeks, see Section 4++ below)
+
 ---
 
 ### 4.1 User Authentication (Weeks 1-2)
