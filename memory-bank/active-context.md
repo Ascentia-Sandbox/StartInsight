@@ -1,10 +1,10 @@
 # Active Context: StartInsight Development
 
 ## Current Phase
-**v0.1 Release** - All Core Features Complete & Tested
+**v0.1 Complete, Phase 4.1 Active** - User Authentication Implementation
 
 ## Current Focus
-**Preparing for Phase 4** - Post-MVP Enhancements
+**Phase 4.1 User Authentication - 60% Complete**
 
 ## Objective
 Deploy StartInsight to production and begin enhancement iterations (Phase 4+).
@@ -24,20 +24,65 @@ All 9 sub-phases of Phase 3 are complete! The modern Next.js frontend now displa
 **Phase 3.8:** E2E Testing with Playwright (47 tests)
 **Phase 3.9:** Comprehensive Documentation
 
+### Phase 4.1 Progress (60% Complete)
+
+<!-- Phase 4.1 status merged from active-context-phase4.md on 2026-01-24 -->
+
+**Backend Complete:**
+- ✅ User model (SQLAlchemy with Clerk integration)
+- ✅ SavedInsight model (workspace functionality)
+- ✅ UserRating model (1-5 star ratings)
+- ✅ Pydantic schemas (8 request/response types)
+- ✅ API routes (8 endpoints for user management)
+- ✅ Authentication dependencies (deps.py with JWT verification)
+- ✅ Alembic migration (004_phase_4_1_user_auth.py)
+
+**Pending:**
+- ❌ Clerk configuration in backend/app/core/config.py
+- ❌ Model imports registration
+- ❌ Migration execution (alembic upgrade head)
+- ❌ Frontend implementation (0%)
+
 ### Next Steps
 
-**Production Deployment** (Recommended Next Step)
-- Deploy backend to Railway or Render (see DEPLOYMENT.md)
-- Deploy frontend to Vercel (see frontend/README.md)
-- Configure production environment variables
-- Run end-to-end tests
-- Monitor and optimize with uptime monitoring
+**Immediate: Complete Phase 4.1 Backend Integration (1 hour)**
 
-**Phase 4: Post-MVP Enhancements** (Optional)
-- User authentication (Clerk/Auth0)
-- Saved insights / favorites
-- Email notifications (SendGrid/Resend)
-- Advanced data sources (Twitter/X, Indie Hackers, HN)
+1. **Task 4.1.1:** Add Clerk dependency (15 min)
+   ```bash
+   cd backend && uv add clerk-backend-api>=2.0.0
+   ```
+
+2. **Task 4.1.2:** Update `backend/app/core/config.py` with Clerk settings (5 min)
+   ```python
+   clerk_secret_key: str = Field(..., description="Clerk secret key")
+   clerk_frontend_api: str = Field(..., description="Clerk frontend API")
+   ```
+
+3. **Task 4.1.3:** Register models and router (5 min)
+   - Update `backend/app/models/__init__.py`
+   - Update `backend/app/schemas/__init__.py`
+   - Update `backend/app/main.py` to include users router
+
+4. **Task 4.1.4:** Run migration (5 min)
+   ```bash
+   cd backend && alembic upgrade head
+   ```
+
+5. **Task 4.1.5:** Test endpoints (15 min)
+
+**Frontend Authentication Setup (3 hours)**
+- Install @clerk/nextjs
+- Configure middleware
+- Create auth components (SignInButton, UserButton)
+- Build workspace page
+- Add save/rate functionality
+
+See `implementation-plan-phase4-detailed.md` for complete step-by-step instructions.
+
+**Production Deployment** (Deferred)
+- Deploy to Railway/Vercel after Phase 4.1 complete
+- Configure production Clerk keys
+- Run E2E tests with auth flows
 - Multi-agent workflows
 - Automated competitor research
 - MVP plan generator
@@ -360,6 +405,6 @@ When resuming work:
 
 ---
 
-**Last Updated**: 2026-01-18
+**Last Updated**: 2026-01-24
 **Updated By**: Lead Architect (Claude)
-**Status**: All core phases complete (Phase 1: Data Collection, Phase 2: Analysis Loop, Phase 3: Frontend & Visualization) - Production-ready with comprehensive testing, documentation, and deployment configuration. Ready for production deployment to Railway/Render (backend) and Vercel (frontend).
+**Status**: Phase 1-3 complete (v0.1 production-ready). Phase 4.1 (User Authentication) in progress - 60% complete. Backend models and API routes complete, pending Clerk integration and frontend implementation.

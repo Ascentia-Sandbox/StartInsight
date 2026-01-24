@@ -5,28 +5,28 @@
 ### CRITICAL: Always Read These Files First
 Before answering ANY complex question or starting ANY implementation task, you MUST read the relevant memory-bank files in this order:
 
-1. **`memory-bank/project-brief.md`** (103 lines)
-   - Purpose: Executive summary, business objectives, 3 core loops (Collect → Analyze → Present)
+1. **`memory-bank/project-brief.md`** (125 lines)
+   - Purpose: Executive summary, business objectives, 3 core loops, competitive positioning vs IdeaBrowser
    - When to read: At the start of any new session, before proposing architectural changes
 
-2. **`memory-bank/active-context.md`** (109 lines)
-   - Purpose: Current phase, immediate tasks, blockers, what's working/what's next
+2. **`memory-bank/active-context.md`** (450 lines)
+   - Purpose: Current phase (Phase 4.1 active - 60% complete), immediate tasks, blockers, what's working/what's next
    - When to read: Before every task to understand current state
 
-3. **`memory-bank/implementation-plan.md`** (360 lines)
-   - Purpose: Detailed 3-phase roadmap with step-by-step instructions
+3. **`memory-bank/implementation-plan.md`** (3,428 lines)
+   - Purpose: Phases 1-7 detailed roadmap with step-by-step instructions, Phase 4-7 comprehensive implementation guide
    - When to read: When planning implementation steps, checking phase requirements
 
-4. **`memory-bank/architecture.md`** (769 lines)
-   - Purpose: System architecture, data flows, UI/UX design, database schema, API endpoints
+4. **`memory-bank/architecture.md`** (2,767 lines)
+   - Purpose: System architecture, 9 tables, 35+ API endpoints, SSE architecture, authentication, admin portal, enhanced scoring
    - When to read: Before implementing features, designing database models, creating APIs
 
-5. **`memory-bank/tech-stack.md`** (169 lines)
-   - Purpose: Technology decisions, dependencies, library versions
-   - When to read: When choosing libraries, verifying dependencies, resolving conflicts
+5. **`memory-bank/tech-stack.md`** (827 lines)
+   - Purpose: Phase 1-7 dependencies, cost analysis ($80-$674/mo), revenue projections ($59K MRR at 10K users)
+   - When to read: When choosing libraries, verifying dependencies, resolving conflicts, cost planning
 
-6. **`memory-bank/progress.md`** (42 lines)
-   - Purpose: Completed work log, upcoming tasks
+6. **`memory-bank/progress.md`** (200 lines)
+   - Purpose: Completion log (Phase 1-3 complete, 4.1 active), upcoming tasks
    - When to read: After completing tasks (for logging), before starting work (to avoid duplication)
 
 ### Context-Based Reading Guide
@@ -38,6 +38,9 @@ Before answering ANY complex question or starting ANY implementation task, you M
 | **Database/model changes** | architecture.md (Database Schema section), tech-stack.md | CRITICAL |
 | **API endpoint creation** | architecture.md (API Endpoints section), implementation-plan.md | CRITICAL |
 | **Library selection** | tech-stack.md, project-brief.md (Glue Coding philosophy) | CRITICAL |
+| **Implementing Phase 4+ features** | active-context.md, implementation-plan.md (Phase 4-7), architecture.md (Phase 4+ sections) | CRITICAL |
+| **Authentication/Admin setup** | architecture.md (Authentication Architecture, Admin Portal), implementation-plan.md (Phase 4.1-4.2) | CRITICAL |
+| **Cost/pricing planning** | tech-stack.md (Cost Analysis), project-brief.md (Competitive Positioning) | HIGH |
 | **Debugging/questions** | All files (in reading order above) | MEDIUM |
 
 ### Rules

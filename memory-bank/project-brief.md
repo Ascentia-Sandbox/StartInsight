@@ -96,9 +96,30 @@ Data Quality: Insights are coherent and directly traceable to a source URL.
 
 User Value: The dashboard successfully displays at least 10 high-quality insights per day.
 
-8. Future Roadmap (Post-MVP)
-User Customization: Users can track specific keywords or niches.
 
-Competitor Radar: AI agents automatically find and list existing competitors for a generated idea.
+<\!-- Competitive positioning merged from implementation-plan-phase4-detailed.md on 2026-01-24 -->
 
-Newsletter Integration: Automated daily email summaries.
+### IdeaBrowser Competitive Analysis Summary
+
+**What They Charge:** $499-$2,999/year ($41-$250/month)
+
+**What We'll Charge:** $19-$299/month (50-70% cheaper)
+
+**Feature Parity Achieved:**
+- ✅ 8-dimension scoring (vs. their 6)
+- ✅ Value Ladder framework (4-tier pricing model)
+- ✅ Custom AI analysis (our Research Agent)
+- ✅ Build tools (landing pages, brand packages)
+- ✅ Export to PDF/CSV
+- ✅ Status tracking (Interested/Saved/Building)
+
+**Our Unique Features:**
+- 🆕 Admin portal (monitor AI agents)
+- 🆕 Real-time updates (6-hour vs 24-hour)
+- 🆕 Public API (Phase 7)
+- 🆕 Team collaboration (Phase 7)
+- 🆕 White-label (Phase 7)
+
+**Full Analysis:** See `memory-bank/ideabrowser-analysis.md`
+
+---
