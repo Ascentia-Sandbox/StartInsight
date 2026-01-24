@@ -715,6 +715,17 @@ Final State (Supabase Cloud)
 
 ## 6. API Endpoints Reference
 
+**Total Routes:** 35+ endpoints across all phases
+
+**Phase Breakdown:**
+- **Phase 1-3** (Implemented): 8 endpoints (raw signals CRUD, insights CRUD, health check)
+- **Phase 4.1-4.4** (In Progress): +12 endpoints (users, saved insights, ratings, admin, workspace)
+- **Phase 4.5+** (Planned): +15 endpoints (Supabase integration, real-time, storage)
+
+**Note:** The sections below document all planned endpoints. Check active-context.md for current implementation status.
+
+---
+
 ### Health & Status
 - `GET /health` - Health check endpoint
 - `GET /api/status` - System status (DB connection, worker status)
@@ -2900,7 +2911,8 @@ CREATE POLICY "Only service role can write"
 
 ### 10.3 Connection Pooling
 
-**Current (SQLAlchemy):**
+#### Current (SQLAlchemy)
+
 ```python
 # backend/app/db/session.py
 engine = create_async_engine(
