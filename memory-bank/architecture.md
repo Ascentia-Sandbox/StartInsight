@@ -640,6 +640,70 @@ StartInsight/
 
 ---
 
+<!-- Supabase Cloud architecture added on 2026-01-25 for Phase 4.5 migration -->
+
+### 5.10 Database Migration Strategy (Phase 4.5)
+
+**Migration Approach:** Blue-Green Deployment with Dual-Write Period
+
+```
+Current State (PostgreSQL)
+         ↓
+┌────────────────────────┐
+│  Week 1: Setup         │
+│  - Create Supabase     │
+│  - Migrate schema      │
+│  - Configure RLS       │
+└────────────────────────┘
+         ↓
+┌────────────────────────┐
+│  Week 2: Dual-Write    │
+│  - Write to both DBs   │
+│  - Sync historical     │
+│  - Validate integrity  │
+└────────────────────────┘
+         ↓
+┌────────────────────────┐
+│  Week 3: Testing       │
+│  - Load tests          │
+│  - Rollback practice   │
+│  - Performance tuning  │
+└────────────────────────┘
+         ↓
+┌────────────────────────┐
+│  Week 4: Cutover       │
+│  - Switch reads        │
+│  - Monitor 48h         │
+│  - Deprecate old DB    │
+└────────────────────────┘
+         ↓
+Final State (Supabase Cloud)
+```
+
+**Migration Components:**
+
+1. **Schema Migration** (Alembic → Supabase SQL)
+   - Export schema: `alembic revision --autogenerate -m "export"`
+   - Convert to Supabase SQL: Remove SQLAlchemy types, add RLS policies
+   - Apply via Supabase Studio or CLI
+
+2. **Data Migration**
+   - Historical data: `pg_dump` → `pg_restore` to Supabase
+   - Incremental sync: Custom Python script (read PostgreSQL, write Supabase)
+   - Validation: Row counts, checksums, sample queries
+
+3. **Application Migration**
+   - Dual-write service: Write to both PostgreSQL + Supabase
+   - Read from Supabase (fallback to PostgreSQL on error)
+   - 48-hour monitoring period before PostgreSQL deprecation
+
+4. **Rollback Plan**
+   - Trigger: >5% error rate, >100ms p95 latency degradation, data integrity issues
+   - Action: Switch reads back to PostgreSQL, pause dual-writes
+   - Time: 30-minute rollback window
+
+---
+
 ## 6. API Endpoints Reference
 
 ### Health & Status
@@ -2743,6 +2807,202 @@ def after_cursor_execute(conn, cursor, statement, parameters, context, executema
 ---
 
 ## Conclusion
+
+---
+
+<!-- Supabase Cloud architecture added on 2026-01-25 for Phase 4.5 migration -->
+
+## 10. Phase 4.5: Supabase Cloud Architecture
+
+### 10.1 Supabase Stack Overview
+
+**Components:**
+- **PostgreSQL**: Managed database (AWS Singapore ap-southeast-1)
+- **PostgREST**: Auto-generated REST API from schema
+- **GoTrue**: Authentication service (optional, using Clerk for now)
+- **Realtime**: WebSocket server for live updates (Phase 5.1)
+- **Storage**: S3-compatible object storage (Phase 5.2)
+- **Edge Functions**: Deno runtime for serverless (Phase 5.3)
+
+**StartInsight Usage (Phase 4.5):**
+- PostgreSQL: ✅ Primary database
+- PostgREST: ⚠️ Optional (still using FastAPI for complex queries)
+- GoTrue: ❌ Not used (Clerk for authentication)
+- Realtime: 🔜 Phase 5.1
+- Storage: 🔜 Phase 5.2
+- Edge Functions: 🔜 Phase 5.3
+
+### 10.2 Row Level Security (RLS) Policies
+
+**Principle:** Users can only access their own data (multi-tenant isolation)
+
+**Tables with RLS:**
+1. `users` - Users view their own profile
+2. `saved_insights` - Users view their saved insights
+3. `user_ratings` - Users view their ratings
+4. `raw_signals` - Public read (admin write)
+5. `insights` - Public read (system write)
+
+**Example RLS Policies (SQL):**
+
+```sql
+-- users table: Users can view and update their own profile
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own profile"
+  ON users FOR SELECT
+  USING (clerk_user_id = auth.jwt() ->> 'sub');
+
+CREATE POLICY "Users can update own profile"
+  ON users FOR UPDATE
+  USING (clerk_user_id = auth.jwt() ->> 'sub');
+
+-- saved_insights table: Users can manage their own saved insights
+ALTER TABLE saved_insights ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users view own saved insights"
+  ON saved_insights FOR SELECT
+  USING (user_id = (SELECT id FROM users WHERE clerk_user_id = auth.jwt() ->> 'sub'));
+
+CREATE POLICY "Users insert own saved insights"
+  ON saved_insights FOR INSERT
+  WITH CHECK (user_id = (SELECT id FROM users WHERE clerk_user_id = auth.jwt() ->> 'sub'));
+
+CREATE POLICY "Users delete own saved insights"
+  ON saved_insights FOR DELETE
+  USING (user_id = (SELECT id FROM users WHERE clerk_user_id = auth.jwt() ->> 'sub'));
+
+-- insights table: Public read, system write
+ALTER TABLE insights ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can read insights"
+  ON insights FOR SELECT
+  USING (true);
+
+CREATE POLICY "Only service role can write"
+  ON insights FOR INSERT
+  WITH CHECK (auth.role() = 'service_role');
+```
+
+**RLS Configuration:**
+- Enable RLS on all tables during migration (Week 1)
+- Use `auth.jwt()` to extract Clerk user ID from JWT
+- Service role bypasses RLS (backend uses service_role key)
+
+### 10.3 Connection Pooling
+
+**Current (SQLAlchemy):**
+```python
+# backend/app/db/session.py
+engine = create_async_engine(
+    DATABASE_URL,
+    pool_size=5,
+    max_overflow=10
+)  # Max 15 connections
+```
+
+**Supabase Cloud:**
+- **Pooler Mode**: Transaction pooling (PgBouncer)
+- **Max Connections**: 500 concurrent (Pro tier)
+- **Connection String**: `postgresql://postgres:password@db.pooler.supabase.co:6543/postgres`
+
+**Hybrid Approach (Phase 4.5):**
+```python
+# backend/app/db/session.py
+from supabase import create_client, Client
+from sqlalchemy.ext.asyncio import create_async_engine
+
+# SQLAlchemy (keep during transition)
+pg_engine = create_async_engine(
+    settings.DATABASE_URL,
+    pool_size=5,
+    max_overflow=10
+)
+
+# Supabase client (new)
+supabase: Client = create_client(
+    settings.SUPABASE_URL,
+    settings.SUPABASE_SERVICE_ROLE_KEY
+)
+
+# Dual-write wrapper
+class DualWriteSession:
+    async def add(self, obj):
+        await pg_session.add(obj)  # Write to PostgreSQL
+        await supabase.table(obj.__tablename__).insert(obj.dict())  # Write to Supabase
+
+    async def commit(self):
+        await pg_session.commit()
+        # Supabase commit is automatic (no transactions in PostgREST)
+```
+
+### 10.4 Real-time Features (Phase 5.1)
+
+**Supabase Realtime vs Current SSE:**
+
+| Feature | SSE (Current) | Supabase Realtime |
+|---------|---------------|-------------------|
+| Protocol | HTTP long-polling | WebSocket |
+| Latency | 1-5s | <100ms |
+| Client lib | EventSource API | @supabase/realtime-js |
+| Server complexity | High (Redis, FastAPI) | Low (built-in) |
+| Scalability | Manual (Redis cluster) | Auto-scaled |
+| Cost | Redis: $5/mo | Included in Pro |
+
+**Migration Path:**
+- Phase 4.5: Keep SSE for admin dashboard
+- Phase 5.1: Migrate to Supabase Realtime for insights feed
+- Phase 5.2: Deprecate custom SSE implementation
+
+**Example (Python → TypeScript):**
+
+```python
+# Current SSE (backend/app/api/routes/sse.py)
+@router.get("/stream")
+async def stream_insights(request: Request):
+    async def event_generator():
+        while True:
+            if await request.is_disconnected():
+                break
+            insight = await redis.get("latest_insight")
+            yield f"data: {insight}\n\n"
+            await asyncio.sleep(1)
+    return EventSourceResponse(event_generator())
+```
+
+```typescript
+// Supabase Realtime (frontend/app/insights/page.tsx)
+useEffect(() => {
+  const subscription = supabase
+    .channel('insights')
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'insights'
+    }, (payload) => {
+      setInsights(prev => [payload.new, ...prev])
+    })
+    .subscribe()
+
+  return () => subscription.unsubscribe()
+}, [])
+```
+
+### 10.5 Migration Risks & Mitigation
+
+| Risk | Probability | Impact | Mitigation |
+|------|-------------|--------|------------|
+| Data loss during migration | Low | Critical | Dual-write, validation scripts, backups |
+| Latency regression | Medium | High | Load testing, Singapore region, connection pooling |
+| RLS misconfiguration | Medium | Critical | Test suite with multi-user scenarios |
+| Supabase downtime | Low | High | Fallback to PostgreSQL, 99.9% SLA monitoring |
+| Cost overrun | Low | Medium | Pro tier limit ($25/mo), usage alerts |
+| JWT auth issues | Medium | High | Clerk + Supabase JWT compatibility testing |
+
+**Monitoring Plan:**
+- Pre-migration: Baseline latency (p50, p95, p99), error rate, throughput
+- During migration: Real-time dashboard (Grafana), alerting (PagerDuty)
+- Post-migration: 48-hour intensive monitoring, 2-week gradual relaxation
 
 ---
 
