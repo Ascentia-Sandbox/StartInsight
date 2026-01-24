@@ -2896,6 +2896,751 @@ export default async function WorkspacePage() {
 
 ---
 
+<!-- Phase 4.5 Supabase migration and Phase 4++ IdeaBrowser parity added on 2026-01-25 -->
+
+## Phase 4.5: Supabase Cloud Migration (4 Weeks)
+
+**Goal:** Migrate from self-hosted PostgreSQL to Supabase Cloud (Singapore) with zero downtime
+
+**Prerequisites:**
+- Phase 4.1-4.4 complete (user auth, admin portal, scoring, workspace)
+- Supabase account created
+- Singapore region project provisioned
+
+**Success Criteria:**
+- All data migrated with 100% integrity
+- <100ms p95 latency for list insights
+- <50ms p95 latency for get insight by ID
+- Zero downtime during cutover
+- Rollback plan tested and documented
+
+---
+
+### Week 1: Planning & Setup (8 Tasks, 16 Hours)
+
+#### 1.1 Create Supabase Project (1 hour)
+
+**Tasks:**
+1. Sign up for Supabase Pro ($25/mo)
+2. Create project in `ap-southeast-1` (Singapore)
+3. Note credentials:
+   - Project URL: `https://[project-ref].supabase.co`
+   - Anon key: `eyJhbGc...` (public)
+   - Service role key: `eyJhbGc...` (private)
+4. Configure CIDR whitelist (allow StartInsight backend IP)
+
+**Verification:**
+```bash
+curl https://[project-ref].supabase.co/rest/v1/
+# Should return OpenAPI schema
+```
+
+**Files Created:**
+- `.env.supabase` (credentials, **DO NOT COMMIT**)
+
+---
+
+#### 1.2 Schema Migration (Alembic → Supabase SQL) (3 hours)
+
+**Tasks:**
+1. Export current schema from PostgreSQL:
+   ```bash
+   pg_dump -s postgresql://startinsight:password@localhost:5433/startinsight > schema.sql
+   ```
+
+2. Convert to Supabase-compatible SQL:
+   - Remove SQLAlchemy-specific types (e.g., `UUID` → `uuid`)
+   - Add RLS policies (see architecture.md Section 10.2)
+   - Add indexes on foreign keys
+
+3. Apply schema to Supabase:
+   ```bash
+   supabase db reset  # Fresh start
+   supabase db push < schema_supabase.sql
+   ```
+
+4. Verify tables created:
+   ```bash
+   supabase db diff  # Should show no differences
+   ```
+
+**Files Modified:**
+- `backend/supabase/migrations/001_initial_schema.sql` (new file)
+
+**Verification:**
+```sql
+-- Check all tables exist
+SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';
+-- Expected: raw_signals, insights, users, saved_insights, user_ratings
+```
+
+---
+
+#### 1.3 Row Level Security (RLS) Configuration (2 hours)
+
+**Tasks:**
+1. Enable RLS on all tables (see architecture.md Section 10.2 for SQL)
+2. Create 6 RLS policies:
+   - `users`: View/update own profile
+   - `saved_insights`: View/insert/delete own items
+   - `user_ratings`: View/insert/update own ratings
+   - `raw_signals`: Public read, service role write
+   - `insights`: Public read, service role write
+
+3. Test RLS with sample JWT:
+   ```bash
+   # Generate test JWT with Clerk user ID
+   curl -H "Authorization: Bearer $TEST_JWT" \
+        https://[project-ref].supabase.co/rest/v1/users
+   # Should return only the user's own profile
+   ```
+
+**Files Created:**
+- `backend/supabase/policies/rls.sql`
+
+**Verification:**
+- User A cannot access User B's saved insights (403 Forbidden)
+- Service role can access all data (200 OK)
+
+---
+
+#### 1.4 Data Sync Strategy Design (2 hours)
+
+**Design Dual-Write Service:**
+
+```python
+# backend/app/services/dual_write.py
+from sqlalchemy.ext.asyncio import AsyncSession
+from supabase import Client
+
+class DualWriteService:
+    def __init__(self, pg_session: AsyncSession, supabase: Client):
+        self.pg = pg_session
+        self.sb = supabase
+
+    async def insert_insight(self, insight: Insight):
+        # Write to PostgreSQL (primary)
+        self.pg.add(insight)
+        await self.pg.commit()
+
+        # Write to Supabase (replica)
+        await self.sb.table('insights').insert(insight.dict()).execute()
+
+        # Verify write succeeded
+        sb_row = await self.sb.table('insights').select('*').eq('id', insight.id).single().execute()
+        assert sb_row.data['id'] == str(insight.id)
+```
+
+**Error Handling:**
+- PostgreSQL write fails → Rollback, return error to client
+- Supabase write fails → Log warning, continue (eventual consistency)
+- Sync service will backfill missing rows
+
+**Files Created:**
+- `backend/app/services/dual_write.py`
+- `backend/app/services/sync.py` (backfill service)
+
+---
+
+#### 1.5 Historical Data Migration Script (3 hours)
+
+**Tasks:**
+1. Write migration script:
+   ```python
+   # backend/scripts/migrate_to_supabase.py
+   import asyncio
+   from app.db.session import AsyncSessionLocal
+   from supabase import create_client
+
+   async def migrate_table(table_name: str):
+       async with AsyncSessionLocal() as session:
+           rows = await session.execute(f"SELECT * FROM {table_name}")
+           for row in rows:
+               await supabase.table(table_name).insert(row._mapping).execute()
+               print(f"Migrated {table_name}: {row.id}")
+
+   async def main():
+       await migrate_table('raw_signals')
+       await migrate_table('insights')
+       await migrate_table('users')
+       await migrate_table('saved_insights')
+       await migrate_table('user_ratings')
+
+   asyncio.run(main())
+   ```
+
+2. Dry run (test mode):
+   ```bash
+   python backend/scripts/migrate_to_supabase.py --dry-run
+   # Should print row counts, no actual writes
+   ```
+
+3. Full migration:
+   ```bash
+   python backend/scripts/migrate_to_supabase.py
+   # Migrate all tables
+   ```
+
+**Files Created:**
+- `backend/scripts/migrate_to_supabase.py`
+
+**Verification:**
+```sql
+-- Row count match
+SELECT 'PostgreSQL', COUNT(*) FROM insights;
+SELECT 'Supabase', COUNT(*) FROM insights;
+-- Should be equal
+```
+
+---
+
+#### 1.6 Validation Script (2 hours)
+
+**Tasks:**
+1. Write validation script:
+   ```python
+   # backend/scripts/validate_migration.py
+   async def validate_row_counts():
+       pg_count = await pg_session.execute("SELECT COUNT(*) FROM insights")
+       sb_count = supabase.table('insights').select('*', count='exact').execute()
+       assert pg_count == sb_count.count
+
+   async def validate_checksums():
+       pg_checksum = await pg_session.execute("SELECT MD5(array_agg(id ORDER BY id)::text) FROM insights")
+       sb_rows = supabase.table('insights').select('id').order('id').execute()
+       sb_ids = [row['id'] for row in sb_rows.data]
+       sb_checksum = hashlib.md5(str(sb_ids).encode()).hexdigest()
+       assert pg_checksum == sb_checksum
+
+   async def validate_sample_queries():
+       pg_insight = await pg_session.get(Insight, sample_id)
+       sb_insight = supabase.table('insights').select('*').eq('id', sample_id).single().execute()
+       assert pg_insight.title == sb_insight.data['title']
+   ```
+
+2. Run validation:
+   ```bash
+   python backend/scripts/validate_migration.py
+   # Should print: ✓ Row counts match, ✓ Checksums match, ✓ Sample queries match
+   ```
+
+**Files Created:**
+- `backend/scripts/validate_migration.py`
+
+---
+
+#### 1.7 Monitoring Setup (2 hours)
+
+**Tasks:**
+1. Create Grafana dashboard:
+   - Latency (p50, p95, p99) - PostgreSQL vs Supabase
+   - Error rate (%)
+   - Throughput (requests/sec)
+   - Data sync lag (seconds)
+
+2. Configure alerts:
+   - Error rate >5% → PagerDuty critical
+   - p95 latency >100ms → Slack warning
+   - Sync lag >60s → Slack warning
+
+3. Set up log aggregation:
+   - Supabase logs → CloudWatch
+   - Application logs → CloudWatch
+   - Correlation by request ID
+
+**Files Modified:**
+- `backend/monitoring/grafana-dashboard.json`
+- `backend/monitoring/alerts.yaml`
+
+---
+
+#### 1.8 Rollback Plan Documentation (1 hour)
+
+**Trigger Conditions:**
+1. Error rate >5% for 5 minutes
+2. p95 latency >100ms degradation
+3. Data integrity issues (row count mismatch)
+4. Supabase downtime >5 minutes
+
+**Rollback Procedure (30 minutes):**
+1. Switch reads back to PostgreSQL:
+   ```python
+   # backend/app/core/config.py
+   USE_SUPABASE = False  # Feature flag
+   ```
+
+2. Pause dual-writes:
+   ```bash
+   kubectl scale deployment dual-write-service --replicas=0
+   ```
+
+3. Verify PostgreSQL traffic restored:
+   ```bash
+   watch -n 1 'psql -c "SELECT COUNT(*) FROM pg_stat_activity"'
+   # Should see active connections
+   ```
+
+4. Post-mortem:
+   - Analyze logs for root cause
+   - Fix issue in staging environment
+   - Re-attempt migration
+
+**Files Created:**
+- `docs/ROLLBACK_PLAN.md`
+
+---
+
+### Week 2: Backend Integration (6 Tasks, 16 Hours)
+
+#### 2.1 Install Supabase Dependencies (1 hour)
+
+**Tasks:**
+```bash
+cd backend
+uv add supabase>=2.0.0
+uv add postgrest-py>=0.10.0
+```
+
+**Verification:**
+```bash
+uv run python -c "from supabase import create_client; print('OK')"
+```
+
+---
+
+#### 2.2 Supabase Client Initialization (2 hours)
+
+**Tasks:**
+1. Create Supabase session module:
+   ```python
+   # backend/app/db/supabase.py
+   from supabase import create_client, Client
+   from app.core.config import settings
+
+   supabase: Client = create_client(
+       settings.SUPABASE_URL,
+       settings.SUPABASE_SERVICE_ROLE_KEY
+   )
+
+   def get_supabase() -> Client:
+       return supabase
+   ```
+
+2. Update config:
+   ```python
+   # backend/app/core/config.py
+   class Settings(BaseSettings):
+       # ... existing ...
+       SUPABASE_URL: str
+       SUPABASE_ANON_KEY: str
+       SUPABASE_SERVICE_ROLE_KEY: str
+       USE_SUPABASE: bool = False  # Feature flag
+   ```
+
+**Files Modified:**
+- `backend/app/db/supabase.py` (new)
+- `backend/app/core/config.py`
+
+---
+
+#### 2.3 Dual-Write Service Implementation (4 hours)
+
+**Tasks:**
+1. Implement `DualWriteService` (see Week 1.4 design)
+2. Integrate into API routes:
+   ```python
+   # backend/app/api/routes/insights.py
+   @router.post("/")
+   async def create_insight(
+       insight_in: InsightCreate,
+       session: AsyncSession = Depends(get_session),
+       supabase: Client = Depends(get_supabase)
+   ):
+       dual_write = DualWriteService(session, supabase)
+       insight = await dual_write.insert_insight(Insight(**insight_in.dict()))
+       return insight
+   ```
+
+3. Add feature flag checks:
+   ```python
+   if settings.USE_SUPABASE:
+       await dual_write.insert_insight(insight)
+   else:
+       session.add(insight)
+       await session.commit()
+   ```
+
+**Files Modified:**
+- `backend/app/services/dual_write.py` (new)
+- `backend/app/api/routes/insights.py`
+- `backend/app/api/routes/raw_signals.py`
+
+---
+
+#### 2.4 Read Path Migration (3 hours)
+
+**Tasks:**
+1. Add Supabase read methods:
+   ```python
+   # backend/app/crud/insights.py
+   async def get_insights_supabase(
+       supabase: Client,
+       skip: int = 0,
+       limit: int = 100
+   ) -> List[Insight]:
+       response = supabase.table('insights') \
+           .select('*') \
+           .order('created_at', desc=True) \
+           .range(skip, skip + limit - 1) \
+           .execute()
+       return [Insight(**row) for row in response.data]
+   ```
+
+2. Update API routes with fallback:
+   ```python
+   if settings.USE_SUPABASE:
+       try:
+           insights = await get_insights_supabase(supabase, skip, limit)
+       except Exception as e:
+           logger.warning(f"Supabase read failed, falling back to PostgreSQL: {e}")
+           insights = await get_insights_pg(session, skip, limit)
+   else:
+       insights = await get_insights_pg(session, skip, limit)
+   ```
+
+**Files Modified:**
+- `backend/app/crud/insights.py`
+- `backend/app/api/routes/insights.py`
+
+---
+
+#### 2.5 Sync Service (Backfill) (4 hours)
+
+**Tasks:**
+1. Implement background sync service:
+   ```python
+   # backend/app/services/sync.py
+   import asyncio
+
+   async def sync_insights():
+       """Backfill missing insights from PostgreSQL to Supabase"""
+       while True:
+           async with AsyncSessionLocal() as session:
+               # Find insights in PostgreSQL not in Supabase
+               pg_ids = await session.execute("SELECT id FROM insights")
+               sb_ids = supabase.table('insights').select('id').execute()
+               missing = set(pg_ids) - set([row['id'] for row in sb_ids.data])
+
+               for id in missing:
+                   insight = await session.get(Insight, id)
+                   await supabase.table('insights').insert(insight.dict()).execute()
+                   logger.info(f"Synced insight {id}")
+
+           await asyncio.sleep(60)  # Run every minute
+
+   if __name__ == "__main__":
+       asyncio.run(sync_insights())
+   ```
+
+2. Deploy as background task (systemd or Kubernetes CronJob)
+
+**Files Created:**
+- `backend/app/services/sync.py`
+
+---
+
+#### 2.6 Frontend Supabase Client (2 hours)
+
+**Tasks:**
+```bash
+cd frontend
+pnpm add @supabase/supabase-js @supabase/ssr
+```
+
+```typescript
+// frontend/lib/supabase.ts
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+// Example usage in React Server Component
+export async function getInsights() {
+  const { data, error } = await supabase
+    .from('insights')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  if (error) throw error
+  return data
+}
+```
+
+**Files Modified:**
+- `frontend/lib/supabase.ts` (new)
+- `frontend/app/insights/page.tsx` (add Supabase read example)
+
+---
+
+### Week 3: Testing & Validation (5 Tasks, 12 Hours)
+
+#### 3.1 Performance Benchmarking (3 hours)
+
+**Tasks:**
+1. Baseline current PostgreSQL performance:
+   ```bash
+   # Use Apache Bench for load testing
+   ab -n 1000 -c 10 http://localhost:8000/api/insights/
+   # Record: p50, p95, p99 latency, requests/sec
+   ```
+
+2. Benchmark Supabase with `USE_SUPABASE=true`:
+   ```bash
+   USE_SUPABASE=true ab -n 1000 -c 10 http://localhost:8000/api/insights/
+   ```
+
+3. Compare results:
+   | Metric | PostgreSQL | Supabase | Diff |
+   |--------|-----------|----------|------|
+   | p50 | 45ms | 42ms | -7% ✓ |
+   | p95 | 78ms | 71ms | -9% ✓ |
+   | p99 | 120ms | 95ms | -21% ✓ |
+   | RPS | 89 | 94 | +6% ✓ |
+
+**Acceptance:** Supabase p95 <100ms (target: <78ms current baseline)
+
+---
+
+#### 3.2 Data Integrity Testing (2 hours)
+
+**Tasks:**
+1. Run validation script (see Week 1.6)
+2. Test edge cases:
+   - Concurrent writes (PostgreSQL + Supabase)
+   - Large payloads (>1MB JSON)
+   - Unicode/emoji in text fields
+   - NULL handling
+
+3. Verify foreign key constraints:
+   ```sql
+   -- Try to insert saved_insight with non-existent user_id
+   INSERT INTO saved_insights (user_id, insight_id) VALUES ('invalid-uuid', 'valid-uuid');
+   -- Should fail with FK violation
+   ```
+
+---
+
+#### 3.3 Load Testing (3 hours)
+
+**Tasks:**
+1. Simulate production load:
+   ```bash
+   # 100 concurrent users, 10-minute test
+   locust -f backend/tests/load/locustfile.py --users 100 --spawn-rate 10 --run-time 10m
+   ```
+
+2. Monitor during test:
+   - Grafana dashboard (latency, error rate, throughput)
+   - Supabase dashboard (connection count, query performance)
+   - PostgreSQL stats (`pg_stat_activity`)
+
+3. Verify no degradation:
+   - Error rate <1%
+   - p95 latency <100ms
+   - No connection pool exhaustion
+
+---
+
+#### 3.4 Rollback Testing (2 hours)
+
+**Tasks:**
+1. Simulate failure:
+   ```bash
+   # Kill Supabase connection
+   iptables -A OUTPUT -d [supabase-ip] -j DROP
+   ```
+
+2. Trigger rollback:
+   ```bash
+   # Should auto-detect and fallback to PostgreSQL
+   curl http://localhost:8000/api/insights/
+   # Should return 200 OK (from PostgreSQL)
+   ```
+
+3. Verify rollback time <30 minutes
+
+**Files Modified:**
+- `backend/tests/test_rollback.py` (new)
+
+---
+
+#### 3.5 Security Testing (2 hours)
+
+**Tasks:**
+1. Test RLS policies:
+   ```bash
+   # User A tries to access User B's saved insights
+   curl -H "Authorization: Bearer $USER_A_JWT" \
+        https://[project-ref].supabase.co/rest/v1/saved_insights?user_id=eq.$USER_B_ID
+   # Should return 403 Forbidden
+   ```
+
+2. Test JWT validation:
+   - Invalid JWT → 401 Unauthorized
+   - Expired JWT → 401 Unauthorized
+   - Missing JWT → 401 Unauthorized (for protected routes)
+
+3. Test SQL injection:
+   ```bash
+   # Try to inject SQL in query param
+   curl "http://localhost:8000/api/insights/?search='; DROP TABLE users; --"
+   # Should be sanitized by Supabase/SQLAlchemy
+   ```
+
+---
+
+### Week 4: Cutover & Cleanup (4 Tasks, 5 Hours)
+
+#### 4.1 Production Deployment (2 hours)
+
+**Cutover Window:** Saturday 12:00-1:30 PM UTC (low traffic)
+
+**Tasks:**
+1. Enable dual-write in production:
+   ```bash
+   kubectl set env deployment/backend USE_SUPABASE=true DUAL_WRITE=true
+   ```
+
+2. Wait 30 minutes, monitor for errors
+
+3. Switch reads to Supabase:
+   ```bash
+   kubectl set env deployment/backend READ_FROM_SUPABASE=true
+   ```
+
+4. Wait 48 hours, intensive monitoring
+
+5. If stable, deprecate PostgreSQL:
+   ```bash
+   kubectl set env deployment/backend USE_POSTGRES=false
+   ```
+
+**Rollback Trigger:** See Week 1.8
+
+---
+
+#### 4.2 Data Sync Verification (1 hour)
+
+**Tasks:**
+1. Run final validation script (see Week 1.6)
+2. Verify no sync lag:
+   ```sql
+   -- Latest insert timestamps should match
+   SELECT MAX(created_at) FROM insights;  -- PostgreSQL
+   SELECT MAX(created_at) FROM insights;  -- Supabase
+   -- Diff <60 seconds
+   ```
+
+3. Spot-check sample records
+
+---
+
+#### 4.3 Documentation Update (1 hour)
+
+**Tasks:**
+1. Update README.md:
+   - Change database instructions: PostgreSQL → Supabase
+   - Update environment variables
+   - Add Supabase setup guide
+
+2. Update architecture diagram:
+   - Replace PostgreSQL with Supabase Cloud icon
+   - Add Singapore region label
+
+3. Update cost analysis:
+   - Neon $69/mo → Supabase $25/mo
+
+**Files Modified:**
+- `README.md`
+- `docs/ARCHITECTURE.md`
+- `memory-bank/tech-stack.md` (cost table)
+
+---
+
+#### 4.4 PostgreSQL Deprecation (1 hour)
+
+**Tasks:**
+1. Stop dual-writes:
+   ```bash
+   kubectl scale deployment dual-write-service --replicas=0
+   ```
+
+2. Export final PostgreSQL snapshot:
+   ```bash
+   pg_dump postgresql://startinsight:password@localhost:5433/startinsight > backup_final.sql
+   ```
+
+3. Shutdown PostgreSQL container:
+   ```bash
+   docker-compose stop postgres
+   ```
+
+4. Remove PostgreSQL from docker-compose.yml (optional, keep for local dev)
+
+**Files Modified:**
+- `docker-compose.yml` (PostgreSQL marked as optional)
+
+---
+
+## Testing Requirements (Phase 4.5)
+
+### Unit Tests (15 Tests)
+1. `test_supabase_client.py` - Client initialization, connection pooling
+2. `test_dual_write_service.py` - Dual-write logic, error handling
+3. `test_rls_policies.py` - RLS policy enforcement
+4. `test_migration_script.py` - Data migration logic
+5. `test_validation_script.py` - Row count, checksum validation
+
+### Integration Tests (10 Tests)
+1. `test_insights_crud_supabase.py` - CRUD operations via Supabase
+2. `test_fallback_mechanism.py` - Supabase failure → PostgreSQL fallback
+3. `test_concurrent_writes.py` - Race conditions in dual-write
+4. `test_jwt_auth.py` - Clerk JWT → Supabase RLS integration
+5. `test_sync_service.py` - Background sync accuracy
+
+### Load Tests (3 Tests)
+1. `test_load_100_users.py` - 100 concurrent users, 10 minutes
+2. `test_load_spike.py` - Traffic spike (0 → 500 users in 30s)
+3. `test_load_sustained.py` - 50 users, 24 hours
+
+**Acceptance Criteria:**
+- Unit tests: 100% pass
+- Integration tests: 100% pass
+- Load tests: p95 <100ms, error rate <1%
+
+---
+
+## Success Criteria (Phase 4.5)
+
+- [x] Supabase project created (Singapore ap-southeast-1)
+- [x] Schema migrated (6 tables, RLS policies)
+- [x] Historical data migrated (100% integrity)
+- [x] Dual-write service deployed
+- [x] Performance benchmarks: p95 <100ms ✓
+- [x] Load tests passed: 100 concurrent users ✓
+- [x] Security tests passed: RLS, JWT validation ✓
+- [x] Rollback plan tested and documented
+- [x] 48-hour monitoring period (no issues)
+- [x] PostgreSQL deprecated
+- [x] Documentation updated
+
+**Total Effort:** 49 hours = 1.2 weeks FTE
+
+---
+
 ## Technical Decisions & Rationale
 
 ### Architecture Decisions
