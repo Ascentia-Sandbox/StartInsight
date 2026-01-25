@@ -25,6 +25,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from app.api.deps import AdminUser
 from app.core.config import settings
+from app.db.query_helpers import count_by_field
 from app.db.session import get_db, AsyncSessionLocal
 from app.models.agent_execution_log import AgentExecutionLog
 from app.models.insight import Insight
@@ -250,7 +251,7 @@ async def list_agents(
         )
         last_log = last_result.scalar_one_or_none()
 
-        # Count items processed today
+        # Count items processed today (SUM not supported by count_by_field, keep manual)
         processed_result = await db.execute(
             select(func.sum(AgentExecutionLog.items_processed)).where(
                 AgentExecutionLog.agent_type == agent_type,
@@ -259,7 +260,7 @@ async def list_agents(
         )
         items_today = processed_result.scalar_one() or 0
 
-        # Count errors today
+        # Count errors today (multiple WHERE conditions, keep manual)
         errors_result = await db.execute(
             select(func.count()).select_from(AgentExecutionLog).where(
                 AgentExecutionLog.agent_type == agent_type,
@@ -294,13 +295,8 @@ async def get_agent_logs(
     """
     Get execution logs for a specific agent.
     """
-    # Get total count
-    count_result = await db.execute(
-        select(func.count()).select_from(AgentExecutionLog).where(
-            AgentExecutionLog.agent_type == agent_type
-        )
-    )
-    total = count_result.scalar_one() or 0
+    # Get total count (uses count_by_field helper)
+    total = await count_by_field(db, AgentExecutionLog, "agent_type", agent_type)
 
     # Get logs
     logs_result = await db.execute(
@@ -437,22 +433,18 @@ async def get_review_queue(
     if status_filter:
         query = query.where(Insight.admin_status == status_filter)
 
-    # Get total
-    count_query = select(func.count()).select_from(Insight)
-    if status_filter:
-        count_query = count_query.where(Insight.admin_status == status_filter)
-    total = await db.scalar(count_query) or 0
+    # Get total count (simplified with count_by_field for single field case)
+    if not status_filter:
+        # Simple case: count all insights
+        total = await count_by_field(db, Insight)
+    else:
+        # Filtered case: use count_by_field with admin_status
+        total = await count_by_field(db, Insight, "admin_status", status_filter)
 
-    # Get status counts
-    pending_count = await db.scalar(
-        select(func.count()).select_from(Insight).where(Insight.admin_status == "pending")
-    ) or 0
-    approved_count = await db.scalar(
-        select(func.count()).select_from(Insight).where(Insight.admin_status == "approved")
-    ) or 0
-    rejected_count = await db.scalar(
-        select(func.count()).select_from(Insight).where(Insight.admin_status == "rejected")
-    ) or 0
+    # Get status counts (uses count_by_field helper)
+    pending_count = await count_by_field(db, Insight, "admin_status", "pending")
+    approved_count = await count_by_field(db, Insight, "admin_status", "approved")
+    rejected_count = await count_by_field(db, Insight, "admin_status", "rejected")
 
     # Get insights
     result = await db.execute(query.limit(limit).offset(offset))
@@ -633,7 +625,7 @@ async def get_error_summary(
     """
     start_time = datetime.utcnow() - timedelta(hours=hours)
 
-    # Get total errors
+    # Get total errors (multiple WHERE conditions, keep manual)
     total_result = await db.execute(
         select(func.count()).select_from(SystemMetric).where(
             SystemMetric.metric_type == "error_rate",

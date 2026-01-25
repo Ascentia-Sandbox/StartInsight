@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import CurrentUser
+from app.db.query_helpers import count_by_field
 from app.db.session import get_db
 from app.models.insight import Insight
 from app.models.saved_insight import SavedInsight
@@ -45,6 +46,7 @@ from app.schemas.user import (
     UserUpdate,
     WorkspaceStatusResponse,
 )
+from app.services.user_service import UserService
 
 logger = logging.getLogger(__name__)
 
@@ -113,12 +115,10 @@ async def get_workspace_status(
 
     Returns counts of saved, interested, and building insights.
     """
-    # Count saved insights by status
-    saved_query = select(func.count()).select_from(SavedInsight).where(
-        SavedInsight.user_id == current_user.id
-    )
-    saved_count = await db.scalar(saved_query) or 0
+    # Count saved insights (uses count_by_field helper)
+    saved_count = await count_by_field(db, SavedInsight, "user_id", current_user.id)
 
+    # Count by status - Note: count_by_field only supports single field, so we keep compound WHERE for now
     interested_query = select(func.count()).select_from(SavedInsight).where(
         SavedInsight.user_id == current_user.id,
         SavedInsight.status == "interested",
@@ -131,11 +131,8 @@ async def get_workspace_status(
     )
     building_count = await db.scalar(building_query) or 0
 
-    # Count ratings
-    ratings_query = select(func.count()).select_from(UserRating).where(
-        UserRating.user_id == current_user.id
-    )
-    ratings_count = await db.scalar(ratings_query) or 0
+    # Count ratings (uses count_by_field helper)
+    ratings_count = await count_by_field(db, UserRating, "user_id", current_user.id)
 
     return WorkspaceStatusResponse(
         saved_count=saved_count,
@@ -179,13 +176,17 @@ async def list_saved_insights(
     if status:
         query = query.where(SavedInsight.status == status)
 
-    # Get total count
-    count_query = select(func.count()).select_from(SavedInsight).where(
-        SavedInsight.user_id == current_user.id
-    )
-    if status:
-        count_query = count_query.where(SavedInsight.status == status)
-    total = await db.scalar(count_query) or 0
+    # Get total count (simplified with count_by_field for single field case)
+    if not status:
+        # Simple case: count all for user
+        total = await count_by_field(db, SavedInsight, "user_id", current_user.id)
+    else:
+        # Complex case: count with status filter (keep manual query)
+        count_query = select(func.count()).select_from(SavedInsight).where(
+            SavedInsight.user_id == current_user.id,
+            SavedInsight.status == status,
+        )
+        total = await db.scalar(count_query) or 0
 
     # Paginate
     query = query.limit(limit).offset(offset)
@@ -265,36 +266,15 @@ async def save_insight(
     if not insight:
         raise HTTPException(status_code=404, detail="Insight not found")
 
-    # Check if already saved
-    existing = await db.execute(
-        select(SavedInsight).where(
-            SavedInsight.user_id == current_user.id,
-            SavedInsight.insight_id == insight_id,
-        )
+    # Use UserService to get or create SavedInsight
+    saved_insight = await UserService.get_or_create_saved_insight(
+        db=db,
+        user_id=current_user.id,
+        insight_id=insight_id,
+        status="saved",
+        notes=save_data.notes if save_data else None,
+        tags=save_data.tags if save_data else None,
     )
-    saved_insight = existing.scalar_one_or_none()
-
-    if saved_insight:
-        # Update existing
-        if save_data:
-            if save_data.notes is not None:
-                saved_insight.notes = save_data.notes
-            if save_data.tags is not None:
-                saved_insight.tags = save_data.tags
-        await db.commit()
-        await db.refresh(saved_insight)
-    else:
-        # Create new
-        saved_insight = SavedInsight(
-            user_id=current_user.id,
-            insight_id=insight_id,
-            notes=save_data.notes if save_data else None,
-            tags=save_data.tags if save_data else [],
-            status="saved",
-        )
-        db.add(saved_insight)
-        await db.commit()
-        await db.refresh(saved_insight)
 
     logger.info(f"User {current_user.email} saved insight {insight_id}")
     return SavedInsightResponse.model_validate(saved_insight)
@@ -375,27 +355,13 @@ async def mark_interested(
     if not insight:
         raise HTTPException(status_code=404, detail="Insight not found")
 
-    # Check if already saved
-    result = await db.execute(
-        select(SavedInsight).where(
-            SavedInsight.user_id == current_user.id,
-            SavedInsight.insight_id == insight_id,
-        )
+    # Use UserService to get or create SavedInsight with interested status
+    saved_insight = await UserService.get_or_create_saved_insight(
+        db=db,
+        user_id=current_user.id,
+        insight_id=insight_id,
+        status="interested",
     )
-    saved_insight = result.scalar_one_or_none()
-
-    if saved_insight:
-        saved_insight.status = "interested"
-    else:
-        saved_insight = SavedInsight(
-            user_id=current_user.id,
-            insight_id=insight_id,
-            status="interested",
-        )
-        db.add(saved_insight)
-
-    await db.commit()
-    await db.refresh(saved_insight)
 
     logger.info(f"User {current_user.email} marked insight {insight_id} as interested")
     return SavedInsightResponse.model_validate(saved_insight)
@@ -417,30 +383,15 @@ async def claim_insight(
     if not insight:
         raise HTTPException(status_code=404, detail="Insight not found")
 
-    # Check if already saved
-    result = await db.execute(
-        select(SavedInsight).where(
-            SavedInsight.user_id == current_user.id,
-            SavedInsight.insight_id == insight_id,
-        )
-    )
-    saved_insight = result.scalar_one_or_none()
-
+    # Use UserService to get or create SavedInsight with building status
     claimed_at = datetime.utcnow()
-
-    if saved_insight:
-        saved_insight.status = "building"
-        saved_insight.claimed_at = claimed_at
-    else:
-        saved_insight = SavedInsight(
-            user_id=current_user.id,
-            insight_id=insight_id,
-            status="building",
-            claimed_at=claimed_at,
-        )
-        db.add(saved_insight)
-
-    await db.commit()
+    saved_insight = await UserService.get_or_create_saved_insight(
+        db=db,
+        user_id=current_user.id,
+        insight_id=insight_id,
+        status="building",
+        claimed_at=claimed_at,
+    )
 
     logger.info(f"User {current_user.email} claimed insight {insight_id}")
     return ClaimResponse(
@@ -466,27 +417,12 @@ async def track_share(
     if not insight:
         raise HTTPException(status_code=404, detail="Insight not found")
 
-    # Get or create saved insight
-    result = await db.execute(
-        select(SavedInsight).where(
-            SavedInsight.user_id == current_user.id,
-            SavedInsight.insight_id == insight_id,
-        )
+    # Use UserService to increment share count
+    saved_insight = await UserService.increment_share_count(
+        db=db,
+        user_id=current_user.id,
+        insight_id=insight_id,
     )
-    saved_insight = result.scalar_one_or_none()
-
-    if saved_insight:
-        saved_insight.shared_count += 1
-    else:
-        saved_insight = SavedInsight(
-            user_id=current_user.id,
-            insight_id=insight_id,
-            shared_count=1,
-        )
-        db.add(saved_insight)
-
-    await db.commit()
-    await db.refresh(saved_insight)
 
     logger.info(f"User {current_user.email} shared insight {insight_id}")
     return ShareResponse(
@@ -613,11 +549,8 @@ async def list_my_ratings(
     """
     List all ratings given by current user.
     """
-    # Get total count
-    count_query = select(func.count()).select_from(UserRating).where(
-        UserRating.user_id == current_user.id
-    )
-    total = await db.scalar(count_query) or 0
+    # Get total count (uses count_by_field helper)
+    total = await count_by_field(db, UserRating, "user_id", current_user.id)
 
     # Get ratings
     query = (
