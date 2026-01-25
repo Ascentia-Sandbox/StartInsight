@@ -10,9 +10,11 @@
 # Active Context: StartInsight Development
 
 ## Current Phase
-**Phase 1-7 Backend: Code Complete (100% implemented, migrations pending)**
-**Phase 4-7 Frontend: Not Started (0%)**
-**Production Deployment: Blocked by Phase 4.5 Migration**
+**Phase 1-3 Backend:** Fully Complete (100%, deployed 2026-01-18)
+**Phase 4-7 Backend:** Code Complete (100% merged)
+**Phase 4.5 Migration:** Complete (100%, 20 tables, 13 migrations, RLS enabled)
+**Phase 4-7 Frontend:** Not Started (0%, ready to begin)
+**Production Status:** Phase 1-3 live, Phase 4-7 backend + migration complete, frontend pending
 
 ## Phase Completion Criteria
 
@@ -22,40 +24,36 @@
 - **Current Status:** Fully Complete (deployed 2026-01-18)
 
 ### Phase 4: User Authentication & Admin Portal
-- **Backend Complete:** Phase 4.1-4.4 code merged (Current: 100% - 2026-01-25)
-- **Migration Complete:** Phase 4.5 Supabase migration executed (Current: 0% - pending)
-- **Frontend Complete:** Phase 4.1-4.4 UI implemented and tested (Current: 0% - not started)
-- **Fully Complete:** All sub-phases deployed to production
-- **Current Status:** Backend 100%, Migration 0%, Frontend 0%
+- **Backend Code:** 100% (all models/services/routes merged)
+- **Migration Execution:** 100% (13 Supabase migrations applied)
+- **Frontend Implementation:** 0% (not started, ready to begin)
+- **Current Status:** Backend and database complete, ready for frontend implementation
 
 ### Phase 5-7: Advanced Features
-- **Backend Complete:** All models/services/routes merged (Current: 100% - 2026-01-25)
-- **Migration Complete:** Database tables created in Supabase (Current: 0% - depends on Phase 4.5)
-- **Frontend Complete:** All UI components implemented and tested (Current: 0% - not scoped)
-- **Fully Complete:** All features deployed to production
-- **Current Status:** Backend 100%, Migration pending, Frontend 0%
+- **Backend Code:** 100% (all models/services/routes merged)
+- **Migration Execution:** 100% (all tables deployed to Supabase)
+- **Frontend Implementation:** 0% (not scoped)
+- **Current Status:** Backend and database complete, ready for frontend implementation
 
 ## Current Focus
-**Phase 4.5 Supabase Cloud Migration (CRITICAL BLOCKER)**
+**Phase 4-7 Frontend Implementation (Next Priority)**
+
+**Phase 4.5 Supabase Migration: COMPLETE (2026-01-25)**
+- [x] Supabase project created (https://mxduetfcsgttwwgszjae.supabase.co)
+- [x] 13 migrations executed (12 schema + 1 RLS security fix)
+- [x] 20 tables deployed with full RLS protection
+- [x] Test data verified (2 users, 10 signals, 10 insights, 1 admin)
+- [x] All security advisories addressed (10 tables fixed with RLS policies)
 
 **Immediate Next Steps:**
-1. Create Supabase project (Singapore ap-southeast-1 region, Pro tier)
-2. Execute 9 Alembic migrations (Phase 4-7 database schema)
-3. Configure Row Level Security (RLS) policies
-4. Update environment variables (DATABASE_URL, SUPABASE_URL, SUPABASE_ANON_KEY)
-5. Verify data access from backend (connection test, sample queries)
-
-**Current Status:**
-- [x] Backend 100% Complete (21 models, 97 endpoints, 11 services verified 2026-01-25)
-- [x] All 9 Alembic migrations created and ready for execution
-- [x] Architecture designed for Supabase (supabase_user_id fields, RLS policy templates)
-- [x] Blue-green migration plan documented (Phase 4.5 in implementation-plan.md)
-- [ ] Supabase project NOT created (blocker)
-- [ ] Migrations NOT executed (0% - blocked by project creation)
-- [ ] Frontend 0% (blocked by database access)
+1. Begin Phase 4.1 Frontend - User authentication UI (sign-in, sign-up, profile)
+2. Implement user workspace (saved insights, ratings, preferences)
+3. Build admin dashboard (agent monitoring, insight moderation)
+4. Create research page UI (AI-powered analysis)
+5. Add payment flows (Stripe checkout, subscription management)
 
 ## Objective
-Execute Phase 4.5 Supabase Cloud migration to unblock Phase 4-7 frontend development and production deployment.
+Implement Phase 4-7 frontend to complete full-stack features and enable production deployment.
 
 ---
 
@@ -116,8 +114,10 @@ All backend components for Phase 4-7 are implemented and verified! The backend n
 - [x] API key management (APIKey, APIKeyUsageLog models, api_key_service.py, api_keys.py routes)
 - [x] Multi-tenancy (Tenant, TenantUser models, tenant_service.py, tenants.py routes)
 
+**Completed:**
+- [x] Migration execution (13 Supabase migrations applied 2026-01-25)
+
 **Pending:**
-- [ ] Migration execution (9 Alembic migrations) - blocked by Phase 4.5 Supabase project creation
 - [ ] Frontend implementation (0% - all phases)
 
 ### Phase 5 Progress (100% Backend Complete)
@@ -196,82 +196,62 @@ All backend components for Phase 4-7 are implemented and verified! The backend n
 - [x] Custom domain configuration
 - [x] CSS variables for theming
 
-## Phase 4.5: Supabase Cloud Migration (Documentation Complete)
+## Phase 4.5: Supabase Cloud Migration (COMPLETE)
 
-**Timeline:** Week 1-4 after Phase 4.4 complete
-**Status:** Documentation 100% complete. Backend code ready. Pending execution.
+**Executed:** 2026-01-25
+**Status:** 100% Complete
 
-**What's Ready:**
-- [x] 9 Alembic migrations compatible with Supabase
-- [x] Dual-mode database support (SQLAlchemy + Supabase client)
-- [x] All models include Supabase Auth integration (supabase_user_id)
-- [x] RLS policies designed (architecture.md Section 10)
-- [x] Environment variables configured (.env.example)
+**Deployment Summary:**
+- [x] Supabase project created (https://mxduetfcsgttwwgszjae.supabase.co)
+- [x] 13 migrations executed successfully
+- [x] 20 tables deployed to public schema
+- [x] All tables have Row Level Security (RLS) enabled
+- [x] Test data migrated (2 users, 10 signals, 10 insights, 1 admin)
+- [x] Security advisories addressed (10 tables fixed with appropriate policies)
 
-**Pending Tasks:**
-1. Create Supabase project (Singapore ap-southeast-1)
-2. Run Alembic migrations on Supabase
-3. Update production DATABASE_URL
-4. Verify RLS policies
-5. Test real-time features
+**Tables Deployed (20):**
+raw_signals, users, insights, saved_insights, user_ratings, insight_interactions,
+teams, team_members, team_invitations, shared_insights, subscriptions, payment_history,
+api_keys, api_key_usage_logs, custom_analyses, admin_users, agent_execution_logs,
+system_metrics, tenants, tenant_users
 
-**Why Supabase:**
-1. **Cost Efficiency**: $25/mo vs Neon $69/mo at 10K users (64% savings)
-2. **APAC Market**: Singapore region for 50ms latency (vs 180ms US-based)
-3. **Scalability**: Auto-scaling, 500 concurrent connections (vs 15 current)
-4. **Phase 5+ Enablement**: Real-time subscriptions, Storage, Edge Functions
-
-**Success Criteria:**
-- Zero downtime during cutover
-- <100ms p95 latency (target: <50ms)
-- 100% data integrity (row counts, checksums)
-- Rollback plan tested (<30 minute recovery)
+**Migrations Applied (13):**
+1. create_raw_signals_table
+2. create_users_table
+3. create_insights_table
+4. create_user_interaction_tables
+5. create_teams_tables
+6. create_subscription_tables
+7. create_api_keys_tables
+8. create_custom_analyses_table
+9. create_admin_tables
+10. create_tenant_tables
+11. enable_rls_policies
+12. public_read_and_auth_trigger
+13. fix_rls_security_issues
 
 ---
 
 ### Next Steps
 
-**Immediate: Complete Phase 4.1 Backend Integration (1 hour)**
+**Immediate: Phase 4.1 Frontend (User Authentication)**
+1. Install @supabase/auth-ui-react for authentication UI
+2. Build sign-in/sign-up pages with Supabase Auth
+3. Implement user profile page
+4. Add saved insights UI
+5. Integrate rating functionality
 
-1. **Task 4.1.1:** Add Clerk dependency (15 min)
-   ```bash
-   cd backend && uv add clerk-backend-api>=2.0.0
-   ```
+**Next: Phase 4.2 Frontend (Admin Dashboard)**
+1. Build admin portal with role-based access
+2. Implement agent monitoring dashboard
+3. Add insight moderation UI
+4. Create system metrics visualization
 
-2. **Task 4.1.2:** Update `backend/app/core/config.py` with Clerk settings (5 min)
-   ```python
-   clerk_secret_key: str = Field(..., description="Clerk secret key")
-   clerk_frontend_api: str = Field(..., description="Clerk frontend API")
-   ```
-
-3. **Task 4.1.3:** Register models and router (5 min)
-   - Update `backend/app/models/__init__.py`
-   - Update `backend/app/schemas/__init__.py`
-   - Update `backend/app/main.py` to include users router
-
-4. **Task 4.1.4:** Run migration (5 min)
-   ```bash
-   cd backend && alembic upgrade head
-   ```
-
-5. **Task 4.1.5:** Test endpoints (15 min)
-
-**Frontend Authentication Setup (3 hours)**
-- Install @clerk/nextjs
-- Configure middleware
-- Create auth components (SignInButton, UserButton)
-- Build workspace page
-- Add save/rate functionality
-
-See `implementation-plan-phase4-detailed.md` for complete step-by-step instructions.
-
-**Production Deployment** (Deferred)
-- Deploy to Railway/Vercel after Phase 4.1 complete
-- Configure production Clerk keys
+**Production Deployment** (After Phase 4 Frontend)
+- Deploy backend to Railway
+- Deploy frontend to Vercel
+- Configure production environment variables
 - Run E2E tests with auth flows
-- Multi-agent workflows
-- Automated competitor research
-- MVP plan generator
 
 ---
 
@@ -436,123 +416,21 @@ See `implementation-plan-phase4-detailed.md` for complete step-by-step instructi
 
 ---
 
-## Key Decisions Made
-
-### Technology Stack (Phase 1)
-- **Backend Framework**: FastAPI (async, modern, fast)
-- **Database**: PostgreSQL (managed on Railway/Neon for production)
-- **ORM**: SQLAlchemy (async mode)
-- **Scraper**: Firecrawl (AI-powered web → markdown conversion)
-- **Task Queue**: Arq (lightweight, async-native)
-- **Package Manager**: `uv` (blazing-fast Python dependency management)
-
-### Architecture Principles
-1. **Modular Monolith**: Single repo with clear separation (backend/, frontend/)
-2. **Async-First**: All I/O operations use async/await
-3. **Type Safety**: Pydantic for validation, TypeScript for frontend
-4. **Environment Parity**: Docker Compose for local dev, mirrors production setup
-
----
-
-## Phase 3 Prerequisites
-
-Before starting Phase 3.1, verify:
-
-**Environment** ([x] = Verified):
-- [x] [x] Node.js 18+ installed - **v20.19.6** (`node --version`)
-- [x] [x] npm installed - **v10.8.2** (`npm --version`)
-- [ ] Backend running on `http://localhost:8000` - **ACTION REQUIRED**
-- [ ] Database contains insights - **ACTION REQUIRED** (run analysis task if needed)
-
-**Action Required Before Starting Phase 3**:
-
-1. **Start Backend Server**:
-   ```bash
-   cd /home/wysetime-pcc/Nero/StartInsight/backend
-   uv run uvicorn app.main:app --reload --port 8000
-
-   # Should see:
-   # INFO:     Uvicorn running on http://127.0.0.1:8000
-   # INFO:     Application startup complete
-   ```
-
-2. **Verify Backend Endpoints**:
-   ```bash
-   # In a new terminal, test endpoints
-
-   # Check health
-   curl http://localhost:8000/health
-   # Expected: {"status":"healthy","version":"1.0.0"}
-
-   # Check insights exist
-   curl "http://localhost:8000/api/insights?limit=1" | jq '.total'
-   # Expected: number > 0 (if insights exist)
-
-   # If no insights, run analysis task:
-   cd backend
-   uv run python -c "
-   import asyncio
-   from app.worker import analyze_signals_task
-   asyncio.run(analyze_signals_task({}))
-   "
-   ```
-
-3. **Verify CORS Configuration**:
-   Backend `app/main.py` should have:
-   ```python
-   app.add_middleware(
-       CORSMiddleware,
-       allow_origins=["*"],  # For development
-       allow_credentials=True,
-       allow_methods=["*"],
-       allow_headers=["*"],
-   )
-   ```
-
-**Backend Endpoints Required** (will be used by frontend):
-- `GET /api/insights` - List insights with filters
-- `GET /api/insights/{id}` - Get single insight
-- `GET /api/insights/daily-top` - Top 5 insights
-- `GET /health` - Health check
-
-**Quick Verification Script**:
-```bash
-# Save as backend/verify_phase3_ready.sh
-#!/bin/bash
-echo "=== Phase 3 Prerequisites Check ==="
-echo ""
-echo "Node.js version:"
-node --version
-echo ""
-echo "npm version:"
-npm --version
-echo ""
-echo "Backend health:"
-curl -s http://localhost:8000/health || echo "[ ] Backend not running - start with 'uvicorn app.main:app --reload'"
-echo ""
-echo "Insights available:"
-curl -s "http://localhost:8000/api/insights?limit=1" | jq -r '.total // "[ ] No insights"' || echo "[ ] Backend not accessible"
-echo ""
-echo "=== Check complete ==="
-```
+## Historical Documentation
+For Phase 3 development setup and key technology decisions, see `archived/phase-3-setup-guide.md`
 
 ## Current Blockers
-**Action Required**:
-1. Start backend server (`uvicorn app.main:app --reload`)
-2. Ensure database has insights (run analysis task if total = 0)
 
-**Once backend is running**: Phase 3.1 can begin immediately.
+### 1. Phase 4-7 Frontend Implementation - HIGH
+- **Status:** Not started (0%)
+- **Dependency:** Phase 4.5 migration COMPLETE - ready to begin
+- **Components:** User workspace, admin dashboard, research UI, payments, teams
+- **Next Action:** Begin Phase 4.1 frontend (authentication UI)
 
----
-
-## Environment Setup Checklist
-Before starting Phase 1.3, ensure you have:
-- [x] Python 3.11+ installed
-- [x] Docker Desktop installed and running
-- [x] Git installed
-- [x] `uv` package manager installed
-- [x] PostgreSQL and Redis containers running (`docker-compose up -d`)
-- [x] Text editor/IDE ready (VS Code recommended)
+### 2. Production Deployment - MEDIUM
+- **Status:** Blocked by frontend implementation
+- **Environment:** Railway (backend), Vercel (frontend), Supabase (database)
+- **Next Action:** Deploy after Phase 4 frontend complete
 
 ---
 
@@ -610,12 +488,12 @@ When resuming work:
 - [x] 3.8 Testing & QA (Playwright, 47 E2E tests, 5 browsers)
 - [x] 3.9 Documentation (README 329 lines, user guide)
 
-### Phase 4 Progress: [ ] Backend Complete, Frontend Pending
+### Phase 4 Progress: [x] Backend + Migration Complete, Frontend Pending
 - [x] 4.1 User Authentication Backend (Supabase Auth, JWT, 15 endpoints)
 - [x] 4.2 Admin Portal Backend (SSE, agent monitoring, 15+ endpoints)
 - [x] 4.3 Enhanced Scoring Backend (8-dimension system)
 - [x] 4.4 User Workspace Backend (interaction tracking)
-- [ ] 4.5 Supabase Migration (pending execution)
+- [x] 4.5 Supabase Migration (13 migrations executed, 20 tables, RLS enabled)
 - [ ] 4.1-4.4 Frontend Implementation (0%)
 
 ### Phase 5 Progress: [x] Backend Complete (4/4 sub-phases)
@@ -642,4 +520,4 @@ When resuming work:
 
 **Last Updated**: 2026-01-25
 **Updated By**: Lead Architect (Claude)
-**Status**: Phase 1-7 backend complete. All backend models, services, and API routes implemented. 137 tests passing. Pending: Supabase migration (Phase 4.5), frontend implementation for Phases 4-7, production deployment.
+**Status**: Phase 1-7 backend complete. Phase 4.5 Supabase migration complete (13 migrations, 20 tables, RLS enabled). Pending: Frontend implementation for Phases 4-7, production deployment.
