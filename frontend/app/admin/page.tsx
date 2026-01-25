@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { API_BASE_URL } from '@/lib/api/config';
 
 interface AgentStatus {
   agent_id: string;
@@ -30,14 +32,12 @@ export default function AdminDashboard() {
     // Fetch admin stats from API
     const fetchStats = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
         // Fetch pipeline status
-        const pipelineRes = await fetch(`${apiUrl}/api/pipeline/status`);
+        const pipelineRes = await fetch(`${API_BASE_URL}/api/pipeline/status`);
         const pipelineData = await pipelineRes.json();
 
         // Fetch insights count
-        const insightsRes = await fetch(`${apiUrl}/api/insights`);
+        const insightsRes = await fetch(`${API_BASE_URL}/api/insights`);
         const insightsData = await insightsRes.json();
 
         setStats({
@@ -81,7 +81,7 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <Loader2 className="animate-spin h-8 w-8 text-primary mx-auto" />
           <p className="mt-2 text-muted-foreground">Loading admin dashboard...</p>
         </div>
       </div>

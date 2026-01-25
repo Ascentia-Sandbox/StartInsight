@@ -2,10 +2,13 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Lightbulb, Link2, BarChart3, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { SelectableCard } from '@/components/ui/SelectableCard';
+import { API_BASE_URL } from '@/lib/api/config';
 
 type InputType = 'idea' | 'url' | 'competitor';
 
@@ -23,8 +26,7 @@ export default function ResearchPage() {
     setError(null);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${apiUrl}/api/research/analyze`, {
+      const response = await fetch(`${API_BASE_URL}/api/research/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -61,83 +63,27 @@ export default function ResearchPage() {
 
         {/* Input Type Selection */}
         <div className="grid grid-cols-3 gap-4 mb-8">
-          <button
+          <SelectableCard
+            title="Business Idea"
+            description="Analyze your startup concept"
+            icon={<Lightbulb className="h-6 w-6" />}
+            selected={inputType === 'idea'}
             onClick={() => setInputType('idea')}
-            className={`p-4 rounded-lg border-2 text-left transition-colors ${
-              inputType === 'idea'
-                ? 'border-primary bg-primary/5'
-                : 'border-muted hover:border-muted-foreground/50'
-            }`}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 mb-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-              />
-            </svg>
-            <p className="font-semibold">Business Idea</p>
-            <p className="text-sm text-muted-foreground">Analyze your startup concept</p>
-          </button>
-
-          <button
+          />
+          <SelectableCard
+            title="Website URL"
+            description="Analyze an existing product"
+            icon={<Link2 className="h-6 w-6" />}
+            selected={inputType === 'url'}
             onClick={() => setInputType('url')}
-            className={`p-4 rounded-lg border-2 text-left transition-colors ${
-              inputType === 'url'
-                ? 'border-primary bg-primary/5'
-                : 'border-muted hover:border-muted-foreground/50'
-            }`}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 mb-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-              />
-            </svg>
-            <p className="font-semibold">Website URL</p>
-            <p className="text-sm text-muted-foreground">Analyze an existing product</p>
-          </button>
-
-          <button
+          />
+          <SelectableCard
+            title="Competitor Analysis"
+            description="Compare with competitors"
+            icon={<BarChart3 className="h-6 w-6" />}
+            selected={inputType === 'competitor'}
             onClick={() => setInputType('competitor')}
-            className={`p-4 rounded-lg border-2 text-left transition-colors ${
-              inputType === 'competitor'
-                ? 'border-primary bg-primary/5'
-                : 'border-muted hover:border-muted-foreground/50'
-            }`}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 mb-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-              />
-            </svg>
-            <p className="font-semibold">Competitor Analysis</p>
-            <p className="text-sm text-muted-foreground">Compare with competitors</p>
-          </button>
+          />
         </div>
 
         {/* Research Form */}
@@ -212,26 +158,7 @@ export default function ResearchPage() {
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? (
                   <>
-                    <svg
-                      className="animate-spin -ml-1 mr-3 h-5 w-5"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
+                    <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5" />
                     Running AI Analysis...
                   </>
                 ) : (
