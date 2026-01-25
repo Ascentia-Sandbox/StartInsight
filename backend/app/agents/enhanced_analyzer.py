@@ -60,11 +60,10 @@ class ValueLadderTier(BaseModel):
     price: str = Field(
         description="Price range: Free, $9-$29/mo, $49-$99/mo, $299+/mo"
     )
-    name: str = Field(description="Product name for this tier (max 50 chars)")
-    description: str = Field(description="What this tier offers (max 200 chars)")
+    name: str = Field(description="Product name for this tier")
+    description: str = Field(description="What this tier offers")
     features: list[str] = Field(
         default_factory=list,
-        max_length=5,
         description="Key features (3-5 bullet points)",
     )
 
@@ -86,12 +85,36 @@ class ExecutionStep(BaseModel):
     """Single step in the execution plan (5-7 required)."""
 
     step_number: int = Field(ge=1, le=10, description="Step number (1-7)")
-    title: str = Field(description="Step title (max 100 chars)")
-    description: str = Field(description="What to do (max 500 chars)")
+    title: str = Field(description="Step title")
+    description: str = Field(description="What to do")
     estimated_time: str = Field(description="e.g., '1 week', '2-3 days'")
     resources_needed: list[str] = Field(
-        default_factory=list, max_length=5, description="Required resources"
+        default_factory=list, description="Required resources"
     )
+
+
+class CommunitySignal(BaseModel):
+    """Community validation signal (Reddit, Facebook, YouTube, etc.)."""
+
+    platform: Literal["Reddit", "Facebook", "YouTube", "Other"] = Field(
+        description="Platform name"
+    )
+    communities: str = Field(
+        description="e.g., '4 subreddits' or '3 groups'"
+    )
+    members: str = Field(
+        description="e.g., '2.5M+ members' or '150K+ members'"
+    )
+    score: int = Field(ge=1, le=10, description="Community engagement score 1-10")
+    top_community: str = Field(description="Most relevant community name")
+
+
+class TrendKeyword(BaseModel):
+    """Trending keyword with search data."""
+
+    keyword: str = Field(description="Search keyword")
+    volume: str = Field(description="e.g., '1.0K' or '27.1K'")
+    growth: str = Field(description="e.g., '+1900%' or '+86%'")
 
 
 class EnhancedInsightSchema(BaseModel):
@@ -99,14 +122,16 @@ class EnhancedInsightSchema(BaseModel):
 
     # Basic insight fields
     title: str = Field(
-        description="Concise insight title (max 200 chars)", max_length=200
+        description="Concise insight title"
     )
     problem_statement: str = Field(
-        description="Clearly articulated market problem (max 1000 chars)",
-        max_length=1000,
+        description="IdeaBrowser-style narrative problem statement (450+ words). "
+        "Start with a vivid real-world scenario showing the pain point in action. "
+        "Use specific details, dialogue, emotions. Then explain the solution and business model. "
+        "Include market size ($XB industry), pricing ($X-$Y/month), and GTM strategy.",
     )
     proposed_solution: str = Field(
-        description="Suggested solution approach (max 1000 chars)", max_length=1000
+        description="Suggested solution approach"
     )
     market_size_estimate: Literal["Small", "Medium", "Large"] = Field(
         description="Market TAM: Small (<$100M), Medium ($100M-$1B), Large (>$1B)"
@@ -116,7 +141,6 @@ class EnhancedInsightSchema(BaseModel):
     )
     competitor_analysis: list[Competitor] = Field(
         default_factory=list,
-        max_length=3,
         description="Top 3 competitors (if any)",
     )
 
@@ -154,25 +178,33 @@ class EnhancedInsightSchema(BaseModel):
     # ============================================
 
     value_ladder: list[ValueLadderTier] = Field(
-        min_length=4,
-        max_length=4,
+        default_factory=list,
         description="4-tier pricing model (lead_magnet, frontend, core, backend)",
     )
     market_gap_analysis: str = Field(
-        min_length=100,
-        max_length=2000,
         description="200-500 word analysis of competitor gaps",
     )
     why_now_analysis: str = Field(
-        min_length=100,
-        max_length=2000,
         description="200-500 word analysis of market timing",
     )
     proof_signals: list[ProofSignal] = Field(
-        min_length=3, max_length=5, description="3-5 validation evidence pieces"
+        default_factory=list, description="3-5 validation evidence pieces"
     )
     execution_plan: list[ExecutionStep] = Field(
-        min_length=5, max_length=7, description="5-7 actionable launch steps"
+        default_factory=list, description="5-7 actionable launch steps"
+    )
+
+    # ============================================
+    # Community Signals (IdeaBrowser Parity)
+    # ============================================
+
+    community_signals: list[CommunitySignal] = Field(
+        default_factory=list,
+        description="3-4 community validation signals (Reddit, Facebook, YouTube, Other)",
+    )
+    trend_keywords: list[TrendKeyword] = Field(
+        default_factory=list,
+        description="2-5 trending keywords with search volume and growth",
     )
 
 
@@ -180,96 +212,87 @@ class EnhancedInsightSchema(BaseModel):
 # Enhanced System Prompt
 # ============================================================
 
-ENHANCED_SYSTEM_PROMPT = """You are an expert startup analyst with deep expertise in market analysis, competitive intelligence, and go-to-market strategy.
+ENHANCED_SYSTEM_PROMPT = """You are an expert startup analyst with deep expertise in market analysis, competitive intelligence, and go-to-market strategy. Your analyses MUST match IdeaBrowser.com quality - the industry standard for startup opportunity research.
 
-Your task is to analyze market signals and provide a comprehensive business opportunity assessment using 8-dimension scoring and advanced frameworks.
+## CRITICAL: Problem Statement Format (IdeaBrowser Standard)
+
+Your problem_statement MUST be 450+ words written as a NARRATIVE STORY, not a dry business analysis. Follow this exact structure:
+
+1. **Opening Hook (50-75 words)**: Start with a vivid, specific scenario showing the pain. Use a real person's name (Jake, Sarah, Mike). Include sensory details, emotions, and the exact moment of frustration.
+
+Example: "The aftercare sheet made it to the parking lot. Maybe the glovebox. Definitely not the bathroom mirror at 11pm when the swelling started. The client took a photo, texted the clinic, got nothing back. By morning she'd posted a 1-star review and told her group chat to book somewhere else."
+
+2. **Problem Amplification (75-100 words)**: Show WHY this happens repeatedly. Make the reader feel the systemic nature of the problem. Use specific numbers and consequences.
+
+3. **Solution Introduction (100-150 words)**: Introduce your product with a clear, branded name (PostCare, GlassScan, SalaryRep). Explain EXACTLY what it does in concrete terms. Use action verbs.
+
+4. **Technical Implementation (75-100 words)**: Describe HOW to build the MVP. Be specific about the technology stack, AI components, integrations, and first 5 features.
+
+5. **Market & Monetization (75-100 words)**: Include specific market size ($XB industry), pricing ($X-$Y/month), target customer profile, and revenue potential per customer.
+
+6. **GTM Strategy (50-75 words)**: Describe exactly WHERE to find first customers. Name specific subreddits, Facebook groups, conferences, or communities. Explain the viral loop.
 
 ## 8-Dimension Scoring Model (1-10 scale)
 
+Score generously but honestly. IdeaBrowser typically scores 7-9 on good ideas.
+
 1. **opportunity_score** (Market Size)
-   - 1-3: Tiny niche (<$10M TAM)
-   - 4-6: Moderate market ($10M-$500M TAM)
-   - 7-10: Large/massive market ($500M+ TAM)
+   - 7-8: $500M-$5B TAM (common for B2B SaaS)
+   - 9-10: $5B+ TAM (rare, only massive markets)
 
 2. **problem_score** (Pain Severity)
-   - 1-3: Nice-to-have, weak pain point
-   - 4-6: Moderate pain, some urgency
-   - 7-10: Hair-on-fire, existential problem
+   - 7-8: Clear pain point with urgent need (money loss, reputation damage, legal risk)
+   - 9-10: Existential crisis level (business survival, health, safety)
 
 3. **feasibility_score** (Technical Difficulty)
-   - 1-3: Requires major R&D, breakthrough tech
-   - 4-6: Challenging but achievable with good team
-   - 7-10: Well-understood tech, can be built quickly
+   - 7-8: Uses existing APIs and AI (most SaaS ideas)
+   - 9-10: Simple CRUD app or no-code possible
 
 4. **why_now_score** (Market Timing)
-   - 1-3: Too early or too late
-   - 4-6: Market developing, some tailwinds
-   - 7-10: Perfect timing, major inflection point
+   - 7-8: AI/automation wave, regulatory change, or platform shift
+   - 9-10: Perfect storm of multiple tailwinds
 
-5. **revenue_potential** (Monthly Revenue at Scale)
-   - $: <$10K/mo (lifestyle business)
-   - $$: $10K-$50K/mo (solid small business)
-   - $$$: $50K-$200K/mo (venture-scale)
-   - $$$$: >$200K/mo (unicorn potential)
+5. **revenue_potential**: Use $$ for $10K-$50K/mo, $$$ for venture-scale
 
-6. **execution_difficulty** (Operational Complexity)
-   - 1-3: Weekend project, solo founder can do
-   - 4-6: Needs small team, some ops complexity
-   - 7-10: Multi-year, large team, enterprise ops
+6. **execution_difficulty**: Inverse of feasibility
 
-7. **go_to_market_score** (Distribution Ease)
-   - 1-3: Enterprise sales, long cycles
-   - 4-6: SMB sales, content marketing
-   - 7-10: Viral/PLG, self-serve, community-driven
+7. **go_to_market_score**: Score 7+ for community-driven markets
 
-8. **founder_fit_score** (Skill Requirements)
-   - 1-3: Requires PhD, 10+ years domain expertise
-   - 4-6: Needs some specialized knowledge
-   - 7-10: General skills, anyone can learn
+8. **founder_fit_score**: Score 7+ for general tech skills
 
-## Advanced Frameworks
+## Community Signals (REQUIRED)
 
-### Value Ladder (4 Tiers)
-Create a complete pricing strategy:
-- **lead_magnet**: Free tier (Free) - Hook to acquire users
-- **frontend**: Entry tier ($9-$29/mo) - Low-risk first purchase
-- **core**: Main tier ($49-$99/mo) - Main revenue driver
-- **backend**: Premium tier ($299+/mo) - High-value enterprise
+For EACH insight, identify 3-4 community platforms:
 
-### Market Gap Analysis (200-500 words)
-Identify what competitors are missing:
-- Unmet customer needs
-- Price/value gaps
-- Feature gaps
-- Service/support gaps
-- Target segment gaps
+- **Reddit**: Find 2-5 relevant subreddits with member counts. Example: "4 subreddits · 2.5M+ members"
+- **Facebook**: Find 2-4 relevant groups. Example: "4 groups · 150K+ members"
+- **YouTube**: Find relevant channels. Example: "15 channels"
+- **Other**: LinkedIn groups, Discord servers, Slack communities
 
-### Why Now Analysis (200-500 words)
-Explain market timing drivers:
-- Technology enablers
-- Regulatory changes
-- Market shifts
-- Consumer behavior changes
-- Cost structure changes
+Each community signal needs:
+- platform: "Reddit" | "Facebook" | "YouTube" | "Other"
+- communities: "X subreddits" or "X groups"
+- members: "X+ members" or "views"
+- score: 1-10 based on engagement and relevance
+- top_community: Name of the most relevant community
 
-### Proof Signals (3-5 pieces)
-Evidence validating the opportunity:
-- search_trend: Google Trends, keyword growth
-- competitor_growth: Competitor funding, growth metrics
-- community_discussion: Reddit, HN, forum activity
-- market_report: Industry reports, analyst insights
+## Trend Keywords (REQUIRED)
 
-### Execution Plan (5-7 steps)
-Actionable launch roadmap:
-- Step 1: MVP/validation (1-2 weeks)
-- Step 2: First 10 users (1-2 weeks)
-- Step 3: Product iteration (2-4 weeks)
-- Step 4: Growth experiments (2-4 weeks)
-- Step 5: Scale preparation (2-4 weeks)
+Identify 2-5 related search keywords with estimated volume and growth:
+- keyword: The search term (e.g., "aftercare instructions")
+- volume: Estimated monthly volume ("1.0K", "27.1K", "90.5K")
+- growth: Percentage growth ("+1900%", "+86%", "+514%")
+
+## Value Ladder (4 Tiers)
+- **lead_magnet**: Free (whitepaper, calculator, checklist)
+- **frontend**: $29-$49/mo (pilot program, basic tier)
+- **core**: $99-$199/mo (full platform, main revenue)
+- **backend**: $299-$999/mo (enterprise, done-for-you)
 
 ## Output Format
-Return a structured JSON object matching the EnhancedInsightSchema format.
-Be specific, actionable, and realistic in your analysis."""
+Return a structured JSON matching EnhancedInsightSchema.
+Every field is REQUIRED. Write problem_statement as a compelling narrative story.
+Be specific with numbers, names, and actionable details."""
 
 
 # ============================================================
@@ -368,6 +391,9 @@ async def analyze_signal_enhanced(raw_signal: RawSignal) -> Insight:
             why_now_analysis=insight_data.why_now_analysis,
             proof_signals=[p.model_dump() for p in insight_data.proof_signals],
             execution_plan=[s.model_dump() for s in insight_data.execution_plan],
+            # Phase 5.2: IdeaBrowser parity - community signals and trend keywords
+            community_signals_chart=[c.model_dump() for c in insight_data.community_signals],
+            trend_keywords=[t.model_dump() for t in insight_data.trend_keywords],
         )
 
         # Track successful insight generation
@@ -495,6 +521,13 @@ async def upgrade_insight_scoring(
         ]
         existing_insight.execution_plan = [
             s.model_dump() for s in insight_data.execution_plan
+        ]
+        # Phase 5.2: IdeaBrowser parity
+        existing_insight.community_signals_chart = [
+            c.model_dump() for c in insight_data.community_signals
+        ]
+        existing_insight.trend_keywords = [
+            t.model_dump() for t in insight_data.trend_keywords
         ]
 
         # Track metrics

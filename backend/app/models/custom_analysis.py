@@ -266,6 +266,7 @@ class CustomAnalysis(Base):
 
     request: Mapped["ResearchRequest"] = relationship(
         "ResearchRequest",
+        foreign_keys=[request_id],
         back_populates="analysis",
         lazy="selectin",
         doc="Original research request (if from request queue)",

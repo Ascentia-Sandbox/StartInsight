@@ -224,6 +224,14 @@ class Insight(Base):
         doc="8-dimension scoring breakdown (dimension, value, label)",
     )
 
+    # Trend Keywords: Search volume and growth data
+    trend_keywords: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        default=list,
+        doc="Trending keywords with search volume and growth percentage",
+    )
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

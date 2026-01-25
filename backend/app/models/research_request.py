@@ -141,6 +141,7 @@ class ResearchRequest(Base):
 
     analysis: Mapped["CustomAnalysis"] = relationship(
         "CustomAnalysis",
+        foreign_keys="[CustomAnalysis.request_id]",
         back_populates="request",
         lazy="selectin",
         doc="The completed analysis (if approved)",
