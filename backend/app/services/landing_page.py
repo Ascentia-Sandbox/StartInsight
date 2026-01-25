@@ -150,11 +150,11 @@ Be specific to the product. Avoid generic startup cliches."""
 
 
 def get_landing_page_agent() -> Agent:
-    """Get PydanticAI agent for landing page generation."""
+    """Get PydanticAI agent for landing page generation (API key from GOOGLE_API_KEY env)."""
     return Agent(
-        model="anthropic:claude-3-5-sonnet-20241022",
+        model="google-gla:gemini-2.0-flash",
         system_prompt=LANDING_PAGE_SYSTEM_PROMPT,
-        result_type=LandingPageTemplate,
+        output_type=LandingPageTemplate,
     )
 
 
@@ -228,7 +228,7 @@ Generate complete landing page content including:
     try:
         agent = get_landing_page_agent()
         result = await agent.run(prompt)
-        landing_page = result.data
+        landing_page = result.output
 
         logger.info(f"Landing page generated for '{company_name}'")
         return landing_page

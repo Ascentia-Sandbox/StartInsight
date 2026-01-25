@@ -1,4 +1,4 @@
-"""AI analyzer agent using PydanticAI with Claude 3.5 Sonnet."""
+"""AI analyzer agent using PydanticAI with Gemini 2.0 Flash."""
 
 import logging
 import time
@@ -186,7 +186,7 @@ async def analyze_signal(raw_signal: RawSignal) -> Insight:
         # Track failed LLM call
         input_tokens = len(raw_signal.content) // 4
         metrics_tracker.track_llm_call(
-            model="claude-3-5-sonnet-20241022",
+            model="gemini-2.0-flash",
             prompt=raw_signal.content[:200] + "...",
             response=None,
             input_tokens=input_tokens,

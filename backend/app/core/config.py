@@ -33,8 +33,9 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
     # AI & LLM APIs
-    anthropic_api_key: str | None = None
-    openai_api_key: str | None = None
+    google_api_key: str | None = None  # Primary: Gemini API
+    anthropic_api_key: str | None = None  # Fallback: Claude API
+    openai_api_key: str | None = None  # Fallback: GPT-4o
 
     # Web Scraping APIs
     firecrawl_api_key: str | None = None

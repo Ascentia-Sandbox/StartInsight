@@ -133,11 +133,11 @@ Be specific, actionable, and creative. Avoid generic suggestions."""
 
 
 def get_brand_agent() -> Agent:
-    """Get PydanticAI agent for brand generation."""
+    """Get PydanticAI agent for brand generation (API key from GOOGLE_API_KEY env)."""
     return Agent(
-        model="anthropic:claude-3-5-sonnet-20241022",
+        model="google-gla:gemini-2.0-flash",
         system_prompt=BRAND_SYSTEM_PROMPT,
-        result_type=BrandPackage,
+        output_type=BrandPackage,
     )
 
 
@@ -195,7 +195,7 @@ Generate a complete, cohesive brand package including:
     try:
         agent = get_brand_agent()
         result = await agent.run(prompt)
-        brand_package = result.data
+        brand_package = result.output
 
         logger.info(f"Brand package generated for '{company_name}'")
         return brand_package

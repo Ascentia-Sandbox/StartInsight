@@ -1,6 +1,6 @@
 """AI Research Agent for 40-step deep analysis - Phase 5.1.
 
-Performs comprehensive startup idea analysis using Claude 3.5 Sonnet:
+Performs comprehensive startup idea analysis using Gemini 2.0 Flash:
 - Market analysis (TAM/SAM/SOM)
 - Competitor landscape
 - Value equation (Hormozi framework)
@@ -192,11 +192,11 @@ Return a structured JSON object matching the ResearchResult schema."""
 
 
 def get_research_agent() -> Agent:
-    """Get PydanticAI agent for research analysis (API key from environment)."""
+    """Get PydanticAI agent for research analysis (API key from GOOGLE_API_KEY env)."""
     return Agent(
-        model="anthropic:claude-3-5-sonnet-20241022",
+        model="google-gla:gemini-2.0-flash",
         system_prompt=RESEARCH_SYSTEM_PROMPT,
-        result_type=ResearchResult,
+        output_type=ResearchResult,
     )
 
 
@@ -281,7 +281,7 @@ Please provide a comprehensive 40-step analysis following all frameworks:
         latency_ms = (time.time() - start_time) * 1000
 
         # Extract result
-        research_data = result.data
+        research_data = result.output
 
         # ✅ Get actual token counts from PydanticAI response
         # PydanticAI stores usage in result.usage() if available
@@ -304,9 +304,9 @@ Please provide a comprehensive 40-step analysis following all frameworks:
 
         total_tokens = input_tokens + output_tokens
 
-        # Claude 3.5 Sonnet pricing: $15/M input, $75/M output
-        input_cost = (input_tokens / 1_000_000) * 15
-        output_cost = (output_tokens / 1_000_000) * 75
+        # Gemini 2.0 Flash pricing: $0.10/M input, $0.40/M output
+        input_cost = (input_tokens / 1_000_000) * 0.10
+        output_cost = (output_tokens / 1_000_000) * 0.40
         total_cost = input_cost + output_cost
 
         # ✅ Cost cap validation
@@ -322,7 +322,7 @@ Please provide a comprehensive 40-step analysis following all frameworks:
 
         # Track LLM metrics
         metrics_tracker.track_llm_call(
-            model="claude-3-5-sonnet-20241022",
+            model="gemini-2.0-flash",
             prompt=f"Research: {idea_description[:100]}...",
             response=f"Opportunity: {research_data.opportunity_score}",
             input_tokens=input_tokens,
@@ -345,7 +345,7 @@ Please provide a comprehensive 40-step analysis following all frameworks:
 
         # Track failed call
         metrics_tracker.track_llm_call(
-            model="claude-3-5-sonnet-20241022",
+            model="gemini-2.0-flash",
             prompt=f"Research: {idea_description[:100]}...",
             response=None,
             input_tokens=len(prompt) // 4,

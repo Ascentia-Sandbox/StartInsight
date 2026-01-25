@@ -8,7 +8,7 @@ This agent extends the base analyzer with IdeaBrowser-parity features:
 - Proof signals
 - Execution plan
 
-Uses PydanticAI with Claude 3.5 Sonnet for structured output.
+Uses PydanticAI with Gemini 2.0 Flash for structured output.
 See architecture.md "Enhanced Scoring Architecture" for specification.
 """
 
@@ -278,11 +278,11 @@ Be specific, actionable, and realistic in your analysis."""
 
 
 def get_enhanced_agent() -> Agent:
-    """Get PydanticAI agent for enhanced analysis (API key from environment)."""
+    """Get PydanticAI agent for enhanced analysis (API key from GOOGLE_API_KEY env)."""
     return Agent(
-        model="anthropic:claude-3-5-sonnet-20241022",
+        model="google-gla:gemini-2.0-flash",
         system_prompt=ENHANCED_SYSTEM_PROMPT,
-        result_type=EnhancedInsightSchema,
+        output_type=EnhancedInsightSchema,
     )
 
 
@@ -318,7 +318,7 @@ async def analyze_signal_enhanced(raw_signal: RawSignal) -> Insight:
         latency_ms = (time.time() - start_time) * 1000
 
         # Extract structured data from agent response
-        insight_data = result.data
+        insight_data = result.output
 
         # Estimate tokens (rough approximation: ~4 chars per token)
         input_tokens = len(raw_signal.content) // 4
@@ -332,7 +332,7 @@ async def analyze_signal_enhanced(raw_signal: RawSignal) -> Insight:
 
         # Track LLM call metrics
         metrics_tracker.track_llm_call(
-            model="claude-3-5-sonnet-20241022",
+            model="gemini-2.0-flash",
             prompt=raw_signal.content[:200] + "...",  # Log first 200 chars
             response=insight_data.title,
             input_tokens=input_tokens,
@@ -388,7 +388,7 @@ async def analyze_signal_enhanced(raw_signal: RawSignal) -> Insight:
         # Track failed LLM call
         input_tokens = len(raw_signal.content) // 4
         metrics_tracker.track_llm_call(
-            model="claude-3-5-sonnet-20241022",
+            model="gemini-2.0-flash",
             prompt=raw_signal.content[:200] + "...",
             response=None,
             input_tokens=input_tokens,
@@ -470,7 +470,7 @@ async def upgrade_insight_scoring(
 
         # Call with enhanced prompt
         result = await agent.run(raw_signal.content)
-        insight_data = result.data
+        insight_data = result.output
 
         # Calculate latency
         latency_ms = (time.time() - start_time) * 1000
@@ -505,7 +505,7 @@ async def upgrade_insight_scoring(
         ) // 4
 
         metrics_tracker.track_llm_call(
-            model="claude-3-5-sonnet-20241022",
+            model="gemini-2.0-flash",
             prompt=f"Upgrade insight {existing_insight.id}",
             response=insight_data.title,
             input_tokens=input_tokens,

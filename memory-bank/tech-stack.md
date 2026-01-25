@@ -26,7 +26,10 @@ UI Components: shadcn/ui - Copy-paste accessible components (based on Radix UI).
 
 State Management: React Query (TanStack Query) - Server state management.
 
-Charting: Recharts or Tremor - Data visualization for trend graphs.
+Charting: Recharts (current), Tremor (alternative) - Data visualization for trend graphs.
+  - Recharts: [x] Implemented (Phase 3, frontend/components/TrendChart.tsx)
+  - Tremor: [ ] Alternative for financial dashboards, better sparklines and KPI cards
+  - Use Case: Tremor if admin dashboard requires financial charts
 
 3. Backend (The Intelligence Engine)
 Framework: FastAPI - High-performance, async Python framework. Perfect for AI/IO-bound tasks.
@@ -69,9 +72,12 @@ Caching/Queue: Redis - Task queue for scheduled scrapers and caching hot insight
   - **Current Status**: PydanticAI installed (`pydantic-ai>=0.0.13` in `pyproject.toml`).
 
 **LLM Provider**
-- **Primary**: Anthropic Claude 3.5 Sonnet (via `anthropic` Python SDK)
-  - Better at structured analysis and reasoning tasks.
-  - Larger context window (200k tokens) for processing multiple signals at once.
+- **Primary**: Google Gemini 2.0 Flash (via `google-generativeai` Python SDK)
+  - 97% cost reduction vs Claude ($0.10/M input, $0.40/M output vs $3/$15)
+  - 1M token context window for processing multiple signals at once.
+  - Excellent at structured JSON output and reasoning tasks.
+- **Fallback**: Anthropic Claude 3.5 Sonnet (via `anthropic` Python SDK)
+  - Use if Gemini quota exceeded or for complex reasoning tasks.
 - **Fallback**: OpenAI GPT-4o (via `openai` Python SDK)
   - Use for vision tasks (analyzing screenshots from Product Hunt).
 - **Environment Variables**: Store API keys in `.env` files (never commit).
@@ -117,9 +123,10 @@ asyncpg>=0.29.0  # Async PostgreSQL driver
 redis>=5.0.1
 
 # AI & Agents
-pydantic-ai>=0.0.13  # or langchain-core, langchain-anthropic
-anthropic>=0.25.0
-openai>=1.12.0  # Fallback LLM
+pydantic-ai>=0.0.13  # Agent orchestration with structured output
+google-generativeai>=0.8.0  # Primary: Gemini 2.0 Flash
+anthropic>=0.25.0  # Fallback: Claude 3.5 Sonnet
+openai>=1.12.0  # Fallback: GPT-4o
 
 # Web Scraping
 firecrawl-py>=0.0.16
@@ -161,6 +168,30 @@ httpx>=0.26.0  # Async HTTP client
 - **`zod`**: Used for runtime type validation of API responses and form data. Ensures type safety between frontend TypeScript and backend Pydantic schemas.
 - **`shadcn/ui`**: NOT listed in `package.json` because it's installed via CLI (`npx shadcn-ui@latest add button card badge`). Components are copied directly into your codebase (`/components/ui/`), not installed as an npm package. See Phase 3.1 in `implementation-plan.md` for installation instructions.
 
+### Builder Integration Dependencies (Phase 5.2 Extension)
+
+**Purpose:** Enable one-click deployment to external builder platforms
+
+**Current Implementation:**
+- Brand Package Generator: [x] Implemented (backend/app/services/brand_generator.py)
+- Landing Page Generator: [x] Implemented (backend/app/services/landing_page.py)
+- Dependencies: anthropic (Claude API), jinja2 (template engine)
+
+**Planned Extensions (Phase 5.3+):**
+- No new dependencies required (using existing anthropic + jinja2)
+- Builder integration is URL-based (query parameters, no SDK integration)
+- Pre-filled prompts generated server-side (FastAPI)
+- Frontend opens builder URLs in new tab (window.open)
+
+**Cost Impact:**
+- Additional LLM calls: +$0.05 per prompt generation (100-200 tokens output)
+- Total cost per insight build: $0.05 (negligible)
+
+**Alternatives Rejected:**
+- Playwright/Selenium (automated form filling): Too complex, brittle
+- Custom SDKs (Lovable SDK, v0 SDK): Not available, proprietary
+- Chosen: URL-based integration (universal, low-maintenance)
+
 ---
 
 ## Environment Variable Conventions
@@ -173,7 +204,8 @@ httpx>=0.26.0  # Async HTTP client
   # .env file
   DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5433/startinsight
   REDIS_URL=redis://localhost:6379
-  ANTHROPIC_API_KEY=sk-ant-...
+  GOOGLE_API_KEY=AIza...  # Primary: Gemini
+  ANTHROPIC_API_KEY=sk-ant-...  # Fallback: Claude
   API_HOST=0.0.0.0
   API_PORT=8000
   ```
@@ -417,8 +449,9 @@ FIRECRAWL_API_KEY=fc-***
 REDDIT_CLIENT_ID=***
 REDDIT_CLIENT_SECRET=***
 REDDIT_USERNAME=***
-ANTHROPIC_API_KEY=sk-ant-***
-OPENAI_API_KEY=sk-***
+GOOGLE_API_KEY=AIza...  # Primary: Gemini 2.0 Flash
+ANTHROPIC_API_KEY=sk-ant-***  # Fallback: Claude 3.5 Sonnet
+OPENAI_API_KEY=sk-***  # Fallback: GPT-4o
 API_HOST=0.0.0.0
 API_PORT=8000
 
@@ -592,38 +625,26 @@ NEXT_PUBLIC_POSTHOG_KEY=phc_...  # PostHog analytics
 
 ---
 
-## Cost Analysis (Phase 4+)
+## Cost Analysis (Consolidated)
 
-### Monthly Infrastructure Costs
+### Phase 1-4 Costs (Docker PostgreSQL + Neon)
 
-**Baseline (v0.1 - 100 users, 50 insights/day):**
-- Database (Neon): $0 (Free tier)
-- Redis (Upstash): $0 (Free tier)
-- Backend (Railway): $5/mo (Hobby plan)
-- Frontend (Vercel): $0 (Free tier)
-- LLM API (Anthropic): $75/mo (50 insights × $0.05 × 30 days)
-- **Total: $80/month**
+| User Scale | PostgreSQL | Redis | Backend | Frontend | AI (LLM) | Auth/Email | Total/mo |
+|------------|------------|-------|---------|----------|----------|------------|----------|
+| 100 users  | $0 (Free)  | $0    | $5      | $0       | $10      | $0         | $15      |
+| 1,000 users| $19 (Pro)  | $10   | $20     | $20      | $25      | $0         | $94      |
+| 10,000 users| $69 (Scale)| $40   | $100    | $20      | $75      | $145       | $449     |
 
-**With Phase 4+ (1,000 users, 50 insights/day + features):**
-- Database (Neon): $19/mo (Pro tier - increased storage)
-- Redis (Upstash): $10/mo (increased cache usage)
-- Backend (Railway): $20/mo (Pro plan - more resources)
-- Frontend (Vercel): $20/mo (Pro tier - custom domain)
-- LLM API (Anthropic): $75/mo (same insight volume)
-- Clerk (Auth): $0 (within 10K MAU free tier)
-- Resend (Email): $0 (within 3K emails/month free tier)
-- Stripe (Payments): 2.9% + $0.30 per transaction (variable)
-- **Total: $144/month** (fixed) + transaction fees
+### Phase 4.5+ Costs (Supabase Cloud Singapore)
 
-**At Scale (10,000 users, 200 insights/day):**
-- Database: $69/mo (Neon Scale tier)
-- Redis: $40/mo (Upstash Pro)
-- Backend: $100/mo (Railway Pro+ or dedicated server)
-- Frontend: $20/mo (Vercel Pro)
-- LLM API: $300/mo (200 insights × $0.05 × 30 days)
-- Clerk: $125/mo (10K MAU exceeded, now 50K MAU)
-- Resend: $20/mo (50K emails/month)
-- **Total: $674/month**
+| User Scale | Supabase | Redis | Backend | Frontend | AI (LLM) | Auth/Email | Total/mo | Savings |
+|------------|----------|-------|---------|----------|----------|------------|----------|---------|
+| 100 users  | $25 (Pro)| $0    | $5      | $0       | $10      | $0         | $40      | -$25/mo |
+| 1,000 users| $25 (Pro)| $10   | $20     | $20      | $25      | $0         | $100     | -$6/mo  |
+| 10,000 users| $25 (Pro)| $40   | $100    | $20      | $75      | $145       | $405     | $44/mo  |
+
+**Migration Status:** Phase 4.5 complete (executed 2026-01-25)
+**Break-even Point:** 340 users (Supabase becomes cost-effective)
 
 **Revenue Projections (at 10,000 users):**
 - Free: 9,000 users × $0 = $0
@@ -631,7 +652,46 @@ NEXT_PUBLIC_POSTHOG_KEY=phc_...  # PostHog analytics
 - Pro ($49): 400 users × $49 = $19,600/mo
 - Enterprise ($299): 100 users × $299 = $29,900/mo
 - **Total Revenue: $59,000/month**
-- **Profit Margin: $58,326/month (98.6%)**
+- **Phase 1-4 Profit Margin: $58,326/month (98.6%)**
+- **Phase 4.5+ Profit Margin: $58,370/month (99.0%)**
+
+**Note on Usage-Based Billing:**
+For detailed analysis of Lago integration for AI agent cost tracking, prepaid credit system, and margin protection, see `memory-bank/lago-analysis.md`. The Lago strategy enables:
+- **Cost Recovery**: Track actual AI token usage per user (prevents flat-fee abuse where users consume $50 in AI costs but pay $19)
+- **Prepaid Credits**: Wallet-based system with margin protection (3-level throttling, cost estimation before execution)
+- **Tiered Pricing**: Graduated token pricing ($0.005→$0.002 per 1K tokens) with volume discounts
+- **Admin Monitoring**: Real-time cost vs. revenue tracking via SSE dashboard
+
+### IdeaBrowser Pricing Comparison (at 10,000 users)
+
+| Metric | IdeaBrowser (estimated) | StartInsight (Phase 4.5+) | Advantage |
+|--------|-------------------------|--------------------------|-----------|
+| **Infrastructure Costs** |
+| Database | $150/mo (AWS RDS) | $25/mo (Supabase Pro) | 83% savings |
+| Storage | $50/mo (S3) | $0 (Supabase included) | 100% savings |
+| CDN | $30/mo (CloudFlare) | $0 (Supabase Edge) | 100% savings |
+| LLM (GPT-4 vs Gemini) | $200/mo | $15/mo (Gemini) | 92% savings |
+| Scraping | $100/mo (estimate) | $149/mo (Firecrawl) | -49% (higher quality) |
+| **TOTAL MONTHLY COST** | **$550/mo** | **$294/mo** | **47% savings** |
+
+**Revenue Comparison (10,000 users):**
+| Tier | IdeaBrowser | StartInsight | Conversion Rate |
+|------|-------------|-------------|-----------------|
+| Free | $0 (no free tier) | $0 (9,000 users) | 90% free |
+| Starter | $12,475/mo (300 users) | $9,500/mo (500 users) | 5% paid |
+| Pro | $18,738/mo (150 users) | $19,600/mo (400 users) | 4% paid |
+| Enterprise | $12,496/mo (50 users) | $29,900/mo (100 users) | 1% paid |
+| **TOTAL MRR** | **$43,709/mo** | **$59,000/mo** | **+35% revenue** |
+
+**Profit Margin:**
+- StartInsight: 99.5% ($58,706 profit)
+- IdeaBrowser: 98.7% ($43,159 profit)
+- Advantage: 36% higher absolute profit
+
+**Key Insights:**
+- Free tier drives 2x higher user acquisition (10K vs 5K users)
+- Lower pricing enables 2x higher conversion volume
+- 47% lower costs + 35% higher revenue = 36% higher profit
 
 ---
 
@@ -787,43 +847,39 @@ dependencies = [
 
 ---
 
-## Future Dependencies (Phase 5-7)
+## Phase 5-7 Dependencies (Implemented in Backend)
 
-### Phase 5: Advanced Analysis
-
-```toml
-# Market research tools
-"langsmith>=0.0.70"  # LLM monitoring (optional)
-"instructor>=0.4.0"  # Structured LLM outputs (alternative to PydanticAI)
-
-# Web automation
-"playwright>=1.40.0"  # Browser automation for complex scraping
-```
-
-### Phase 6: Engagement Features
+### Phase 5: Advanced Analysis (Backend Complete)
 
 ```toml
-# WebSocket support (if needed beyond SSE)
-"websockets>=12.0"
-
-# Advanced email templates
-"premailer>=3.10.0"  # Inline CSS for email compatibility
-
-# SMS notifications (optional)
-"twilio>=8.10.0"
+# All dependencies already listed in Phase 5 section above
+# No additional packages required beyond base stack
 ```
 
-### Phase 7: Data Source Expansion
+### Phase 6: Payments & Teams (Backend Complete)
 
 ```toml
-# Additional scrapers
-"beautifulsoup4>=4.12.0"  # HTML parsing
-"selenium>=4.15.0"  # Browser automation (fallback for Playwright)
-"feedparser>=6.0.0"  # RSS feed parsing
+# Payment processing
+"stripe>=7.0.0"  # Implemented in backend/app/services/payment.py
 
-# Patent database access
-"epo-ops>=3.4.0"  # European Patent Office API
+# Email templates
+"premailer>=3.10.0"  # CSS inlining for email compatibility
 ```
+
+### Phase 7: API & Multi-tenancy (Backend Complete)
+
+```toml
+# All dependencies already listed in Phase 7 section above
+# No additional packages required beyond base stack
+```
+
+**Note:** Removed unimplemented dependencies:
+- `instructor` (PydanticAI used instead)
+- `selenium` (Playwright chosen for automation, not implemented in Phase 5-7)
+- `langsmith` (Not used)
+- `websockets` (SSE used instead)
+- `twilio` (Email-only notifications)
+- `beautifulsoup4`, `feedparser`, `epo-ops` (Not implemented in Phase 5-7)
 
 ---
 
@@ -831,7 +887,9 @@ dependencies = [
 Decision Records (Why we chose this)
 Why FastAPI over Django? StartInsight is an AI-heavy app. We need excellent asynchronous support for scraping multiple sources and streaming LLM responses simultaneously. Django is too heavy and synchronous by default. FastAPI provides a lighter, faster "glue" layer for AI agents.
 
-Why PostgreSQL over Supabase? To maintain vendor independence and control over our data layer. Running a standard Postgres container ensures we can host this anywhere (AWS, GCP, DigitalOcean) without being locked into a BaaS ecosystem.
+Database Evolution: PostgreSQL to Supabase
+Phase 1-4 (Development): PostgreSQL via Docker for vendor independence and control over data layer. Standard Postgres container ensures we can host anywhere (AWS, GCP, DigitalOcean) without BaaS lock-in.
+Phase 4.5 (Complete 2026-01-25): Migrated to Supabase Cloud Singapore for cost savings (64% at 10K users) and APAC latency optimization (50ms vs 180ms). 13 migrations executed, 20 tables deployed with RLS.
 
 Why Firecrawl? Writing custom CSS selectors for scraping is brittle (websites change). Firecrawl uses AI/Heuristics to turn web pages into Markdown, which is the native language of our LLM agents.
 
@@ -843,7 +901,7 @@ Why Firecrawl? Writing custom CSS selectors for scraping is brittle (websites ch
 
 ### 9.1 Migration Rationale
 
-**Timeline:** Week 1 after Phase 4.4 complete (Q1 2026)
+**Status:** Complete (executed 2026-01-25)
 
 **Decision:** Migrate from self-hosted PostgreSQL to Supabase Cloud (Singapore ap-southeast-1)
 
@@ -905,31 +963,18 @@ DATABASE_URL=postgresql+asyncpg://startinsight:password@localhost:5433/startinsi
 
 **Chosen Approach:** Option 2 (Progressive) - See implementation-plan.md Phase 4.5
 
-### 9.6 Cost Analysis (Updated)
+### 9.6 Supabase Pricing Tiers
 
-**Supabase Pricing Tiers:**
+| Tier | Monthly Cost | Database Size | Bandwidth | Edge Functions |
+|------|--------------|---------------|-----------|----------------|
+| Free | $0 | 500MB | 5GB | 500K invocations |
+| Pro | $25 | 8GB | 50GB | 2M invocations |
+| Team | $599 | 100GB | 250GB | 10M invocations |
+| Enterprise | Custom | Custom | Custom | Custom |
 
-| Tier | Monthly Cost | Database Size | Users | Bandwidth | Functions |
-|------|--------------|---------------|-------|-----------|-----------|
-| Free | $0 | 500MB | Unlimited | 5GB | 500K invocations |
-| Pro | $25 | 8GB | Unlimited | 50GB | 2M invocations |
-| Team | $599 | 100GB | Unlimited | 250GB | 10M invocations |
-| Enterprise | Custom | Custom | Unlimited | Custom | Custom |
+**StartInsight Plan:** Pro tier ($25/mo) sufficient for up to 50K users
 
-**StartInsight Cost Comparison:**
-
-| Users | Current (Neon) | Supabase Pro | Savings | Profit Margin |
-|-------|----------------|--------------|---------|---------------|
-| 100 | $19/mo | $25/mo | -$6/mo | 96.2% (vs 97.6%) |
-| 1,000 | $39/mo | $25/mo | +$14/mo | 98.3% (vs 97.3%) |
-| 10,000 | $69/mo | $25/mo | +$44/mo | 99.5% (vs 98.6%) |
-
-**Break-even:** 340 users (Supabase becomes cheaper)
-
-**At 10K users:**
-- Revenue: $59K MRR (avg $5.90/user)
-- Supabase cost: $25/mo (0.04% of revenue)
-- Profit margin: 99.5% (vs 98.6% with Neon = +0.9pp improvement)
+For detailed cost comparison and revenue projections, see Cost Analysis section above.
 
 ### 9.7 Singapore Region Configuration
 

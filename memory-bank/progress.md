@@ -117,6 +117,21 @@ This file tracks all significant changes made to the project. Each entry follows
 
 <!-- New entries follow simplified format (max 50 words) -->
 
+- [2026-01-25] [GEMINI-MIGRATION]: Migrated AI analysis from Claude to Gemini 2.0 Flash
+  - Files: analyzer.py, enhanced_analyzer.py, research_agent.py, brand_generator.py, landing_page.py, config.py, .env.example
+  - Tech: PydanticAI model="google-gla:gemini-2.0-flash", 97% cost reduction ($0.10/M vs $3/M tokens)
+  - Status: [x] Complete
+
+- [2026-01-25] [ACTIVE-CONTEXT-REVISION]: Synchronized active-context.md with recent memory-bank updates
+  - Files: active-context.md
+  - Tech: Added 8 competitive advantages section, Production Deployment Checklist, removed outdated Next Steps section
+  - Status: [✓ Complete]
+
+- [2026-01-25] [MEMORY-BANK-ALIGNMENT]: IdeaBrowser competitive positioning documentation
+  - Files: project-brief.md, architecture.md, tech-stack.md, implementation-plan.md
+  - Tech: Added 8 competitive advantages, Evidence Engine architecture, Builder Integration, IdeaBrowser gap analysis
+  - Status: [✓ Complete]
+
 - [2026-01-25] [SETTINGS-PAGE-COMPLETE]: User profile and preferences page
   - Profile: Display name updates via updateUserProfile API
   - Preferences: Daily digest, research notifications stored in user preferences
