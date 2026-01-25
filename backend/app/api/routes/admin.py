@@ -1,0 +1,633 @@
+"""Admin API endpoints - Phase 4.2 admin portal.
+
+Endpoints:
+- /api/admin/dashboard - Overview metrics
+- /api/admin/events - SSE stream for real-time updates
+- /api/admin/agents/* - Agent control (pause/resume/trigger)
+- /api/admin/insights/* - Insight moderation
+- /api/admin/metrics - System metrics query
+
+See architecture.md "Admin Portal Architecture" for full specification.
+"""
+
+import asyncio
+import json
+import logging
+from datetime import datetime, timedelta
+from typing import Annotated
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func, select, text
+from sqlalchemy.ext.asyncio import AsyncSession
+from sse_starlette.sse import EventSourceResponse
+
+from app.api.deps import AdminUser
+from app.db.session import get_db
+from app.models.agent_execution_log import AgentExecutionLog
+from app.models.insight import Insight
+from app.models.system_metric import SystemMetric
+from app.schemas.admin import (
+    AgentControlResponse,
+    AgentStatusResponse,
+    AgentType,
+    DashboardMetricsResponse,
+    ErrorSummaryResponse,
+    ExecutionLogListResponse,
+    ExecutionLogResponse,
+    InsightAdminUpdate,
+    InsightReviewResponse,
+    MetricQueryRequest,
+    MetricResponse,
+    MetricSummaryResponse,
+    ReviewQueueResponse,
+)
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+
+# ============================================
+# DASHBOARD ENDPOINTS
+# ============================================
+
+
+@router.get("/dashboard", response_model=DashboardMetricsResponse)
+async def get_dashboard_metrics(
+    admin: AdminUser,
+    db: AsyncSession = Depends(get_db),
+) -> DashboardMetricsResponse:
+    """
+    Get admin dashboard overview metrics.
+
+    Returns:
+    - Agent states (running/paused)
+    - Recent execution logs
+    - LLM cost today
+    - Pending insights count
+    """
+    metrics = await _gather_admin_metrics(db)
+    logger.info(f"Admin dashboard accessed by {admin.email}")
+    return DashboardMetricsResponse(**metrics)
+
+
+@router.get("/events")
+async def admin_event_stream(
+    admin: AdminUser,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Server-Sent Events stream for real-time admin dashboard updates.
+
+    Sends metrics_update events every 5 seconds.
+    """
+
+    async def event_generator():
+        while True:
+            try:
+                # Gather metrics
+                metrics = await _gather_admin_metrics(db)
+
+                # Send update
+                yield {
+                    "event": "metrics_update",
+                    "data": json.dumps(metrics, default=str),
+                    "retry": 5000,
+                }
+
+                # Wait 5 seconds
+                await asyncio.sleep(5)
+
+            except asyncio.CancelledError:
+                logger.info(f"Admin SSE disconnected: {admin.email}")
+                break
+            except Exception as e:
+                logger.error(f"SSE error: {e}")
+                yield {
+                    "event": "error",
+                    "data": json.dumps({"error": str(e)}),
+                }
+                await asyncio.sleep(5)
+
+    logger.info(f"Admin SSE connected: {admin.email}")
+    return EventSourceResponse(event_generator())
+
+
+async def _gather_admin_metrics(db: AsyncSession) -> dict:
+    """Gather all metrics for admin dashboard."""
+
+    # Get agent states from recent logs
+    agent_types = ["reddit_scraper", "product_hunt_scraper", "trends_scraper", "analyzer"]
+    agent_states = {}
+
+    for agent in agent_types:
+        # Get most recent log for this agent
+        result = await db.execute(
+            select(AgentExecutionLog)
+            .where(AgentExecutionLog.agent_type == agent)
+            .order_by(AgentExecutionLog.created_at.desc())
+            .limit(1)
+        )
+        log = result.scalar_one_or_none()
+        agent_states[agent] = log.status if log else "unknown"
+
+    # Get last 10 execution logs
+    logs_result = await db.execute(
+        select(AgentExecutionLog)
+        .order_by(AgentExecutionLog.created_at.desc())
+        .limit(10)
+    )
+    recent_logs = [
+        ExecutionLogResponse.model_validate(log).model_dump()
+        for log in logs_result.scalars().all()
+    ]
+
+    # Get LLM cost today
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    cost_result = await db.execute(
+        select(func.sum(SystemMetric.metric_value)).where(
+            SystemMetric.metric_type == "llm_cost",
+            SystemMetric.recorded_at >= today_start,
+        )
+    )
+    llm_cost_today = float(cost_result.scalar_one() or 0.0)
+
+    # Get pending insights count
+    pending_result = await db.execute(
+        select(func.count()).select_from(Insight).where(Insight.admin_status == "pending")
+    )
+    pending_count = pending_result.scalar_one() or 0
+
+    # Get total insights today
+    insights_today_result = await db.execute(
+        select(func.count()).select_from(Insight).where(Insight.created_at >= today_start)
+    )
+    total_insights_today = insights_today_result.scalar_one() or 0
+
+    # Get errors today
+    errors_result = await db.execute(
+        select(func.count()).select_from(SystemMetric).where(
+            SystemMetric.metric_type == "error_rate",
+            SystemMetric.recorded_at >= today_start,
+        )
+    )
+    errors_today = errors_result.scalar_one() or 0
+
+    return {
+        "agent_states": agent_states,
+        "recent_logs": recent_logs,
+        "llm_cost_today": llm_cost_today,
+        "pending_insights": pending_count,
+        "total_insights_today": total_insights_today,
+        "errors_today": errors_today,
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+
+
+# ============================================
+# AGENT CONTROL ENDPOINTS
+# ============================================
+
+
+@router.get("/agents", response_model=list[AgentStatusResponse])
+async def list_agents(
+    admin: AdminUser,
+    db: AsyncSession = Depends(get_db),
+) -> list[AgentStatusResponse]:
+    """
+    List all agents with their current status.
+    """
+    agents = ["reddit_scraper", "product_hunt_scraper", "trends_scraper", "analyzer"]
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    results = []
+
+    for agent_type in agents:
+        # Get last run
+        last_result = await db.execute(
+            select(AgentExecutionLog)
+            .where(AgentExecutionLog.agent_type == agent_type)
+            .order_by(AgentExecutionLog.created_at.desc())
+            .limit(1)
+        )
+        last_log = last_result.scalar_one_or_none()
+
+        # Count items processed today
+        processed_result = await db.execute(
+            select(func.sum(AgentExecutionLog.items_processed)).where(
+                AgentExecutionLog.agent_type == agent_type,
+                AgentExecutionLog.created_at >= today_start,
+            )
+        )
+        items_today = processed_result.scalar_one() or 0
+
+        # Count errors today
+        errors_result = await db.execute(
+            select(func.count()).select_from(AgentExecutionLog).where(
+                AgentExecutionLog.agent_type == agent_type,
+                AgentExecutionLog.status == "failed",
+                AgentExecutionLog.created_at >= today_start,
+            )
+        )
+        errors_today = errors_result.scalar_one() or 0
+
+        results.append(
+            AgentStatusResponse(
+                agent_type=agent_type,
+                state="running",  # Default state
+                last_run=last_log.completed_at if last_log else None,
+                last_status=last_log.status if last_log else None,
+                items_processed_today=items_today,
+                errors_today=errors_today,
+            )
+        )
+
+    return results
+
+
+@router.get("/agents/{agent_type}/logs", response_model=ExecutionLogListResponse)
+async def get_agent_logs(
+    agent_type: str,
+    admin: AdminUser,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    db: AsyncSession = Depends(get_db),
+) -> ExecutionLogListResponse:
+    """
+    Get execution logs for a specific agent.
+    """
+    # Get total count
+    count_result = await db.execute(
+        select(func.count()).select_from(AgentExecutionLog).where(
+            AgentExecutionLog.agent_type == agent_type
+        )
+    )
+    total = count_result.scalar_one() or 0
+
+    # Get logs
+    logs_result = await db.execute(
+        select(AgentExecutionLog)
+        .where(AgentExecutionLog.agent_type == agent_type)
+        .order_by(AgentExecutionLog.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    logs = logs_result.scalars().all()
+
+    return ExecutionLogListResponse(
+        items=[ExecutionLogResponse.model_validate(log) for log in logs],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@router.post("/agents/{agent_type}/pause", response_model=AgentControlResponse)
+async def pause_agent(
+    agent_type: AgentType,
+    admin: AdminUser,
+    db: AsyncSession = Depends(get_db),
+) -> AgentControlResponse:
+    """
+    Pause agent execution.
+
+    Agent will skip next scheduled run until resumed.
+    """
+    # Log admin action
+    log = AgentExecutionLog(
+        agent_type=agent_type.value,
+        status="skipped",
+        error_message=f"Paused by admin {admin.email}",
+        extra_metadata={"action": "pause", "admin_id": str(admin.id)},
+    )
+    db.add(log)
+    await db.commit()
+
+    logger.info(f"Agent {agent_type} paused by admin {admin.email}")
+
+    return AgentControlResponse(
+        status="paused",
+        agent_type=agent_type.value,
+        triggered_by=admin.email,
+        timestamp=datetime.utcnow(),
+    )
+
+
+@router.post("/agents/{agent_type}/resume", response_model=AgentControlResponse)
+async def resume_agent(
+    agent_type: AgentType,
+    admin: AdminUser,
+    db: AsyncSession = Depends(get_db),
+) -> AgentControlResponse:
+    """
+    Resume paused agent execution.
+    """
+    # Log admin action
+    log = AgentExecutionLog(
+        agent_type=agent_type.value,
+        status="running",
+        error_message=f"Resumed by admin {admin.email}",
+        extra_metadata={"action": "resume", "admin_id": str(admin.id)},
+    )
+    db.add(log)
+    await db.commit()
+
+    logger.info(f"Agent {agent_type} resumed by admin {admin.email}")
+
+    return AgentControlResponse(
+        status="running",
+        agent_type=agent_type.value,
+        triggered_by=admin.email,
+        timestamp=datetime.utcnow(),
+    )
+
+
+@router.post("/agents/{agent_type}/trigger", response_model=AgentControlResponse)
+async def trigger_agent(
+    agent_type: AgentType,
+    admin: AdminUser,
+    db: AsyncSession = Depends(get_db),
+) -> AgentControlResponse:
+    """
+    Manually trigger agent execution (out of schedule).
+    """
+    # Create execution log
+    log = AgentExecutionLog(
+        agent_type=agent_type.value,
+        status="running",
+        extra_metadata={"action": "manual_trigger", "admin_id": str(admin.id)},
+    )
+    db.add(log)
+    await db.commit()
+    await db.refresh(log)
+
+    # TODO: Actually enqueue the task with Arq
+    # from app.worker import arq_redis
+    # job = await arq_redis.enqueue_job(task_map[agent_type])
+
+    logger.info(f"Agent {agent_type} triggered by admin {admin.email}")
+
+    return AgentControlResponse(
+        status="triggered",
+        agent_type=agent_type.value,
+        triggered_by=admin.email,
+        job_id=str(log.id),
+        timestamp=datetime.utcnow(),
+    )
+
+
+# ============================================
+# INSIGHT MODERATION ENDPOINTS
+# ============================================
+
+
+@router.get("/insights", response_model=ReviewQueueResponse)
+async def get_review_queue(
+    admin: AdminUser,
+    status_filter: Annotated[str | None, Query(alias="status")] = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    db: AsyncSession = Depends(get_db),
+) -> ReviewQueueResponse:
+    """
+    Get insights review queue.
+
+    - **status**: Filter by admin_status (pending, approved, rejected)
+    """
+    # Build query
+    query = select(Insight).order_by(Insight.created_at.desc())
+    if status_filter:
+        query = query.where(Insight.admin_status == status_filter)
+
+    # Get total
+    count_query = select(func.count()).select_from(Insight)
+    if status_filter:
+        count_query = count_query.where(Insight.admin_status == status_filter)
+    total = await db.scalar(count_query) or 0
+
+    # Get status counts
+    pending_count = await db.scalar(
+        select(func.count()).select_from(Insight).where(Insight.admin_status == "pending")
+    ) or 0
+    approved_count = await db.scalar(
+        select(func.count()).select_from(Insight).where(Insight.admin_status == "approved")
+    ) or 0
+    rejected_count = await db.scalar(
+        select(func.count()).select_from(Insight).where(Insight.admin_status == "rejected")
+    ) or 0
+
+    # Get insights
+    result = await db.execute(query.limit(limit).offset(offset))
+    insights = result.scalars().all()
+
+    return ReviewQueueResponse(
+        items=[
+            InsightReviewResponse(
+                id=i.id,
+                problem_statement=i.problem_statement,
+                proposed_solution=i.proposed_solution,
+                relevance_score=i.relevance_score,
+                admin_status=i.admin_status or "approved",
+                admin_notes=i.admin_notes,
+                source=i.raw_signal.source if i.raw_signal else "unknown",
+                created_at=i.created_at,
+            )
+            for i in insights
+        ],
+        total=total,
+        pending_count=pending_count,
+        approved_count=approved_count,
+        rejected_count=rejected_count,
+    )
+
+
+@router.patch("/insights/{insight_id}", response_model=InsightReviewResponse)
+async def update_insight_status(
+    insight_id: UUID,
+    update_data: InsightAdminUpdate,
+    admin: AdminUser,
+    db: AsyncSession = Depends(get_db),
+) -> InsightReviewResponse:
+    """
+    Update insight admin status (approve/reject).
+    """
+    # Get insight
+    insight = await db.get(Insight, insight_id)
+    if not insight:
+        raise HTTPException(status_code=404, detail="Insight not found")
+
+    # Get admin_users record for edited_by FK
+    from app.models.admin_user import AdminUser as AdminUserModel
+
+    admin_record_result = await db.execute(
+        select(AdminUserModel).where(AdminUserModel.user_id == admin.id)
+    )
+    admin_record = admin_record_result.scalar_one_or_none()
+
+    # Update fields
+    if update_data.admin_status is not None:
+        insight.admin_status = update_data.admin_status
+    if update_data.admin_notes is not None:
+        insight.admin_notes = update_data.admin_notes
+    if update_data.admin_override_score is not None:
+        insight.admin_override_score = update_data.admin_override_score
+
+    # Track who edited
+    if admin_record:
+        insight.edited_by = admin_record.id
+    insight.edited_at = datetime.utcnow()
+
+    await db.commit()
+    await db.refresh(insight)
+
+    logger.info(f"Admin {admin.email} updated insight {insight_id}")
+
+    return InsightReviewResponse(
+        id=insight.id,
+        problem_statement=insight.problem_statement,
+        proposed_solution=insight.proposed_solution,
+        relevance_score=insight.relevance_score,
+        admin_status=insight.admin_status or "approved",
+        admin_notes=insight.admin_notes,
+        source=insight.raw_signal.source if insight.raw_signal else "unknown",
+        created_at=insight.created_at,
+    )
+
+
+@router.delete("/insights/{insight_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_insight(
+    insight_id: UUID,
+    admin: AdminUser,
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """
+    Delete an insight (admin only).
+    """
+    insight = await db.get(Insight, insight_id)
+    if not insight:
+        raise HTTPException(status_code=404, detail="Insight not found")
+
+    await db.delete(insight)
+    await db.commit()
+
+    logger.info(f"Admin {admin.email} deleted insight {insight_id}")
+
+
+# ============================================
+# METRICS ENDPOINTS
+# ============================================
+
+
+@router.get("/metrics", response_model=list[MetricResponse])
+async def query_metrics(
+    admin: AdminUser,
+    metric_type: Annotated[str | None, Query()] = None,
+    start_date: Annotated[datetime | None, Query()] = None,
+    end_date: Annotated[datetime | None, Query()] = None,
+    limit: Annotated[int, Query(ge=1, le=1000)] = 100,
+    db: AsyncSession = Depends(get_db),
+) -> list[MetricResponse]:
+    """
+    Query system metrics with filters.
+    """
+    query = select(SystemMetric).order_by(SystemMetric.recorded_at.desc())
+
+    if metric_type:
+        query = query.where(SystemMetric.metric_type == metric_type)
+    if start_date:
+        query = query.where(SystemMetric.recorded_at >= start_date)
+    if end_date:
+        query = query.where(SystemMetric.recorded_at <= end_date)
+
+    result = await db.execute(query.limit(limit))
+    metrics = result.scalars().all()
+
+    return [MetricResponse.model_validate(m) for m in metrics]
+
+
+@router.get("/metrics/summary", response_model=MetricSummaryResponse)
+async def get_metrics_summary(
+    metric_type: str,
+    admin: AdminUser,
+    hours: Annotated[int, Query(ge=1, le=168)] = 24,
+    db: AsyncSession = Depends(get_db),
+) -> MetricSummaryResponse:
+    """
+    Get aggregated summary for a metric type.
+    """
+    start_time = datetime.utcnow() - timedelta(hours=hours)
+
+    # Aggregate metrics
+    result = await db.execute(
+        select(
+            func.count().label("count"),
+            func.sum(SystemMetric.metric_value).label("total"),
+            func.avg(SystemMetric.metric_value).label("average"),
+            func.min(SystemMetric.metric_value).label("min_value"),
+            func.max(SystemMetric.metric_value).label("max_value"),
+        ).where(
+            SystemMetric.metric_type == metric_type,
+            SystemMetric.recorded_at >= start_time,
+        )
+    )
+    row = result.one()
+
+    return MetricSummaryResponse(
+        metric_type=metric_type,
+        count=row.count or 0,
+        total=float(row.total or 0),
+        average=float(row.average or 0),
+        min_value=float(row.min_value or 0),
+        max_value=float(row.max_value or 0),
+        period_start=start_time,
+        period_end=datetime.utcnow(),
+    )
+
+
+@router.get("/errors", response_model=ErrorSummaryResponse)
+async def get_error_summary(
+    admin: AdminUser,
+    hours: Annotated[int, Query(ge=1, le=168)] = 24,
+    db: AsyncSession = Depends(get_db),
+) -> ErrorSummaryResponse:
+    """
+    Get error summary for the specified time period.
+    """
+    start_time = datetime.utcnow() - timedelta(hours=hours)
+
+    # Get total errors
+    total_result = await db.execute(
+        select(func.count()).select_from(SystemMetric).where(
+            SystemMetric.metric_type == "error_rate",
+            SystemMetric.recorded_at >= start_time,
+        )
+    )
+    total_errors = total_result.scalar_one() or 0
+
+    # Get errors by type (from dimensions)
+    errors_result = await db.execute(
+        select(SystemMetric).where(
+            SystemMetric.metric_type == "error_rate",
+            SystemMetric.recorded_at >= start_time,
+        ).order_by(SystemMetric.recorded_at.desc()).limit(50)
+    )
+    errors = errors_result.scalars().all()
+
+    # Aggregate by type and source
+    errors_by_type: dict[str, int] = {}
+    errors_by_source: dict[str, int] = {}
+
+    for error in errors:
+        error_type = error.dimensions.get("error_type", "unknown")
+        source = error.dimensions.get("source", "unknown")
+
+        errors_by_type[error_type] = errors_by_type.get(error_type, 0) + 1
+        if source:
+            errors_by_source[source] = errors_by_source.get(source, 0) + 1
+
+    return ErrorSummaryResponse(
+        total_errors_today=total_errors,
+        errors_by_type=errors_by_type,
+        errors_by_source=errors_by_source,
+        recent_errors=[],  # TODO: Convert to ErrorEntry list
+    )

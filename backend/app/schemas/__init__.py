@@ -1,5 +1,53 @@
-"""Pydantic schemas for API responses."""
+"""Pydantic schemas for API responses.
 
+Phase 1-3: Signals, Insights
+Phase 4.1: User authentication and workspace
+Phase 4.2: Admin portal
+"""
+
+from app.schemas.enhanced_insight import (
+    EnhancedInsightCreate,
+    EnhancedInsightResponse,
+    EnhancedScoreBase,
+    EnhancedScoreResponse,
+    ExecutionStep,
+    ProofSignal,
+    ScoreFilter,
+    ScoreRanking,
+    ValueLadderTier,
+)
+from app.schemas.research import (
+    ResearchAnalysisListResponse,
+    ResearchAnalysisResponse,
+    ResearchAnalysisSummary,
+    ResearchProgressUpdate,
+    ResearchQuotaResponse,
+    ResearchRequestCreate,
+)
+from app.schemas.admin import (
+    AdminRole,
+    AdminUserCreate,
+    AdminUserListResponse,
+    AdminUserResponse,
+    AgentControlRequest,
+    AgentControlResponse,
+    AgentState,
+    AgentStatusResponse,
+    AgentType,
+    DashboardMetricsResponse,
+    ErrorEntry,
+    ErrorSummaryResponse,
+    ExecutionLogListResponse,
+    ExecutionLogResponse,
+    ExecutionStatus,
+    InsightAdminUpdate,
+    InsightReviewResponse,
+    MetricQueryRequest,
+    MetricResponse,
+    MetricSummaryResponse,
+    ReviewQueueResponse,
+    SSEMessage,
+)
 from app.schemas.insight import (
     CompetitorResponse,
     InsightListResponse,
@@ -12,8 +60,28 @@ from app.schemas.signals import (
     RawSignalResponse,
     SignalStatsResponse,
 )
+from app.schemas.user import (
+    ClaimResponse,
+    InteractionCreate,
+    InteractionResponse,
+    InteractionStatsResponse,
+    RatingCreate,
+    RatingListResponse,
+    RatingResponse,
+    RatingUpdate,
+    SavedInsightCreate,
+    SavedInsightListResponse,
+    SavedInsightResponse,
+    SavedInsightUpdate,
+    ShareResponse,
+    UserCreate,
+    UserResponse,
+    UserUpdate,
+    WorkspaceStatusResponse,
+)
 
 __all__ = [
+    # Phase 1-3: Signals & Insights
     "RawSignalResponse",
     "RawSignalListResponse",
     "PaginatedResponse",
@@ -22,4 +90,63 @@ __all__ = [
     "InsightListResponse",
     "CompetitorResponse",
     "RawSignalSummary",
+    # Phase 4.1: User & Workspace
+    "UserCreate",
+    "UserResponse",
+    "UserUpdate",
+    "SavedInsightCreate",
+    "SavedInsightResponse",
+    "SavedInsightUpdate",
+    "SavedInsightListResponse",
+    "RatingCreate",
+    "RatingResponse",
+    "RatingUpdate",
+    "RatingListResponse",
+    "WorkspaceStatusResponse",
+    "ClaimResponse",
+    "ShareResponse",
+    # Phase 4.4: Interaction Tracking
+    "InteractionCreate",
+    "InteractionResponse",
+    "InteractionStatsResponse",
+    # Phase 4.2: Admin Portal
+    "AdminRole",
+    "AdminUserCreate",
+    "AdminUserListResponse",
+    "AdminUserResponse",
+    "AgentControlRequest",
+    "AgentControlResponse",
+    "AgentState",
+    "AgentStatusResponse",
+    "AgentType",
+    "DashboardMetricsResponse",
+    "ErrorEntry",
+    "ErrorSummaryResponse",
+    "ExecutionLogListResponse",
+    "ExecutionLogResponse",
+    "ExecutionStatus",
+    "InsightAdminUpdate",
+    "InsightReviewResponse",
+    "MetricQueryRequest",
+    "MetricResponse",
+    "MetricSummaryResponse",
+    "ReviewQueueResponse",
+    "SSEMessage",
+    # Phase 4.3: Enhanced 8-Dimension Scoring
+    "EnhancedScoreBase",
+    "EnhancedScoreResponse",
+    "EnhancedInsightCreate",
+    "EnhancedInsightResponse",
+    "ValueLadderTier",
+    "ProofSignal",
+    "ExecutionStep",
+    "ScoreFilter",
+    "ScoreRanking",
+    # Phase 5.1: AI Research Agent
+    "ResearchRequestCreate",
+    "ResearchAnalysisResponse",
+    "ResearchAnalysisSummary",
+    "ResearchAnalysisListResponse",
+    "ResearchProgressUpdate",
+    "ResearchQuotaResponse",
 ]

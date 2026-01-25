@@ -97,7 +97,30 @@ async def root():
 
 
 # Import and include routers
-from app.api.routes import insights, signals  # noqa: E402
+from app.api.routes import (  # noqa: E402
+    admin,
+    api_keys,
+    build_tools,
+    export,
+    feed,
+    insights,
+    payments,
+    research,
+    signals,
+    teams,
+    tenants,
+    users,
+)
 
 app.include_router(signals.router, prefix="/api", tags=["Signals"])
 app.include_router(insights.router, tags=["Insights"])
+app.include_router(users.router, tags=["Users"])  # Phase 4.1
+app.include_router(admin.router, tags=["Admin"])  # Phase 4.2
+app.include_router(research.router, tags=["Research"])  # Phase 5.1
+app.include_router(build_tools.router, tags=["Build Tools"])  # Phase 5.2
+app.include_router(export.router, tags=["Export"])  # Phase 5.3
+app.include_router(feed.router, tags=["Real-time Feed"])  # Phase 5.4
+app.include_router(payments.router, tags=["Payments"])  # Phase 6.1
+app.include_router(teams.router, tags=["Teams"])  # Phase 6.4
+app.include_router(api_keys.router, tags=["API Keys"])  # Phase 7.2
+app.include_router(tenants.router, tags=["Tenants"])  # Phase 7.3

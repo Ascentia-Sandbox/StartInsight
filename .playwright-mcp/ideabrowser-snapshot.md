@@ -1,0 +1,330 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - banner [ref=e4]:
+        - generic [ref=e5]:
+          - link "Ideabrowser symbol Ideabrowser" [ref=e7] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e8]:
+              - img "Ideabrowser symbol" [ref=e10]
+              - img "Ideabrowser" [ref=e11]
+          - button "Neo Cycling 1" [ref=e13] [cursor=pointer]:
+            - img [ref=e14]
+            - generic [ref=e15]:
+              - img "Neo Cycling" [ref=e17]
+              - generic [ref=e18]: "1"
+      - generic [ref=e20]:
+        - generic [ref=e21]:
+          - heading "Your Dashboard" [level=1] [ref=e22]
+          - paragraph [ref=e23]: Track your progress and manage your entrepreneurial journey
+        - generic [ref=e24]:
+          - generic [ref=e25]:
+            - generic [ref=e26]:
+              - link "Free" [ref=e28] [cursor=pointer]:
+                - /url: /pricing
+              - generic [ref=e29]:
+                - generic [ref=e30]:
+                  - link "Neo Cycling Edit" [ref=e32] [cursor=pointer]:
+                    - /url: /account
+                    - img "Neo Cycling" [ref=e33]
+                    - generic [ref=e35]: Edit
+                  - link "Neo Cycling neocyclingshop@gmail.com" [ref=e37] [cursor=pointer]:
+                    - /url: /account
+                    - generic [ref=e38]: Neo Cycling
+                    - generic [ref=e39]: neocyclingshop@gmail.com
+                - link "Add your bio..." [ref=e41] [cursor=pointer]:
+                  - /url: /account
+                - link "Complete Your Business Profile 2-minute setup Get Started →" [ref=e43] [cursor=pointer]:
+                  - /url: /dashboard/profile
+                  - generic [ref=e44]:
+                    - img [ref=e46]
+                    - heading "Complete Your Business Profile" [level=4] [ref=e49]
+                    - paragraph [ref=e50]: 2-minute setup
+                    - generic [ref=e51]:
+                      - generic [ref=e52]: Get Started
+                      - generic [ref=e53]: →
+            - generic [ref=e54]:
+              - heading "Account Management" [level=3] [ref=e55]
+              - link "Manage Account" [ref=e56] [cursor=pointer]:
+                - /url: /account
+                - img [ref=e57]
+                - text: Manage Account
+              - link "Billing & Subscription" [ref=e60] [cursor=pointer]:
+                - /url: /billing
+                - img [ref=e61]
+                - text: Billing & Subscription
+            - generic [ref=e64]:
+              - generic [ref=e65]: Most Popular
+              - heading "Starter" [level=3] [ref=e66]
+              - paragraph [ref=e67]: Find winning ideas
+              - generic [ref=e68]:
+                - generic [ref=e69]: $499/year
+                - paragraph [ref=e70]: $1.37/day
+              - list [ref=e71]:
+                - listitem [ref=e72]:
+                  - img [ref=e73]
+                  - generic [ref=e75]: 800+ researched ideas
+                - listitem [ref=e76]:
+                  - img [ref=e77]
+                  - generic [ref=e79]: 20 AI-generated ideas/mo
+                - listitem [ref=e80]:
+                  - img [ref=e81]
+                  - generic [ref=e83]: Founder Fit assessments
+                - listitem [ref=e84]:
+                  - img [ref=e85]
+                  - generic [ref=e87]: Market insights database
+              - link "Unlock Starter" [ref=e88] [cursor=pointer]:
+                - /url: /pricing
+                - text: Unlock Starter
+                - img [ref=e89]
+            - generic [ref=e91]:
+              - generic [ref=e92]:
+                - generic [ref=e93]:
+                  - img [ref=e94]
+                  - heading "Notifications" [level=2] [ref=e97]
+                - link "View All" [ref=e98] [cursor=pointer]:
+                  - /url: /dashboard/notifications
+                  - text: View All
+                  - img [ref=e99]
+              - link "Welcome to Ideabrowser Welcome to Ideabrowser! Take a tour of what's included with your free membership." [ref=e103] [cursor=pointer]:
+                - /url: /welcome-tour
+                - generic [ref=e104]:
+                  - img [ref=e106]
+                  - generic [ref=e109]:
+                    - heading "Welcome to Ideabrowser" [level=3] [ref=e110]
+                    - generic [ref=e112]: Welcome to Ideabrowser! Take a tour of what's included with your free membership.
+            - generic [ref=e113]:
+              - generic [ref=e114]:
+                - generic [ref=e115]:
+                  - img [ref=e116]
+                  - heading "Recent Activity" [level=2] [ref=e120]
+                - link "View All" [ref=e121] [cursor=pointer]:
+                  - /url: /dashboard/recent-activity
+                  - text: View All
+                  - img [ref=e122]
+              - paragraph [ref=e126]: No recent activity
+          - generic [ref=e127]:
+            - generic [ref=e129]:
+              - generic [ref=e130]:
+                - img [ref=e132]
+                - heading "Welcome to IdeaBrowser" [level=2] [ref=e134]
+              - paragraph [ref=e135]: Click the button below for a complete platform guide and learn how to get the most out of your free plan.
+              - generic [ref=e136]:
+                - link "Platform Guide" [ref=e137] [cursor=pointer]:
+                  - /url: /welcome-tour
+                  - img [ref=e138]
+                  - text: Platform Guide
+                - link "Compare Plans" [ref=e140] [cursor=pointer]:
+                  - /url: /pricing
+            - generic [ref=e141]:
+              - heading "Explore & Build" [level=2] [ref=e142]
+              - generic [ref=e143]:
+                - generic [ref=e144]:
+                  - heading "Find Ideas" [level=3] [ref=e145]:
+                    - button "Find Ideas" [expanded] [ref=e146] [cursor=pointer]:
+                      - heading "Find Ideas" [level=3] [ref=e147]
+                      - img [ref=e148]
+                  - region "Find Ideas" [ref=e150]:
+                    - generic [ref=e152]:
+                      - link "Idea Database Fully-researched startup ideas with market analysis" [ref=e153] [cursor=pointer]:
+                        - /url: /database
+                        - generic [ref=e154]:
+                          - img [ref=e156]
+                          - generic [ref=e160]:
+                            - heading "Idea Database" [level=4] [ref=e161]
+                            - paragraph [ref=e162]: Fully-researched startup ideas with market analysis
+                          - img [ref=e163]
+                      - link "Trends See what's exploding before markets get saturated" [ref=e165] [cursor=pointer]:
+                        - /url: /trends
+                        - generic [ref=e166]:
+                          - img [ref=e168]
+                          - generic [ref=e171]:
+                            - heading "Trends" [level=4] [ref=e172]
+                            - paragraph [ref=e173]: See what's exploding before markets get saturated
+                          - img [ref=e174]
+                      - link "Market Insights Real problems from online communities" [ref=e176] [cursor=pointer]:
+                        - /url: /market-insights
+                        - generic [ref=e177]:
+                          - img [ref=e179]
+                          - generic [ref=e184]:
+                            - heading "Market Insights" [level=4] [ref=e185]
+                            - paragraph [ref=e186]: Real problems from online communities
+                          - img [ref=e187]
+                      - link "Idea GeneratorSTARTER AI creates ideas matched to your skills & situation" [ref=e189] [cursor=pointer]:
+                        - /url: /idea-generator
+                        - generic [ref=e190]:
+                          - img [ref=e192]
+                          - generic [ref=e194]:
+                            - heading "Idea GeneratorSTARTER" [level=4] [ref=e195]
+                            - paragraph [ref=e196]: AI creates ideas matched to your skills & situation
+                          - img [ref=e197]
+                - heading "Build Ideas" [level=3] [ref=e200]:
+                  - button "Build Ideas" [ref=e201] [cursor=pointer]:
+                    - heading "Build Ideas" [level=3] [ref=e202]
+                    - img [ref=e203]
+                - heading "Resources & Support" [level=3] [ref=e206]:
+                  - button "Resources & Support" [ref=e207] [cursor=pointer]:
+                    - heading "Resources & Support" [level=3] [ref=e208]
+                    - img [ref=e209]
+            - generic [ref=e211]:
+              - generic [ref=e212]:
+                - heading "Your Workspace" [level=2] [ref=e213]
+                - paragraph [ref=e214]: Your ideas, chats, assessments, and saved content
+              - generic [ref=e215]:
+                - generic [ref=e217]:
+                  - img [ref=e219]
+                  - generic [ref=e221]:
+                    - heading "My Researched Ideas" [level=3] [ref=e222]
+                    - generic [ref=e223]:
+                      - link "Learn More" [ref=e224] [cursor=pointer]:
+                        - /url: /idea-agent
+                      - link "Upgrade" [ref=e225] [cursor=pointer]:
+                        - /url: /pricing
+                - generic [ref=e227]:
+                  - img [ref=e229]
+                  - generic [ref=e231]:
+                    - heading "My Generated Ideas" [level=3] [ref=e232]
+                    - generic [ref=e233]:
+                      - link "Learn More" [ref=e234] [cursor=pointer]:
+                        - /url: /idea-generator
+                      - link "Upgrade" [ref=e235] [cursor=pointer]:
+                        - /url: /pricing
+                - link "My Market Insights 0" [ref=e236] [cursor=pointer]:
+                  - /url: /dashboard/my-market-insights
+                  - generic [ref=e238]:
+                    - img [ref=e240]
+                    - generic [ref=e243]:
+                      - heading "My Market Insights" [level=3] [ref=e244]
+                      - paragraph [ref=e245]: "0"
+                - link "My Trends 0" [ref=e246] [cursor=pointer]:
+                  - /url: /dashboard/my-trends
+                  - generic [ref=e248]:
+                    - img [ref=e250]
+                    - generic [ref=e253]:
+                      - heading "My Trends" [level=3] [ref=e254]
+                      - paragraph [ref=e255]: "0"
+                - generic [ref=e257]:
+                  - img [ref=e259]
+                  - generic [ref=e261]:
+                    - heading "My Chats" [level=3] [ref=e262]
+                    - generic [ref=e263]:
+                      - link "Learn More" [ref=e264] [cursor=pointer]:
+                        - /url: /ai-chat
+                      - link "Upgrade" [ref=e265] [cursor=pointer]:
+                        - /url: /pricing
+                - generic [ref=e267]:
+                  - img [ref=e269]
+                  - generic [ref=e273]:
+                    - heading "My Assessments" [level=3] [ref=e274]
+                    - generic [ref=e275]:
+                      - link "Learn More" [ref=e276] [cursor=pointer]:
+                        - /url: /founder-fit
+                      - link "Upgrade" [ref=e277] [cursor=pointer]:
+                        - /url: /pricing
+                - generic [ref=e279]:
+                  - img [ref=e281]
+                  - generic [ref=e283]:
+                    - heading "My Claimed Ideas" [level=3] [ref=e284]
+                    - link "Learn More" [ref=e286] [cursor=pointer]:
+                      - /url: /claim-idea
+                - link "My Saved Ideas 0" [ref=e287] [cursor=pointer]:
+                  - /url: /dashboard/saved-ideas
+                  - generic [ref=e289]:
+                    - img [ref=e291]
+                    - generic [ref=e293]:
+                      - heading "My Saved Ideas" [level=3] [ref=e294]
+                      - paragraph [ref=e295]: "0"
+    - contentinfo [ref=e296]:
+      - generic [ref=e297]:
+        - generic [ref=e298]:
+          - generic [ref=e299]:
+            - link [ref=e300] [cursor=pointer]:
+              - /url: /
+              - img [ref=e301]
+            - paragraph [ref=e339]: Get ideas for profitable startups, trending keywords, and go-to-market tactics, powered by data.
+          - generic [ref=e341]:
+            - generic [ref=e342]:
+              - heading "Browse Ideas" [level=3] [ref=e343]
+              - list [ref=e344]:
+                - listitem [ref=e345]:
+                  - link "Idea of the Day" [ref=e346] [cursor=pointer]:
+                    - /url: /idea-of-the-day
+                - listitem [ref=e347]:
+                  - link "Idea Database" [ref=e348] [cursor=pointer]:
+                    - /url: /database
+                - listitem [ref=e349]:
+                  - link "Trends" [ref=e350] [cursor=pointer]:
+                    - /url: /trends
+                - listitem [ref=e351]:
+                  - link "Market Insights" [ref=e352] [cursor=pointer]:
+                    - /url: /market-insights
+            - generic [ref=e353]:
+              - heading "Tools" [level=3] [ref=e354]
+              - list [ref=e355]:
+                - listitem [ref=e356]:
+                  - link "Idea Generator" [ref=e357] [cursor=pointer]:
+                    - /url: /idea-generator
+                - listitem [ref=e358]:
+                  - link "Research Your Ideas" [ref=e359] [cursor=pointer]:
+                    - /url: /idea-agent
+                - listitem [ref=e360]:
+                  - link "Idea Builder" [ref=e361] [cursor=pointer]:
+                    - /url: /idea-builder
+                - listitem [ref=e362]:
+                  - link "Chat & Strategize" [ref=e363] [cursor=pointer]:
+                    - /url: /ai-chat
+                - listitem [ref=e364]:
+                  - link "Founder Fit" [ref=e365] [cursor=pointer]:
+                    - /url: /founder-fit
+            - generic [ref=e366]:
+              - heading "Resources" [level=3] [ref=e367]
+              - list [ref=e368]:
+                - listitem [ref=e369]:
+                  - link "Platform Tour" [ref=e370] [cursor=pointer]:
+                    - /url: /welcome-tour
+                - listitem [ref=e371]:
+                  - link "Features" [ref=e372] [cursor=pointer]:
+                    - /url: /features
+                - listitem [ref=e373]:
+                  - link "Tools Library" [ref=e374] [cursor=pointer]:
+                    - /url: /tools
+                - listitem [ref=e375]:
+                  - link "Pricing" [ref=e376] [cursor=pointer]:
+                    - /url: /pricing
+                - listitem [ref=e377]:
+                  - link "FAQ" [ref=e378] [cursor=pointer]:
+                    - /url: /frequently-asked-questions
+            - generic [ref=e379]:
+              - heading "Company" [level=3] [ref=e380]
+              - list [ref=e381]:
+                - listitem [ref=e382]:
+                  - link "About" [ref=e383] [cursor=pointer]:
+                    - /url: /about
+                - listitem [ref=e384]:
+                  - link "Success Stories" [ref=e385] [cursor=pointer]:
+                    - /url: /success-stories
+                - listitem [ref=e386]:
+                  - link "Announcements" [ref=e387] [cursor=pointer]:
+                    - /url: /announcements
+                - listitem [ref=e388]:
+                  - link "What's New" [ref=e389] [cursor=pointer]:
+                    - /url: /updates
+                - listitem [ref=e390]:
+                  - link "Contact & Support" [ref=e391] [cursor=pointer]:
+                    - /url: /contact
+        - generic [ref=e392]:
+          - generic [ref=e393]:
+            - paragraph [ref=e394]: © 2026 Ideabrowser. All rights reserved.
+            - generic [ref=e395]:
+              - link "Terms and Conditions" [ref=e396] [cursor=pointer]:
+                - /url: /terms
+              - link "Privacy Policy" [ref=e397] [cursor=pointer]:
+                - /url: /privacy
+              - link "Data Protection" [ref=e398] [cursor=pointer]:
+                - /url: /data-protection
+              - link "Disclaimer" [ref=e399] [cursor=pointer]:
+                - /url: /disclaimer
+          - paragraph [ref=e400]: Ideabrowser shares research and education, not promises or advice. Revenue estimates, scores, and examples are illustrative only; your results will vary. Always do your own due diligence.
+    - region "Notifications alt+T"
+  - region "Notifications alt+T"
+  - alert [ref=e401]

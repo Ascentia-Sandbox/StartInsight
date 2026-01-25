@@ -123,6 +123,55 @@ async def get_daily_top(
     return [InsightResponse.model_validate(i) for i in insights]
 
 
+@router.get("/idea-of-the-day", response_model=InsightResponse | None)
+async def get_idea_of_the_day(
+    db: AsyncSession = Depends(get_db),
+) -> InsightResponse | None:
+    """
+    Get featured "Idea of the Day" insight.
+
+    Returns a high-quality insight deterministically selected for the current day.
+    The selection stays consistent throughout the day (uses date as seed).
+
+    Selection criteria:
+    - Relevance score >= 0.7 (high quality)
+    - Created within last 7 days (fresh)
+    - Deterministic selection based on date (same insight all day)
+    """
+    import hashlib
+
+    # Calculate 7 days ago for freshness filter
+    week_ago = datetime.utcnow() - timedelta(days=7)
+
+    # Get qualifying insights (high quality, recent)
+    query = (
+        select(Insight)
+        .options(selectinload(Insight.raw_signal))
+        .where(Insight.relevance_score >= 0.7)
+        .where(Insight.created_at >= week_ago)
+        .order_by(Insight.relevance_score.desc())
+        .limit(20)  # Get top 20 candidates
+    )
+
+    result = await db.execute(query)
+    candidates = list(result.scalars().all())
+
+    if not candidates:
+        logger.warning("No qualifying insights for idea of the day")
+        return None
+
+    # Deterministic selection based on today's date
+    today_str = datetime.utcnow().strftime("%Y-%m-%d")
+    date_hash = int(hashlib.md5(today_str.encode()).hexdigest(), 16)
+    selected_index = date_hash % len(candidates)
+
+    selected_insight = candidates[selected_index]
+
+    logger.info(f"Idea of the day: {selected_insight.id} (index {selected_index})")
+
+    return InsightResponse.model_validate(selected_insight)
+
+
 @router.get("/{insight_id}", response_model=InsightResponse)
 async def get_insight(
     insight_id: UUID,

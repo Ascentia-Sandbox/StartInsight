@@ -1,9 +1,13 @@
-"""Insight database model - AI-analyzed structured insights."""
+"""Insight database model - AI-analyzed structured insights.
+
+Phase 1-3: Basic insight analysis
+Phase 4.3: Enhanced 8-dimension scoring (IdeaBrowser parity)
+"""
 
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, Float, ForeignKey, String, Text, func
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -20,6 +24,23 @@ class Insight(Base):
     - Market size estimate
     - Relevance score (0.0 - 1.0)
     - Competitor analysis (up to 3 competitors)
+
+    Phase 4.3 Enhanced Scoring (8 dimensions):
+    - opportunity_score: Market size (1-10)
+    - problem_score: Pain severity (1-10)
+    - feasibility_score: Technical difficulty (1-10)
+    - why_now_score: Market timing (1-10)
+    - revenue_potential: $, $$, $$$, $$$$
+    - execution_difficulty: Complexity (1-10)
+    - go_to_market_score: Distribution ease (1-10)
+    - founder_fit_score: Skill requirements (1-10)
+
+    Advanced Frameworks:
+    - value_ladder: 4-tier pricing model
+    - market_gap_analysis: 200-500 word competitor gap analysis
+    - why_now_analysis: 200-500 word timing analysis
+    - proof_signals: 3-5 validation evidence pieces
+    - execution_plan: 5-7 actionable launch steps
     """
 
     __tablename__ = "insights"
@@ -75,6 +96,114 @@ class Insight(Base):
         doc="List of up to 3 competitors with name, URL, description, market position",
     )
 
+    # ============================================
+    # Phase 4.3: Enhanced 8-Dimension Scoring
+    # ============================================
+
+    # Optional title for display
+    title: Mapped[str | None] = mapped_column(
+        String(200),
+        nullable=True,
+        doc="Optional display title for this insight",
+    )
+
+    # Core Opportunity Metrics (1-10 scale)
+    opportunity_score: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        index=True,
+        doc="Market size: 1=tiny, 10=massive",
+    )
+
+    problem_score: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        index=True,
+        doc="Pain severity: 1=nice-to-have, 10=existential",
+    )
+
+    feasibility_score: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        index=True,
+        doc="Technical ease: 1=breakthrough needed, 10=weekend project",
+    )
+
+    why_now_score: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        index=True,
+        doc="Market timing: 1=too early/late, 10=perfect inflection",
+    )
+
+    # Business Fit Metrics
+    revenue_potential: Mapped[str | None] = mapped_column(
+        String(4),
+        nullable=True,
+        index=True,
+        doc="$=low, $$=medium, $$$=high, $$$$=very high",
+    )
+
+    execution_difficulty: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        index=True,
+        doc="Complexity: 1=weekend, 10=multi-year enterprise",
+    )
+
+    go_to_market_score: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        index=True,
+        doc="Distribution: 1=enterprise sales, 10=viral PLG",
+    )
+
+    founder_fit_score: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        index=True,
+        doc="Skills: 1=PhD + 10 years, 10=anyone can learn",
+    )
+
+    # ============================================
+    # Advanced Frameworks (IdeaBrowser Parity)
+    # ============================================
+
+    # Value Ladder: 4-tier pricing model
+    value_ladder: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        doc="4-tier value ladder: lead_magnet, frontend, core, backend",
+    )
+
+    # Market Gap Analysis: 200-500 word competitor gap analysis
+    market_gap_analysis: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+        doc="200-500 word analysis of competitor gaps",
+    )
+
+    # Why Now Analysis: 200-500 word timing analysis
+    why_now_analysis: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+        doc="200-500 word analysis of market timing",
+    )
+
+    # Proof Signals: 3-5 validation evidence pieces
+    proof_signals: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        doc="3-5 validation evidence pieces",
+    )
+
+    # Execution Plan: 5-7 actionable launch steps
+    execution_plan: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        doc="5-7 actionable launch steps",
+    )
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -90,6 +219,23 @@ class Insight(Base):
         back_populates="insights",
         lazy="selectin",
         doc="The source raw signal for this insight",
+    )
+
+    interactions: Mapped[list["InsightInteraction"]] = relationship(
+        "InsightInteraction",
+        back_populates="insight",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        doc="User interactions with this insight (Phase 4.4)",
+    )
+
+    # Phase 6.4: Team shares relationship
+    team_shares: Mapped[list["SharedInsight"]] = relationship(
+        "SharedInsight",
+        back_populates="insight",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        doc="Teams this insight is shared with (Phase 6.4)",
     )
 
     def __repr__(self) -> str:

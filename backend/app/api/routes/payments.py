@@ -1,0 +1,218 @@
+"""Payment API Routes - Phase 6.1.
+
+Endpoints for Stripe subscription management.
+"""
+
+import logging
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel, Field
+
+from app.api.deps import get_current_user
+from app.models import User
+from app.services.payment_service import (
+    PRICING_TIERS,
+    create_checkout_session,
+    create_customer_portal_session,
+    handle_webhook_event,
+)
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/api/payments", tags=["Payments"])
+
+
+# ============================================================
+# Request/Response Schemas
+# ============================================================
+
+
+class CheckoutRequest(BaseModel):
+    """Checkout session request."""
+
+    tier: str = Field(..., pattern=r"^(starter|pro|enterprise)$")
+    billing_cycle: str = Field(default="monthly", pattern=r"^(monthly|yearly)$")
+    success_url: str
+    cancel_url: str
+
+
+class CheckoutResponse(BaseModel):
+    """Checkout session response."""
+
+    session_id: str
+    checkout_url: str
+
+
+class PortalRequest(BaseModel):
+    """Customer portal request."""
+
+    return_url: str
+
+
+class PricingResponse(BaseModel):
+    """Pricing information response."""
+
+    tiers: dict[str, Any]
+
+
+# ============================================================
+# Pricing Endpoints
+# ============================================================
+
+
+@router.get("/pricing", response_model=PricingResponse)
+async def get_pricing() -> PricingResponse:
+    """
+    Get pricing tiers and features.
+
+    Public endpoint - no authentication required.
+    """
+    tiers_data = {}
+    for tier_name, tier_config in PRICING_TIERS.items():
+        tiers_data[tier_name] = {
+            "name": tier_config.name,
+            "price_monthly": tier_config.price_monthly / 100,  # Convert to dollars
+            "price_yearly": tier_config.price_yearly / 100,
+            "features": tier_config.features,
+            "limits": tier_config.limits,
+        }
+
+    return PricingResponse(tiers=tiers_data)
+
+
+# ============================================================
+# Checkout Endpoints
+# ============================================================
+
+
+@router.post("/checkout", response_model=CheckoutResponse)
+async def create_checkout(
+    request: CheckoutRequest,
+    current_user: User = Depends(get_current_user),
+) -> CheckoutResponse:
+    """
+    Create a Stripe checkout session for subscription.
+
+    Requires authentication.
+    """
+    result = await create_checkout_session(
+        user_id=str(current_user.id),
+        tier=request.tier,
+        success_url=request.success_url,
+        cancel_url=request.cancel_url,
+        billing_cycle=request.billing_cycle,
+    )
+
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create checkout session",
+        )
+
+    return CheckoutResponse(
+        session_id=result["id"],
+        checkout_url=result["url"],
+    )
+
+
+@router.post("/portal")
+async def create_portal_session(
+    request: PortalRequest,
+    current_user: User = Depends(get_current_user),
+) -> dict[str, str]:
+    """
+    Create a Stripe customer portal session for subscription management.
+
+    Requires authentication. User must have an active subscription.
+    """
+    # In production, get stripe_customer_id from user's subscription
+    subscription = current_user.subscription if hasattr(current_user, "subscription") else None
+
+    if not subscription or not hasattr(subscription, "stripe_customer_id"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No active subscription found",
+        )
+
+    result = await create_customer_portal_session(
+        stripe_customer_id=subscription.stripe_customer_id,
+        return_url=request.return_url,
+    )
+
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create portal session",
+        )
+
+    return {"portal_url": result["url"]}
+
+
+# ============================================================
+# Webhook Endpoint
+# ============================================================
+
+
+@router.post("/webhook")
+async def handle_stripe_webhook(request: Request) -> dict[str, str]:
+    """
+    Handle Stripe webhook events.
+
+    This endpoint is called by Stripe to notify of subscription events.
+    """
+    payload = await request.body()
+    signature = request.headers.get("stripe-signature", "")
+
+    result = await handle_webhook_event(payload, signature)
+
+    if result.get("status") == "error":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=result.get("error", "Webhook processing failed"),
+        )
+
+    return {"status": "processed", "event_type": result.get("event_type", "unknown")}
+
+
+# ============================================================
+# Subscription Status
+# ============================================================
+
+
+@router.get("/subscription")
+async def get_subscription_status(
+    current_user: User = Depends(get_current_user),
+) -> dict[str, Any]:
+    """
+    Get current user's subscription status.
+
+    Requires authentication.
+    """
+    subscription = current_user.subscription if hasattr(current_user, "subscription") else None
+
+    if not subscription:
+        return {
+            "tier": "free",
+            "status": "active",
+            "limits": PRICING_TIERS["free"].limits,
+        }
+
+    return {
+        "tier": subscription.tier if hasattr(subscription, "tier") else "free",
+        "status": subscription.status if hasattr(subscription, "status") else "active",
+        "current_period_end": (
+            subscription.current_period_end.isoformat()
+            if hasattr(subscription, "current_period_end") and subscription.current_period_end
+            else None
+        ),
+        "cancel_at_period_end": (
+            subscription.cancel_at_period_end
+            if hasattr(subscription, "cancel_at_period_end")
+            else False
+        ),
+        "limits": PRICING_TIERS.get(
+            subscription.tier if hasattr(subscription, "tier") else "free",
+            PRICING_TIERS["free"],
+        ).limits,
+    }

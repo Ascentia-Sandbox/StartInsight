@@ -93,14 +93,14 @@ Guidelines:
 Output Format:
 Return a structured JSON object matching the InsightSchema format."""
 
-# Create PydanticAI agent (API key read from ANTHROPIC_API_KEY environment variable)
-def get_agent() -> Agent:
+# Create PydanticAI agent (API key read from GOOGLE_API_KEY environment variable)
+def get_agent() -> Agent[None, InsightSchema]:
     """Get PydanticAI agent (API key from environment)."""
-    # PydanticAI automatically reads ANTHROPIC_API_KEY from environment
+    # PydanticAI automatically reads GOOGLE_API_KEY from environment
     return Agent(
-        model="anthropic:claude-3-5-sonnet-20241022",
+        model="google-gla:gemini-2.0-flash",  # Using Gemini instead of Claude
         system_prompt=SYSTEM_PROMPT,
-        result_type=InsightSchema,
+        output_type=InsightSchema,  # Changed from result_type in PydanticAI v1.x
     )
 
 
@@ -136,7 +136,7 @@ async def analyze_signal(raw_signal: RawSignal) -> Insight:
         latency_ms = (time.time() - start_time) * 1000
 
         # Extract structured data from agent response
-        insight_data = result.data
+        insight_data = result.output  # Changed from result.data in PydanticAI v1.x
 
         # Estimate tokens (rough approximation: ~4 chars per token)
         input_tokens = len(raw_signal.content) // 4
@@ -148,7 +148,7 @@ async def analyze_signal(raw_signal: RawSignal) -> Insight:
 
         # Track LLM call metrics
         metrics_tracker.track_llm_call(
-            model="claude-3-5-sonnet-20241022",
+            model="gemini-2.0-flash",
             prompt=raw_signal.content[:200] + "...",  # Log first 200 chars
             response=insight_data.title,
             input_tokens=input_tokens,

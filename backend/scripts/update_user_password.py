@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""
+Update user password in Supabase
+"""
+import asyncio
+import os
+import sys
+from dotenv import load_dotenv
+from supabase import create_client, Client
+
+load_dotenv()
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+async def update_password(email: str, new_password: str):
+    """Update user password with service role key"""
+    # Use service role client (bypasses RLS)
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+    print(f"Updating password for: {email}")
+
+    try:
+        # First, get the user by email
+        user_query = supabase.table("users").select("supabase_user_id").eq("email", email).execute()
+
+        if not user_query.data:
+            print(f"❌ User not found: {email}")
+            return
+
+        supabase_user_id = user_query.data[0]["supabase_user_id"]
+
+        # Update password using Admin API
+        response = supabase.auth.admin.update_user_by_id(
+            supabase_user_id,
+            {
+                "password": new_password
+            }
+        )
+
+        print(f"✅ Password updated successfully for {email}")
+        print(f"\nNew credentials:")
+        print(f"Email: {email}")
+        print(f"Password: {new_password}")
+        print(f"\nYou can now sign in at: http://localhost:3000/auth/login")
+
+    except Exception as e:
+        print(f"❌ Error updating password: {e}")
+
+if __name__ == "__main__":
+    # Get email and password from command line
+    if len(sys.argv) >= 3:
+        email = sys.argv[1]
+        password = sys.argv[2]
+    else:
+        email = "user1@testing.com"
+        password = "Abcd1234"
+
+    asyncio.run(update_password(email, password))
