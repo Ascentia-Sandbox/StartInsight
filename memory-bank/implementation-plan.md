@@ -899,15 +899,15 @@ chmod +x frontend/scripts/vibe_check_phase_3.sh
 **Priority:** CRITICAL (foundation for all future features)
 
 **Phase 4 Overview:**
-- **Phase 4.1-4.4**: User authentication, admin portal, enhanced scoring, workspace features (Weeks 1-12)
-- **Phase 4.5**: Supabase Cloud migration (Weeks 13-16, see Section 4.5 below for detailed 4-week plan)
+- **Phase 4.1-4.4**: User authentication, admin portal, enhanced scoring, workspace features
+- **Phase 4.5**: Supabase Cloud migration (see Section 4.5 below for detailed plan)
 - **Phase 5-7**: Advanced features (see Phase 5-7 sections below)
 
 ---
 
-### 4.1 User Authentication (Weeks 1-2)
+### 4.1 User Authentication
 
-**Status:** 🟡 60% Complete (Backend done, Frontend pending)
+**Status:** 60% Complete (Backend done, Frontend pending)
 **Technology:** Clerk (Free up to 10K MAU, JWT-based)
 **Architecture:** JWT Bearer Token: `User → Clerk → JWT → Frontend → Backend → Database`
 
@@ -935,9 +935,9 @@ chmod +x frontend/scripts/vibe_check_phase_3.sh
 
 ---
 
-### 4.2 Admin Portal (Weeks 2-3)
+### 4.2 Admin Portal
 
-**Status:** 🔴 0% Complete
+**Status:** 0% Complete
 **Technology:** Server-Sent Events (SSE) for real-time updates (sse-starlette>=2.0.0)
 **Objective:** AI agent monitoring, manual control, insight quality control, cost tracking
 
@@ -966,9 +966,9 @@ chmod +x frontend/scripts/vibe_check_phase_3.sh
 
 ---
 
-### 4.3 Multi-Dimensional Scoring (Weeks 3-4)
+### 4.3 Multi-Dimensional Scoring
 
-**Status:** 🔴 0% Complete
+**Status:** 0% Complete
 **Objective:** Match IdeaBrowser's 8-dimension scoring + business frameworks
 **Architecture:** Single-prompt approach (~$0.05/insight vs $0.20 parallel)
 
@@ -1019,9 +1019,9 @@ chmod +x frontend/scripts/vibe_check_phase_3.sh
 
 ---
 
-### 4.4 User Workspace & Status Tracking (Week 4)
+### 4.4 User Workspace & Status Tracking
 
-**Status:** 🔴 0% Complete
+**Status:** 0% Complete
 **Objective:** User interaction features (status tracking, sharing, idea of the day)
 
 **Backend Tasks:**
@@ -1100,9 +1100,14 @@ chmod +x frontend/scripts/vibe_check_phase_3.sh
 
 ---
 
-### Week 1: Planning & Setup (8 Tasks, 16 Hours)
+### 4.5.1 Planning & Setup
 
-#### 1.1 Create Supabase Project (1 hour)
+**Scope:** 8 tasks
+**Estimated Duration:** ~16 hours
+**Complexity:** Medium
+
+#### Task 4.5.1.1: Create Supabase Project
+**Duration:** ~1 hour
 
 **Tasks:**
 1. Sign up for Supabase Pro ($25/mo)
@@ -1124,7 +1129,8 @@ curl https://[project-ref].supabase.co/rest/v1/
 
 ---
 
-#### 1.2 Schema Migration (Alembic → Supabase SQL) (3 hours)
+#### Task 4.5.1.2: Schema Migration (Alembic → Supabase SQL)
+**Duration:** ~3 hours
 
 **Tasks:**
 1. Export current schema from PostgreSQL:
@@ -1374,7 +1380,11 @@ SELECT 'Supabase', COUNT(*) FROM insights;
 
 ---
 
-### Week 2: Backend Integration (6 Tasks, 16 Hours)
+### 4.5.2 Backend Integration
+
+**Scope:** 6 tasks
+**Estimated Duration:** ~16 hours
+**Complexity:** Medium
 
 #### 2.1 Install Supabase Dependencies (1 hour)
 
@@ -1569,7 +1579,11 @@ export async function getInsights() {
 
 ---
 
-### Week 3: Testing & Validation (5 Tasks, 12 Hours)
+### 4.5.3 Testing & Validation
+
+**Scope:** 5 tasks
+**Estimated Duration:** ~12 hours
+**Complexity:** Medium
 
 #### 3.1 Performance Benchmarking (3 hours)
 
@@ -1686,7 +1700,11 @@ export async function getInsights() {
 
 ---
 
-### Week 4: Cutover & Cleanup (4 Tasks, 5 Hours)
+### 4.5.4 Cutover & Cleanup
+
+**Scope:** 4 tasks
+**Estimated Duration:** ~5 hours
+**Complexity:** Low
 
 #### 4.1 Production Deployment (2 hours)
 
@@ -3280,7 +3298,7 @@ echo "[x] Phase 5 Complete Vibe Check PASSED"
 
 ---
 
-## Phase 6: Payments, Email & Engagement (Weeks 23-28)
+## Phase 6: Payments, Email & Engagement
 
 **Duration:** 6 weeks
 **Objective:** Monetization infrastructure, user engagement features
@@ -3492,7 +3510,7 @@ CREATE TABLE team_members (
 
 ---
 
-## Phase 7: Data Source Expansion & Public API (Weeks 29-34)
+## Phase 7: Data Source Expansion & Public API
 
 **Duration:** 6 weeks
 **Objective:** Twitter/X integration, public API, white-label options
@@ -3639,8 +3657,6 @@ CREATE TABLE tenants (
 | **Phase 7.1** | 2 weeks | ⚪ Pending | 0% | ~150 lines |
 | **Phase 7.2** | 2 weeks | ⚪ Pending | 0% | ~150 lines |
 | **Phase 7.3** | 2 weeks | ⚪ Pending | 0% | ~150 lines |
-
-**Total Estimated Timeline:** 46 weeks (~11 months)
 
 ---
 
