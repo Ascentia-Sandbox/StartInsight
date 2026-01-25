@@ -2909,7 +2909,45 @@ CREATE POLICY "Only service role can write"
 - Use `auth.jwt()` to extract Clerk user ID from JWT
 - Service role bypasses RLS (backend uses service_role key)
 
-### 10.3 Connection Pooling
+### 10.3 Database Architecture Decision (2026-01-25)
+
+**Production Database:** Supabase Cloud (Singapore ap-southeast-1)
+**Connection Method:** Dual-mode support
+
+#### Primary: SQLAlchemy (ORM Operations)
+- Connection: PostgreSQL protocol via AsyncPG
+- Usage: All CRUD operations, Alembic migrations
+- Supabase URL: `postgresql://[user]:[pass]@db.[project].supabase.co:5432/postgres`
+- Advantage: Type-safe ORM, migration version control
+
+#### Secondary: Supabase Client (Advanced Features)
+- Connection: Supabase REST API + WebSocket
+- Usage: Row-Level Security, real-time subscriptions (Phase 5+), storage
+- Advantage: Built-in RLS, real-time, edge functions
+
+#### Local Development Options
+
+**Option A: Supabase Cloud (Recommended)**
+- Best for testing RLS policies
+- Same environment as production
+- Required for real-time feature testing
+
+**Option B: Docker PostgreSQL (Faster Iteration)**
+- Offline development capability
+- Faster test execution (no network latency)
+- Cost-free local iterations
+- Rollback safety net
+
+#### Why Keep PostgreSQL Docker?
+1. Offline development capability
+2. Faster test execution (no network latency)
+3. Cost-free local iterations
+4. Rollback safety if Supabase issues arise
+5. Supabase IS PostgreSQL (100% compatible)
+
+**Migration Status:** Backend 100% ready, pending Supabase project creation
+
+### 10.4 Connection Pooling
 
 #### Current (SQLAlchemy)
 
@@ -2957,7 +2995,7 @@ class DualWriteSession:
         # Supabase commit is automatic (no transactions in PostgREST)
 ```
 
-### 10.4 Real-time Features (Phase 5.1)
+### 10.5 Real-time Features (Phase 5.1)
 
 **Supabase Realtime vs Current SSE:**
 
@@ -3009,7 +3047,7 @@ useEffect(() => {
 }, [])
 ```
 
-### 10.5 Migration Risks & Mitigation
+### 10.6 Migration Risks & Mitigation
 
 | Risk | Probability | Impact | Mitigation |
 |------|-------------|--------|------------|

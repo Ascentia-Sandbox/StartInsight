@@ -1,5 +1,14 @@
 version: '3.8'
 
+# Production: Uses Supabase Cloud (Singapore ap-southeast-1) for database
+# Local Dev: Optional PostgreSQL for offline development
+#
+# Quick Start (Production Mode):
+#   docker-compose up -d redis
+#
+# Quick Start (Local Dev Mode):
+#   docker-compose up -d  # PostgreSQL + Redis
+
 services:
   # PostgreSQL Database
   postgres:

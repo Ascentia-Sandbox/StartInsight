@@ -10,13 +10,19 @@
 # Active Context: StartInsight Development
 
 ## Current Phase
-**v0.1 Complete, Phase 4.1 Active** - User Authentication Implementation
+**Phase 1-7 Backend Complete** - Frontend & Production Deployment Pending
 
 ## Current Focus
-**Phase 4.1 User Authentication - 67% Complete**
+**Phase 4.5 Supabase Migration (DOCUMENTATION COMPLETE) & Frontend Implementation**
+
+Status:
+- ✅ Architecture designed for dual PostgreSQL/Supabase support
+- ✅ All 9 Alembic migrations ready for Supabase
+- ✅ Backend 100% Supabase-ready (supabase_user_id fields added)
+- ⏳ Pending: Supabase project creation, migration execution
 
 ## Objective
-Deploy StartInsight to production and begin enhancement iterations (Phase 4+).
+Complete Supabase Cloud migration and implement frontend for all phases (4-7).
 
 ---
 
@@ -33,56 +39,152 @@ All 9 sub-phases of Phase 3 are complete! The modern Next.js frontend now displa
 **Phase 3.8:** E2E Testing with Playwright (47 tests)
 **Phase 3.9:** Comprehensive Documentation
 
-### Phase 4.1 Progress (67% Complete)
+### Phase 4.1 Progress (85% Complete)
 
-<!-- Phase 4.1 status merged from active-context-phase4.md on 2026-01-24 -->
+<!-- Updated 2026-01-25: Backend 100% complete with Supabase Auth -->
 
-**Backend Complete:**
-- ✅ User model (SQLAlchemy with Clerk integration)
+**Backend Complete (100%):**
+- ✅ User model (SQLAlchemy with Supabase Auth integration)
 - ✅ SavedInsight model (workspace functionality)
 - ✅ UserRating model (1-5 star ratings)
-- ✅ Pydantic schemas (8 request/response types)
-- ✅ API routes (8 endpoints for user management)
-- ✅ Authentication dependencies (deps.py with JWT verification)
-- ✅ Alembic migration (004_phase_4_1_user_auth.py)
+- ✅ AdminUser model (role-based access)
+- ✅ Pydantic schemas (15+ request/response types)
+- ✅ API routes (15 endpoints for user workspace)
+- ✅ Authentication dependencies (deps.py with Supabase JWT verification)
+- ✅ Alembic migration (a001_phase_4_1_user_auth.py with RLS policies)
+- ✅ Supabase client configuration (config.py + supabase.py)
+- ✅ Model and route registration (main.py, __init__.py)
 
 **Pending:**
-- ❌ Clerk configuration in backend/app/core/config.py
-- ❌ Model imports registration
-- ❌ Migration execution (alembic upgrade head)
+- ❌ Migration execution (alembic upgrade head) - requires Supabase setup
 - ❌ Frontend implementation (0%)
 
-## Upcoming: Phase 4.5 Supabase Migration
+### Phase 4.2 Progress (80% Complete)
 
-<!-- Phase 4.5 planning added on 2026-01-25 -->
+<!-- Updated 2026-01-25: Admin portal backend complete -->
 
-**Timeline:** Week 1 after Phase 4.4 complete (estimated Q1 2026)
+**Backend Complete (100%):**
+- ✅ AgentExecutionLog model (execution tracking)
+- ✅ SystemMetric model (LLM costs, latencies)
+- ✅ Pydantic schemas (25+ admin schemas)
+- ✅ Admin API routes (15+ endpoints with SSE)
+- ✅ SSE real-time updates (5-second refresh)
+- ✅ Agent control (pause/resume/trigger)
+- ✅ Insight moderation (approve/reject)
+- ✅ Metrics query endpoints
+- ✅ Alembic migration (a002_phase_4_2_admin_portal.py with RLS)
+- ✅ Route registration (main.py, __init__.py)
 
-**Goal:** Migrate from self-hosted PostgreSQL to Supabase Cloud (Singapore)
+**Pending:**
+- ❌ Migration execution (alembic upgrade head)
+- ❌ Frontend admin dashboard (0%)
 
-**Why Now:**
-1. **Cost Efficiency**: Supabase $25/mo vs Neon $69/mo at 10K users (64% savings)
+### Phase 5 Progress (100% Backend Complete)
+
+<!-- Updated 2026-01-25: All Phase 5 backend complete -->
+
+**Phase 5.1 AI Research Agent (100%):**
+- ✅ CustomAnalysis model (40-step research results)
+- ✅ Research agent with PydanticAI and Claude 3.5 Sonnet
+- ✅ 4 API endpoints (analyze, get, list, quota)
+- ✅ Background task execution
+- ✅ Quota system (Free 1, Starter 3, Pro 10, Enterprise 100/month)
+
+**Phase 5.2 Build Tools (100%):**
+- ✅ Brand generator service (logo suggestions, taglines, color palettes)
+- ✅ Landing page generator (hero, features, pricing, CTA sections)
+- ✅ API endpoints for build tools
+
+**Phase 5.3 Export Features (100%):**
+- ✅ PDF export with ReportLab
+- ✅ CSV export for spreadsheet tools
+- ✅ JSON export for API consumers
+
+**Phase 5.4 Real-time Feed (100%):**
+- ✅ SSE streaming for live updates
+- ✅ Polling fallback for browsers without SSE support
+- ✅ Feed service with filtering
+
+### Phase 6 Progress (100% Backend Complete)
+
+<!-- Updated 2026-01-25: All Phase 6 backend complete -->
+
+**Phase 6.1 Payment Integration (100%):**
+- ✅ Stripe subscription management
+- ✅ 4 pricing tiers (free, starter $19/mo, pro $49/mo, enterprise $199/mo)
+- ✅ Checkout session creation
+- ✅ Customer portal session
+- ✅ Webhook handling
+
+**Phase 6.2 Email Notifications (100%):**
+- ✅ Resend integration
+- ✅ 6 email templates (welcome, daily_digest, analysis_ready, payment_confirmation, team_invitation, password_reset)
+- ✅ HTML template rendering
+
+**Phase 6.3 Rate Limiting (100%):**
+- ✅ Redis-based sliding window algorithm
+- ✅ In-memory fallback for development
+- ✅ Tier-based rate limits
+
+**Phase 6.4 Team Collaboration (100%):**
+- ✅ Team model with owner, members
+- ✅ Role-based permissions (owner, admin, member, viewer)
+- ✅ Team invitations with tokens
+- ✅ Shared insights functionality
+
+### Phase 7 Progress (100% Backend Complete)
+
+<!-- Updated 2026-01-25: All Phase 7 backend complete -->
+
+**Phase 7.1 Twitter/X Integration (100%):**
+- ✅ TwitterScraper with Tweepy v2 API
+- ✅ Tweet search with keywords and hashtags
+- ✅ Sentiment analysis integration
+- ✅ User timeline fetching
+
+**Phase 7.2 Public API & API Keys (100%):**
+- ✅ API key generation with si_ prefix
+- ✅ Scope-based permissions (insights:read, insights:write, research:read, research:create, etc.)
+- ✅ Wildcard scope support (insights:*)
+- ✅ Rate limiting per API key
+- ✅ Usage tracking and analytics
+
+**Phase 7.3 Multi-tenancy (100%):**
+- ✅ Tenant model with branding (logo, colors, app name)
+- ✅ Subdomain routing support
+- ✅ Custom domain configuration
+- ✅ CSS variables for theming
+
+## Phase 4.5: Supabase Cloud Migration (Documentation Complete)
+
+**Timeline:** Week 1-4 after Phase 4.4 complete
+**Status:** Documentation 100% complete. Backend code ready. Pending execution.
+
+**What's Ready:**
+- ✅ 9 Alembic migrations compatible with Supabase
+- ✅ Dual-mode database support (SQLAlchemy + Supabase client)
+- ✅ All models include Supabase Auth integration (supabase_user_id)
+- ✅ RLS policies designed (architecture.md Section 10)
+- ✅ Environment variables configured (.env.example)
+
+**Pending Tasks:**
+1. Create Supabase project (Singapore ap-southeast-1)
+2. Run Alembic migrations on Supabase
+3. Update production DATABASE_URL
+4. Verify RLS policies
+5. Test real-time features
+
+**Why Supabase:**
+1. **Cost Efficiency**: $25/mo vs Neon $69/mo at 10K users (64% savings)
 2. **APAC Market**: Singapore region for 50ms latency (vs 180ms US-based)
 3. **Scalability**: Auto-scaling, 500 concurrent connections (vs 15 current)
 4. **Phase 5+ Enablement**: Real-time subscriptions, Storage, Edge Functions
 
-**Migration Approach:**
-- **Week 1**: Planning & Setup (Supabase project, schema migration, RLS config)
-- **Week 2**: Backend Integration (dual-write service, read path migration)
-- **Week 3**: Testing & Validation (performance benchmarks, load tests)
-- **Week 4**: Cutover & Cleanup (production deployment, PostgreSQL deprecation)
-
 **Success Criteria:**
 - Zero downtime during cutover
-- <100ms p95 latency (target: <78ms current)
+- <100ms p95 latency (target: <50ms)
 - 100% data integrity (row counts, checksums)
 - Rollback plan tested (<30 minute recovery)
-
-**Preparation Tasks:**
-- [ ] Create Supabase Pro account ($25/mo)
-- [ ] Document current PostgreSQL schema (Alembic migrations)
-- [ ] Set up staging environment for testing
-- [ ] Review RLS policies (see architecture.md Section 10.2)
 
 ---
 
@@ -167,6 +269,16 @@ See `implementation-plan-phase4-detailed.md` for complete step-by-step instructi
 - ✅ **Phase 3.9 Complete**: Comprehensive frontend README.md (329 lines), user guide, setup instructions, troubleshooting section, API integration examples, deployment guide, contributing guidelines
 
 **Total Phase 3:** 50+ files created/modified, 12,000+ lines of code, 47 E2E tests, production-ready deployment configuration
+
+**Phase 4-7: Backend Implementation (Complete)**
+- ✅ **Phase 4.1-4.4 Complete**: User models, authentication, admin portal, enhanced scoring, interaction tracking
+- ✅ **Phase 5 Complete**: AI research agent (40-step analysis), build tools (brand/landing page generators), export features (PDF/CSV/JSON), real-time feed (SSE)
+- ✅ **Phase 6 Complete**: Payment integration (Stripe 4 tiers), email notifications (Resend 6 templates), rate limiting (Redis sliding window), team collaboration (roles, invitations, sharing)
+- ✅ **Phase 7 Complete**: Twitter/X scraper (Tweepy v2), API key management (scopes, rate limits, usage), multi-tenancy (subdomain, custom domain, branding)
+- ✅ **Total Backend Tests**: 137 passing, 30 skipped, 19 warnings
+- ✅ **Total Tables**: 17 database tables
+- ✅ **Total Endpoints**: 79+ API endpoints
+- ✅ **Total Services**: 6 business logic services
 
 **Documentation**
 - ✅ `project-brief.md`: Defines the three core loops (Collection → Analysis → Presentation)
@@ -446,8 +558,36 @@ When resuming work:
 - [x] 3.8 Testing & QA (Playwright, 47 E2E tests, 5 browsers)
 - [x] 3.9 Documentation (README 329 lines, user guide)
 
+### Phase 4 Progress: ⚠️ Backend Complete, Frontend Pending
+- [x] 4.1 User Authentication Backend (Supabase Auth, JWT, 15 endpoints)
+- [x] 4.2 Admin Portal Backend (SSE, agent monitoring, 15+ endpoints)
+- [x] 4.3 Enhanced Scoring Backend (8-dimension system)
+- [x] 4.4 User Workspace Backend (interaction tracking)
+- [ ] 4.5 Supabase Migration (pending execution)
+- [ ] 4.1-4.4 Frontend Implementation (0%)
+
+### Phase 5 Progress: ✅ Backend Complete (4/4 sub-phases)
+- [x] 5.1 AI Research Agent (40-step analysis, 4 endpoints)
+- [x] 5.2 Build Tools (brand generator, landing page builder)
+- [x] 5.3 Export Features (PDF, CSV, JSON)
+- [x] 5.4 Real-time Feed (SSE streaming, polling fallback)
+- [ ] Frontend Implementation (0%)
+
+### Phase 6 Progress: ✅ Backend Complete (4/4 sub-phases)
+- [x] 6.1 Payment Integration (Stripe, 4 tiers)
+- [x] 6.2 Email Notifications (Resend, 6 templates)
+- [x] 6.3 Rate Limiting (Redis, sliding window)
+- [x] 6.4 Team Collaboration (roles, invitations, sharing)
+- [ ] Frontend Implementation (0%)
+
+### Phase 7 Progress: ✅ Backend Complete (3/3 sub-phases)
+- [x] 7.1 Twitter/X Integration (Tweepy v2, sentiment analysis)
+- [x] 7.2 Public API (API keys, scopes, usage tracking)
+- [x] 7.3 Multi-tenancy (subdomain, custom domain, branding)
+- [ ] Frontend Implementation (0%)
+
 ---
 
-**Last Updated**: 2026-01-24
+**Last Updated**: 2026-01-25
 **Updated By**: Lead Architect (Claude)
-**Status**: Phase 1-3 complete (v0.1 production-ready). Phase 4.1 (User Authentication) in progress - 60% complete. Backend models and API routes complete, pending Clerk integration and frontend implementation.
+**Status**: Phase 1-7 backend complete. All backend models, services, and API routes implemented. 137 tests passing. Pending: Supabase migration (Phase 4.5), frontend implementation for Phases 4-7, production deployment.

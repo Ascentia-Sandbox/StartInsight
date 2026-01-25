@@ -147,17 +147,20 @@ Edit `frontend/.env.local`:
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
-### 3. Start Infrastructure (PostgreSQL + Redis)
+### 3. Start Infrastructure
 
 ```bash
-# From project root
+# OPTION A: Redis only (use Supabase Cloud for database)
+docker-compose up -d redis
+
+# OPTION B: Redis + PostgreSQL (for local dev/testing)
 docker-compose up -d
 ```
 
 Verify containers are running:
 ```bash
 docker ps
-# Should show: startinsight-postgres, startinsight-redis
+# Should show: startinsight-redis (and startinsight-postgres if using Option B)
 ```
 
 ### 4. Initialize Database
@@ -195,6 +198,29 @@ pnpm dev
 ```
 
 Frontend runs at: **http://localhost:3000**
+
+---
+
+## 🌏 Architecture: Supabase Cloud (Singapore)
+
+StartInsight uses **Supabase Cloud** as the primary production database:
+
+- **Region:** ap-southeast-1 (Singapore) - Optimized for APAC market
+- **Latency:** <50ms for Southeast Asia (vs 180ms US-based)
+- **Cost:** $25/mo (Supabase Pro) vs $69/mo (Neon) = 64% savings
+- **Features:** PostgreSQL 15+, Row-Level Security, real-time, storage
+
+### Local Development Options
+
+**Option A: Supabase Cloud (Recommended)**
+- Best for testing RLS policies
+- Set `SUPABASE_URL` and `DATABASE_URL` in `.env`
+- Compatible with all Supabase features (real-time, storage)
+
+**Option B: Docker PostgreSQL (Faster Iteration)**
+- Offline development capability
+- Faster test execution (no network latency)
+- Run `docker-compose up -d` for full local stack
 
 ---
 
