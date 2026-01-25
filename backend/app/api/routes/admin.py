@@ -17,13 +17,15 @@ from datetime import datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from redis import asyncio as aioredis
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse
 
 from app.api.deps import AdminUser
-from app.db.session import get_db
+from app.core.config import settings
+from app.db.session import get_db, AsyncSessionLocal
 from app.models.agent_execution_log import AgentExecutionLog
 from app.models.insight import Insight
 from app.models.system_metric import SystemMetric
@@ -46,6 +48,10 @@ from app.schemas.admin import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+# SSE connection tracking (prevent connection exhaustion)
+_active_sse_connections = set()
+_MAX_SSE_CONNECTIONS = 10  # Limit concurrent admin SSE streams
 
 
 # ============================================
@@ -74,65 +80,108 @@ async def get_dashboard_metrics(
 
 @router.get("/events")
 async def admin_event_stream(
+    request: Request,
     admin: AdminUser,
-    db: AsyncSession = Depends(get_db),
 ):
     """
     Server-Sent Events stream for real-time admin dashboard updates.
 
-    Sends metrics_update events every 5 seconds.
+    Sends metrics_update events every 5 seconds with heartbeat.
+
+    Security:
+    - Limited to 10 concurrent connections (prevents DB pool exhaustion)
+    - Creates fresh DB session per query (prevents session leak)
+    - Heartbeat detects client disconnects
+    - Auto-cleanup on disconnect
     """
+    connection_id = id(request)
+
+    # ✅ CONNECTION LIMIT - Prevent DB pool exhaustion
+    if len(_active_sse_connections) >= _MAX_SSE_CONNECTIONS:
+        logger.warning(f"SSE connection limit reached ({_MAX_SSE_CONNECTIONS})")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Too many active admin connections. Please try again later.",
+        )
 
     async def event_generator():
-        while True:
-            try:
-                # Gather metrics
-                metrics = await _gather_admin_metrics(db)
+        # Track this connection
+        _active_sse_connections.add(connection_id)
+        logger.info(f"Admin SSE connected: {admin.email} (total: {len(_active_sse_connections)})")
 
-                # Send update
-                yield {
-                    "event": "metrics_update",
-                    "data": json.dumps(metrics, default=str),
-                    "retry": 5000,
-                }
+        try:
+            while True:
+                # ✅ CHECK CLIENT DISCONNECT - Heartbeat mechanism
+                if await request.is_disconnected():
+                    logger.info(f"Admin SSE client disconnected: {admin.email}")
+                    break
 
-                # Wait 5 seconds
-                await asyncio.sleep(5)
+                try:
+                    # ✅ FRESH DB SESSION - Prevents connection leak
+                    async with AsyncSessionLocal() as db:
+                        metrics = await _gather_admin_metrics(db)
 
-            except asyncio.CancelledError:
-                logger.info(f"Admin SSE disconnected: {admin.email}")
-                break
-            except Exception as e:
-                logger.error(f"SSE error: {e}")
-                yield {
-                    "event": "error",
-                    "data": json.dumps({"error": str(e)}),
-                }
-                await asyncio.sleep(5)
+                    # Send metrics update
+                    yield {
+                        "event": "metrics_update",
+                        "data": json.dumps(metrics, default=str),
+                        "retry": 5000,
+                    }
 
-    logger.info(f"Admin SSE connected: {admin.email}")
+                    # Wait 5 seconds
+                    await asyncio.sleep(5)
+
+                except asyncio.CancelledError:
+                    logger.info(f"Admin SSE cancelled: {admin.email}")
+                    break
+                except Exception as e:
+                    logger.error(f"SSE metrics error: {e}", exc_info=True)
+                    # Send error event but keep connection alive
+                    yield {
+                        "event": "error",
+                        "data": json.dumps({"error": str(e)}),
+                    }
+                    await asyncio.sleep(5)
+
+        finally:
+            # ✅ CLEANUP - Always remove from active connections
+            _active_sse_connections.discard(connection_id)
+            logger.info(f"Admin SSE cleanup: {admin.email} (remaining: {len(_active_sse_connections)})")
+
     return EventSourceResponse(event_generator())
 
 
 async def _gather_admin_metrics(db: AsyncSession) -> dict:
-    """Gather all metrics for admin dashboard."""
+    """
+    Gather all metrics for admin dashboard with optimized queries.
 
-    # Get agent states from recent logs
-    agent_types = ["reddit_scraper", "product_hunt_scraper", "trends_scraper", "analyzer"]
-    agent_states = {}
+    Optimizations:
+    - Single query for agent states using DISTINCT ON (PostgreSQL)
+    - Combined insight/metric queries
+    - Reduced from 9 queries to 3 queries
+    """
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
 
-    for agent in agent_types:
-        # Get most recent log for this agent
-        result = await db.execute(
-            select(AgentExecutionLog)
-            .where(AgentExecutionLog.agent_type == agent)
-            .order_by(AgentExecutionLog.created_at.desc())
-            .limit(1)
-        )
-        log = result.scalar_one_or_none()
-        agent_states[agent] = log.status if log else "unknown"
+    # ✅ OPTIMIZATION #1: Get agent states in single query (was 4 queries)
+    # Uses PostgreSQL DISTINCT ON to get most recent log per agent type
+    agent_states_query = text("""
+        SELECT DISTINCT ON (agent_type) agent_type, status
+        FROM agent_execution_logs
+        WHERE agent_type IN ('reddit_scraper', 'product_hunt_scraper', 'trends_scraper', 'analyzer')
+        ORDER BY agent_type, created_at DESC
+    """)
+    agent_states_result = await db.execute(agent_states_query)
+    agent_states = {
+        row.agent_type: row.status
+        for row in agent_states_result.fetchall()
+    }
 
-    # Get last 10 execution logs
+    # Ensure all agents have a state (even if no logs)
+    for agent in ["reddit_scraper", "product_hunt_scraper", "trends_scraper", "analyzer"]:
+        if agent not in agent_states:
+            agent_states[agent] = "unknown"
+
+    # ✅ OPTIMIZATION #2: Get recent logs (unchanged - already optimized)
     logs_result = await db.execute(
         select(AgentExecutionLog)
         .order_by(AgentExecutionLog.created_at.desc())
@@ -143,44 +192,33 @@ async def _gather_admin_metrics(db: AsyncSession) -> dict:
         for log in logs_result.scalars().all()
     ]
 
-    # Get LLM cost today
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    cost_result = await db.execute(
-        select(func.sum(SystemMetric.metric_value)).where(
-            SystemMetric.metric_type == "llm_cost",
-            SystemMetric.recorded_at >= today_start,
-        )
-    )
-    llm_cost_today = float(cost_result.scalar_one() or 0.0)
-
-    # Get pending insights count
-    pending_result = await db.execute(
-        select(func.count()).select_from(Insight).where(Insight.admin_status == "pending")
-    )
-    pending_count = pending_result.scalar_one() or 0
-
-    # Get total insights today
-    insights_today_result = await db.execute(
-        select(func.count()).select_from(Insight).where(Insight.created_at >= today_start)
-    )
-    total_insights_today = insights_today_result.scalar_one() or 0
-
-    # Get errors today
-    errors_result = await db.execute(
-        select(func.count()).select_from(SystemMetric).where(
-            SystemMetric.metric_type == "error_rate",
-            SystemMetric.recorded_at >= today_start,
-        )
-    )
-    errors_today = errors_result.scalar_one() or 0
+    # ✅ OPTIMIZATION #3: Combined metrics query (was 4 separate queries)
+    # Single query with multiple aggregations
+    metrics_query = text("""
+        SELECT
+            (SELECT COALESCE(SUM(metric_value), 0)
+             FROM system_metrics
+             WHERE metric_type = 'llm_cost' AND recorded_at >= :today_start) AS llm_cost_today,
+            (SELECT COUNT(*)
+             FROM insights
+             WHERE admin_status = 'pending') AS pending_insights,
+            (SELECT COUNT(*)
+             FROM insights
+             WHERE created_at >= :today_start) AS total_insights_today,
+            (SELECT COUNT(*)
+             FROM system_metrics
+             WHERE metric_type = 'error_rate' AND recorded_at >= :today_start) AS errors_today
+    """)
+    metrics_result = await db.execute(metrics_query, {"today_start": today_start})
+    metrics_row = metrics_result.fetchone()
 
     return {
         "agent_states": agent_states,
         "recent_logs": recent_logs,
-        "llm_cost_today": llm_cost_today,
-        "pending_insights": pending_count,
-        "total_insights_today": total_insights_today,
-        "errors_today": errors_today,
+        "llm_cost_today": float(metrics_row.llm_cost_today),
+        "pending_insights": int(metrics_row.pending_insights),
+        "total_insights_today": int(metrics_row.total_insights_today),
+        "errors_today": int(metrics_row.errors_today),
         "timestamp": datetime.utcnow().isoformat(),
     }
 
