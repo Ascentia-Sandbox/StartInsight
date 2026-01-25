@@ -6,13 +6,15 @@ FastAPI backend for StartInsight - an AI-powered business intelligence engine th
 
 - **Framework**: FastAPI (async)
 - **Language**: Python 3.11+
-- **Database**: PostgreSQL 16 (AsyncPG driver)
+- **Database**: Supabase PostgreSQL (ap-southeast-1, Singapore)
 - **ORM**: SQLAlchemy 2.0 (async mode)
+- **Auth**: Supabase Auth (OAuth + email/password)
 - **Task Queue**: Arq + Redis + APScheduler
 - **Package Manager**: uv
 - **Linter/Formatter**: Ruff
-- **AI Framework**: PydanticAI
-- **Web Scraping**: Firecrawl, PRAW (Reddit), pytrends (Google Trends)
+- **AI Framework**: PydanticAI + Gemini 2.0 Flash
+- **Web Scraping**: Firecrawl, PRAW (Reddit), Tweepy (Twitter/X), pytrends (Google Trends), feedparser (RSS)
+- **Services**: Stripe (payments), Resend (email), SlowAPI (rate limiting)
 
 ## Prerequisites
 
@@ -138,16 +140,61 @@ backend/
 
 ## API Endpoints
 
+**Total**: 105 endpoints across 9 route files
+
 ### Health & Info
 - `GET /health` - Health check endpoint
 - `GET /` - API information
 
-### Raw Signals (Phase 1)
+### Signals (4 endpoints)
 - `GET /api/signals` - List raw signals with pagination
-  - Query params: `source`, `processed`, `limit`, `offset`
-- `GET /api/signals/{id}` - Get single raw signal by UUID
+- `GET /api/signals/{id}` - Get single signal by UUID
 - `GET /api/signals/stats/summary` - Signal statistics
-- `POST /api/signals/trigger-scraping` - Manually trigger scraping (testing/debugging)
+- `POST /api/signals/trigger-scraping` - Manually trigger scraping
+
+### Insights (4 endpoints)
+- `GET /api/insights` - List insights with filters (score, category, source)
+- `GET /api/insights/{id}` - Get single insight by UUID
+- `GET /api/insights/stats/summary` - Insight statistics
+- `POST /api/insights/trigger-analysis` - Manually trigger analysis
+
+### Users (18 endpoints)
+- Authentication: signup, signin, signout, refresh, profile
+- Workspace: saved insights, ratings, claims
+- Preferences: notifications, settings
+
+### Admin (13 endpoints)
+- Dashboard: metrics, agent status/control (pause/resume/trigger)
+- SSE streaming: real-time updates (5-second intervals)
+- Review queue: moderate insights, manage users
+
+### Research (12 endpoints)
+- User: submit requests, view status, get results
+- Admin: approval queue, approve/reject, manual trigger
+- 40-step research agent with admin sovereignty
+
+### Teams (15 endpoints)
+- Team management: create, update, delete
+- Member management: invite, remove, update roles
+- Shared insights: share, unshare, permissions (RBAC)
+
+### Payments (5 endpoints)
+- Stripe checkout, subscription status, customer portal
+- Webhook handling, payment history
+
+### API Keys (8 endpoints)
+- Create, list, revoke API keys
+- Scoped permissions, usage tracking
+
+### Tenants (11 endpoints)
+- Multi-tenancy: subdomain routing, custom domains
+- Tenant branding, settings, user management
+
+### Export & Feed (11 endpoints)
+- PDF/CSV/JSON exports with brand customization
+- SSE real-time feed, build tools (brand/landing generators)
+
+See `../memory-bank/architecture.md` for complete endpoint documentation.
 
 ### Example Request
 
@@ -352,25 +399,53 @@ See `.env.example` for all available environment variables.
 
 ## Development Status
 
-### ✅ Phase 1 Complete (Data Collection Loop)
+### ✅ Phase 1-7 Complete (100%)
 
-- ✅ 1.1: Project Initialization
-- ✅ 1.2: Database Setup (PostgreSQL + Redis)
-- ✅ 1.3: Firecrawl Integration & Scrapers
-- ✅ 1.4: Task Queue Setup (Arq + APScheduler)
-- ✅ 1.5: FastAPI Endpoints
-- ✅ 1.6: Environment & Configuration
-- ✅ 1.7: Testing & Validation
-- ✅ 1.8: Documentation
+**Phase 1-3: MVP Foundation**
+- ✅ Data collection: 7 scrapers (Reddit, Product Hunt, Google Trends, Hacker News, Twitter/X, RSS, custom)
+- ✅ AI analysis: PydanticAI + Gemini 2.0 Flash (97% cost reduction)
+- ✅ Database: 22 tables, 15 Supabase migrations, Row-Level Security
+- ✅ API: 105 endpoints across 9 route files
 
-### 🚧 Next: Phase 2 (Analysis Loop)
+**Phase 4: Authentication & Admin Portal**
+- ✅ Supabase Auth integration (OAuth + email/password)
+- ✅ Admin dashboard with SSE streaming (5-second updates)
+- ✅ 8-dimension scoring (opportunity, problem, feasibility, why now, go-to-market, founder fit, execution difficulty, revenue potential)
+- ✅ Workspace features: save, rate, claim insights
 
-- Create `Insight` database model
-- Implement PydanticAI analyzer agent
-- Add analysis task queue
-- Create insights API endpoints
+**Phase 5: AI Research Agent**
+- ✅ 40-step research agent with comprehensive market analysis
+- ✅ Admin approval queue (Free: manual, Starter/Pro/Enterprise: auto-approved)
+- ✅ Brand generator, landing page generator
+- ✅ PDF/CSV/JSON exports with customization
+- ✅ SSE real-time feed
 
-See `../memory-bank/implementation-plan.md` for the complete roadmap.
+**Phase 6: Monetization**
+- ✅ Stripe 4-tier subscriptions (Free, Starter $19/mo, Pro $49/mo, Enterprise $199/mo)
+- ✅ Resend email integration (6 templates: welcome, digest, research results, payment receipts, team invitations, password reset)
+- ✅ SlowAPI rate limiting with tier-based quotas
+- ✅ Team collaboration: RBAC (owner/admin/member), shared insights
+
+**Phase 7: Expansion**
+- ✅ Twitter/X scraper (Tweepy integration)
+- ✅ API key management: scoped permissions, usage tracking
+- ✅ Multi-tenancy: subdomain routing, custom domains, tenant branding
+- ✅ Advanced rate limiting and cost tracking
+
+**Phase 5.2: Super Admin Sovereignty + Evidence Visualizations**
+- ✅ Research request queue (admin approval system)
+- ✅ Community signals radar chart (4-platform engagement)
+- ✅ 8-dimension scoring KPI cards with color-coded badges
+- ✅ Enhanced evidence panel with collapsible visualizations
+
+### 🚀 Next: Production Deployment
+
+- Deploy backend to Railway
+- Deploy frontend to Vercel
+- Configure production environment variables
+- Set up monitoring (Sentry, uptime checks)
+
+See `../memory-bank/active-context.md` for deployment checklist and `../memory-bank/implementation-plan.md` for complete roadmap.
 
 ## Contributing
 

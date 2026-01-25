@@ -55,6 +55,8 @@ export function InsightFilters() {
               <SelectItem value="reddit">Reddit</SelectItem>
               <SelectItem value="product_hunt">Product Hunt</SelectItem>
               <SelectItem value="google_trends">Google Trends</SelectItem>
+              <SelectItem value="twitter">Twitter/X</SelectItem>
+              <SelectItem value="hacker_news">Hacker News</SelectItem>
             </SelectContent>
           </Select>
         </div>

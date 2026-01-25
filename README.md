@@ -25,19 +25,31 @@ Unlike traditional brainstorming tools, StartInsight relies on **real-time marke
 
 ## ✨ Features
 
-### Current (Phase 1 MVP)
+### Current (Phase 1-7 Complete)
 
-- **Automated Data Collection**: Scrapes Reddit, Product Hunt, and Google Trends every 6 hours
-- **AI-Powered Analysis**: Claude 3.5 Sonnet transforms raw signals into structured insights
-- **Structured Insights**: Problem statements, market scores, competitor analysis, source attribution
-- **PostgreSQL + Redis**: Robust data storage with task queue management
+**Data Intelligence**
+- **Automated Data Collection**: 7 data sources (Reddit, Product Hunt, Google Trends, Hacker News, Twitter/X, RSS feeds)
+- **AI-Powered Analysis**: Gemini 2.0 Flash with 8-dimension scoring (97% cost reduction vs Claude)
+- **40-Step Research Agent**: Comprehensive market research with admin approval queue
+- **Evidence Visualizations**: Radar charts, KPI cards, community engagement metrics
 
-### Planned (Phase 2-4)
+**User Features**
+- **Visual Dashboard**: Next.js interface with insights, trend graphs, filters, dark mode
+- **Workspace Management**: Save insights, rate quality, claim for development
+- **Team Collaboration**: RBAC with owner/admin/member roles, shared insights
+- **Custom Research**: Submit research requests with tier-based approval (Free: manual, Starter/Pro/Enterprise: auto-approved)
 
-- **Visual Dashboard**: Next.js interface with top insights, trend graphs, and filters
-- **Daily Digest**: Top 5 insights presented daily with deep-dive capabilities
-- **Advanced Sources**: Twitter/X, Hacker News, custom RSS feeds
-- **User Customization**: Track specific keywords, niches, or industries
+**Admin Portal**
+- **Super Admin Sovereignty**: Full control over AI agents, research approval queue, system monitoring
+- **Real-time Monitoring**: SSE streaming dashboard, agent status control (pause/resume/trigger)
+- **Revenue Analytics**: Stripe 4-tier subscriptions, usage tracking, payment history
+- **Multi-Tenancy**: Subdomain routing, custom domains, tenant branding
+
+**Developer Features**
+- **API Key Management**: Scoped keys with usage tracking, rate limiting
+- **Export Tools**: PDF/CSV/JSON exports with brand customization
+- **Row-Level Security**: Supabase RLS policies on all 22 tables
+- **Comprehensive Testing**: 47 E2E tests (Playwright), 26 backend tests (pytest)
 
 ---
 
@@ -76,27 +88,36 @@ graph LR
 ### Backend
 - **Framework**: FastAPI (async-first)
 - **Language**: Python 3.11+
-- **Database**: PostgreSQL 16+ (AsyncPG driver)
+- **Database**: Supabase PostgreSQL (ap-southeast-1, Singapore)
 - **ORM**: SQLAlchemy 2.0 (async)
 - **Queue**: Redis + Arq (async task queue)
-- **AI**: PydanticAI + Claude 3.5 Sonnet
+- **AI**: PydanticAI + Gemini 2.0 Flash ($0.10/M tokens)
+- **Auth**: Supabase Auth (OAuth + email/password)
 
 ### Frontend
-- **Framework**: Next.js 14+ (App Router)
+- **Framework**: Next.js 16.1.3 (App Router, React 19)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **Components**: shadcn/ui
+- **Charts**: Recharts (radar, line, area, bar)
 - **State**: TanStack Query (React Query)
 
 ### Data Pipeline
-- **Scraping**: Firecrawl (web → markdown)
+- **Scraping**: Firecrawl (web → markdown), Tweepy (Twitter/X)
 - **Reddit**: PRAW (Python Reddit API Wrapper)
 - **Trends**: pytrends (Google Trends API)
+- **RSS**: feedparser (custom feeds)
+
+### Services
+- **Payments**: Stripe (4-tier subscriptions, webhooks)
+- **Email**: Resend (6 email templates)
+- **Rate Limiting**: SlowAPI + Redis (tier-based quotas)
 
 ### DevOps
-- **Containers**: Docker + Docker Compose
+- **Database**: Supabase Cloud (PostgreSQL 15+, Row-Level Security)
+- **Cache**: Redis 7
 - **Package Managers**: `uv` (Python), `pnpm` (Node.js)
-- **Migrations**: Alembic
+- **Migrations**: Alembic + Supabase migrations (15 total)
 - **Linting**: Ruff (Python), ESLint + Prettier (TypeScript)
 
 ---
@@ -128,12 +149,29 @@ cp .env.example .env
 
 Edit `backend/.env`:
 ```bash
-DATABASE_URL=postgresql+asyncpg://startinsight:startinsight_dev_password@localhost:5433/startinsight
+# Database (Supabase Cloud or Local Docker)
+DATABASE_URL=postgresql+asyncpg://postgres:[password]@db.[project].supabase.co:5432/postgres
+SUPABASE_URL=https://[project].supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# Cache
 REDIS_URL=redis://localhost:6379
-ANTHROPIC_API_KEY=your_claude_api_key_here
-FIRECRAWL_API_KEY=your_firecrawl_api_key_here
-API_HOST=0.0.0.0
-API_PORT=8000
+
+# AI (Gemini 2.0 Flash)
+GOOGLE_API_KEY=your_google_ai_api_key
+
+# Scraping
+FIRECRAWL_API_KEY=your_firecrawl_api_key
+REDDIT_CLIENT_ID=your_reddit_client_id
+REDDIT_CLIENT_SECRET=your_reddit_client_secret
+TWITTER_BEARER_TOKEN=your_twitter_bearer_token
+
+# Payments (Stripe)
+STRIPE_SECRET_KEY=your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+
+# Email (Resend)
+RESEND_API_KEY=your_resend_api_key
 ```
 
 **Frontend (.env.local)**:
@@ -145,6 +183,8 @@ cp .env.example .env.local
 Edit `frontend/.env.local`:
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_SUPABASE_URL=https://[project].supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 ### 3. Start Infrastructure
@@ -383,36 +423,41 @@ The project enforces 4 core skills via Claude Code:
 
 | Service | Purpose | Get Key |
 |---------|---------|---------|
-| **Anthropic** | Claude 3.5 Sonnet (AI analysis) | [console.anthropic.com](https://console.anthropic.com) |
+| **Supabase** | Database + Auth (ap-southeast-1) | [supabase.com](https://supabase.com) |
+| **Google AI** | Gemini 2.0 Flash (AI analysis) | [aistudio.google.com](https://aistudio.google.com) |
 | **Firecrawl** | Web scraping (web → markdown) | [firecrawl.dev](https://firecrawl.dev) |
 | **Reddit** | Reddit API (PRAW) | [reddit.com/prefs/apps](https://reddit.com/prefs/apps) |
+| **Twitter** | Twitter/X API (Tweepy) | [developer.twitter.com](https://developer.twitter.com) |
+| **Stripe** | Payments (subscriptions) | [stripe.com](https://stripe.com) |
+| **Resend** | Email (transactional) | [resend.com](https://resend.com) |
 
-Store keys in `backend/.env` (never commit `.env` files).
+Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` files).
 
 ---
 
 ## 📊 Current Status
 
-**Active Phase**: Phase 1 - Data Collection & Storage (Foundation)
+**Active Phase**: Phase 1-7 Complete (100%) - Production Ready
+
+**Backend**: 105 API endpoints, 22 database tables, 11 services
+**Frontend**: 18 routes (dashboard, workspace, research, admin, teams, settings, billing)
+**Database**: 15 Supabase migrations applied, Row-Level Security enabled
+**AI Agents**: 3 agents (basic analyzer, 8-dimension scoring, 40-step research)
 
 **Completed**:
-- ✅ Project structure setup
-- ✅ PostgreSQL + Redis Docker configuration
-- ✅ FastAPI backend foundation
-- ✅ Database models and migrations
-- ✅ Claude Code skills and agents
-
-**In Progress**:
-- 🔄 Reddit scraper implementation
-- 🔄 Firecrawl integration
-- 🔄 AI analysis pipeline
+- ✅ Phase 1-3: MVP Foundation (scrapers, analyzer, Next.js dashboard)
+- ✅ Phase 4: Authentication & Admin Portal (Supabase Auth, SSE streaming, 8-dimension scoring)
+- ✅ Phase 5: AI Research Agent (40-step research, admin approval queue, brand/landing generators)
+- ✅ Phase 6: Monetization (Stripe 4-tier, Resend email, team collaboration)
+- ✅ Phase 7: Expansion (Twitter/X scraper, API keys, multi-tenancy)
+- ✅ Phase 5.2: Super Admin Sovereignty + Evidence Visualizations (research request queue, radar charts, KPI cards)
 
 **Next**:
-- ⏳ Product Hunt scraper
-- ⏳ Google Trends integration
-- ⏳ Arq task queue setup
+- 🚀 Production Deployment (Railway + Vercel + Supabase Cloud)
+- 📊 Monitoring Setup (Sentry, uptime checks)
+- 🧪 E2E Test Updates (optional, 47 tests exist)
 
-See `memory-bank/active-context.md` for detailed status.
+See `memory-bank/active-context.md` for deployment checklist.
 
 ---
 

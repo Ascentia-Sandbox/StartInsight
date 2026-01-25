@@ -153,10 +153,21 @@ class User(Base):
 
     custom_analyses: Mapped[list["CustomAnalysis"]] = relationship(
         "CustomAnalysis",
+        foreign_keys="CustomAnalysis.user_id",
         back_populates="user",
         lazy="selectin",
         cascade="all, delete-orphan",
         doc="User's custom research analyses (Phase 5.1)",
+    )
+
+    # Phase 5.2: Research requests relationship
+    research_requests: Mapped[list["ResearchRequest"]] = relationship(
+        "ResearchRequest",
+        foreign_keys="ResearchRequest.user_id",
+        back_populates="user",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        doc="User's research requests (Phase 5.2)",
     )
 
     # Phase 6.1: Subscription relationship

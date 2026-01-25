@@ -1,10 +1,10 @@
 """Pydantic schemas for Insight API responses."""
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 
 
 class CompetitorResponse(BaseModel):
@@ -14,6 +14,24 @@ class CompetitorResponse(BaseModel):
     url: str
     description: str
     market_position: str | None = None
+
+
+class CommunitySignal(BaseModel):
+    """Community signal data for visualization."""
+
+    platform: Literal["Reddit", "Facebook", "YouTube", "Other"]
+    score: int = Field(ge=1, le=10, description="Engagement score from 1-10")
+    members: int = Field(ge=0, description="Total community members")
+    engagement_rate: float = Field(ge=0.0, le=1.0, description="Engagement rate as decimal (0-1)")
+    top_url: HttpUrl | None = Field(default=None, description="URL to top post/discussion")
+
+
+class EnhancedScore(BaseModel):
+    """Enhanced 8-dimension scoring data."""
+
+    dimension: str = Field(description="Scoring dimension name")
+    value: int = Field(ge=1, le=10, description="Score from 1-10")
+    label: str = Field(description="Human-readable label (e.g., 'Excellent', 'Strong', 'Moderate')")
 
 
 class RawSignalSummary(BaseModel):
@@ -42,6 +60,16 @@ class InsightResponse(BaseModel):
 
     # Optional: include raw signal summary
     raw_signal: RawSignalSummary | None = None
+
+    # Enhanced visualizations (Phase 5+)
+    community_signals_chart: list[CommunitySignal] | None = Field(
+        default=None,
+        description="Community engagement visualization data"
+    )
+    enhanced_scores: list[EnhancedScore] | None = Field(
+        default=None,
+        description="8-dimension scoring breakdown"
+    )
 
     class Config:
         from_attributes = True

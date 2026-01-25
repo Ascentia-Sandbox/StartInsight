@@ -26,10 +26,13 @@ UI Components: shadcn/ui - Copy-paste accessible components (based on Radix UI).
 
 State Management: React Query (TanStack Query) - Server state management.
 
-Charting: Recharts (current), Tremor (alternative) - Data visualization for trend graphs.
-  - Recharts: [x] Implemented (Phase 3, frontend/components/TrendChart.tsx)
-  - Tremor: [ ] Alternative for financial dashboards, better sparklines and KPI cards
-  - Use Case: Tremor if admin dashboard requires financial charts
+Charting: Recharts v3.6.0 (React 19 compatible) - Data visualization for trend graphs.
+  - **Implemented Components** (Phase 5+):
+    - TrendChart.tsx: Line/bar charts for Google Trends data (Phase 3)
+    - CommunitySignalsRadar.tsx: RadarChart for 4-platform engagement (Phase 5.2)
+    - ScoreBreakdown.tsx: 8-dimension KPI cards with color-coded badges (Phase 5.2)
+  - **Strategy**: Recharts + shadcn/ui for all visualizations (Tremor incompatible with React 19)
+  - **Competitive Advantage**: Dual-visualization stack (radar charts + KPI grids) vs IdeaBrowser's basic charts
 
 3. Backend (The Intelligence Engine)
 Framework: FastAPI - High-performance, async Python framework. Perfect for AI/IO-bound tasks.

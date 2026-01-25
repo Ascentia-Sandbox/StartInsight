@@ -204,6 +204,26 @@ class Insight(Base):
         doc="5-7 actionable launch steps",
     )
 
+    # ============================================
+    # Phase 5+: Enhanced Visualizations
+    # ============================================
+
+    # Community Signals Chart: Array of platform engagement data
+    community_signals_chart: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        default=list,
+        doc="Community engagement visualization data (platform, score, members, engagement_rate)",
+    )
+
+    # Enhanced Scores: 8-dimension scoring breakdown
+    enhanced_scores: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        default=list,
+        doc="8-dimension scoring breakdown (dimension, value, label)",
+    )
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

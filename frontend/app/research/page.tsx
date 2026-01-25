@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lightbulb, Link2, BarChart3, Loader2 } from 'lucide-react';
+import { Lightbulb, Link2, BarChart3, Loader2, CheckCircle, Clock } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { SelectableCard } from '@/components/ui/SelectableCard';
-import { createAuthenticatedClient } from '@/lib/api';
+import { createResearchRequest, fetchUserProfile } from '@/lib/api';
 
 type InputType = 'idea' | 'url' | 'competitor';
 
@@ -24,8 +25,10 @@ export default function ResearchPage() {
   const [budgetRange, setBudgetRange] = useState('bootstrap');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [tier, setTier] = useState<string>('free');
 
-  // Check authentication
+  // Check authentication and fetch user profile
   useEffect(() => {
     const checkAuth = async () => {
       const supabase = getSupabaseClient();
@@ -38,6 +41,16 @@ export default function ResearchPage() {
 
       setAccessToken(session.access_token);
       setIsCheckingAuth(false);
+
+      // Fetch user profile to get subscription tier
+      try {
+        const profile = await fetchUserProfile(session.access_token);
+        setTier(profile.subscription_tier || 'free');
+      } catch (err) {
+        console.error('Failed to fetch user profile:', err);
+        // Default to free tier on error
+        setTier('free');
+      }
     };
 
     checkAuth();
@@ -57,25 +70,36 @@ export default function ResearchPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!accessToken) {
-      setError('Please log in to run research analyses');
+      setError('Please log in to submit research requests');
       return;
     }
 
     setLoading(true);
     setError(null);
+    setSuccess(false);
 
     try {
-      const client = createAuthenticatedClient(accessToken);
-      const response = await client.post('/api/research/analyze', {
+      const request = await createResearchRequest(accessToken, {
         idea_description: content,
         target_market: targetMarket || 'General',
         budget_range: budgetRange,
       });
 
-      // Redirect to analysis result page
-      router.push(`/research/${response.data.id}`);
-    } catch (err) {
-      if (err instanceof Error) {
+      // Show success message
+      setSuccess(true);
+      setContent('');
+      setTargetMarket('');
+
+      // If auto-approved (paid tiers), redirect to analysis
+      if (request.status === 'approved' && request.analysis_id) {
+        setTimeout(() => {
+          router.push(`/research/${request.analysis_id}`);
+        }, 2000);
+      }
+    } catch (err: any) {
+      if (err?.response?.status === 429) {
+        setError('Monthly quota exceeded. Upgrade your plan to submit more research requests.');
+      } else if (err instanceof Error) {
         setError(err.message);
       } else {
         setError('An error occurred while submitting your research request');
@@ -90,10 +114,40 @@ export default function ResearchPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">AI Research Agent</h1>
-          <p className="text-muted-foreground mt-2">
-            Get comprehensive market analysis powered by AI
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">AI Research Agent</h1>
+              <p className="text-muted-foreground mt-2">
+                Get comprehensive market analysis powered by AI
+              </p>
+            </div>
+            <div>
+              {tier === 'free' && (
+                <Badge variant="secondary" className="text-sm">
+                  <Clock className="h-3 w-3 mr-1" />
+                  Manual Approval (1/month)
+                </Badge>
+              )}
+              {tier === 'starter' && (
+                <Badge variant="default" className="text-sm">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Auto-Approved (3/month)
+                </Badge>
+              )}
+              {tier === 'pro' && (
+                <Badge variant="default" className="text-sm">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Auto-Approved (10/month)
+                </Badge>
+              )}
+              {tier === 'enterprise' && (
+                <Badge variant="default" className="text-sm">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Auto-Approved (100/month)
+                </Badge>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Input Type Selection */}
@@ -130,8 +184,15 @@ export default function ResearchPage() {
               {inputType === 'competitor' && 'Enter Competitor Details'}
             </CardTitle>
             <CardDescription>
-              {inputType === 'idea' &&
-                'Provide a detailed description of your startup idea for comprehensive analysis'}
+              {inputType === 'idea' && (
+                <>
+                  Provide a detailed description of your startup idea for comprehensive analysis.{' '}
+                  {tier === 'free' && 'Requires admin approval (1 request/month).'}
+                  {tier === 'starter' && 'Auto-approved (3 requests/month).'}
+                  {tier === 'pro' && 'Auto-approved (10 requests/month).'}
+                  {tier === 'enterprise' && 'Auto-approved (100 requests/month).'}
+                </>
+              )}
               {inputType === 'url' &&
                 'We will scrape and analyze the product page to provide insights'}
               {inputType === 'competitor' &&
@@ -143,6 +204,19 @@ export default function ResearchPage() {
               {error && (
                 <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-md text-sm">
                   {error}
+                </div>
+              )}
+
+              {success && (
+                <div className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 p-3 rounded-md text-sm">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4" />
+                    <span>
+                      {tier === 'free'
+                        ? 'Research request submitted! Admin will review shortly (typically within 24 hours).'
+                        : 'Research request submitted and auto-approved! Analysis starting now...'}
+                    </span>
+                  </div>
                 </div>
               )}
 
@@ -208,14 +282,19 @@ export default function ResearchPage() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={loading || success}>
                 {loading ? (
                   <>
                     <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5" />
-                    Running AI Analysis...
+                    Submitting Request...
+                  </>
+                ) : success ? (
+                  <>
+                    <CheckCircle className="-ml-1 mr-3 h-5 w-5" />
+                    Request Submitted
                   </>
                 ) : (
-                  'Start Research'
+                  'Submit Research Request'
                 )}
               </Button>
             </form>

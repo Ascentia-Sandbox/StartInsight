@@ -23,6 +23,13 @@ import {
   ReviewQueueResponseSchema,
   InsightReviewSchema,
   UserProfileSchema,
+  TenantSchema,
+  TenantBrandingSchema,
+  DomainConfigSchema,
+  ResearchRequestSchema,
+  ResearchRequestSummarySchema,
+  ResearchRequestListResponseSchema,
+  ResearchRequestActionSchema,
   type Insight,
   type InsightListResponse,
   type FetchInsightsParams,
@@ -45,8 +52,15 @@ import {
   type AgentStatus,
   type ReviewQueueResponse,
   type InsightReview,
+  type ResearchRequest,
+  type ResearchRequestSummary,
+  type ResearchRequestListResponse,
+  type ResearchRequestAction,
   type UserProfile,
   type UserUpdate,
+  type Tenant,
+  type TenantBranding,
+  type DomainConfig,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -522,4 +536,190 @@ export async function updateUserProfile(
   const client = createAuthenticatedClient(accessToken);
   const { data } = await client.patch('/api/users/me', payload);
   return UserProfileSchema.parse(data);
+}
+
+// ============================================
+// Tenant API (Phase 7.3)
+// ============================================
+
+/**
+ * Create a new tenant
+ */
+export async function createTenant(
+  accessToken: string,
+  payload: { name: string; subdomain?: string }
+): Promise<Tenant> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post('/api/tenants', payload);
+  return TenantSchema.parse(data);
+}
+
+/**
+ * Get current user's tenant
+ */
+export async function fetchCurrentTenant(accessToken: string): Promise<Tenant | null> {
+  const client = createAuthenticatedClient(accessToken);
+  try {
+    const { data } = await client.get('/api/tenants/current');
+    return TenantSchema.parse(data);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get tenant by ID
+ */
+export async function fetchTenant(accessToken: string, tenantId: string): Promise<Tenant> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get(`/api/tenants/${tenantId}`);
+  return TenantSchema.parse(data);
+}
+
+/**
+ * Get tenant branding
+ */
+export async function fetchTenantBranding(accessToken: string, tenantId: string): Promise<TenantBranding> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get(`/api/tenants/${tenantId}/branding`);
+  return TenantBrandingSchema.parse(data);
+}
+
+/**
+ * Update tenant branding
+ */
+export async function updateTenantBranding(
+  accessToken: string,
+  tenantId: string,
+  payload: {
+    logo_url?: string;
+    favicon_url?: string;
+    primary_color?: string;
+    secondary_color?: string;
+    accent_color?: string;
+    app_name?: string;
+    tagline?: string;
+  }
+): Promise<TenantBranding> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.patch(`/api/tenants/${tenantId}/branding`, payload);
+  return TenantBrandingSchema.parse(data);
+}
+
+/**
+ * Configure custom domain for tenant
+ */
+export async function configureTenantDomain(
+  accessToken: string,
+  tenantId: string,
+  customDomain: string
+): Promise<DomainConfig> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post(`/api/tenants/${tenantId}/domain`, { custom_domain: customDomain });
+  return DomainConfigSchema.parse(data);
+}
+
+/**
+ * Verify custom domain DNS configuration
+ */
+export async function verifyTenantDomain(
+  accessToken: string,
+  tenantId: string
+): Promise<{ domain: string; verified: boolean; ssl_status: string }> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post(`/api/tenants/${tenantId}/domain/verify`);
+  return data;
+}
+
+/**
+ * Remove custom domain
+ */
+export async function removeTenantDomain(accessToken: string, tenantId: string): Promise<void> {
+  const client = createAuthenticatedClient(accessToken);
+  await client.delete(`/api/tenants/${tenantId}/domain`);
+}
+
+// ============================================
+// Research Request API (Phase 5.2: Admin Queue)
+// ============================================
+
+/**
+ * Submit a research request (user endpoint)
+ */
+export async function createResearchRequest(
+  accessToken: string,
+  data: {
+    idea_description: string;
+    target_market: string;
+    budget_range?: string;
+  }
+): Promise<ResearchRequest> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data: response } = await client.post('/api/research/request', data);
+  return ResearchRequestSchema.parse(response);
+}
+
+/**
+ * List user's research requests
+ */
+export async function fetchUserResearchRequests(
+  accessToken: string,
+  params?: { limit?: number; offset?: number }
+): Promise<ResearchRequestListResponse> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/research/requests', { params });
+  return ResearchRequestListResponseSchema.parse(data);
+}
+
+/**
+ * Admin: List all research requests with optional status filter
+ */
+export async function fetchAdminResearchRequests(
+  accessToken: string,
+  params?: { status?: 'pending' | 'approved' | 'rejected' | 'completed'; limit?: number; offset?: number }
+): Promise<ResearchRequestListResponse> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/research/admin/requests', { params });
+  return ResearchRequestListResponseSchema.parse(data);
+}
+
+/**
+ * Admin: Approve or reject a research request
+ */
+export async function updateResearchRequest(
+  accessToken: string,
+  requestId: string,
+  action: ResearchRequestAction
+): Promise<ResearchRequest> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.patch(`/api/research/admin/requests/${requestId}`, action);
+  return ResearchRequestSchema.parse(data);
+}
+
+/**
+ * Admin: Manually trigger analysis (bypass request queue)
+ */
+export async function adminTriggerAnalysis(
+  accessToken: string,
+  data: {
+    idea_description: string;
+    target_market: string;
+    budget_range?: string;
+  }
+): Promise<any> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data: response } = await client.post('/api/research/admin/analyze', data);
+  return response;
+}
+
+/**
+ * Admin: List all analyses (all users)
+ */
+export async function fetchAdminAnalyses(
+  accessToken: string,
+  params?: { limit?: number; offset?: number }
+): Promise<any> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/research/admin/analyses', { params });
+  return data;
 }

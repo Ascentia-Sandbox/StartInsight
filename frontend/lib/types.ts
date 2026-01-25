@@ -23,6 +23,19 @@ export const RawSignalSummarySchema = z.object({
   extra_metadata: z.record(z.string(), z.any()).nullable().optional(), // Flexible metadata (varies by source)
 });
 
+// 8-Dimension Scoring Schema (StartInsight competitive advantage over IdeaBrowser's 4)
+export const ScoringDimensionsSchema = z.object({
+  opportunity: z.number().min(0).max(10).optional(),
+  problem: z.number().min(0).max(10).optional(),
+  feasibility: z.number().min(0).max(10).optional(),
+  why_now: z.number().min(0).max(10).optional(),
+  // StartInsight-exclusive dimensions (not in IdeaBrowser)
+  go_to_market: z.number().min(0).max(10).optional(),
+  founder_fit: z.number().min(0).max(10).optional(),
+  execution_difficulty: z.number().min(0).max(10).optional(),
+  revenue_potential: z.number().min(0).max(10).optional(),
+});
+
 export const InsightSchema = z.object({
   id: z.string().uuid(),
   raw_signal_id: z.string().uuid(),
@@ -33,6 +46,12 @@ export const InsightSchema = z.object({
   competitor_analysis: z.array(CompetitorSchema),
   created_at: z.string().datetime(),
   raw_signal: RawSignalSummarySchema.optional(),
+  // 8-dimension scoring (Phase 4.3)
+  scores: ScoringDimensionsSchema.optional(),
+  // Additional framework fields
+  value_ladder: z.record(z.string(), z.any()).optional(),
+  market_gap_analysis: z.string().optional(),
+  why_now_analysis: z.string().optional(),
 });
 
 export const InsightListResponseSchema = z.object({
@@ -45,6 +64,7 @@ export const InsightListResponseSchema = z.object({
 // TypeScript types derived from Zod schemas
 export type Competitor = z.infer<typeof CompetitorSchema>;
 export type RawSignalSummary = z.infer<typeof RawSignalSummarySchema>;
+export type ScoringDimensions = z.infer<typeof ScoringDimensionsSchema>;
 export type Insight = z.infer<typeof InsightSchema>;
 export type InsightListResponse = z.infer<typeof InsightListResponseSchema>;
 
@@ -293,6 +313,52 @@ export type InsightReview = z.infer<typeof InsightReviewSchema>;
 export type ReviewQueueResponse = z.infer<typeof ReviewQueueResponseSchema>;
 
 // ============================================
+// Research Request Types (Phase 5.2: Admin Queue)
+// ============================================
+
+export const ResearchRequestSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  admin_id: z.string().uuid().nullable().optional(),
+  status: z.enum(['pending', 'approved', 'rejected', 'completed']),
+  idea_description: z.string(),
+  target_market: z.string().nullable().optional(),
+  budget_range: z.string().nullable().optional(),
+  admin_notes: z.string().nullable().optional(),
+  analysis_id: z.string().uuid().nullable().optional(),
+  created_at: z.string().datetime(),
+  reviewed_at: z.string().datetime().nullable().optional(),
+  completed_at: z.string().datetime().nullable().optional(),
+  user_email: z.string().email().nullable().optional(),
+});
+
+export const ResearchRequestSummarySchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  user_email: z.string().email().nullable().optional(),
+  status: z.enum(['pending', 'approved', 'rejected', 'completed']),
+  idea_description: z.string(),
+  target_market: z.string().nullable().optional(),
+  created_at: z.string().datetime(),
+  reviewed_at: z.string().datetime().nullable().optional(),
+});
+
+export const ResearchRequestListResponseSchema = z.object({
+  items: z.array(ResearchRequestSummarySchema),
+  total: z.number(),
+});
+
+export const ResearchRequestActionSchema = z.object({
+  action: z.enum(['approve', 'reject']),
+  notes: z.string().max(1000).nullable().optional(),
+});
+
+export type ResearchRequest = z.infer<typeof ResearchRequestSchema>;
+export type ResearchRequestSummary = z.infer<typeof ResearchRequestSummarySchema>;
+export type ResearchRequestListResponse = z.infer<typeof ResearchRequestListResponseSchema>;
+export type ResearchRequestAction = z.infer<typeof ResearchRequestActionSchema>;
+
+// ============================================
 // User Profile Types (Phase 4.1)
 // ============================================
 
@@ -314,3 +380,42 @@ export const UserUpdateSchema = z.object({
 
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 export type UserUpdate = z.infer<typeof UserUpdateSchema>;
+
+// ============================================
+// Tenant Types (Phase 7.3)
+// ============================================
+
+export const TenantSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  slug: z.string(),
+  subdomain: z.string().nullable().optional(),
+  custom_domain: z.string().nullable().optional(),
+  custom_domain_verified: z.boolean(),
+  app_name: z.string().nullable().optional(),
+  logo_url: z.string().nullable().optional(),
+  primary_color: z.string().nullable().optional(),
+  status: z.string(),
+  created_at: z.string(),
+});
+
+export const TenantBrandingSchema = z.object({
+  logo_url: z.string().nullable().optional(),
+  favicon_url: z.string().nullable().optional(),
+  primary_color: z.string().nullable().optional(),
+  secondary_color: z.string().nullable().optional(),
+  accent_color: z.string().nullable().optional(),
+  app_name: z.string().nullable().optional(),
+  tagline: z.string().nullable().optional(),
+  css_variables: z.string(),
+});
+
+export const DomainConfigSchema = z.object({
+  custom_domain: z.string(),
+  verified: z.boolean(),
+  dns_instructions: z.record(z.string(), z.any()),
+});
+
+export type Tenant = z.infer<typeof TenantSchema>;
+export type TenantBranding = z.infer<typeof TenantBrandingSchema>;
+export type DomainConfig = z.infer<typeof DomainConfigSchema>;

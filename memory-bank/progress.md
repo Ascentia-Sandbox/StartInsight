@@ -17,17 +17,17 @@ This file tracks all significant changes made to the project. Each entry follows
 
 **Backend Status:** Phase 1-7 Complete (100% verified 2026-01-25)
 
-**Database:** 21 tables verified
+**Database:** 22 tables verified (updated 2026-01-25)
 - Phase 1-3 (MVP): RawSignal, Insight (2 tables)
 - Phase 4 (Foundation): User, AdminUser, AgentExecutionLog, SystemMetric, SavedInsight, UserRating, InsightInteraction (7 tables)
-- Phase 5 (Analysis): CustomAnalysis (1 table)
+- Phase 5 (Analysis): CustomAnalysis, ResearchRequest (2 tables)
 - Phase 6 (Monetization): Subscription, PaymentHistory, Team, TeamMember, TeamInvitation, SharedInsight, WebhookEvent (7 tables)
 - Phase 7 (Expansion): APIKey, APIKeyUsageLog, Tenant, TenantUser (4 tables)
 
-**API:** 97 endpoints verified (2026-01-25)
+**API:** 105 endpoints verified (updated 2026-01-25)
 - Phase 1-3: signals.py (4), insights.py (4) = 8 endpoints
 - Phase 4: users.py (18), admin.py (13) = 31 endpoints
-- Phase 5: research.py (4), build_tools.py (6), export.py (5), feed.py (4) = 19 endpoints
+- Phase 5: research.py (12), build_tools.py (6), export.py (5), feed.py (4) = 27 endpoints
 - Phase 6: payments.py (5), teams.py (15) = 20 endpoints
 - Phase 7: api_keys.py (8), tenants.py (11) = 19 endpoints
 
@@ -35,7 +35,7 @@ This file tracks all significant changes made to the project. Each entry follows
 
 **AI Agents:** 3 agents (basic analyzer, enhanced 7-dimension scoring, 40-step research agent)
 
-**Frontend Status:** Phase 1-7 Complete (100% - UI + API integration for all 9 pages)
+**Frontend Status:** Phase 1-7 Complete (100% - 17 routes including tenant-settings, all API integrations)
 
 **Migration Status:** 13 Supabase migrations executed (100% complete 2026-01-25)
 - 12 schema migrations (tables, indexes, relationships)
@@ -116,6 +116,16 @@ This file tracks all significant changes made to the project. Each entry follows
 ## Recent Changes
 
 <!-- New entries follow simplified format (max 50 words) -->
+
+- [2026-01-25] [PHASE-7-FRONTEND-COMPLETE]: Final Phase 7 frontend features
+  - Files: InsightFilters.tsx, InsightCard.tsx, tenant-settings/page.tsx, lib/types.ts, lib/api.ts
+  - Tech: Twitter/X filter, Hacker News filter, source badges, tenant branding page, custom domain config
+  - Status: [x] Complete (17 routes now)
+
+- [2026-01-25] [IDEABROWSER-FEATURES]: Implemented IdeaBrowser competitive UI components
+  - Files: 9 new components (evidence-panel, community-signals-badge, trend-indicator, data-citation-link, builder-integration, builder-platform-card, prompt-type-selector, prompt-preview-modal, score-radar)
+  - Tech: Evidence Engine (7 sources), Builder Integration (5 platforms), 8-dimension scoring
+  - Status: [✓ Complete]
 
 - [2026-01-25] [GEMINI-MIGRATION]: Migrated AI analysis from Claude to Gemini 2.0 Flash
   - Files: analyzer.py, enhanced_analyzer.py, research_agent.py, brand_generator.py, landing_page.py, config.py, .env.example
@@ -215,3 +225,12 @@ This file tracks all significant changes made to the project. Each entry follows
 **Benefits:** Single source of truth, type-safe enums, easier maintenance.
 **Verification:** All tests passed, production builds successful.
 **Status:** [x] All 4 phases complete (2026-01-25)
+
+---
+
+## Phase 5.2: Super Admin Sovereignty + Visualizations (2026-01-25)
+
+- [2026-01-25] [PHASE-5.2]: Super Admin Sovereignty + Evidence Visualizations
+  - Files: research_request.py, research.py, research-queue/page.tsx, community-signals-radar.tsx, score-breakdown.tsx
+  - Tech: Admin approval queue with auto-approval for paid tiers, Recharts RadarChart + KPI cards
+  - Status: [✓ Complete]

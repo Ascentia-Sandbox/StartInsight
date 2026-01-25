@@ -246,6 +246,68 @@ class ResearchProgressUpdate(BaseModel):
 
 
 # ============================================
+# Research Request Schemas (Phase 5.2: Admin Queue)
+# ============================================
+
+
+class ResearchRequestResponse(BaseModel):
+    """Research request entity with admin review details."""
+
+    id: UUID
+    user_id: UUID
+    admin_id: UUID | None = None
+    status: Literal["pending", "approved", "rejected", "completed"]
+    idea_description: str
+    target_market: str | None = None
+    budget_range: str | None = None
+    admin_notes: str | None = None
+    analysis_id: UUID | None = None
+    created_at: datetime
+    reviewed_at: datetime | None = None
+    completed_at: datetime | None = None
+
+    # Optional: include user email for admin queue display
+    user_email: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class ResearchRequestSummary(BaseModel):
+    """Summary view of research request (for admin queue)."""
+
+    id: UUID
+    user_id: UUID
+    user_email: str | None = None
+    status: Literal["pending", "approved", "rejected", "completed"]
+    idea_description: str
+    target_market: str | None = None
+    created_at: datetime
+    reviewed_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class ResearchRequestListResponse(BaseModel):
+    """Paginated list of research requests."""
+
+    items: list[ResearchRequestSummary]
+    total: int
+
+
+class ResearchRequestAction(BaseModel):
+    """Admin action on research request (approve/reject)."""
+
+    action: Literal["approve", "reject"]
+    notes: str | None = Field(
+        default=None,
+        max_length=1000,
+        description="Optional notes explaining the decision",
+    )
+
+
+# ============================================
 # Quota Response
 # ============================================
 

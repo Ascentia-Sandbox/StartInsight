@@ -41,13 +41,30 @@ class CustomAnalysis(Base):
         doc="Unique identifier for this analysis",
     )
 
-    # Foreign key to user
-    user_id: Mapped[UUID] = mapped_column(
+    # Foreign key to user (nullable for admin-initiated analyses)
+    user_id: Mapped[UUID | None] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey("users.id", ondelete="RESTRICT"),
-        nullable=False,
+        nullable=True,
         index=True,
-        doc="User who requested this analysis (RESTRICT prevents deletion if analyses exist)",
+        doc="User who requested this analysis (NULL if admin-initiated, RESTRICT prevents deletion)",
+    )
+
+    # Phase 5.2: Super Admin Sovereignty
+    admin_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+        doc="Admin who triggered the analysis (Phase 5.2)",
+    )
+
+    request_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("research_requests.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+        doc="Link to original user request (if from request queue)",
     )
 
     # ============================================
@@ -234,9 +251,24 @@ class CustomAnalysis(Base):
     # Relationships
     user: Mapped["User"] = relationship(
         "User",
+        foreign_keys=[user_id],
         back_populates="custom_analyses",
         lazy="selectin",
         doc="User who requested this analysis",
+    )
+
+    admin: Mapped["User"] = relationship(
+        "User",
+        foreign_keys=[admin_id],
+        lazy="selectin",
+        doc="Admin who triggered the analysis (Phase 5.2)",
+    )
+
+    request: Mapped["ResearchRequest"] = relationship(
+        "ResearchRequest",
+        back_populates="analysis",
+        lazy="selectin",
+        doc="Original research request (if from request queue)",
     )
 
     def __repr__(self) -> str:

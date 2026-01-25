@@ -39,16 +39,37 @@
 
 ## Current Focus
 
+**Phase 5.2: Super Admin Sovereignty + Visualization Enhancement - COMPLETE (2026-01-25)**
+
+Implemented two competitive advantages to surpass IdeaBrowser:
+
+1. **Super Admin Sovereignty** (Complete)
+   - Restricting AI Research Agent access to admin-only via Service Request Model
+   - Users submit requests, admins approve, admins trigger analysis
+   - Free tier: Manual approval, Paid tiers: Auto-approved
+   - 12 new endpoints (7 user, 5 admin), research_requests table, admin queue UI
+
+2. **Evidence-Backed Visualizations** (Complete)
+   - Added Recharts components to insights (CommunitySignalsRadar, ScoreBreakdown)
+   - Enhanced EvidencePanel with collapsible visualization sections
+   - 100% of insights can now have data-driven visualizations
+   - community_signals_chart and enhanced_scores JSONB columns added
+
+3. **Memory Bank Synchronization** (Complete)
+   - Updated 5 documentation files to reflect new architecture
+   - Synchronized project-brief.md, architecture.md, tech-stack.md, implementation-plan.md, active-context.md
+
 **Production Deployment - READY TO EXECUTE**
 
 All Phase 1-7 features are code-complete and verified. The application is production-ready pending deployment execution.
 
 **Deployment Sequence:**
-1. Backend to Railway (with production environment variables)
-2. Frontend to Vercel (with Supabase credentials)
-3. Stripe live mode configuration
-4. E2E test verification (optional, 47 tests exist)
-5. Monitoring and error tracking setup
+1. Apply migrations (b003_viz, b004_research_requests) to Supabase
+2. Backend to Railway (with production environment variables)
+3. Frontend to Vercel (with Supabase credentials)
+4. Stripe live mode configuration
+5. E2E test verification (optional, 47 tests exist)
+6. Monitoring and error tracking setup
 
 **Phase 4.5 Supabase Migration: COMPLETE (2026-01-25)**
 - [x] Supabase project created (https://mxduetfcsgttwwgszjae.supabase.co)
@@ -73,21 +94,23 @@ All pages connected to backend APIs with real data:
 
 StartInsight achieves feature parity with IdeaBrowser ($499-$2,999/year) while delivering 8 unique competitive advantages:
 
-**1. Super Admin Agent Controller (Phase 4.2)**
+**1. Super Admin Agent Controller + Research Sovereignty (Phase 4.2, 5.2)**
 - Real-time monitoring dashboard with SSE streaming (5-second updates)
+- **Research Request Queue**: Admin-only approval system for AI research trigger
 - Agent pause/resume controls, cost tracking, execution logs
-- 13 admin API endpoints vs IdeaBrowser's inferred tools (no public documentation)
-- Impact: Transparent system control, operational visibility
+- 18 admin API endpoints (13 agent control + 5 research admin) vs IdeaBrowser's inferred tools
+- Impact: Transparent system control, full AI research governance, cost control
 
 **2. 8-Dimension Scoring (Phase 4.3)**
 - StartInsight: 8 dimensions (Opportunity, Problem, Feasibility, Why Now, Go-to-Market, Founder Fit, Execution Difficulty, Revenue Potential)
 - IdeaBrowser: 4 dimensions (Opportunity, Problem, Feasibility, Why Now)
 - Impact: 2x more comprehensive market analysis
 
-**3. Evidence Engine (7 Data Sources)**
-- StartInsight: Reddit, Product Hunt, Google Trends, Twitter/X, Hacker News, Facebook, YouTube
-- IdeaBrowser: Reddit, Facebook, YouTube, Other (4 sources)
-- Impact: Users can verify data sources, trace insights to original discussions
+**3. Evidence Engine (7 Data Sources + Enhanced Visualizations)**
+- **Data Sources**: StartInsight: 7 sources (Reddit, Product Hunt, Google Trends, Twitter/X, Hacker News, Facebook, YouTube) | IdeaBrowser: 4 sources
+- **Visualizations**: StartInsight: CommunitySignalsRadar (Recharts RadarChart), ScoreBreakdown (8-dimension KPI cards), TrendChart | IdeaBrowser: Basic charts
+- **Citation System**: Every insight links to source URLs, community signals provide direct platform links
+- Impact: Visual evidence for every claim, users can verify data sources, trace insights to original discussions
 
 **4. APAC Regional Optimization (Phase 4.5)**
 - StartInsight: Singapore region (50ms latency), local payment methods

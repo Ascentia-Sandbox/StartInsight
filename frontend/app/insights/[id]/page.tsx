@@ -11,6 +11,10 @@ import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 import { TrendChart } from '@/components/trend-chart';
+import { EvidencePanel } from '@/components/evidence/evidence-panel';
+import { CommunitySignalsRow } from '@/components/evidence/community-signals-badge';
+import { BuilderIntegration } from '@/components/builder/builder-integration';
+import { ScoreRadar } from '@/components/scoring/score-radar';
 
 export default function InsightDetailPage() {
   const params = useParams();
@@ -67,9 +71,15 @@ export default function InsightDetailPage() {
               <CardTitle className="text-2xl mb-2">
                 {insight.problem_statement}
               </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {formatDistanceToNow(new Date(insight.created_at), { addSuffix: true })}
-              </p>
+              <div className="flex items-center gap-3 mt-2">
+                <p className="text-sm text-muted-foreground">
+                  {formatDistanceToNow(new Date(insight.created_at), { addSuffix: true })}
+                </p>
+                {/* Community Signals Badges - IdeaBrowser competitive feature */}
+                {insight.raw_signal?.extra_metadata?.community_signals && (
+                  <CommunitySignalsRow signals={insight.raw_signal.extra_metadata.community_signals} />
+                )}
+              </div>
             </div>
             <Badge className={marketSizeColor[insight.market_size_estimate]}>
               {insight.market_size_estimate} Market
@@ -98,6 +108,14 @@ export default function InsightDetailPage() {
               </span>
             </div>
           </div>
+
+          {/* 8-Dimension Scoring - IdeaBrowser competitive feature (2x more dimensions) */}
+          {insight.scores && Object.keys(insight.scores).length > 0 && (
+            <>
+              <Separator />
+              <ScoreRadar scores={insight.scores} size="md" />
+            </>
+          )}
 
           {/* Competitors */}
           {insight.competitor_analysis && insight.competitor_analysis.length > 0 && (
@@ -168,6 +186,26 @@ export default function InsightDetailPage() {
           />
         </div>
       )}
+
+      {/* Evidence Engine Panel - IdeaBrowser competitive feature */}
+      {insight.raw_signal && (
+        <div className="mt-6">
+          <EvidencePanel
+            evidence={insight.raw_signal.extra_metadata}
+            primarySource={{
+              url: insight.raw_signal.url,
+              platform: insight.raw_signal.source,
+            }}
+            collapsible={true}
+            defaultExpanded={true}
+          />
+        </div>
+      )}
+
+      {/* Builder Integration - IdeaBrowser competitive feature */}
+      <div className="mt-6">
+        <BuilderIntegration insight={insight} />
+      </div>
     </div>
   );
 }

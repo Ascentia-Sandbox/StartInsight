@@ -25,6 +25,8 @@ Automated Trend Scouting: consistently aggregate data from high-signal sources. 
 
 AI Analysis Pipeline: Use LLMs to process raw unstructured text into structured "Insight Reports" (Problem, Solution, Market Size, Competitor Check).
 
+Super Admin Agent Controller (Enhanced): Real-time monitoring and control dashboard for AI agents with pause/resume capabilities, SSE streaming updates (5-second intervals), cost tracking, and execution logs. **Research Request Queue**: Admin-only approval system for user-submitted analyses (Free tier requires manual approval, paid tiers auto-approved). Competitive advantage: Full control over AI research trigger (vs IdeaBrowser's user-initiated model).
+
 Visual Dashboard: A clean, minimal web interface for users to browse, filter, and save insights.
 
 4. User Journey
@@ -37,6 +39,39 @@ Deep Dive: User clicks an insight (e.g., "AI for Legal Docs") and sees the under
 "50+ negative comments on r/lawyers about current tools."
 
 Validation: User sees a generated MVP plan or "Glue Code" suggestions to build the solution.
+
+## 4.5 Evidence Engine: Data-Driven Visualization Layer
+
+StartInsight's Evidence Engine transforms raw market signals into quantified, cited insights:
+
+**Multi-Source Data Integration:**
+- Reddit: 4+ subreddits per idea, engagement metrics, sentiment scoring
+- Facebook: 4-7 groups per topic, total members, activity frequency
+- YouTube: 14-16 channels, video views, content themes
+- Google Trends: Search volume (0-100 normalized), growth percentages
+- Twitter/X: Trending topics, tweet engagement (Phase 7.1)
+- Hacker News: Launch discussions, upvote patterns (planned)
+- Product Hunt: Launch metrics, comment sentiment (implemented)
+
+**Visualization Components:**
+- Trend charts: Line graphs (2022-2025 timeline) with volume overlays (Recharts)
+- Community Signals Radar: 4-platform engagement strength visualization (Recharts RadarChart)
+- 8-Dimension Scoring: KPI card grid with color-coded values (Recharts + shadcn/ui)
+- Evidence Timeline: Signal discovery chronology
+- Keyword cards: Volume, growth rate, competition level
+- Community signals badges: Platform-specific scores with member counts
+
+**Citation Format:**
+- Every insight links to source URLs
+- Community signals section provides direct platform links
+- Trend charts include keyword search links for validation
+
+**Competitive Positioning:**
+- **Data Sources**: IdeaBrowser: 4 sources (Reddit, Facebook, YouTube, Other) | StartInsight: 7 sources (adds Twitter/X, Hacker News, Product Hunt)
+- **Scoring System**: IdeaBrowser: 4 dimensions | StartInsight: 8 dimensions (adds Go-to-Market, Founder Fit, Execution Difficulty, Revenue Potential)
+- **Visualizations**: IdeaBrowser: Basic charts | StartInsight: Recharts dual-stack (CommunitySignalsRadar, ScoreBreakdown, TrendChart)
+- **AI Research Control**: IdeaBrowser: User-initiated | StartInsight: Admin-only trigger with request queue (Super Admin Sovereignty)
+- **Impact**: Visual evidence for every claim, transparent AI research governance
 
 5. The Three Core Loops
 StartInsight operates on three distinct, sequential processing loops that run continuously:
@@ -115,12 +150,15 @@ User Value: The dashboard successfully displays at least 10 high-quality insight
 **What We'll Charge:** $19-$299/month (50-70% cheaper)
 
 **Feature Parity Achieved:**
-- [x] 8-dimension scoring (vs. their 6)
-- [x] Value Ladder framework (4-tier pricing model)
-- [x] Custom AI analysis (our Research Agent)
-- [x] Build tools (landing pages, brand packages)
-- [x] Export to PDF/CSV
-- [x] Status tracking (Interested/Saved/Building)
+- [x] 8-dimension scoring vs IdeaBrowser's 4 (2x more comprehensive)
+- [x] Super Admin Agent Controller (real-time monitoring, pause/resume, SSE streaming)
+- [x] Evidence Engine (7 data sources vs IdeaBrowser's 4, multi-source citation)
+- [x] Custom AI Research Agent (40-step analysis, 1-100 reports/month vs IdeaBrowser's 3-9)
+- [x] Build tools (brand packages, landing page generator)
+- [x] Click-to-Build Integration (planned: Lovable, v0, Replit, ChatGPT, Claude)
+- [x] Export to PDF/CSV/JSON (IdeaBrowser: limited to Pro tier)
+- [x] Status tracking (4 statuses: Interested/Saved/Building/Not Interested)
+- [x] Value Ladder framework (4-tier pricing: Free/Starter/Pro/Enterprise)
 
 **Our Unique Features:**
 - Admin portal (monitor AI agents)
@@ -130,6 +168,33 @@ User Value: The dashboard successfully displays at least 10 high-quality insight
 - White-label (Phase 7)
 
 **Full Analysis:** See `memory-bank/ideabrowser-analysis.md`
+
+### IdeaBrowser Gap Analysis: What They're Missing
+
+**1. Real-time Updates**
+- IdeaBrowser: 24-hour digest (static daily emails)
+- StartInsight: SSE streaming (real-time feed with <100ms latency)
+- Impact: Users see opportunities the moment they're discovered
+
+**2. Public API**
+- IdeaBrowser: No API access (closed ecosystem)
+- StartInsight: 97 REST endpoints, API key management, scoped permissions
+- Impact: Developers integrate insights into custom dashboards
+
+**3. Team Collaboration**
+- IdeaBrowser: Empire tier community only ($2,999/year)
+- StartInsight: Full RBAC (4 roles), shared workspaces, team invitations (all tiers)
+- Impact: Teams build together from day one
+
+**4. White-Label Multi-tenancy**
+- IdeaBrowser: Fixed branding, single-tenant
+- StartInsight: Custom branding, subdomain routing, custom domains
+- Impact: Agencies resell as their own service (40-60% margins)
+
+**5. APAC Regional Optimization**
+- IdeaBrowser: US-based (180ms latency for APAC users)
+- StartInsight: Singapore region (50ms latency), local payment methods, multi-language
+- Impact: 72% faster APAC experience, 50-70% cheaper pricing
 
 ---
 

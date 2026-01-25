@@ -128,8 +128,26 @@ User → Next.js → GET /api/insights → FastAPI → PostgreSQL → JSON respo
 
 ### 4.4 Research & Build Tables (Phase 5.1-5.2)
 
-**`custom_analyses`**
-- id (UUID PK), user_id (UUID FK), market_type (varchar), status (enum: pending/processing/completed/failed), result_data (JSONB 40-step output), cost_usd (decimal), created_at, completed_at
+**`research_requests` (New - Phase 5.2: Admin Queue)**
+- id (UUID PK), user_id (UUID FK users), admin_id (UUID FK users nullable)
+- status (enum: pending/approved/rejected/completed)
+- idea_description (text), target_market (varchar 255), budget_range (varchar 100)
+- admin_notes (text), analysis_id (UUID FK custom_analyses nullable)
+- created_at (timestamptz indexed DESC), reviewed_at (timestamptz), completed_at (timestamptz)
+- **Indexes**: idx_research_requests_user_id, idx_research_requests_status, idx_research_requests_created_at
+- **RLS**: Users see own requests only, admins see all requests
+- **Purpose**: Admin approval queue for user-submitted research requests (Super Admin Sovereignty)
+
+**`custom_analyses` (Modified - Phase 5.2)**
+- id (UUID PK), user_id (UUID FK nullable), admin_id (UUID FK users nullable), request_id (UUID FK research_requests nullable)
+- idea_description (text), target_market (text), budget_range (varchar 20)
+- status (enum: pending/processing/completed/failed), progress_percent (int), current_step (varchar 100)
+- market_analysis (JSONB), competitor_landscape (JSONB), value_equation (JSONB), market_matrix (JSONB)
+- acp_framework (JSONB), validation_signals (JSONB), execution_roadmap (JSONB), risk_assessment (JSONB)
+- opportunity_score (numeric 4,2), market_fit_score (numeric 4,2), execution_readiness (numeric 4,2)
+- tokens_used (int), analysis_cost_usd (numeric 6,4), error_message (text)
+- created_at (timestamptz indexed), started_at (timestamptz), completed_at (timestamptz)
+- **Changes**: user_id now nullable (admin can trigger without user), added admin_id, request_id
 
 ### 4.5 Payment Tables (Phase 6.1)
 
@@ -236,13 +254,23 @@ User → Next.js → GET /api/insights → FastAPI → PostgreSQL → JSON respo
 - `PATCH /api/admin/users/{id}` - Update user subscription tier
 - `GET /api/admin/stream` - SSE stream (5-second updates)
 
-### 5.3 Phase 5 (Advanced Analysis - 19 endpoints)
+### 5.3 Phase 5 (Advanced Analysis - 28 endpoints)
 
-**AI Research** (4 endpoints)
-- `POST /api/research/analyze` - Start 40-step analysis (async)
-- `GET /api/research/{id}` - Get analysis result
-- `GET /api/research/my` - List user's analyses
-- `DELETE /api/research/{id}` - Delete analysis
+**AI Research - User Endpoints** (7 endpoints)
+- `POST /api/research/request` - Submit research request (queued for admin approval)
+- `GET /api/research/requests` - List user's research requests
+- `GET /api/research/requests/{id}` - Get request status
+- `POST /api/research/analyze` - ⚠️ DEPRECATED: Direct analysis (use /request instead)
+- `GET /api/research/analysis/{id}` - Get analysis result
+- `GET /api/research/analyses` - List user's analyses
+- `GET /api/research/quota` - Get quota status
+
+**AI Research - Admin Endpoints** (5 endpoints)
+- `GET /api/research/admin/requests` - List all research requests (filter: status)
+- `PATCH /api/research/admin/requests/{id}` - Approve/reject request
+- `POST /api/research/admin/analyze` - Manually trigger analysis (bypass request system)
+- `GET /api/research/admin/analyses` - List all analyses (all users)
+- `DELETE /api/research/admin/analyses/{id}` - Delete analysis
 
 **Build Tools** (6 endpoints)
 - `POST /api/build/brand` - Generate brand package
@@ -569,6 +597,171 @@ AND timestamp >= CURRENT_DATE
 **Rate limit handling**:
 - Tenacity retry: 3 attempts, exponential backoff (2s, 4s, 8s)
 - Fallback: GPT-4o if Claude rate-limited (not implemented in Phase 1-3)
+
+### 9.4 Super Admin Agent Controller Architecture
+
+**Purpose:** Real-time monitoring and control dashboard for AI agents, scrapers, and system metrics
+
+**Components:**
+
+1. **Agent Execution Logs Table**
+   - Schema: agent_name, status, started_at, completed_at, tokens_used, cost, error_message
+   - Indexes: idx_agent_name, idx_status, idx_started_at DESC
+   - Retention: 90 days (configurable)
+
+2. **System Metrics Table**
+   - Schema: metric_name, value, unit, timestamp
+   - Metrics: llm_cost_daily, scraper_success_rate, insight_generation_rate, api_response_time_p95
+   - Aggregation: 5-minute intervals
+
+3. **Agent Control Endpoints** (backend/app/api/routes/admin.py)
+   - GET /admin/dashboard - System overview
+   - GET /admin/agents/logs - Agent execution history
+   - POST /admin/agents/{agent_name}/pause - Pause agent execution
+   - POST /admin/agents/{agent_name}/resume - Resume agent execution
+   - POST /admin/agents/{agent_name}/trigger - Manually trigger agent
+   - GET /admin/metrics/stream - SSE streaming (5-second interval)
+
+4. **Frontend Implementation**
+   - Real-time charts (agent execution timeline, cost trends)
+   - Pause/resume controls (one-click agent management)
+   - Alert notifications (high cost, scraper failures)
+   - Audit log viewer
+
+**Competitive Advantage:**
+- IdeaBrowser: Inferred admin tools (no public documentation)
+- StartInsight: 13 admin endpoints, SSE real-time streaming, documented architecture
+- Impact: Transparent system control, cost management, operational visibility
+
+### 9.5 Evidence Engine Architecture
+
+**Purpose:** Transform raw market signals into quantified, cited insights with multi-source data visualization
+
+**Data Layer:**
+
+1. **Signal Aggregation**
+   - Input: 7 data sources (Reddit, Product Hunt, Google Trends, Twitter/X, Hacker News, Facebook, YouTube)
+   - Processing: Firecrawl markdown conversion, metadata extraction
+   - Storage: raw_signals table with JSONB metadata field
+
+2. **Metadata Schema (JSONB fields)**
+```json
+{
+  "community_signals": {
+    "reddit": {
+      "score": 8,
+      "subreddits": ["r/lawyers", "r/legal", "r/legaltech"],
+      "members": 2500000,
+      "top_post_url": "https://reddit.com/r/lawyers/..."
+    },
+    "facebook": {
+      "score": 7,
+      "groups": 4,
+      "members": 150000
+    },
+    "youtube": {
+      "score": 7,
+      "channels": 15,
+      "views": "500K+"
+    }
+  },
+  "trend_data": {
+    "volume": "1.0K",
+    "growth": "+1900%",
+    "chart_data": [
+      {"date": "2024-01", "volume": 10},
+      {"date": "2024-12", "volume": 190}
+    ]
+  }
+}
+```
+
+**Visualization Layer (Frontend):**
+
+1. **Community Signals Component**
+   - Display platform-specific relevance scores
+   - Show member counts and engagement metrics
+   - Link to original sources
+
+2. **Trend Chart Component**
+   - Enhanced from existing TrendChart
+   - Add volume label, growth badge, trend direction indicator
+
+3. **Evidence-Based Scoring Display**
+   - ScoreCard component (radar chart with 8 dimensions)
+   - Score breakdown tooltips
+   - Data source attribution
+
+**Frontend Components:**
+
+**CommunitySignalsBadge.tsx**
+- Display platform-specific relevance scores
+- Props: platform, score (1-10), members (optional)
+
+**DataCitation.tsx**
+- Link to original source with preview
+- Props: platform, url, snippet
+
+**TrendIndicator.tsx**
+- Visual growth indicator (arrow up/down, percentage)
+- Props: growth (number), direction (rising/falling/stable)
+
+**EvidencePanel.tsx** (NEW)
+- Collapsible panel showing all data sources
+- Components: CommunitySignalsBadge[], TrendChart, DataCitation[]
+
+**Competitive Advantage:**
+- IdeaBrowser: 4 community sources (Reddit, Facebook, YouTube, Other)
+- StartInsight: 7 community sources (adds Twitter/X, Hacker News, Product Hunt)
+- Impact: Users can verify data sources, trace insights to original discussions
+
+### 9.6 Builder Integration Architecture
+
+**Purpose:** One-click deployment to external builder platforms (Lovable, v0, Replit, ChatGPT, Claude)
+
+**Current Implementation (Phase 5.2):**
+- Brand Package Generator: backend/app/services/brand_generator.py
+- Landing Page Generator: backend/app/services/landing_page.py
+- Export endpoints: GET /build/brands/{id}, GET /build/landing-pages/{id}
+
+**Planned Integration Points:**
+
+1. **Pre-filled Prompt Generation**
+   - Generate contextual prompts from insight data
+   - Support types: landing_page, brand_package, ad_creative, email_sequence
+
+2. **API Endpoints (PLANNED)**
+   - GET /build/insights/{id}/prompts/{type} - Get pre-filled prompt
+   - POST /build/insights/{id}/deploy - Generate deployment URL
+
+3. **Frontend Implementation (PLANNED)**
+   - Builder platform selection UI (5 platforms)
+   - Prompt type selector (4 types)
+   - Pre-filled prompt preview modal
+   - 1-click build workflow
+
+**Data Flow:**
+```
+User clicks "Build This Idea"
+  ↓
+Select builder platform (Lovable, v0, etc.)
+  ↓
+Select prompt type (landing page, brand, ad creative)
+  ↓
+Backend generates pre-filled prompt with insight data
+  ↓
+Open builder platform in new tab with pre-filled context
+```
+
+**Competitive Positioning:**
+- IdeaBrowser: 5 builder integrations (Lovable, v0, Replit, ChatGPT, Claude)
+- StartInsight: Same 5 platforms + context-rich prompts (8-dimension scoring)
+- Advantage: 40-step research agent provides deeper market insights for builder prompts
+
+**Implementation Status:**
+- Backend: Brand and landing page generators complete (Phase 5.2)
+- Frontend: Build tools UI planned (not implemented)
+- Integration: Builder URL generation planned (not implemented)
 
 ---
 
