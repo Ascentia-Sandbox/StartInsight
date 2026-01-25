@@ -1,5 +1,14 @@
 import { z } from 'zod';
 
+// Helper: flexible datetime validator (accepts ISO with or without timezone)
+const datetimeValidator = z.string().refine(
+  (val) => {
+    const isoDatetimeRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/;
+    return isoDatetimeRegex.test(val);
+  },
+  { message: 'Invalid datetime format' }
+);
+
 // Zod schemas for runtime validation
 export const CompetitorSchema = z.object({
   name: z.string(),
@@ -12,28 +21,24 @@ export const RawSignalSummarySchema = z.object({
   id: z.string().uuid(),
   source: z.string(),
   url: z.string().url(),
-  created_at: z.string().refine(
-    (val) => {
-      // Accept both ISO datetime with Z (2020-01-01T00:00:00Z) and without Z (2020-01-01T00:00:00)
-      const isoDatetimeRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/;
-      return isoDatetimeRegex.test(val);
-    },
-    { message: 'Invalid datetime format' }
-  ),
+  created_at: datetimeValidator,
   extra_metadata: z.record(z.string(), z.any()).nullable().optional(), // Flexible metadata (varies by source)
 });
 
-// 8-Dimension Scoring Schema (StartInsight competitive advantage over IdeaBrowser's 4)
-export const ScoringDimensionsSchema = z.object({
-  opportunity: z.number().min(0).max(10).optional(),
-  problem: z.number().min(0).max(10).optional(),
-  feasibility: z.number().min(0).max(10).optional(),
-  why_now: z.number().min(0).max(10).optional(),
-  // StartInsight-exclusive dimensions (not in IdeaBrowser)
-  go_to_market: z.number().min(0).max(10).optional(),
-  founder_fit: z.number().min(0).max(10).optional(),
-  execution_difficulty: z.number().min(0).max(10).optional(),
-  revenue_potential: z.number().min(0).max(10).optional(),
+// Community Signal Schema (Phase 5.2: Visualization)
+export const CommunitySignalSchema = z.object({
+  platform: z.enum(['Reddit', 'Facebook', 'YouTube', 'Other']),
+  score: z.number().min(1).max(10),
+  members: z.number().min(0),
+  engagement_rate: z.number().min(0).max(1),
+  top_url: z.string().url().nullable().optional(),
+});
+
+// Enhanced Score Schema (Phase 5.2: 8-Dimension Visualization)
+export const EnhancedScoreSchema = z.object({
+  dimension: z.string(),
+  value: z.number().min(1).max(10),
+  label: z.string(),
 });
 
 export const InsightSchema = z.object({
@@ -41,13 +46,14 @@ export const InsightSchema = z.object({
   raw_signal_id: z.string().uuid(),
   problem_statement: z.string(),
   proposed_solution: z.string(),
-  market_size_estimate: z.enum(['Small', 'Medium', 'Large']),
+  market_size_estimate: z.string(), // Any string (e.g., "$5B-$20B", "Small", "Large")
   relevance_score: z.number().min(0).max(1),
   competitor_analysis: z.array(CompetitorSchema),
-  created_at: z.string().datetime(),
+  created_at: datetimeValidator,
   raw_signal: RawSignalSummarySchema.optional(),
-  // 8-dimension scoring (Phase 4.3)
-  scores: ScoringDimensionsSchema.optional(),
+  // Phase 5.2: Enhanced visualizations
+  community_signals_chart: z.array(CommunitySignalSchema).nullable().optional(),
+  enhanced_scores: z.array(EnhancedScoreSchema).nullable().optional(),
   // Additional framework fields
   value_ladder: z.record(z.string(), z.any()).optional(),
   market_gap_analysis: z.string().optional(),
@@ -64,7 +70,8 @@ export const InsightListResponseSchema = z.object({
 // TypeScript types derived from Zod schemas
 export type Competitor = z.infer<typeof CompetitorSchema>;
 export type RawSignalSummary = z.infer<typeof RawSignalSummarySchema>;
-export type ScoringDimensions = z.infer<typeof ScoringDimensionsSchema>;
+export type CommunitySignal = z.infer<typeof CommunitySignalSchema>;
+export type EnhancedScore = z.infer<typeof EnhancedScoreSchema>;
 export type Insight = z.infer<typeof InsightSchema>;
 export type InsightListResponse = z.infer<typeof InsightListResponseSchema>;
 
@@ -95,8 +102,8 @@ export const SavedInsightSchema = z.object({
   notes: z.string().nullable().optional(),
   tags: z.array(z.string()).nullable().optional(),
   shared_count: z.number().default(0),
-  saved_at: z.string().datetime(),
-  claimed_at: z.string().datetime().nullable().optional(),
+  saved_at: datetimeValidator,
+  claimed_at: datetimeValidator.nullable().optional(),
   insight: InsightSchema.optional(),
 });
 
@@ -113,7 +120,7 @@ export const UserRatingSchema = z.object({
   insight_id: z.string().uuid(),
   rating: z.number().min(1).max(5),
   feedback: z.string().nullable().optional(),
-  rated_at: z.string().datetime(),
+  rated_at: datetimeValidator,
 });
 
 export const RatingListResponseSchema = z.object({
@@ -326,9 +333,9 @@ export const ResearchRequestSchema = z.object({
   budget_range: z.string().nullable().optional(),
   admin_notes: z.string().nullable().optional(),
   analysis_id: z.string().uuid().nullable().optional(),
-  created_at: z.string().datetime(),
-  reviewed_at: z.string().datetime().nullable().optional(),
-  completed_at: z.string().datetime().nullable().optional(),
+  created_at: datetimeValidator,
+  reviewed_at: datetimeValidator.nullable().optional(),
+  completed_at: datetimeValidator.nullable().optional(),
   user_email: z.string().email().nullable().optional(),
 });
 
@@ -339,8 +346,8 @@ export const ResearchRequestSummarySchema = z.object({
   status: z.enum(['pending', 'approved', 'rejected', 'completed']),
   idea_description: z.string(),
   target_market: z.string().nullable().optional(),
-  created_at: z.string().datetime(),
-  reviewed_at: z.string().datetime().nullable().optional(),
+  created_at: datetimeValidator,
+  reviewed_at: datetimeValidator.nullable().optional(),
 });
 
 export const ResearchRequestListResponseSchema = z.object({

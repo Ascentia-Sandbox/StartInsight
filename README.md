@@ -58,28 +58,34 @@ Unlike traditional brainstorming tools, StartInsight relies on **real-time marke
 ```mermaid
 graph LR
     A[Reddit/PH/Trends] -->|Firecrawl| B[Arq Worker]
-    B -->|Raw Signals| C[(PostgreSQL)]
-    C -->|Unprocessed| D[Claude 3.5]
+    B -->|Raw Signals| C[(Supabase PostgreSQL)]
+    C -->|Unprocessed| D[Gemini 2.0 Flash]
     D -->|Insights| C
     C -->|API| E[FastAPI]
     E -->|JSON| F[Next.js Dashboard]
-    G[Redis] -.->|Queue| B
+    G[Upstash Redis] -.->|Queue| B
 ```
+
+**Cloud Infrastructure:**
+- **Database**: Supabase Cloud PostgreSQL (Singapore, ap-southeast-1)
+- **Cache/Queue**: Upstash Redis (Singapore)
+- **Backend**: Railway or local development
+- **Frontend**: Vercel or local development
 
 ### The Three Core Loops
 
 1. **Loop 1: Data Collection** (Every 6 hours)
    - Scrapes content using Firecrawl (markdown format)
-   - Stores raw signals in PostgreSQL with metadata
+   - Stores raw signals in Supabase PostgreSQL with metadata
 
 2. **Loop 2: Analysis** (After each collection)
-   - Claude 3.5 Sonnet processes unprocessed signals
+   - Gemini 2.0 Flash processes unprocessed signals
    - Validates output with Pydantic schemas
-   - Scores relevance and market potential
+   - Scores relevance and market potential (8-dimension scoring)
 
 3. **Loop 3: Presentation** (On-demand)
    - FastAPI serves ranked insights via REST
-   - Next.js dashboard displays top insights
+   - Next.js dashboard displays top insights with visualizations
 
 ---
 
@@ -124,13 +130,22 @@ graph LR
 
 ## 🚀 Quick Start
 
+> **Cloud-First Setup**: StartInsight uses Supabase Cloud PostgreSQL and Upstash Redis by default. No local database required.
+
+For detailed setup instructions, see **[SETUP.md](SETUP.md)** - a comprehensive guide covering:
+- Prerequisites (Supabase, Upstash accounts)
+- Backend and frontend configuration
+- Database initialization
+- Troubleshooting common issues
+- Production deployment
+
 ### Prerequisites
 
-- **Python 3.11+**
+- **Python 3.12+**
 - **Node.js 18+**
-- **Docker & Docker Compose**
 - **uv** (Python package manager): `curl -LsSf https://astral.sh/uv/install.sh | sh`
-- **pnpm**: `npm install -g pnpm`
+- **Supabase Account**: [supabase.com](https://supabase.com) (PostgreSQL database + auth)
+- **Upstash Account**: [upstash.com](https://upstash.com) (Redis cache/queue)
 
 ### 1. Clone the Repository
 
@@ -139,42 +154,48 @@ git clone https://github.com/Ascentia-Sandbox/StartInsight.git
 cd StartInsight
 ```
 
-### 2. Environment Setup
+### 2. Create Supabase Project
 
-**Backend (.env)**:
+1. Go to [supabase.com](https://supabase.com) and create a new project
+2. Choose **Asia Pacific (Singapore)** region
+3. Copy your connection string from **Project Settings > Database > Connection string** (Connection Pooling mode)
+4. Copy your API keys from **Project Settings > API**
+
+### 3. Create Upstash Redis
+
+1. Go to [upstash.com](https://upstash.com) and create a new Redis database
+2. Choose **Asia Pacific Southeast (Singapore)** region
+3. Copy the **REST API URL** (format: `redis://default:[password]@[endpoint].upstash.io:6379`)
+
+### 4. Configure Backend
+
 ```bash
 cd backend
 cp .env.example .env
 ```
 
-Edit `backend/.env`:
+Edit `backend/.env` with your cloud credentials:
 ```bash
-# Database (Supabase Cloud or Local Docker)
-DATABASE_URL=postgresql+asyncpg://postgres:[password]@db.[project].supabase.co:5432/postgres
-SUPABASE_URL=https://[project].supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+# Database (Supabase Cloud)
+DATABASE_URL=postgresql+asyncpg://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true
 
-# Cache
-REDIS_URL=redis://localhost:6379
+# Supabase Auth
+SUPABASE_URL=https://[PROJECT_REF].supabase.co
+SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+JWT_SECRET=your_jwt_secret_from_supabase
+
+# Redis (Upstash Cloud)
+REDIS_URL=redis://default:[PASSWORD]@[ENDPOINT].upstash.io:6379
 
 # AI (Gemini 2.0 Flash)
-GOOGLE_API_KEY=your_google_ai_api_key
+GOOGLE_API_KEY=your_google_api_key
 
-# Scraping
-FIRECRAWL_API_KEY=your_firecrawl_api_key
-REDDIT_CLIENT_ID=your_reddit_client_id
-REDDIT_CLIENT_SECRET=your_reddit_client_secret
-TWITTER_BEARER_TOKEN=your_twitter_bearer_token
-
-# Payments (Stripe)
-STRIPE_SECRET_KEY=your_stripe_secret_key
-STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
-
-# Email (Resend)
-RESEND_API_KEY=your_resend_api_key
+# See .env.example for all required keys
 ```
 
-**Frontend (.env.local)**:
+### 5. Configure Frontend
+
 ```bash
 cd ../frontend
 cp .env.example .env.local
@@ -183,27 +204,11 @@ cp .env.example .env.local
 Edit `frontend/.env.local`:
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_SUPABASE_URL=https://[project].supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://[PROJECT_REF].supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-### 3. Start Infrastructure
-
-```bash
-# OPTION A: Redis only (use Supabase Cloud for database)
-docker-compose up -d redis
-
-# OPTION B: Redis + PostgreSQL (for local dev/testing)
-docker-compose up -d
-```
-
-Verify containers are running:
-```bash
-docker ps
-# Should show: startinsight-redis (and startinsight-postgres if using Option B)
-```
-
-### 4. Initialize Database
+### 6. Initialize Database
 
 ```bash
 cd backend
@@ -211,56 +216,66 @@ cd backend
 # Install dependencies
 uv sync
 
-# Run database setup
-uv run python check_db_connection.py
-
 # Run migrations
-uv run alembic upgrade head
+alembic upgrade head
 ```
 
-### 5. Start Backend
+### 7. Start Backend
 
 ```bash
 # From backend/ directory
-uv run uvicorn app.main:app --reload
+uvicorn app.main:app --reload
 ```
 
 Backend runs at: **http://localhost:8000**
 - API docs: http://localhost:8000/docs
 - Health check: http://localhost:8000/health
 
-### 6. Start Frontend (Phase 3)
+### 8. Start Frontend
 
 ```bash
 # From frontend/ directory
-pnpm install
-pnpm dev
+npm install
+npm run dev
 ```
 
 Frontend runs at: **http://localhost:3000**
 
 ---
 
-## 🌏 Architecture: Supabase Cloud (Singapore)
+## 📖 Full Setup Guide
 
-StartInsight uses **Supabase Cloud** as the primary production database:
+For troubleshooting, production deployment, and advanced configuration, see:
+
+**[SETUP.md](SETUP.md)** - Comprehensive cloud-first setup guide
+
+---
+
+## 🌏 Cloud-First Architecture
+
+StartInsight uses **cloud services by default** to ensure consistency between development and production:
+
+### Supabase Cloud PostgreSQL (Singapore)
 
 - **Region:** ap-southeast-1 (Singapore) - Optimized for APAC market
 - **Latency:** <50ms for Southeast Asia (vs 180ms US-based)
 - **Cost:** $25/mo (Supabase Pro) vs $69/mo (Neon) = 64% savings
-- **Features:** PostgreSQL 15+, Row-Level Security, real-time, storage
+- **Features:** PostgreSQL 15+, Row-Level Security, connection pooling, real-time subscriptions
 
-### Local Development Options
+### Upstash Redis (Singapore)
 
-**Option A: Supabase Cloud (Recommended)**
-- Best for testing RLS policies
-- Set `SUPABASE_URL` and `DATABASE_URL` in `.env`
-- Compatible with all Supabase features (real-time, storage)
+- **Region:** Asia Pacific Southeast (Singapore) - Lowest latency
+- **Type:** Regional (not Global) for optimal performance
+- **Cost:** Free tier available, scales with usage
+- **Use Cases:** Task queue (Arq), rate limiting, session caching
 
-**Option B: Docker PostgreSQL (Faster Iteration)**
-- Offline development capability
-- Faster test execution (no network latency)
-- Run `docker-compose up -d` for full local stack
+### Why Cloud-First?
+
+1. **No Infrastructure Setup**: Skip Docker, PostgreSQL, Redis installation
+2. **Production Parity**: Development environment matches production exactly
+3. **Managed Backups**: Automatic backups and point-in-time recovery
+4. **Global Accessibility**: Access your database from anywhere
+5. **RLS Testing**: Test Row-Level Security policies in real Supabase environment
 
 ---
 
@@ -346,22 +361,20 @@ cd backend && uv run alembic history
 cd backend && uv run alembic downgrade -1
 ```
 
-### Docker Management
+### Cloud Service Management
 
 ```bash
-# Start services
-docker-compose up -d
+# Check Supabase connection
+cd backend && uv run python -c "from app.db.session import check_db_connection; import asyncio; asyncio.run(check_db_connection())"
 
-# Stop services
-docker-compose down
+# View Supabase logs
+# Go to: https://supabase.com/dashboard/project/[PROJECT_REF]/logs/postgres-logs
 
-# View logs
-docker-compose logs -f postgres
-docker-compose logs -f redis
+# View Upstash Redis metrics
+# Go to: https://console.upstash.com/redis/[DATABASE_ID]
 
-# Reset database (⚠️ destroys data)
-docker-compose down -v
-docker-compose up -d
+# Reset database (⚠️ use with caution)
+cd backend && alembic downgrade base && alembic upgrade head
 ```
 
 ---

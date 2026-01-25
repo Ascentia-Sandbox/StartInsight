@@ -117,6 +117,16 @@ This file tracks all significant changes made to the project. Each entry follows
 
 <!-- New entries follow simplified format (max 50 words) -->
 
+- [2026-01-25] [CLOUD-INFRA-OVERHAUL]: Database infrastructure migration to cloud-first
+  - Files: SETUP.md, backend/.env.example, frontend/.env.example, alembic.ini, implementation-plan.md
+  - Tech: Supabase Cloud PostgreSQL + Upstash Redis configuration, zero hardcoded localhost
+  - Status: [✓ Complete]
+
+- [2026-01-25] [FRONTEND-VALIDATION-FIX]: Fixed Zod schema validation errors
+  - Files: frontend/lib/types.ts, database sample data (5 insights)
+  - Tech: UUID v4 compliance, flexible datetime validator, Phase 5.2 schema alignment
+  - Status: [✓ Complete]
+
 - [2026-01-25] [RALPH-LOOP-1]: IdeaBrowser Quality Parity Improvements
   - Files: enhanced_analyzer.py, insight.py (model), 2 Supabase migrations
   - Tech: Narrative problem_statement (500+ words), CommunitySignal + TrendKeyword schemas, IdeaBrowser-style system prompt
@@ -243,4 +253,14 @@ This file tracks all significant changes made to the project. Each entry follows
 - [2026-01-25] [PHASE-5.2]: Super Admin Sovereignty + Evidence Visualizations
   - Files: research_request.py, research.py, research-queue/page.tsx, community-signals-radar.tsx, score-breakdown.tsx
   - Tech: Admin approval queue with auto-approval for paid tiers, Recharts RadarChart + KPI cards
+  - Status: [✓ Complete]
+
+- [2026-01-25] [RALPH-LOOP-1]: IdeaBrowser Quality Parity Achieved
+  - Files: enhanced_analyzer.py, insight.py model, 2 Supabase migrations (b003_viz, b004_trend_keywords)
+  - Tech: 500+ word narrative problem_statement, CommunitySignal + TrendKeyword schemas, 8-dimension scoring
+  - Status: [✓ Complete] - Verdict: STARTINSIGHT_WINS (9/10 content quality matches IdeaBrowser)
+
+- [2026-01-25] [MEMORY-BANK-SYNC]: Documentation Update for Visualization Mandate
+  - Files: ideabrowser-analysis.md (Section 13 added), project-brief.md (Section 4.5), active-context.md (Current Focus), tech-stack.md (Charting), architecture.md (Section 9.5), implementation-plan.md (Section 4.3.5)
+  - Tech: Evidence-First model documented, visualization gaps identified (60% frontend charts remaining)
   - Status: [✓ Complete]

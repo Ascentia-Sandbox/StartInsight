@@ -46,6 +46,127 @@ StartInsight implementation follows 3 core loops across 7 phases:
 
 ---
 
+## Cloud-First Setup Guide
+
+**IMPORTANT:** StartInsight uses cloud services by default. NO local database/Redis setup required.
+
+### Prerequisites
+
+1. **Supabase Account** (Database + Authentication)
+   - Sign up: https://supabase.com
+   - Create new project in Asia Pacific (Singapore) region
+   - Note your project URL and API keys
+
+2. **Upstash Account** (Redis for task queue)
+   - Sign up: https://upstash.com
+   - Create new Redis database (recommended: ap-southeast-1)
+   - Note your Redis connection URL
+
+3. **API Keys** (Development)
+   - Google Gemini API key (primary LLM)
+   - Firecrawl API key (web scraping)
+   - Reddit API credentials (data collection)
+
+### Setup Steps
+
+**Backend Setup:**
+
+```bash
+cd backend
+
+# 1. Copy environment template
+cp .env.example .env
+
+# 2. Edit .env with your credentials:
+# - DATABASE_URL: Your Supabase connection string
+# - SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY
+# - REDIS_URL: Your Upstash Redis URL
+# - GOOGLE_API_KEY, FIRECRAWL_API_KEY, REDDIT_*
+
+# 3. Install dependencies
+uv sync
+
+# 4. Run database migrations
+alembic upgrade head
+
+# 5. Start backend server
+uvicorn app.main:app --reload
+```
+
+**Frontend Setup:**
+
+```bash
+cd frontend
+
+# 1. Copy environment template
+cp .env.example .env.local
+
+# 2. Edit .env.local with your credentials:
+# - NEXT_PUBLIC_API_URL: http://localhost:8000
+# - NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+# 3. Install dependencies
+npm install
+
+# 4. Start frontend server
+npm run dev
+```
+
+### Database Initialization
+
+After running migrations, your Supabase database will have:
+- 20 tables with Row Level Security (RLS) enabled
+- Sample data can be loaded via SQL inserts (see `tests/fixtures/`)
+- Admin user creation via Supabase Dashboard > Authentication
+
+### Verification Checklist
+
+- [ ] Backend starts successfully (http://localhost:8000)
+- [ ] Frontend starts successfully (http://localhost:3000)
+- [ ] Supabase connection working (check logs for database queries)
+- [ ] API health check: `GET http://localhost:8000/health`
+- [ ] Frontend can access backend: Navigate to http://localhost:3000
+
+### Troubleshooting
+
+**Database Connection Errors:**
+- Verify DATABASE_URL format: `postgresql+asyncpg://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true`
+- Check Supabase project is not paused (free tier auto-pauses after 7 days inactivity)
+- Ensure IP is whitelisted in Supabase Dashboard > Settings > Database > Connection Pooling
+
+**Redis Connection Errors:**
+- Verify REDIS_URL format: `redis://default:[PASSWORD]@[ENDPOINT].upstash.io:6379`
+- Check Upstash database is active
+
+**Migration Errors:**
+- Run `alembic downgrade -1` then `alembic upgrade head` to retry
+- Check database user has CREATE TABLE permissions
+- Verify DATABASE_URL is using connection pooler (port 6543)
+
+### Production Deployment
+
+**Railway Backend:**
+1. Connect Railway to GitHub repository
+2. Configure environment variables (copy from .env, replace with production values)
+3. Deploy backend service
+4. Note the Railway backend URL
+
+**Vercel Frontend:**
+1. Connect Vercel to GitHub repository
+2. Configure environment variables:
+   - `NEXT_PUBLIC_API_URL`: Your Railway backend URL
+   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+3. Deploy frontend
+4. Configure custom domain (optional)
+
+**Post-Deployment:**
+- Enable RLS policies in Supabase Dashboard > Authentication > Policies
+- Test authentication flow (sign up, sign in)
+- Run smoke tests on production URLs
+- Configure Stripe live mode keys for payments
+
+---
+
 ## Decision Records
 
 ### DR-001: Supabase Cloud Adoption (2026-01-25)
@@ -270,14 +391,25 @@ User → Reddit/PH/Trends → Firecrawl → Arq Worker → PostgreSQL → FastAP
 
 ### 4.3.5 Evidence Engine Visualization (Frontend Extension)
 
-**Status:** [x] Backend Data Available, [x] Frontend Complete (2026-01-25)
+**Status:** [x] Backend Data Available (100%), [⚠️] Frontend Charts Partial (40% Complete)
 
-**Implemented Components:**
+**VISUALIZATION MANDATE (Post-Ralph-Loop 2026-01-25):**
+Every insight MUST include data-driven visualizations. Evidence MUST be visual. Badges alone are insufficient.
+
+**Quality Parity Achievement:**
+- Ralph Loop Iteration 1: STARTINSIGHT_WINS (content quality)
+- Problem statements: 500+ words (IdeaBrowser-style narrative)
+- Community platforms: 3-4 (PARITY)
+- Trend keywords: 3 (EXCEEDS IdeaBrowser's 1-2)
+- Scoring depth: 8 dimensions (EXCEEDS IdeaBrowser's 4)
+
+**Implemented Components (40%):**
 
 1. **Community Signals Badges** [x] Complete
    - CommunitySignalsBadge component (platform icon + score/10)
    - CommunitySignalsRow for displaying multiple badges
    - Tooltip with member count, engagement metrics
+   - Status: Basic badges work, chart component needed
 
 2. **Data Citation Links** [x] Complete
    - DataCitationLink component (platform icon + "View Source" link)
@@ -289,23 +421,54 @@ User → Reddit/PH/Trends → Firecrawl → Arq Worker → PostgreSQL → FastAP
    - Color-coded: green (+growth), red (-growth), gray (stable)
    - TrendStats component for summary display
 
-4. **Evidence Panel** [x] Complete
+4. **Evidence Panel** [x] Basic Structure Complete
    - EvidencePanel component (collapsible section)
-   - Shows community signals, trend data, primary source
-   - Integrated on insight detail page
+   - Shows community signals badges, trend data, primary source
+   - Status: Exists but missing chart integrations
+
+**Planned Chart Components (60% Remaining):**
+
+5. **CommunitySignalsRadar.tsx** [⚠️] PLANNED
+   - Recharts RadarChart or AreaChart for 4-platform engagement
+   - Data source: insights.community_signals_chart JSONB column
+   - Visual: Multi-platform engagement strength overlay
+   - Purpose: Replace basic badges with data-driven chart
+
+6. **ScoreRadar.tsx** [⚠️] PLANNED
+   - Recharts RadarChart for 8-dimension scoring visualization
+   - Data source: insights.enhanced_scores JSONB column
+   - Dimensions: Opportunity, Problem, Feasibility, Why Now, Revenue, Execution, GTM, Founder Fit
+   - Color-coded zones: 8-10 (green), 5-7 (amber), 1-4 (red)
+
+7. **TrendKeywordCards.tsx** [⚠️] PLANNED
+   - shadcn/ui Card grid for trending keywords
+   - Data source: insights.trend_keywords JSONB column
+   - Display: Keyword, volume (1K, 27K, 74K), growth (+1900%, +86%)
+   - Badges: Color-coded by growth percentage
+
+8. **EvidencePanel Enhancement** [⚠️] PLANNED
+   - Integrate all chart components (CommunitySignalsRadar, ScoreRadar, TrendKeywordCards)
+   - Implement accordion sections for collapsible data categories
+   - Add lazy loading for chart performance (target: <2s render time)
 
 **Files:**
 - frontend/components/evidence/community-signals-badge.tsx [x]
 - frontend/components/evidence/data-citation-link.tsx [x]
 - frontend/components/evidence/trend-indicator.tsx [x]
-- frontend/components/evidence/evidence-panel.tsx [x]
+- frontend/components/evidence/evidence-panel.tsx [x] (needs chart integration)
+- frontend/components/charts/trend-chart.tsx [x] (already exists)
+- frontend/components/evidence/community-signals-radar.tsx [⚠️] PLANNED
+- frontend/components/evidence/score-radar.tsx [⚠️] PLANNED
+- frontend/components/evidence/trend-keyword-cards.tsx [⚠️] PLANNED
 - frontend/components/ui/tooltip.tsx [x] (shadcn/ui component)
 - frontend/app/insights/[id]/page.tsx [x] (integrated)
 
 **IdeaBrowser Feature Parity:**
-- IdeaBrowser: Community signals badges (Reddit, Facebook, YouTube, Other)
-- StartInsight: Same badges + direct source links + trend direction indicators
-- Advantage: 7 data sources (vs IdeaBrowser's 4) provide richer evidence
+- **Content Quality**: IdeaBrowser 9/10 → StartInsight 9/10 (PARITY achieved post-Ralph-Loop)
+- **Data Sources**: IdeaBrowser 4 sources → StartInsight 7 sources (EXCEEDS)
+- **Scoring Depth**: IdeaBrowser 4 dimensions → StartInsight 8 dimensions (EXCEEDS)
+- **Visualization**: IdeaBrowser basic charts → StartInsight 40% complete (GAP - 3 chart components needed)
+- **Verdict**: Backend EXCEEDS, Content PARITY, Frontend GAP (60% visualization remaining)
 
 ### 4.4 User Workspace & Status Tracking
 
