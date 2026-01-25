@@ -14,6 +14,29 @@ This document breaks down the StartInsight project into **3 distinct implementat
 
 **Development Strategy**: Build vertically, not horizontally. Each phase should produce a working end-to-end slice before moving to the next.
 
+## Next Milestone: Phase 4.5 Supabase Cloud Migration
+
+**Current Blocker:** [CRITICAL] Supabase Migration Required for Frontend Development
+
+**Status:** Phase 4-7 Backend 100% Complete (21 models, 97 endpoints), Migration 0% Executed
+
+**Why This Blocks Everything:**
+- Phase 4-7 Frontend: Cannot start until database is accessible
+- Production Deployment: Backend ready, no database to connect to
+- User Authentication: Supabase Auth integration complete but not deployed
+
+**What's Needed:**
+1. Create Supabase project (Singapore region, PostgreSQL 15)
+2. Execute 9 Alembic migrations (Phase 4-7 database schema)
+3. Configure Row Level Security (RLS) policies
+4. Update environment variables (DATABASE_URL, SUPABASE_URL, SUPABASE_ANON_KEY)
+
+**Next Actions:** See Phase 4.5 detailed plan (Section 4.5 below)
+
+**Estimated Duration:** 49 hours (~1-2 weeks)
+
+**Risk:** Low (blue-green deployment, rollback plan included)
+
 ---
 
 ## Decision Records & Technology Evolution
@@ -98,6 +121,41 @@ def example_function():
 4. Run tests from `tests/` directories, not from this document
 
 **Reference:** See `tests/README.md` and `test-results/README.md` for test structure
+
+## Feature-Based Roadmap Index
+
+### Phase 4: Foundation & Admin Portal
+- 4.1 User Authentication & Workspace
+- 4.2 Admin Portal & Moderation
+- 4.3 Multi-Dimensional Scoring
+- 4.4 User Workspace & Status Tracking
+- 4.5 Supabase Cloud Migration
+  - 4.5.1 Planning & Setup
+  - 4.5.2 Backend Integration
+  - 4.5.3 Testing & Validation
+  - 4.5.4 Cutover & Cleanup
+
+### Phase 5: Advanced Analysis & Export
+- 5.1 AI Research Agent (40-Step Analysis)
+- 5.2 Build Tools (Brand Generator, Landing Page Builder)
+- 5.3 Export Features (PDF, CSV, JSON)
+- 5.4 Real-time Insight Feed (SSE)
+
+### Phase 6: Payments, Email & Engagement
+- 6.1 Payment Integration (Stripe 4 Tiers)
+- 6.2 Email Notifications (Resend, 6 Templates)
+- 6.3 Rate Limiting (Redis Sliding Window)
+- 6.4 Team Collaboration (RBAC, Invitations, Sharing)
+
+### Phase 7: Data Expansion & Public API
+- 7.1 Twitter/X Data Source
+- 7.2 API Key Management
+- 7.3 Multi-Tenancy
+
+**Status Legend:**
+- [x] Backend Complete
+- [ ] Migration Pending (blocked by Phase 4.5)
+- [ ] Frontend Not Started
 
 ---
 
@@ -4609,4 +4667,52 @@ async def verify_jwt(token: str):
 4. **Environment Parity**: Use Docker to ensure dev/prod parity.
 5. **Security First**: Never commit secrets. Use `.env` files and secret managers.
 6. **Performance Monitoring**: Add logging and monitoring from Day 1.
+
+---
+
+## Appendix: Duration Estimation Guidelines
+
+### How to Interpret Duration Estimates
+
+Duration estimates in this plan (e.g., "~16 hours", "~2 weeks") are **effort-based approximations** for planning purposes, not hard deadlines.
+
+**Estimation Methodology:**
+- **Task Complexity:** Simple (CRUD) < Medium (Integration) < High (AI/ML)
+- **Dependencies:** Assumes required libraries/services are available
+- **Developer Experience:** Assumes familiarity with FastAPI, Next.js, PostgreSQL
+- **Testing Overhead:** Includes unit tests, excludes E2E tests unless specified
+
+**Effort Levels:**
+- **~1-4 hours:** Simple task (single file, straightforward logic)
+- **~8-16 hours:** Medium task (multiple files, API integration)
+- **~24-40 hours:** Complex task (architectural changes, migration)
+- **~1-2 weeks:** Feature milestone (full sub-phase with testing)
+
+**Example:**
+- "Task 4.5.1.1: Create Supabase Project (~1 hour)" = Click through Supabase UI, configure region/tier
+- "Phase 4.5.2: Backend Integration (~16 hours)" = Update 15+ files, test connections, handle errors
+
+**Conversion to Calendar Time:**
+- Effort hours ≠ Calendar days
+- Account for: meetings, context switching, code review, debugging, environment issues
+- Rule of thumb: 4-6 effort hours = 1 calendar day for focused work
+
+**Use Cases:**
+1. **Sprint Planning:** Estimate team capacity (e.g., "Can we finish 4.5.1 in 1 sprint?")
+2. **Resource Allocation:** Identify bottlenecks (e.g., "Phase 5.1 needs AI expertise")
+3. **Progress Tracking:** Compare actual vs estimated (e.g., "Migration took 60h vs 49h estimated")
+
+**Anti-Patterns (Avoid):**
+- Using estimates as commitments ("We'll ship by Friday")
+- Comparing developers by velocity ("Alice is 2x faster than Bob")
+- Ignoring dependency blockers ("Just start Phase 5 while waiting for Supabase")
+
+**When to Re-Estimate:**
+- New dependencies discovered (e.g., "Need to add OAuth2 flow")
+- Scope changes (e.g., "Add 5 more API endpoints")
+- Actual duration exceeds estimate by 50%+ (e.g., "4h task took 8h")
+
+---
+
+**End of Implementation Plan**
 
