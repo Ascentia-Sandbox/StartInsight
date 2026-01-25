@@ -1,92 +1,113 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Loader2 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Loader2, Zap, DollarSign, Users, Clock, Play, Pause, RotateCcw, FileText, AlertTriangle } from 'lucide-react';
+import { getSupabaseClient } from '@/lib/supabase/client';
+import { fetchAdminDashboard, fetchAgentStatus, pauseAgent, resumeAgent, triggerAgent, fetchReviewQueue } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { API_BASE_URL } from '@/lib/api/config';
-
-interface AgentStatus {
-  agent_id: string;
-  status: string;
-  last_run: string | null;
-  signals_processed: number;
-  insights_generated: number;
-  error_count: number;
-}
-
-interface SystemStats {
-  total_signals: number;
-  total_insights: number;
-  total_users: number;
-  active_agents: number;
-}
+import type { AgentStatus, DashboardMetrics } from '@/lib/types';
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<SystemStats | null>(null);
-  const [agents, setAgents] = useState<AgentStatus[]>([]);
-  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
+  // Check authentication
   useEffect(() => {
-    // Fetch admin stats from API
-    const fetchStats = async () => {
-      try {
-        // Fetch pipeline status
-        const pipelineRes = await fetch(`${API_BASE_URL}/api/pipeline/status`);
-        const pipelineData = await pipelineRes.json();
+    const checkAuth = async () => {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
 
-        // Fetch insights count
-        const insightsRes = await fetch(`${API_BASE_URL}/api/insights`);
-        const insightsData = await insightsRes.json();
-
-        setStats({
-          total_signals: pipelineData.signals_in_queue || 0,
-          total_insights: insightsData.total || 0,
-          total_users: 0, // Would come from Supabase
-          active_agents: pipelineData.running ? 1 : 0,
-        });
-
-        setAgents([
-          {
-            agent_id: 'scraper',
-            status: pipelineData.running ? 'running' : 'idle',
-            last_run: pipelineData.last_run,
-            signals_processed: pipelineData.signals_in_queue || 0,
-            insights_generated: 0,
-            error_count: 0,
-          },
-          {
-            agent_id: 'analyzer',
-            status: pipelineData.running ? 'running' : 'idle',
-            last_run: pipelineData.last_run,
-            signals_processed: 0,
-            insights_generated: insightsData.total || 0,
-            error_count: 0,
-          },
-        ]);
-      } catch (error) {
-        console.error('Error fetching admin stats:', error);
-      } finally {
-        setLoading(false);
+      if (!session) {
+        router.push('/auth/login?redirectTo=/admin');
+        return;
       }
+
+      setAccessToken(session.access_token);
+      setIsCheckingAuth(false);
     };
 
-    fetchStats();
-    const interval = setInterval(fetchStats, 30000); // Refresh every 30s
-    return () => clearInterval(interval);
-  }, []);
+    checkAuth();
+  }, [router]);
 
-  if (loading) {
+  // Fetch dashboard metrics
+  const { data: metrics, isLoading: metricsLoading, error: metricsError } = useQuery({
+    queryKey: ['admin-dashboard', accessToken],
+    queryFn: () => fetchAdminDashboard(accessToken!),
+    enabled: !!accessToken,
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  // Fetch agent status
+  const { data: agents, isLoading: agentsLoading } = useQuery({
+    queryKey: ['admin-agents', accessToken],
+    queryFn: () => fetchAgentStatus(accessToken!),
+    enabled: !!accessToken,
+    refetchInterval: 30000,
+  });
+
+  // Agent control mutations
+  const pauseMutation = useMutation({
+    mutationFn: (agentType: string) => pauseAgent(accessToken!, agentType),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-agents'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-dashboard'] });
+    },
+  });
+
+  const resumeMutation = useMutation({
+    mutationFn: (agentType: string) => resumeAgent(accessToken!, agentType),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-agents'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-dashboard'] });
+    },
+  });
+
+  const triggerMutation = useMutation({
+    mutationFn: (agentType: string) => triggerAgent(accessToken!, agentType),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-agents'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-dashboard'] });
+    },
+  });
+
+  if (isCheckingAuth) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="animate-spin h-8 w-8 text-primary mx-auto" />
-          <p className="mt-2 text-muted-foreground">Loading admin dashboard...</p>
+          <p className="mt-2 text-muted-foreground">Checking admin access...</p>
         </div>
       </div>
     );
   }
+
+  // Handle 403 error (not an admin)
+  if (metricsError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="p-8 text-center">
+            <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
+            <p className="text-muted-foreground mb-4">
+              You do not have admin access. Please contact support if you believe this is an error.
+            </p>
+            <Link href="/dashboard">
+              <Button>Return to Dashboard</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const isLoading = metricsLoading || agentsLoading;
 
   return (
     <div className="min-h-screen bg-background">
@@ -100,226 +121,203 @@ export default function AdminDashboard() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Link href="/admin/agents">
-              <Button variant="outline">Manage Agents</Button>
-            </Link>
-            <Link href="/admin/analytics">
-              <Button variant="outline">Analytics</Button>
+            <Link href="/admin/insights">
+              <Button variant="outline">
+                <FileText className="h-4 w-4 mr-2" />
+                Review Queue
+              </Button>
             </Link>
           </div>
         </div>
 
-        {/* System Stats */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Signals</CardTitle>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-4 w-4 text-muted-foreground"
-              >
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-              </svg>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.total_signals || 0}</div>
-              <p className="text-xs text-muted-foreground">In processing queue</p>
-            </CardContent>
-          </Card>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="animate-spin h-8 w-8 text-primary" />
+          </div>
+        ) : (
+          <>
+            {/* System Stats */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Insights Today</CardTitle>
+                  <Zap className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{metrics?.total_insights_today || 0}</div>
+                  <p className="text-xs text-muted-foreground">Generated by AI agents</p>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Insights</CardTitle>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-4 w-4 text-muted-foreground"
-              >
-                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-              </svg>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.total_insights || 0}</div>
-              <p className="text-xs text-muted-foreground">Generated by AI</p>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">LLM Cost Today</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">${metrics?.llm_cost_today?.toFixed(2) || '0.00'}</div>
+                  <p className="text-xs text-muted-foreground">AI processing costs</p>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-4 w-4 text-muted-foreground"
-              >
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.total_users || 0}</div>
-              <p className="text-xs text-muted-foreground">Registered users</p>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{metrics?.pending_insights || 0}</div>
+                  <p className="text-xs text-muted-foreground">Insights awaiting approval</p>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Agents</CardTitle>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-4 w-4 text-muted-foreground"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
-              </svg>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.active_agents || 0}</div>
-              <p className="text-xs text-muted-foreground">Currently running</p>
-            </CardContent>
-          </Card>
-        </div>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Errors Today</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-red-500">{metrics?.errors_today || 0}</div>
+                  <p className="text-xs text-muted-foreground">Processing errors</p>
+                </CardContent>
+              </Card>
+            </div>
 
-        {/* Agent Status */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Agent Status</CardTitle>
-            <CardDescription>Real-time status of AI processing agents</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {agents.map((agent) => (
-                <div
-                  key={agent.agent_id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
-                >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`w-3 h-3 rounded-full ${
-                        agent.status === 'running'
-                          ? 'bg-green-500 animate-pulse'
-                          : agent.status === 'error'
-                          ? 'bg-red-500'
-                          : 'bg-gray-400'
-                      }`}
-                    />
-                    <div>
-                      <p className="font-medium capitalize">{agent.agent_id} Agent</p>
-                      <p className="text-sm text-muted-foreground">
-                        {agent.last_run
-                          ? `Last run: ${new Date(agent.last_run).toLocaleString()}`
-                          : 'Never run'}
-                      </p>
+            {/* Agent Status */}
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle>Agent Status</CardTitle>
+                <CardDescription>Real-time status of AI processing agents</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {agents && agents.length > 0 ? (
+                    agents.map((agent: AgentStatus) => (
+                      <div
+                        key={agent.agent_type}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div
+                            className={`w-3 h-3 rounded-full ${
+                              agent.state === 'running'
+                                ? 'bg-green-500 animate-pulse'
+                                : agent.state === 'paused'
+                                ? 'bg-yellow-500'
+                                : 'bg-gray-400'
+                            }`}
+                          />
+                          <div>
+                            <p className="font-medium capitalize">
+                              {agent.agent_type.replace(/_/g, ' ')} Agent
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {agent.last_run
+                                ? `Last run: ${new Date(agent.last_run).toLocaleString()}`
+                                : 'Never run'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-6 text-sm">
+                          <div className="text-center">
+                            <p className="font-semibold">{agent.items_processed_today}</p>
+                            <p className="text-muted-foreground">Items</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="font-semibold text-red-500">{agent.errors_today}</p>
+                            <p className="text-muted-foreground">Errors</p>
+                          </div>
+                          <div className="flex gap-2">
+                            {agent.state === 'running' ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => pauseMutation.mutate(agent.agent_type)}
+                                disabled={pauseMutation.isPending}
+                              >
+                                <Pause className="h-4 w-4" />
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => resumeMutation.mutate(agent.agent_type)}
+                                disabled={resumeMutation.isPending}
+                              >
+                                <Play className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => triggerMutation.mutate(agent.agent_type)}
+                              disabled={triggerMutation.isPending}
+                            >
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No agent data available</p>
+                      <p className="text-sm mt-1">Agents will appear here once they start running</p>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-6 text-sm">
-                    <div className="text-center">
-                      <p className="font-semibold">{agent.signals_processed}</p>
-                      <p className="text-muted-foreground">Signals</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="font-semibold">{agent.insights_generated}</p>
-                      <p className="text-muted-foreground">Insights</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="font-semibold text-red-500">{agent.error_count}</p>
-                      <p className="text-muted-foreground">Errors</p>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      View Logs
-                    </Button>
-                  </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Common administrative tasks</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
-              <Button className="h-auto py-4 flex flex-col" variant="outline">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-6 w-6 mb-2"
-                >
-                  <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                  <path d="M3 3v5h5" />
-                  <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-                  <path d="M16 16h5v5" />
-                </svg>
-                <span>Run Scraping Pipeline</span>
-              </Button>
-              <Button className="h-auto py-4 flex flex-col" variant="outline">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-6 w-6 mb-2"
-                >
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                </svg>
-                <span>Run Analysis Agent</span>
-              </Button>
-              <Button className="h-auto py-4 flex flex-col" variant="outline">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-6 w-6 mb-2"
-                >
-                  <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-                  <line x1="3" x2="21" y1="9" y2="9" />
-                  <line x1="9" x2="9" y1="21" y2="9" />
-                </svg>
-                <span>View All Logs</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            {/* Recent Execution Logs */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Activity</CardTitle>
+                <CardDescription>Latest agent execution logs</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {metrics?.recent_logs && metrics.recent_logs.length > 0 ? (
+                  <div className="space-y-2">
+                    {metrics.recent_logs.slice(0, 5).map((log) => (
+                      <div
+                        key={log.id}
+                        className="flex items-center justify-between p-3 border rounded-md text-sm"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-2 h-2 rounded-full ${
+                              log.status === 'completed'
+                                ? 'bg-green-500'
+                                : log.status === 'failed'
+                                ? 'bg-red-500'
+                                : log.status === 'running'
+                                ? 'bg-blue-500 animate-pulse'
+                                : 'bg-gray-400'
+                            }`}
+                          />
+                          <span className="font-medium capitalize">
+                            {log.agent_type.replace(/_/g, ' ')}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {log.items_processed} items processed
+                          </span>
+                        </div>
+                        <span className="text-muted-foreground">
+                          {new Date(log.started_at).toLocaleTimeString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No recent activity</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </div>
   );

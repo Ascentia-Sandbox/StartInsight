@@ -1,10 +1,18 @@
-import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { Loader2, Check, ExternalLink } from 'lucide-react';
+import { getSupabaseClient } from '@/lib/supabase/client';
+import { fetchSubscriptionStatus, createCheckoutSession, createPortalSession } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 const plans = [
   {
+    id: 'free',
     name: 'Free',
     price: '$0',
     period: 'forever',
@@ -15,10 +23,9 @@ const plans = [
       'Save up to 10 insights',
       'Email support',
     ],
-    cta: 'Current Plan',
-    disabled: true,
   },
   {
+    id: 'starter',
     name: 'Starter',
     price: '$19',
     period: 'per month',
@@ -30,10 +37,10 @@ const plans = [
       'Export to PDF/CSV',
       'Priority support',
     ],
-    cta: 'Upgrade to Starter',
     popular: true,
   },
   {
+    id: 'pro',
     name: 'Pro',
     price: '$49',
     period: 'per month',
@@ -46,20 +53,91 @@ const plans = [
       'API access (1,000 calls/month)',
       'Dedicated support',
     ],
-    cta: 'Upgrade to Pro',
   },
 ];
 
-export default async function BillingPage() {
-  const supabase = await createClient();
+export default function BillingPage() {
+  const router = useRouter();
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Check authentication
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
 
-  if (!user) {
-    redirect('/auth/login');
+      if (!session) {
+        router.push('/auth/login?redirectTo=/billing');
+        return;
+      }
+
+      setAccessToken(session.access_token);
+      setIsCheckingAuth(false);
+    };
+
+    checkAuth();
+  }, [router]);
+
+  // Fetch subscription status
+  const { data: subscription, isLoading: subscriptionLoading } = useQuery({
+    queryKey: ['subscription', accessToken],
+    queryFn: () => fetchSubscriptionStatus(accessToken!),
+    enabled: !!accessToken,
+  });
+
+  // Create checkout session mutation
+  const checkoutMutation = useMutation({
+    mutationFn: (tier: 'starter' | 'pro' | 'enterprise') =>
+      createCheckoutSession(accessToken!, {
+        tier,
+        billing_cycle: 'monthly',
+        success_url: `${window.location.origin}/billing?success=true`,
+        cancel_url: `${window.location.origin}/billing?canceled=true`,
+      }),
+    onSuccess: (data) => {
+      // Redirect to Stripe checkout
+      window.location.href = data.checkout_url;
+    },
+  });
+
+  // Create portal session mutation
+  const portalMutation = useMutation({
+    mutationFn: () => createPortalSession(accessToken!, `${window.location.origin}/billing`),
+    onSuccess: (data) => {
+      window.location.href = data.portal_url;
+    },
+  });
+
+  if (isCheckingAuth || subscriptionLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="animate-spin h-8 w-8 text-primary mx-auto" />
+          <p className="mt-2 text-muted-foreground">Loading billing...</p>
+        </div>
+      </div>
+    );
   }
+
+  const currentTier = subscription?.tier || 'free';
+
+  const getButtonText = (planId: string) => {
+    if (planId === currentTier) return 'Current Plan';
+    if (planId === 'free') return 'Downgrade';
+    return `Upgrade to ${planId.charAt(0).toUpperCase() + planId.slice(1)}`;
+  };
+
+  const handlePlanAction = (planId: string) => {
+    if (planId === currentTier) return;
+    if (planId === 'free') {
+      // Open portal to cancel subscription
+      portalMutation.mutate();
+    } else {
+      // Create checkout session
+      checkoutMutation.mutate(planId as 'starter' | 'pro' | 'enterprise');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -70,6 +148,14 @@ export default async function BillingPage() {
           <p className="text-muted-foreground mt-2">
             Scale your market research with the right plan for you
           </p>
+          {subscription && subscription.tier !== 'free' && (
+            <div className="mt-4">
+              <Button variant="outline" onClick={() => portalMutation.mutate()}>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Manage Subscription
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Pricing Cards */}
@@ -77,12 +163,21 @@ export default async function BillingPage() {
           {plans.map((plan) => (
             <Card
               key={plan.name}
-              className={`relative ${plan.popular ? 'border-primary shadow-lg' : ''}`}
+              className={`relative ${plan.popular ? 'border-primary shadow-lg' : ''} ${
+                plan.id === currentTier ? 'ring-2 ring-primary' : ''
+              }`}
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full">
                     Most Popular
+                  </span>
+                </div>
+              )}
+              {plan.id === currentTier && (
+                <div className="absolute -top-3 right-4">
+                  <span className="bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                    Current
                   </span>
                 </div>
               )}
@@ -98,18 +193,7 @@ export default async function BillingPage() {
                 <ul className="space-y-3">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 text-green-500 shrink-0"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
+                      <Check className="h-5 w-5 text-green-500 shrink-0" />
                       <span className="text-sm">{feature}</span>
                     </li>
                   ))}
@@ -118,10 +202,14 @@ export default async function BillingPage() {
               <CardFooter>
                 <Button
                   className="w-full"
-                  variant={plan.popular ? 'default' : 'outline'}
-                  disabled={plan.disabled}
+                  variant={plan.popular && plan.id !== currentTier ? 'default' : 'outline'}
+                  disabled={plan.id === currentTier || checkoutMutation.isPending || portalMutation.isPending}
+                  onClick={() => handlePlanAction(plan.id)}
                 >
-                  {plan.cta}
+                  {(checkoutMutation.isPending || portalMutation.isPending) && plan.id !== currentTier ? (
+                    <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                  ) : null}
+                  {getButtonText(plan.id)}
                 </Button>
               </CardFooter>
             </Card>
@@ -191,9 +279,11 @@ export default async function BillingPage() {
                 For enterprise teams with custom requirements, we offer tailored plans with
                 dedicated support, SLAs, and white-label options.
               </p>
-              <Button variant="outline" className="mt-4">
-                Contact Sales
-              </Button>
+              <Link href="mailto:enterprise@startinsight.ai">
+                <Button variant="outline" className="mt-4">
+                  Contact Sales
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </div>

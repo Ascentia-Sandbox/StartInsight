@@ -15,6 +15,13 @@ import {
   APIKeyCreateResponseSchema,
   APIKeyListResponseSchema,
   APIKeyUsageSchema,
+  PricingResponseSchema,
+  CheckoutResponseSchema,
+  SubscriptionStatusSchema,
+  DashboardMetricsSchema,
+  AgentStatusSchema,
+  ReviewQueueResponseSchema,
+  InsightReviewSchema,
   type Insight,
   type InsightListResponse,
   type FetchInsightsParams,
@@ -30,6 +37,13 @@ import {
   type APIKeyCreateResponse,
   type APIKeyListResponse,
   type APIKeyUsage,
+  type PricingResponse,
+  type CheckoutResponse,
+  type SubscriptionStatus,
+  type DashboardMetrics,
+  type AgentStatus,
+  type ReviewQueueResponse,
+  type InsightReview,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -347,4 +361,137 @@ export async function fetchAPIKeyUsage(
 export async function fetchAPIScopes(): Promise<Record<string, string>> {
   const { data } = await apiClient.get('/api/keys/scopes');
   return data.scopes;
+}
+
+// ============================================
+// Payments API (Phase 6.1)
+// ============================================
+
+/**
+ * Get pricing tiers (public)
+ */
+export async function fetchPricing(): Promise<PricingResponse> {
+  const { data } = await apiClient.get('/api/payments/pricing');
+  return PricingResponseSchema.parse(data);
+}
+
+/**
+ * Create Stripe checkout session
+ */
+export async function createCheckoutSession(
+  accessToken: string,
+  payload: {
+    tier: 'starter' | 'pro' | 'enterprise';
+    billing_cycle?: 'monthly' | 'yearly';
+    success_url: string;
+    cancel_url: string;
+  }
+): Promise<CheckoutResponse> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post('/api/payments/checkout', payload);
+  return CheckoutResponseSchema.parse(data);
+}
+
+/**
+ * Create customer portal session for subscription management
+ */
+export async function createPortalSession(
+  accessToken: string,
+  returnUrl: string
+): Promise<{ portal_url: string }> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post('/api/payments/portal', { return_url: returnUrl });
+  return data;
+}
+
+/**
+ * Get user's subscription status
+ */
+export async function fetchSubscriptionStatus(accessToken: string): Promise<SubscriptionStatus> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/payments/subscription');
+  return SubscriptionStatusSchema.parse(data);
+}
+
+// ============================================
+// Admin API (Phase 4.2)
+// ============================================
+
+/**
+ * Get admin dashboard metrics
+ */
+export async function fetchAdminDashboard(accessToken: string): Promise<DashboardMetrics> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/admin/dashboard');
+  return DashboardMetricsSchema.parse(data);
+}
+
+/**
+ * List all agents with status
+ */
+export async function fetchAgentStatus(accessToken: string): Promise<AgentStatus[]> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/admin/agents');
+  return z.array(AgentStatusSchema).parse(data);
+}
+
+/**
+ * Pause agent execution
+ */
+export async function pauseAgent(
+  accessToken: string,
+  agentType: string
+): Promise<{ status: string; agent_type: string }> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post(`/api/admin/agents/${agentType}/pause`);
+  return data;
+}
+
+/**
+ * Resume agent execution
+ */
+export async function resumeAgent(
+  accessToken: string,
+  agentType: string
+): Promise<{ status: string; agent_type: string }> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post(`/api/admin/agents/${agentType}/resume`);
+  return data;
+}
+
+/**
+ * Trigger agent execution manually
+ */
+export async function triggerAgent(
+  accessToken: string,
+  agentType: string
+): Promise<{ status: string; agent_type: string; job_id?: string }> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post(`/api/admin/agents/${agentType}/trigger`);
+  return data;
+}
+
+/**
+ * Get insight review queue
+ */
+export async function fetchReviewQueue(
+  accessToken: string,
+  params: { status?: string; limit?: number; offset?: number } = {}
+): Promise<ReviewQueueResponse> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/admin/insights', { params });
+  return ReviewQueueResponseSchema.parse(data);
+}
+
+/**
+ * Update insight admin status
+ */
+export async function updateInsightStatus(
+  accessToken: string,
+  insightId: string,
+  payload: { admin_status?: string; admin_notes?: string; admin_override_score?: number }
+): Promise<InsightReview> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.patch(`/api/admin/insights/${insightId}`, payload);
+  return InsightReviewSchema.parse(data);
 }

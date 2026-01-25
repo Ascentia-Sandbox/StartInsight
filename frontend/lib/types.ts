@@ -195,3 +195,99 @@ export type APIKey = z.infer<typeof APIKeySchema>;
 export type APIKeyCreateResponse = z.infer<typeof APIKeyCreateResponseSchema>;
 export type APIKeyListResponse = z.infer<typeof APIKeyListResponseSchema>;
 export type APIKeyUsage = z.infer<typeof APIKeyUsageSchema>;
+
+// ============================================
+// Payments Types (Phase 6.1)
+// ============================================
+
+export const PricingTierSchema = z.object({
+  name: z.string(),
+  price_monthly: z.number(),
+  price_yearly: z.number(),
+  features: z.array(z.string()),
+  limits: z.record(z.string(), z.number()),
+});
+
+export const PricingResponseSchema = z.object({
+  tiers: z.record(z.string(), PricingTierSchema),
+});
+
+export const CheckoutResponseSchema = z.object({
+  session_id: z.string(),
+  checkout_url: z.string(),
+});
+
+export const SubscriptionStatusSchema = z.object({
+  tier: z.string(),
+  status: z.string(),
+  current_period_end: z.string().nullable().optional(),
+  cancel_at_period_end: z.boolean().optional(),
+  limits: z.record(z.string(), z.number()),
+});
+
+export type PricingTier = z.infer<typeof PricingTierSchema>;
+export type PricingResponse = z.infer<typeof PricingResponseSchema>;
+export type CheckoutResponse = z.infer<typeof CheckoutResponseSchema>;
+export type SubscriptionStatus = z.infer<typeof SubscriptionStatusSchema>;
+
+// ============================================
+// Admin Dashboard Types (Phase 4.2)
+// ============================================
+
+export const ExecutionLogSchema = z.object({
+  id: z.string(),
+  agent_type: z.string(),
+  source: z.string().nullable().optional(),
+  status: z.string(),
+  started_at: z.string(),
+  completed_at: z.string().nullable().optional(),
+  duration_ms: z.number().nullable().optional(),
+  items_processed: z.number(),
+  items_failed: z.number(),
+  error_message: z.string().nullable().optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
+});
+
+export const AgentStatusSchema = z.object({
+  agent_type: z.string(),
+  state: z.enum(['running', 'paused', 'triggered']),
+  last_run: z.string().nullable().optional(),
+  last_status: z.string().nullable().optional(),
+  items_processed_today: z.number(),
+  errors_today: z.number(),
+});
+
+export const DashboardMetricsSchema = z.object({
+  agent_states: z.record(z.string(), z.string()),
+  recent_logs: z.array(ExecutionLogSchema),
+  llm_cost_today: z.number(),
+  pending_insights: z.number(),
+  total_insights_today: z.number(),
+  errors_today: z.number(),
+  timestamp: z.string(),
+});
+
+export const InsightReviewSchema = z.object({
+  id: z.string(),
+  problem_statement: z.string(),
+  proposed_solution: z.string(),
+  relevance_score: z.number(),
+  admin_status: z.string(),
+  admin_notes: z.string().nullable().optional(),
+  source: z.string(),
+  created_at: z.string(),
+});
+
+export const ReviewQueueResponseSchema = z.object({
+  items: z.array(InsightReviewSchema),
+  total: z.number(),
+  pending_count: z.number(),
+  approved_count: z.number(),
+  rejected_count: z.number(),
+});
+
+export type ExecutionLog = z.infer<typeof ExecutionLogSchema>;
+export type AgentStatus = z.infer<typeof AgentStatusSchema>;
+export type DashboardMetrics = z.infer<typeof DashboardMetricsSchema>;
+export type InsightReview = z.infer<typeof InsightReviewSchema>;
+export type ReviewQueueResponse = z.infer<typeof ReviewQueueResponseSchema>;
