@@ -25,6 +25,31 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Current Blockers
+
+### 1. Phase 4.5 Supabase Migration - CRITICAL
+- **Status:** Documentation complete, execution pending
+- **Blocker:** Supabase project not created, migrations not executed
+- **Impact:** Blocks Phase 4-7 frontend development, production deployment
+- **Next Action:** Create Supabase project (Singapore region), execute 9 Alembic migrations
+- **Reference:** See active-context.md Phase 4.5, implementation-plan.md Phase 4.5
+
+### 2. Phase 4-7 Frontend Implementation - HIGH
+- **Status:** Not scoped (0% complete)
+- **Dependency:** Phase 4.5 migration (requires authentication, database access)
+- **Components Needed:** User workspace, admin portal, research UI, payment flows, team collaboration
+- **Next Action:** Create frontend implementation plan for Phase 4.1-4.4 after migration
+- **Reference:** See ideabrowser-analysis.md for UI/UX patterns
+
+### 3. Production Deployment - MEDIUM
+- **Status:** Blocked by items 1 and 2
+- **Dependency:** Supabase migration complete + Phase 4 frontend implemented
+- **Environment:** Railway (backend), Vercel (frontend), Supabase (database)
+- **Next Action:** Execute deployment after Phase 4.5 and Phase 4 frontend complete
+- **Reference:** See memory-bank/architecture.md Section 5.10 for blue-green deployment strategy
+
+---
+
 ## Recent Changes
 
 - [2026-01-25] [COMPETITIVE-ANALYSIS]: IdeaBrowser comprehensive analysis
