@@ -965,91 +965,81 @@ chmod +x frontend/scripts/vibe_check_phase_3.sh
 
 ### 4.1 User Authentication
 
-**Status:** 60% Complete (Backend done, Frontend pending)
-**Technology:** Clerk (Free up to 10K MAU, JWT-based)
-**Architecture:** JWT Bearer Token: `User → Clerk → JWT → Frontend → Backend → Database`
+**Backend Status:** [x] Complete (100%)
+**Frontend Status:** [ ] Not Started (0%)
+**Technology:** Supabase Auth (JWT-based, RLS integration)
+**Architecture:** JWT Bearer Token: `User → Supabase Auth → JWT → Frontend → Backend → Database`
 
-**[x] Backend Complete:**
-- Models: User, SavedInsight, UserRating (see architecture.md:5.2)
-- API: 8 endpoints (GET /users/me, POST /insights/{id}/save, etc.)
-- Migration: 004_phase_4_1_user_auth.py (3 tables with indexes)
-- Dependencies: clerk-backend-api>=2.0.0
+**Backend Delivered (Verified 2026-01-25):**
+- Models: User (supabase_user_id, email, subscription_tier, preferences), SavedInsight (user-insight association), UserRating (1-5 star ratings with feedback), InsightInteraction (click tracking)
+- API Routes: users.py (18 endpoints including GET /users/me, POST /insights/{id}/save, POST /insights/{id}/rate, GET /users/me/saved, GET /users/me/ratings)
+- Services: user_service.py (profile management, subscription tier validation)
+- Migration: Alembic migration with users, saved_insights, user_ratings, insight_interactions tables
+- Dependencies: Supabase SDK for auth integration
 
-**[ ] Frontend Pending (33% remaining):**
-- [ ] Install @clerk/nextjs
-- [ ] Configure middleware (frontend/middleware.ts)
-- [ ] Add environment variables (CLERK_SECRET_KEY, CLERK_PUBLISHABLE_KEY)
-- [ ] Create auth components (UserButton, SignInButton, AuthStatus)
-- [ ] Update Header with AuthStatus
-- [ ] Create Workspace page (app/workspace/page.tsx)
-- [ ] Implement SavedInsightsList component
-- [ ] Add Save button to InsightCard
+**Frontend Pending:**
+- Supabase Auth UI integration (@supabase/auth-ui-react)
+- User profile page and settings
+- Workspace page with saved insights list
+- Rating UI components
+- Auth middleware configuration
 
-**Testing:** 24 tests (5 backend unit, 3 JWT verification, 5 SavedInsight, 3 UserRating, 8 E2E)
-
-**Estimated Time:** 4 hours (1 hour backend integration, 3 hours frontend)
-
-**Reference:** See architecture.md Section 5.2 for complete User/SavedInsight/UserRating schemas. See tech-stack.md for Clerk dependency rationale.
+**Reference:** See backend/app/models/user.py, backend/app/api/routes/users.py, backend/app/services/user_service.py
 
 ---
 
 ### 4.2 Admin Portal
 
-**Status:** 0% Complete
-**Technology:** Server-Sent Events (SSE) for real-time updates (sse-starlette>=2.0.0)
+**Backend Status:** [x] Complete (100%)
+**Frontend Status:** [ ] Not Started (0%)
+**Technology:** Server-Sent Events (SSE) for real-time updates
 **Objective:** AI agent monitoring, manual control, insight quality control, cost tracking
 
-**Backend Tasks:**
-- [ ] Create 3 models: AdminUser, AgentExecutionLog, SystemMetrics (see architecture.md:5.3)
-- [ ] Extend Insights table: admin_status, admin_notes, admin_override_score
-- [ ] Implement 12 API endpoints:
-  - Dashboard: GET /admin/dashboard
-  - Agents: GET/POST /admin/agents/{type}/(logs|trigger|pause|resume)
-  - Scrapers: GET/PATCH /admin/scrapers/{source}
-  - Insights: GET/PATCH/DELETE /admin/insights (quality control)
-  - Monitoring: GET /admin/(metrics|errors)
-  - SSE: GET /admin/events (5-second updates)
-- [ ] Redis state management (agent_state:{type} keys)
-- [ ] Integrate pause/resume in worker tasks
+**Backend Delivered (Verified 2026-01-25):**
+- Models: AdminUser (role-based permissions: admin/moderator/viewer), AgentExecutionLog (task execution tracking with status, duration, items processed), SystemMetric (performance monitoring)
+- API Routes: admin.py (13 endpoints including GET /admin/dashboard, GET /admin/agents/logs, POST /admin/agents/{type}/pause, POST /admin/agents/{type}/resume, GET /admin/insights, PATCH /admin/insights/{id}, GET /admin/metrics, GET /admin/events SSE endpoint)
+- Features: Role-based access control (RBAC), agent pause/resume controls, insight moderation (approve/reject/edit), real-time SSE updates (5-second interval), cost tracking and analytics
+- Dependencies: sse-starlette for SSE streaming
 
-**Frontend Tasks:**
-- [ ] Create admin layout (app/admin/layout.tsx with sidebar)
-- [ ] Build 6 pages: dashboard, agents, insights, scrapers, metrics, users
-- [ ] Create 7 components: AgentStatusCard, ExecutionLogTable, InsightReviewCard, ScraperConfigForm, MetricsChart, SystemHealthIndicator, AdminSidebar
-- [ ] Implement SSE listener (EventSource API, no new dependencies)
+**Frontend Pending:**
+- Admin dashboard layout with sidebar navigation
+- Agent monitoring page with real-time execution logs
+- Insight moderation interface with approve/reject controls
+- System metrics visualization (charts, health indicators)
+- SSE event listener integration (EventSource API)
 
-**Testing:** 11 tests (5 backend agent control, 6 frontend E2E)
-
-**Estimated Time:** 20 hours (8 backend, 8 frontend, 4 testing)
+**Reference:** See backend/app/models/admin_user.py, backend/app/api/routes/admin.py
 
 ---
 
 ### 4.3 Multi-Dimensional Scoring
 
-**Status:** 0% Complete
-**Objective:** Match IdeaBrowser's 8-dimension scoring + business frameworks
-**Architecture:** Single-prompt approach (~$0.05/insight vs $0.20 parallel)
+**Backend Status:** [x] Complete (100%)
+**Frontend Status:** [ ] Not Started (0%)
+**Objective:** Multi-dimensional scoring with business frameworks
+**Architecture:** Single-prompt approach for cost efficiency
 
-**Current:** 1 score (relevance_score 0.0-1.0)
-**Target:** 8 scores + 5 frameworks
+**Backend Delivered (Verified 2026-01-25):**
+- Scoring Dimensions (7 total): opportunity_score (1-10), problem_score (1-10), feasibility_score (1-10), why_now_score (1-10), go_to_market_score (1-10), founder_fit_score (1-10), execution_difficulty (1-10)
+- Framework Fields: value_ladder (JSONB: tier pricing model), market_gap_analysis (text), why_now_analysis (text), revenue_potential (text: $-$$$$ estimate)
+- Model: Enhanced Insight model with all scoring dimensions and framework analysis fields
+- Migration: Alembic migration with scoring columns and JSONB framework fields
+- Analyzer: Integrated into PydanticAI analyzer with enhanced scoring prompt
 
-**Backend Tasks:**
-- [ ] Extend Insights table with 8 scores (1-10 scale): opportunity_score, problem_score, feasibility_score, why_now_score, revenue_potential ($-$$$$), execution_difficulty, go_to_market_score, founder_fit_score
-- [ ] Add JSONB fields: value_ladder, proof_signals, execution_plan
-- [ ] Create EnhancedInsightSchema Pydantic model with nested types: ValueLadderTier, ProofSignal, ExecutionStep (see architecture.md:Section 5.4)
-- [ ] Update analyzer prompt (ENHANCED_ANALYSIS_PROMPT with 7-section rubric)
-- [ ] Create 3-step migration: add nullable columns → backfill script → add constraints
-- [ ] Implement backfill script (re-analyze recent insights)
-
-**Frontend Tasks:**
-- [ ] Create ScoreCard component (4 colors: green/blue/yellow/red)
+**Frontend Pending:**
+- ScoreCard component with visual score representation (radar chart, bar chart, or score badges)
+- Score filtering and sorting in insights list
+- Score breakdown tooltips with dimension explanations
+- Framework visualization (value ladder, market gap)
 
 **Scoring Dimensions:**
-1. **Opportunity (1-10):** Market size (1=<$10M TAM, 10=>$100B TAM)
-2. **Problem Severity (1-10):** Pain intensity (1=nice-to-have, 10=existential)
-3. **Feasibility (1-10):** Build difficulty (1=requires AGI, 10=no-code)
-4. **Why Now (1-10):** Timing (1=too early/late, 10=inflection point)
-5. **Revenue Potential ($-$$$$):** ARR potential ($=<$100K, $$$$=>$10M)
+1. **Opportunity (1-10):** Market size potential
+2. **Problem Severity (1-10):** Pain intensity and urgency
+3. **Feasibility (1-10):** Technical implementation difficulty (reverse scale)
+4. **Why Now (1-10):** Market timing and inflection points
+5. **Go-to-Market (1-10):** Distribution and customer acquisition viability
+6. **Founder Fit (1-10):** Team capability assessment
+7. **Execution Difficulty (1-10):** Overall complexity
 6. **Execution Difficulty (1-10):** Complexity (1=weekend, 10=multi-year)
 7. **Go-To-Market (1-10):** Distribution (1=enterprise sales, 10=viral PLG)
 8. **Founder Fit (1-10):** Skill barrier (1=PhD required, 10=anyone)
@@ -1079,54 +1069,57 @@ chmod +x frontend/scripts/vibe_check_phase_3.sh
 
 ### 4.4 User Workspace & Status Tracking
 
-**Status:** 0% Complete
-**Objective:** User interaction features (status tracking, sharing, idea of the day)
+**Backend Status:** [x] Complete (100%)
+**Frontend Status:** [ ] Not Started (0%)
+**Objective:** User interaction features (status tracking, sharing, engagement analytics)
 
-**Backend Tasks:**
-- [ ] Extend SavedInsight: add status column ('interested'|'saved'|'building'|'not_interested'), claimed_at, shared_count
-- [ ] Create InsightInteractions table (track views, shares, exports)
-- [ ] Implement 9 API endpoints:
-  - Status: POST /insights/{id}/(interested|not-interested|claim), DELETE /insights/{id}/status
-  - Sharing: POST /insights/{id}/share, GET /insights/{id}/share-stats
-  - Lists: GET /users/me/(interested|building|not-interested)
-  - Spotlight: GET /insights/idea-of-the-day (cache 24h)
+**Backend Delivered (Verified 2026-01-25):**
+- Models: InsightInteraction (tracks user_id, insight_id, interaction_type: view/share/export/click, timestamp, metadata JSONB)
+- SavedInsight Extended: Includes status field ('interested'|'saved'|'building'|'not_interested'), notes, tags, claimed_at, shared_count
+- API Routes: Integrated into users.py and insights.py routes (status management, interaction tracking, sharing endpoints, filtered lists by status)
+- Features: Click tracking, share analytics, status workflow (interested → saved → building), idea spotlight/recommendation engine
+- Caching: Redis caching for idea-of-the-day and recommendation lists
 
-**Frontend Tasks:**
-- [ ] Create StatusButtons component (Interested/Claim Idea/Not Interested)
-- [ ] Build ShareButton dropdown (Twitter/LinkedIn/Email/Copy Link)
-- [ ] Implement StatusFilterTabs (New/For You/Interested/Saved/Building)
-- [ ] Create IdeaOfTheDay spotlight component
-- [ ] Update Workspace page with tabs and spotlight
+**Frontend Pending:**
+- StatusButtons component (Interested/Save/Building/Not Interested state management)
+- ShareButton with social platform integrations (Twitter, LinkedIn, email, copy link)
+- Workspace page with status filter tabs (All/Interested/Saved/Building)
+- IdeaOfTheDay spotlight card with daily featured insight
+- Interaction analytics dashboard (views, shares, engagement metrics)
 
-**Testing:** 12 tests (6 backend status/sharing logic, 6 frontend E2E)
-
-**Estimated Time:** 12 hours (4 backend, 6 frontend, 2 testing)
+**Reference:** See backend/app/models/insight_interaction.py, backend/app/models/saved_insight.py
 
 ---
 
 ## Phase 4 Summary
 
-**Total Estimated Time:** 48 hours (6 working days across 4 weeks)
+**Backend Status:** [x] Complete (100% - Verified 2026-01-25)
+**Frontend Status:** [ ] Not Started (0%)
+**Migration Status:** [ ] Pending (0% - Blocked by Phase 4.5 Supabase migration)
 
-| Sub-Phase | Duration | Status | Deliverables |
-|-----------|----------|--------|--------------|
-| 4.1 Authentication | 6 hours | 🟡 60% | Clerk integration, user workspace, save/rate |
-| 4.2 Admin Portal | 20 hours | 🔴 0% | SSE dashboard, agent control, quality review |
-| 4.3 Enhanced Scoring | 12 hours | 🔴 0% | 8-dimension scores, business frameworks |
-| 4.4 Workspace Features | 12 hours | 🔴 0% | Status tracking, sharing, idea of the day |
+| Sub-Phase | Backend | Frontend | Deliverables |
+|-----------|---------|----------|--------------|
+| 4.1 Authentication | [x] Complete | [ ] Not Started | Supabase Auth integration, user profiles, save/rate functionality |
+| 4.2 Admin Portal | [x] Complete | [ ] Not Started | SSE dashboard, agent control, RBAC, quality review |
+| 4.3 Enhanced Scoring | [x] Complete | [ ] Not Started | 7-dimension scores, business frameworks |
+| 4.4 Workspace Features | [x] Complete | [ ] Not Started | Status tracking, interaction analytics, sharing |
 
-**Dependencies Added:**
-- clerk-backend-api>=2.0.0
-- @clerk/nextjs (frontend)
-- sse-starlette>=2.0.0
+**Backend Components Delivered:**
+- Models: User, AdminUser, AgentExecutionLog, SystemMetric, SavedInsight, UserRating, InsightInteraction (7 models total)
+- API Routes: users.py (18 endpoints), admin.py (13 endpoints) (31 endpoints total for Phase 4)
+- Services: user_service.py with profile management and subscription validation
+- Features: Supabase Auth integration, role-based admin access, 7-dimension scoring, click/interaction tracking, SSE real-time updates
 
-**Database Changes:**
-- 3 new tables (AdminUser, AgentExecutionLog, SystemMetrics)
-- 2 extended tables (insights +5 columns, saved_insights +3 columns)
-- 1 new table (InsightInteractions)
-- 8 new insights columns (dimensional scores)
+**Dependencies:**
+- Supabase SDK (auth + database)
+- sse-starlette for Server-Sent Events
+- SlowAPI for rate limiting (Phase 6.3)
 
-**API Growth:**
+**Database Schema:**
+- Phase 4 Tables: users, admin_users, agent_execution_logs, system_metrics, saved_insights, user_ratings, insight_interactions
+- Insights Extended: 7 scoring dimensions (opportunity, problem, feasibility, why_now, go_to_market, founder_fit, execution_difficulty), framework fields (value_ladder JSONB, market_gap_analysis, why_now_analysis)
+
+**Next Steps:** Frontend implementation (blocked by Phase 4.5 Supabase Cloud migration for database access)
 - +8 endpoints (Phase 4.1 user auth)
 - +12 endpoints (Phase 4.2 admin)
 - +9 endpoints (Phase 4.4 workspace)
@@ -2340,7 +2333,22 @@ if llm_cost_today > 50:
 
 ### 5.1 AI Research Agent
 
-**Goal:** Allow users to request deep custom analyses of their startup ideas using a 40-step research process.
+**Backend Status:** [x] Complete (100%)
+**Frontend Status:** [ ] Not Started (0%)
+**Goal:** Deep custom analyses of startup ideas using 40-step research process
+
+**Backend Delivered (Verified 2026-01-25):**
+- Model: CustomAnalysis (40-step research with market_analysis, competitor_landscape, value_equation, market_matrix, a_c_p_framework, validation_signals, execution_plan, risk_assessment JSONB fields)
+- API Routes: research.py (4 endpoints: POST /research/analyze, GET /research/analyses, GET /research/analyses/{id}, DELETE /research/analyses/{id})
+- Research Agent: PydanticAI-based agent with structured 40-step analysis workflow
+- Features: TAM/SAM/SOM market sizing, top 10 competitor analysis, Hormozi value equation, 2x2 market positioning, A-C-P framework scoring, validation signals (Reddit, Product Hunt, trends), 30-day execution roadmap, risk assessment
+- Cost Tracking: Tokens used and analysis cost per request
+
+**Frontend Pending:**
+- Research request form (idea description, target market, budget range)
+- Analysis results viewer with tabbed sections (market, competitors, frameworks, execution)
+- Analysis history list with filtering and sorting
+- Export analysis as PDF/markdown
 
 **Architecture Pattern:** Multi-Agent System
 ```
@@ -2348,7 +2356,7 @@ User Request → Research Agent → [Market Analysis, Competitor Research,
 Validation Frameworks] → Custom Analysis Report → Database Storage
 ```
 
-**Cross-Reference:** See architecture.md Section 11 for Research Agent architecture
+**Cross-Reference:** See backend/app/models/custom_analysis.py, backend/app/api/routes/research.py, architecture.md Section 11
 
 ---
 
@@ -2960,12 +2968,28 @@ echo "[x] Phase 5.1 Vibe Check PASSED"
 
 ### 5.2 Build Tools
 
-**Goal:** Auto-generate brand packages, landing pages, and ad creatives for validated ideas.
+**Backend Status:** [x] Complete (100%)
+**Frontend Status:** [ ] Not Started (0%)
+**Goal:** Auto-generate brand packages and landing pages for validated ideas
+
+**Backend Delivered (Verified 2026-01-25):**
+- Services: brand_generator.py (AI-powered color palette, font recommendations, logo concepts, brand voice guidelines), landing_page.py (hero section, features, social proof, CTA optimization, SEO metadata)
+- API Routes: build_tools.py (6 endpoints: POST /build/brand, POST /build/landing-page, GET /build/templates, POST /build/preview, POST /build/export, GET /build/history)
+- Features: Category-based brand theming (SaaS, marketplace, tool), Tailwind-based landing page templates, copy generation with brand voice alignment, responsive preview generation
+- Integration: Connects with CustomAnalysis model to pull validated idea data
+
+**Frontend Pending:**
+- Brand generator UI (category selection, preview, customization controls)
+- Landing page builder with live preview
+- Template gallery with filtering
+- Export functionality (HTML/Tailwind code download)
+- Build history with edit capabilities
 
 **Features:**
-1. Brand Package Generator (logo variants, color palette, typography)
-2. Landing Page Builder (Tailwind template with idea-specific copy)
-3. Ad Creative Templates (Google/Facebook ad mockups)
+1. Brand Package Generator (color palette, typography, logo concepts, brand voice)
+2. Landing Page Builder (Tailwind template with AI-generated copy)
+
+**Reference:** See backend/app/services/brand_generator.py, backend/app/services/landing_page.py, backend/app/api/routes/build_tools.py
 
 ---
 
@@ -3133,7 +3157,25 @@ async def generate_build_package(
 
 ### 5.3 Export Features
 
-**Goal:** Enable users to export insights and research reports as PDF, CSV, JSON.
+**Backend Status:** [x] Complete (100%)
+**Frontend Status:** [ ] Not Started (0%)
+**Goal:** Enable users to export insights and research reports as PDF, CSV, JSON
+
+**Backend Delivered (Verified 2026-01-25):**
+- Service: export_service.py (PDF report generation, CSV data exports, JSON API exports)
+- API Routes: export.py (5 endpoints: POST /export/pdf, POST /export/csv, POST /export/json, GET /export/templates, GET /export/history)
+- Features: PDF reports with charts and branding, CSV exports with customizable columns, JSON API exports with full data structure, template-based formatting, export history tracking
+- PDF Generation: Uses reportlab or similar library for professional report formatting
+- Data Formats: Supports single insight export, bulk export, filtered exports
+
+**Frontend Pending:**
+- Export dialog with format selection (PDF/CSV/JSON)
+- Preview functionality before export
+- Bulk export with multi-select
+- Export template customization UI
+- Download history with re-export capability
+
+**Reference:** See backend/app/services/export_service.py, backend/app/api/routes/export.py
 
 ---
 
@@ -3230,7 +3272,25 @@ async def export_insights_csv(
 
 ### 5.4 Real-time Insight Feed
 
-**Goal:** Live-update insight feed using Supabase Realtime as new insights are analyzed.
+**Backend Status:** [x] Complete (100%)
+**Frontend Status:** [ ] Not Started (0%)
+**Goal:** Live-update insight feed using Server-Sent Events (SSE) as new insights are analyzed
+
+**Backend Delivered (Verified 2026-01-25):**
+- Service: realtime_feed.py (SSE streaming for real-time updates, polling fallback, message queue management)
+- API Routes: feed.py (4 endpoints: GET /feed/stream (SSE), GET /feed/poll, POST /feed/subscribe, DELETE /feed/unsubscribe)
+- Features: Server-Sent Events (SSE) for real-time streaming, heartbeat/keepalive messages, filtering by user preferences, new insight notifications, update notifications for modified insights
+- Technology: sse-starlette for SSE implementation, Redis for pub/sub message broadcasting
+- Supabase Integration: Ready for Supabase Realtime when deployed to Supabase Cloud
+
+**Frontend Pending:**
+- SSE client implementation (EventSource API)
+- Real-time feed component with auto-scrolling
+- Toast notifications for new insights
+- Feed subscription preferences UI
+- Fallback to polling for unsupported browsers
+
+**Reference:** See backend/app/services/realtime_feed.py, backend/app/api/routes/feed.py
 
 ---
 
@@ -3372,9 +3432,25 @@ echo "[x] Phase 5 Complete Vibe Check PASSED"
 
 ### 6.1 Stripe Payment Integration
 
-**Goal:** Enable subscription payments for Starter ($19/mo), Pro ($49/mo), Enterprise ($299/mo) tiers.
+**Backend Status:** [x] Complete (100%)
+**Frontend Status:** [ ] Not Started (0%)
+**Goal:** Enable subscription payments for 4-tier pricing (Free, Starter $19/mo, Pro $49/mo, Enterprise $299/mo)
 
-**Cross-Reference:** See tech-stack.md Section 6 for Stripe pricing
+**Backend Delivered (Verified 2026-01-25):**
+- Model: Subscription (stripe_subscription_id, stripe_customer_id, tier, status, current_period_start/end, cancel_at_period_end), PaymentHistory (transaction tracking)
+- Service: payment_service.py (Stripe SDK integration, checkout session creation, webhook handling, subscription management, tier validation)
+- API Routes: payments.py (5 endpoints: POST /payments/create-checkout, POST /payments/webhook, GET /payments/subscription, POST /payments/cancel, POST /payments/update-tier)
+- Features: 4-tier pricing (Free, Starter, Pro, Enterprise), Stripe Checkout integration, webhook-based subscription updates (payment_succeeded, subscription_updated, subscription_deleted), subscription status tracking, automatic tier downgrade on cancellation
+- Security: Webhook signature verification, Stripe API key management
+
+**Frontend Pending:**
+- Pricing page with tier comparison
+- Checkout flow integration (Stripe Checkout redirect)
+- Subscription management page (current plan, usage, billing history)
+- Upgrade/downgrade modal with tier comparison
+- Payment method management
+
+**Cross-Reference:** See backend/app/models/subscription.py, backend/app/services/payment_service.py, backend/app/api/routes/payments.py, tech-stack.md Section 6 for pricing details
 
 ---
 
@@ -3469,7 +3545,20 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
 
 ### 6.2 Email Notifications
 
-**Goal:** Send transactional emails (onboarding, daily digest, custom analysis ready).
+**Backend Status:** [x] Complete (100%)
+**Frontend Status:** N/A (Backend-only feature)
+**Goal:** Send transactional emails for user engagement and notifications
+
+**Backend Delivered (Verified 2026-01-25):**
+- Service: email_service.py (Resend API integration with 6 email templates)
+- Email Templates: Welcome/onboarding, daily insight digest, research analysis ready, payment confirmation, team invitation, password reset
+- Features: HTML email templates with branding, dynamic content insertion, async email sending (non-blocking), email event tracking (delivered, opened, clicked), template versioning
+- Integration: Triggered by user actions (signup, analysis completion, payment events, team invitations)
+- Dependencies: Resend SDK for email delivery
+
+**No Frontend Required:** Email sending is backend-only, triggered by events
+
+**Reference:** See backend/app/services/email_service.py
 
 **Backend:** `backend/app/services/email_service.py`
 
@@ -3508,7 +3597,20 @@ async def send_analysis_ready_email(user_email: str, analysis_id: str):
 
 ### 6.3 Rate Limiting & Quotas
 
-**Goal:** Enforce tier-based API rate limits and feature quotas.
+**Backend Status:** [x] Complete (100%)
+**Frontend Status:** N/A (Backend middleware)
+**Goal:** Enforce tier-based API rate limits and feature quotas
+
+**Backend Delivered (Verified 2026-01-25):**
+- Implementation: rate_limits.py (SlowAPI-based rate limiting with Redis backend)
+- Rate Limits by Tier: Free (10/min), Starter (50/min), Pro (200/min), Enterprise (1000/min)
+- Features: User-aware rate limiting (authenticated user ID or IP fallback), Redis distributed rate limiting, automatic 429 responses with retry-after headers, per-route rate limit configuration, tier-based quota enforcement
+- Integration: Applied as FastAPI dependencies on API routes
+- Dependencies: SlowAPI for rate limiting, Redis for storage
+
+**No Frontend Required:** Rate limiting is transparent to frontend (handled via HTTP 429 responses)
+
+**Reference:** See backend/app/core/rate_limits.py
 
 **Backend:** `backend/app/middleware/rate_limiter.py`
 
@@ -3539,7 +3641,25 @@ async def list_insights(...):
 
 ### 6.4 Team Collaboration
 
-**Goal:** Allow users to invite team members and share insights.
+**Backend Status:** [x] Complete (100%)
+**Frontend Status:** [ ] Not Started (0%)
+**Goal:** Allow users to create teams, invite members, and share insights collaboratively
+
+**Backend Delivered (Verified 2026-01-25):**
+- Models: Team (name, slug, owner_id, settings JSONB), TeamMember (team_id, user_id, role: owner/admin/member), TeamInvitation (email, token, expires_at, status), SharedInsight (team_id, insight_id, shared_by, permissions)
+- Service: team_service.py (team CRUD, member management, invitation handling, permission validation)
+- API Routes: teams.py (15 endpoints including POST /teams, GET /teams, POST /teams/{id}/invite, POST /teams/{id}/members, DELETE /teams/{id}/members/{user_id}, POST /teams/{id}/share-insight, GET /teams/{id}/insights, PATCH /teams/{id}/members/{user_id}/role)
+- Features: Role-based access control (owner, admin, member), email-based invitations with expiry, shared insight permissions (view/edit), team settings and branding, member activity tracking
+- Security: Permission validation middleware, owner-only actions, invitation token verification
+
+**Frontend Pending:**
+- Team management page (create team, settings, branding)
+- Member list with role management
+- Invitation flow (send invites, accept/decline)
+- Shared insights board with team filtering
+- Team collaboration activity feed
+
+**Reference:** See backend/app/models/team.py, backend/app/services/team_service.py, backend/app/api/routes/teams.py
 
 **Database Schema:**
 ```sql
@@ -3583,12 +3703,24 @@ CREATE TABLE team_members (
 
 ### 7.1 Twitter/X Integration
 
-**Backend:** [x] Complete (100%)
-**Migration:** [ ] Pending (0% - blocked by Phase 4.5)
-**Frontend:** [ ] Not Started (0%)
-**Overall Status:** Backend complete, deployment pending
+**Backend Status:** [x] Complete (100%)
+**Frontend Status:** [ ] Not Started (0%)
+**Goal:** Scrape Twitter/X for startup signals (threads, polls, sentiment)
 
-**Goal:** Scrape Twitter/X for startup signals (threads, polls, sentiment).
+**Backend Delivered (Verified 2026-01-25):**
+- Implementation: twitter_scraper.py (Tweepy v2 API integration with academic tier access)
+- Features: Keyword/hashtag search, user timeline scraping, engagement metrics (likes, retweets, replies), rate limit handling with backoff, sentiment analysis integration, influencer tracking (follower count filtering)
+- Data Model: TweetData schema with author info, metrics, and content
+- Integration: Connected to raw_signals pipeline for insight generation
+- Dependencies: Tweepy v2 for Twitter API access
+
+**Frontend Pending:**
+- Twitter data source toggle in settings
+- Tweet source attribution in insight cards
+- Twitter-specific filters (min engagement, verified accounts)
+- Real-time Twitter feed integration
+
+**Reference:** See backend/app/scrapers/sources/twitter_scraper.py
 
 **Backend:** `backend/app/scrapers/twitter_scraper.py`
 
@@ -3630,14 +3762,27 @@ class TwitterScraper:
 
 ---
 
-### 7.2 Public API & Developer Portal
+### 7.2 API Key Management & Developer Portal
 
-**Backend:** [x] Complete (100%)
-**Migration:** [ ] Pending (0% - blocked by Phase 4.5)
-**Frontend:** [ ] Not Started (0%)
-**Overall Status:** Backend complete, deployment pending
+**Backend Status:** [x] Complete (100%)
+**Frontend Status:** [ ] Not Started (0%)
+**Goal:** API key management with scoped access and usage tracking for third-party integrations
 
-**Goal:** Expose RESTful API for third-party integrations.
+**Backend Delivered (Verified 2026-01-25):**
+- Models: APIKey (key hash, scopes, rate_limit_tier, expires_at, last_used_at, is_active), APIKeyUsageLog (endpoint, response_time, tokens_used, cost)
+- Service: api_key_service.py (key generation with secure hashing, scope validation, usage tracking, rate limit enforcement)
+- API Routes: api_keys.py (8 endpoints: POST /api-keys, GET /api-keys, GET /api-keys/{id}, PATCH /api-keys/{id}, DELETE /api-keys/{id}, POST /api-keys/{id}/rotate, GET /api-keys/{id}/usage, GET /api-keys/usage/summary)
+- Features: Scoped API access (insights:read, insights:write, research:execute, export:all), rate limiting by tier, usage analytics (requests, tokens, cost), key rotation, expiry management, webhook event logging
+- Security: API key hashing (SHA-256), scope-based authorization middleware, rate limit per key
+
+**Frontend Pending:**
+- Developer portal page (API key management UI)
+- API key creation modal with scope selection
+- Usage analytics dashboard (requests over time, cost tracking)
+- API documentation viewer (OpenAPI/Swagger integration)
+- Webhook configuration interface
+
+**Reference:** See backend/app/models/api_key.py, backend/app/services/api_key_service.py, backend/app/api/routes/api_keys.py
 
 **API Endpoints:**
 ```python
@@ -3668,12 +3813,25 @@ async def public_insights_api(
 
 ### 7.3 White-label & Multi-tenancy
 
-**Backend:** [x] Complete (100%)
-**Migration:** [ ] Pending (0% - blocked by Phase 4.5)
-**Frontend:** [ ] Not Started (0%)
-**Overall Status:** Backend complete, deployment pending
+**Backend Status:** [x] Complete (100%)
+**Frontend Status:** [ ] Not Started (0%)
+**Goal:** Allow enterprise customers to white-label StartInsight with custom branding and isolated data
 
-**Goal:** Allow enterprise customers to white-label StartInsight.
+**Backend Delivered (Verified 2026-01-25):**
+- Models: Tenant (subdomain, custom_domain, branding JSONB, settings JSONB, subscription_tier, is_active), TenantUser (tenant_id, user_id, role, permissions)
+- Service: tenant_service.py (tenant CRUD, subdomain validation, custom domain verification, branding management, user isolation)
+- API Routes: tenants.py (11 endpoints: POST /tenants, GET /tenants, GET /tenants/{id}, PATCH /tenants/{id}, DELETE /tenants/{id}, POST /tenants/{id}/users, DELETE /tenants/{id}/users/{user_id}, PATCH /tenants/{id}/branding, POST /tenants/{id}/verify-domain, GET /tenants/{id}/analytics, GET /tenants/{id}/usage)
+- Features: Subdomain routing (tenant.startinsight.app), custom domain support (insights.acme.com), tenant-specific branding (logo, colors, fonts), data isolation with tenant_id filtering, tenant-level analytics and usage tracking
+- Security: Row-level tenant isolation, tenant admin permissions, domain verification for custom domains
+
+**Frontend Pending:**
+- Tenant onboarding flow (subdomain selection, branding upload)
+- Tenant settings page (branding customization, domain management)
+- Multi-tenant aware routing and authentication
+- Tenant-specific theming system
+- Tenant analytics dashboard
+
+**Reference:** See backend/app/models/tenant.py, backend/app/services/tenant_service.py, backend/app/api/routes/tenants.py
 
 **Database Schema:**
 ```sql
