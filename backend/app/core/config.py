@@ -1,6 +1,6 @@
 """Application configuration using Pydantic Settings."""
 
-from pydantic import PostgresDsn
+from pydantic import PostgresDsn, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -85,6 +85,38 @@ class Settings(BaseSettings):
     # Phase 7.3: Multi-tenancy
     default_tenant_id: str = "default"
     enable_multi_tenancy: bool = False
+
+    @field_validator('jwt_secret')
+    @classmethod
+    def validate_jwt_secret_length(cls, v: str | None) -> str | None:
+        """Ensure JWT secret is strong (min 32 characters)."""
+        if v and len(v) < 32:
+            raise ValueError("JWT_SECRET must be at least 32 characters for security")
+        return v
+
+    @model_validator(mode='after')
+    def check_production_config(self) -> 'Settings':
+        """Validate critical settings in production environment."""
+        if self.environment == "production":
+            # Phase 4+: Authentication is CRITICAL in production
+            if not self.jwt_secret:
+                raise ValueError(
+                    "JWT_SECRET is required in production for Supabase Auth. "
+                    "Generate a secure secret: openssl rand -hex 32"
+                )
+            if not self.supabase_url:
+                raise ValueError("SUPABASE_URL is required in production")
+            if not self.supabase_service_role_key:
+                raise ValueError("SUPABASE_SERVICE_ROLE_KEY is required in production")
+
+            # Security: Prevent localhost CORS in production
+            if "localhost" in self.cors_origins.lower() or "127.0.0.1" in self.cors_origins:
+                raise ValueError(
+                    "localhost/127.0.0.1 CORS origins not allowed in production. "
+                    "Set CORS_ORIGINS to your production frontend domain."
+                )
+
+        return self
 
     @property
     def cors_origins_list(self) -> list[str]:
