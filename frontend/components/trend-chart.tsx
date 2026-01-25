@@ -2,6 +2,7 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { getTrendBadgeClass, getTrendIcon, TREND_CONFIG, type TrendDirection } from '@/lib/utils/colors';
 
 interface TrendData {
   keyword?: string;
@@ -26,12 +27,16 @@ export function TrendChart({ data, source }: TrendChartProps) {
 
   const { keyword, avg_interest, max_interest, current_interest, trend_direction, timeframe, geo } = data;
 
+  // Get trend color from centralized config
+  const trendDir = (trend_direction?.toLowerCase() || 'unknown') as TrendDirection;
+  const trendColor = TREND_CONFIG[trendDir]?.color || '#94a3b8';
+
   // Prepare chart data
   const chartData = [
     {
       name: 'Current',
       value: current_interest || 0,
-      fill: getTrendColor(trend_direction),
+      fill: trendColor.replace('text-', '#'), // Convert to hex for chart
     },
     {
       name: 'Average',
@@ -58,8 +63,8 @@ export function TrendChart({ data, source }: TrendChartProps) {
           {/* Trend Direction Badge */}
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">Trend Direction:</span>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getTrendBadgeStyle(trend_direction)}`}>
-              {getTrendIcon(trend_direction)} {trend_direction?.toUpperCase() || 'UNKNOWN'}
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getTrendBadgeClass(trendDir)}`}>
+              {getTrendIcon(trendDir)} {trend_direction?.toUpperCase() || 'UNKNOWN'}
             </span>
           </div>
 
@@ -111,42 +116,4 @@ export function TrendChart({ data, source }: TrendChartProps) {
   );
 }
 
-// Helper functions
-function getTrendColor(direction?: string): string {
-  switch (direction?.toLowerCase()) {
-    case 'rising':
-      return '#22c55e'; // green
-    case 'falling':
-      return '#ef4444'; // red
-    case 'stable':
-      return '#f59e0b'; // amber
-    default:
-      return '#94a3b8'; // gray
-  }
-}
-
-function getTrendBadgeStyle(direction?: string): string {
-  switch (direction?.toLowerCase()) {
-    case 'rising':
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-    case 'falling':
-      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-    case 'stable':
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300';
-    default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
-  }
-}
-
-function getTrendIcon(direction?: string): string {
-  switch (direction?.toLowerCase()) {
-    case 'rising':
-      return '↗';
-    case 'falling':
-      return '↘';
-    case 'stable':
-      return '→';
-    default:
-      return '•';
-  }
-}
+// Note: Helper functions removed - now using centralized utilities from @/lib/utils/colors
