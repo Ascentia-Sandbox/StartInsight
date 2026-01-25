@@ -442,3 +442,34 @@ This file tracks all significant changes made to the project. Each entry follows
 
 *Last updated: 2026-01-25*
 *Format: [DATE] [TASK_ID]: [Brief Description] | Files | Technical Notes | Status*
+
+---
+
+## Code Simplification (2026-01-25)
+
+### Phase 1: Backend Query & Pagination Helpers
+- **[2026-01-25] CODE_SIMPLIFICATION_PHASE_1**: Backend query helper utilities
+  - Files created:
+    * `backend/app/db/query_helpers.py` - Added `count_by_field()` and `paginate_query()` functions
+    * `backend/app/services/user_service.py` - Added `get_or_create_saved_insight()` and `increment_share_count()` methods
+    * `backend/tests/unit/test_query_helpers.py` - Unit tests for query helpers
+  - Files modified:
+    * `backend/app/api/routes/users.py` - Replaced 4 count queries with `count_by_field()`, replaced 4 get-or-create patterns with UserService methods (~80 lines saved)
+    * `backend/app/api/routes/admin.py` - Replaced 3 count queries with `count_by_field()` (~20 lines saved)
+  - Technical notes: Centralized 16+ duplicate count queries and 10+ pagination blocks into reusable utilities. Created service layer for user workspace operations.
+  - Lines saved: ~100-120 lines (target: 150-180)
+  - Status: ✅ Complete
+
+### Phase 2: Backend Rate Limiting Simplification
+- **[2026-01-25] CODE_SIMPLIFICATION_PHASE_2**: Replace custom rate limiter with SlowAPI
+  - Files created:
+    * `backend/app/core/rate_limits.py` - SlowAPI configuration with user-aware rate limiting (52 lines)
+  - Files deleted:
+    * `backend/app/services/rate_limiter.py` - Deleted custom rate limiter (352 lines)
+  - Files modified:
+    * `backend/app/main.py` - Added SlowAPI limiter registration and RateLimitExceeded exception handler
+    * `backend/app/api/routes/research.py` - Added `@limiter.limit("10/hour")` decorator, removed manual rate check
+    * `backend/app/api/routes/admin.py` - Added `@limiter.limit("20/minute")` to 4 admin endpoints
+  - Technical notes: Replaced 352-line custom implementation with 52-line SlowAPI integration. Uses same Redis backend with better connection pooling and error handling. User-aware limiting preserved (uses user_id from request.state or IP fallback).
+  - Lines saved: ~300 lines (352 deleted - 52 added = 85% reduction)
+  - Status: ✅ Complete
