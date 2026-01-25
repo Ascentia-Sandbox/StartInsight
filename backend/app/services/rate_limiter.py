@@ -28,6 +28,7 @@ class RateLimitConfig(BaseModel):
     requests_per_hour: int
     requests_per_day: int
     api_calls_per_hour: int
+    analyses_per_hour: int  # ✅ NEW: Hourly limit for AI research analyses
     analyses_per_month: int
 
 
@@ -37,6 +38,7 @@ TIER_LIMITS: dict[str, RateLimitConfig] = {
         requests_per_hour=200,
         requests_per_day=1000,
         api_calls_per_hour=10,
+        analyses_per_hour=1,  # ✅ 1 analysis/hour (prevents spam)
         analyses_per_month=1,
     ),
     "starter": RateLimitConfig(
@@ -44,6 +46,7 @@ TIER_LIMITS: dict[str, RateLimitConfig] = {
         requests_per_hour=1000,
         requests_per_day=10000,
         api_calls_per_hour=100,
+        analyses_per_hour=2,  # ✅ 2 analyses/hour
         analyses_per_month=3,
     ),
     "pro": RateLimitConfig(
@@ -51,6 +54,7 @@ TIER_LIMITS: dict[str, RateLimitConfig] = {
         requests_per_hour=3000,
         requests_per_day=50000,
         api_calls_per_hour=500,
+        analyses_per_hour=5,  # ✅ 5 analyses/hour
         analyses_per_month=10,
     ),
     "enterprise": RateLimitConfig(
@@ -58,6 +62,7 @@ TIER_LIMITS: dict[str, RateLimitConfig] = {
         requests_per_hour=10000,
         requests_per_day=200000,
         api_calls_per_hour=2000,
+        analyses_per_hour=-1,  # ✅ Unlimited
         analyses_per_month=-1,  # Unlimited
     ),
 }
@@ -183,6 +188,7 @@ async def check_rate_limit(
         "requests_per_hour": 3600,
         "requests_per_day": 86400,
         "api_calls_per_hour": 3600,
+        "analyses_per_hour": 3600,  # ✅ 1 hour window for analyses
         "analyses_per_month": 2592000,  # 30 days
     }
     window = window_map.get(limit_type, 60)

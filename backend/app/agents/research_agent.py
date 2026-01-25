@@ -13,6 +13,7 @@ Performs comprehensive startup idea analysis using Claude 3.5 Sonnet:
 See architecture.md "Research Agent Architecture" for specification.
 """
 
+import asyncio
 import logging
 import time
 from typing import Any
@@ -200,6 +201,17 @@ def get_research_agent() -> Agent:
 
 
 # ============================================================
+# Cost Limits and Timeouts
+# ============================================================
+
+# Maximum cost per analysis ($5 USD)
+MAX_COST_PER_ANALYSIS = 5.0
+
+# Maximum execution time (5 minutes)
+MAX_ANALYSIS_TIMEOUT_SECONDS = 300
+
+
+# ============================================================
 # Research Analysis Function
 # ============================================================
 
@@ -253,8 +265,17 @@ Please provide a comprehensive 40-step analysis following all frameworks:
         # Get research agent
         agent = get_research_agent()
 
-        # Execute analysis
-        result = await agent.run(prompt)
+        # ✅ Execute analysis with timeout protection (5 minutes max)
+        try:
+            result = await asyncio.wait_for(
+                agent.run(prompt),
+                timeout=MAX_ANALYSIS_TIMEOUT_SECONDS,
+            )
+        except asyncio.TimeoutError:
+            raise Exception(
+                f"Analysis timed out after {MAX_ANALYSIS_TIMEOUT_SECONDS}s. "
+                "This may indicate an API issue or overly complex analysis."
+            )
 
         # Calculate latency
         latency_ms = (time.time() - start_time) * 1000
@@ -262,16 +283,42 @@ Please provide a comprehensive 40-step analysis following all frameworks:
         # Extract result
         research_data = result.data
 
-        # Estimate tokens and cost (rough approximation)
-        input_tokens = len(prompt) // 4
-        # Research output is much larger
-        output_tokens = 8000  # Approximate for full research output
+        # ✅ Get actual token counts from PydanticAI response
+        # PydanticAI stores usage in result.usage() if available
+        input_tokens = 0
+        output_tokens = 0
+
+        # Try to get actual token counts from result
+        if hasattr(result, 'usage') and result.usage:
+            usage = result.usage()
+            input_tokens = getattr(usage, 'input_tokens', 0) or getattr(usage, 'prompt_tokens', 0)
+            output_tokens = getattr(usage, 'output_tokens', 0) or getattr(usage, 'completion_tokens', 0)
+
+        # Fallback to estimation if no usage data
+        if input_tokens == 0:
+            input_tokens = len(prompt) // 4  # Rough estimate: 4 chars per token
+        if output_tokens == 0:
+            # Estimate based on serialized output length
+            output_str = research_data.model_dump_json()
+            output_tokens = len(output_str) // 4
+
         total_tokens = input_tokens + output_tokens
 
         # Claude 3.5 Sonnet pricing: $15/M input, $75/M output
         input_cost = (input_tokens / 1_000_000) * 15
         output_cost = (output_tokens / 1_000_000) * 75
         total_cost = input_cost + output_cost
+
+        # ✅ Cost cap validation
+        if total_cost > MAX_COST_PER_ANALYSIS:
+            logger.error(
+                f"Analysis exceeded cost cap: ${total_cost:.4f} > ${MAX_COST_PER_ANALYSIS}. "
+                f"Input tokens: {input_tokens}, Output tokens: {output_tokens}"
+            )
+            raise Exception(
+                f"Analysis cost ${total_cost:.2f} exceeds maximum ${MAX_COST_PER_ANALYSIS}. "
+                "Please simplify your idea description or target market."
+            )
 
         # Track LLM metrics
         metrics_tracker.track_llm_call(
