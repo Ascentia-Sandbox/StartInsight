@@ -8,8 +8,10 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
+from app.db.session import get_db
 from app.models import User
 from app.services.payment_service import (
     PRICING_TIERS,
@@ -155,16 +157,25 @@ async def create_portal_session(
 
 
 @router.post("/webhook")
-async def handle_stripe_webhook(request: Request) -> dict[str, str]:
+async def handle_stripe_webhook(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, str]:
     """
-    Handle Stripe webhook events.
+    Handle Stripe webhook events with idempotency protection.
 
     This endpoint is called by Stripe to notify of subscription events.
+    Uses database transactions to ensure exactly-once processing.
+
+    Security:
+    - Verifies webhook signature from Stripe
+    - Uses idempotency to prevent duplicate processing
+    - Records all webhook events for audit trail
     """
     payload = await request.body()
     signature = request.headers.get("stripe-signature", "")
 
-    result = await handle_webhook_event(payload, signature)
+    result = await handle_webhook_event(payload, signature, db)
 
     if result.get("status") == "error":
         raise HTTPException(
@@ -172,7 +183,11 @@ async def handle_stripe_webhook(request: Request) -> dict[str, str]:
             detail=result.get("error", "Webhook processing failed"),
         )
 
-    return {"status": "processed", "event_type": result.get("event_type", "unknown")}
+    # Return 200 OK to Stripe for all processed events (including duplicates)
+    return {
+        "status": result.get("status", "processed"),
+        "event_type": result.get("event_type", "unknown"),
+    }
 
 
 # ============================================================

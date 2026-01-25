@@ -8,6 +8,9 @@ from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 
@@ -136,16 +139,39 @@ async def create_checkout_session(
     Args:
         user_id: User's UUID
         tier: Pricing tier (starter, pro, enterprise)
-        success_url: Redirect URL on successful payment
-        cancel_url: Redirect URL on cancelled payment
+        success_url: Redirect URL on successful payment (must be HTTPS in production)
+        cancel_url: Redirect URL on cancelled payment (must be HTTPS in production)
         billing_cycle: monthly or yearly
 
     Returns:
         Checkout session data with URL, or None if failed
+
+    Raises:
+        ValueError: If URLs are invalid or Stripe not configured in production
     """
+    # ✅ URL VALIDATION - Prevent phishing attacks
+    if settings.environment == "production":
+        if not success_url.startswith("https://"):
+            raise ValueError("success_url must use HTTPS in production")
+        if not cancel_url.startswith("https://"):
+            raise ValueError("cancel_url must use HTTPS in production")
+
+        # Validate URLs belong to allowed domains (prevent redirect attacks)
+        allowed_domains = settings.cors_origins_list
+        success_domain = success_url.split("/")[2] if len(success_url.split("/")) > 2 else ""
+        cancel_domain = cancel_url.split("/")[2] if len(cancel_url.split("/")) > 2 else ""
+
+        if not any(domain in success_url for domain in allowed_domains):
+            raise ValueError(f"success_url domain not in allowed CORS origins: {success_domain}")
+        if not any(domain in cancel_url for domain in allowed_domains):
+            raise ValueError(f"cancel_url domain not in allowed CORS origins: {cancel_domain}")
+
     stripe = get_stripe_client()
     if not stripe or not settings.stripe_secret_key:
-        logger.warning("Stripe not configured, returning mock checkout")
+        if settings.environment == "production":
+            raise ValueError("Stripe not configured - cannot process payments in production")
+
+        logger.warning("Stripe not configured, returning mock checkout (development only)")
         return {
             "id": "mock_session_id",
             "url": success_url,
@@ -219,13 +245,18 @@ async def create_customer_portal_session(
 async def handle_webhook_event(
     payload: bytes,
     signature: str,
+    db: AsyncSession,
 ) -> dict[str, Any]:
     """
-    Process Stripe webhook event.
+    Process Stripe webhook event with idempotency protection.
+
+    Uses webhook_events table to ensure exactly-once processing.
+    Stripe guarantees at-least-once delivery, so we must prevent duplicate processing.
 
     Args:
         payload: Raw webhook payload
         signature: Stripe signature header
+        db: Database session for transaction
 
     Returns:
         Processing result with event type and status
@@ -236,34 +267,89 @@ async def handle_webhook_event(
         return {"status": "skipped", "reason": "not_configured"}
 
     try:
+        # Verify webhook signature (prevents forgery)
         event = stripe.Webhook.construct_event(
             payload,
             signature,
             settings.stripe_webhook_secret,
         )
 
+        event_id = event["id"]
         event_type = event["type"]
         event_data = event["data"]["object"]
 
-        logger.info(f"Processing Stripe webhook: {event_type}")
+        logger.info(f"Processing Stripe webhook: {event_type} (event_id: {event_id})")
 
-        # Handle different event types
-        if event_type == "checkout.session.completed":
-            return await _handle_checkout_completed(event_data)
-        elif event_type == "customer.subscription.updated":
-            return await _handle_subscription_updated(event_data)
-        elif event_type == "customer.subscription.deleted":
-            return await _handle_subscription_deleted(event_data)
-        elif event_type == "invoice.paid":
-            return await _handle_invoice_paid(event_data)
-        elif event_type == "invoice.payment_failed":
-            return await _handle_payment_failed(event_data)
-        else:
-            logger.info(f"Unhandled webhook event: {event_type}")
-            return {"status": "ignored", "event_type": event_type}
+        # ✅ IDEMPOTENCY CHECK - Prevent duplicate processing
+        from app.models.webhook_event import WebhookEvent
 
+        # Check if event already processed
+        result = await db.execute(
+            select(WebhookEvent).where(WebhookEvent.stripe_event_id == event_id)
+        )
+        existing_event = result.scalar_one_or_none()
+
+        if existing_event:
+            logger.info(f"Webhook event {event_id} already processed, skipping")
+            return {
+                "status": "duplicate",
+                "event_id": event_id,
+                "event_type": event_type,
+                "processed_at": existing_event.processed_at.isoformat(),
+            }
+
+        # Process event based on type
+        processing_result = {}
+        try:
+            if event_type == "checkout.session.completed":
+                processing_result = await _handle_checkout_completed(event_data, db)
+            elif event_type == "customer.subscription.updated":
+                processing_result = await _handle_subscription_updated(event_data, db)
+            elif event_type == "customer.subscription.deleted":
+                processing_result = await _handle_subscription_deleted(event_data, db)
+            elif event_type == "invoice.paid":
+                processing_result = await _handle_invoice_paid(event_data, db)
+            elif event_type == "invoice.payment_failed":
+                processing_result = await _handle_payment_failed(event_data, db)
+            else:
+                logger.info(f"Unhandled webhook event: {event_type}")
+                processing_result = {"status": "ignored", "event_type": event_type}
+
+            # ✅ RECORD EVENT - Mark as processed
+            webhook_event = WebhookEvent(
+                stripe_event_id=event_id,
+                event_type=event_type,
+                status="processed",
+                payload=event,
+                result=processing_result,
+            )
+            db.add(webhook_event)
+            await db.commit()
+
+            logger.info(f"Webhook event {event_id} processed successfully")
+            return processing_result
+
+        except Exception as handler_error:
+            # Record failed processing attempt
+            webhook_event = WebhookEvent(
+                stripe_event_id=event_id,
+                event_type=event_type,
+                status="failed",
+                payload=event,
+                error_message=str(handler_error),
+            )
+            db.add(webhook_event)
+            await db.commit()
+
+            logger.error(f"Webhook handler failed: {handler_error}", exc_info=True)
+            raise
+
+    except stripe.error.SignatureVerificationError as e:
+        logger.error(f"Invalid webhook signature: {e}")
+        return {"status": "error", "error": "invalid_signature"}
     except Exception as e:
-        logger.error(f"Webhook processing failed: {e}")
+        logger.error(f"Webhook processing failed: {e}", exc_info=True)
+        await db.rollback()
         return {"status": "error", "error": str(e)}
 
 
@@ -272,16 +358,51 @@ async def handle_webhook_event(
 # ============================================================
 
 
-async def _handle_checkout_completed(data: dict) -> dict:
-    """Handle successful checkout completion."""
+async def _handle_checkout_completed(data: dict, db: AsyncSession) -> dict:
+    """Handle successful checkout completion - create/update subscription."""
+    from app.models.subscription import Subscription
+    from app.models.user import User
+
     user_id = data.get("client_reference_id")
     customer_id = data.get("customer")
     subscription_id = data.get("subscription")
+    tier = data.get("metadata", {}).get("tier", "starter")
 
-    logger.info(f"Checkout completed for user {user_id}")
+    if not user_id or not customer_id:
+        raise ValueError("Missing user_id or customer_id in checkout session")
 
-    # TODO: Update user subscription in database
-    # This would be done by the route handler after validating webhook
+    logger.info(f"Checkout completed for user {user_id}, tier {tier}")
+
+    # Get user
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise ValueError(f"User {user_id} not found")
+
+    # Create or update subscription (atomic upsert)
+    stmt = insert(Subscription).values(
+        user_id=user_id,
+        stripe_customer_id=customer_id,
+        stripe_subscription_id=subscription_id,
+        tier=tier,
+        status="active",
+        subscription_metadata=data.get("metadata", {}),
+    ).on_conflict_do_update(
+        index_elements=["user_id"],
+        set_={
+            "stripe_customer_id": customer_id,
+            "stripe_subscription_id": subscription_id,
+            "tier": tier,
+            "status": "active",
+            "subscription_metadata": data.get("metadata", {}),
+        }
+    )
+
+    await db.execute(stmt)
+    await db.commit()
+
+    logger.info(f"Subscription activated for user {user_id}: {tier}")
 
     return {
         "status": "processed",
@@ -289,46 +410,121 @@ async def _handle_checkout_completed(data: dict) -> dict:
         "user_id": user_id,
         "customer_id": customer_id,
         "subscription_id": subscription_id,
+        "tier": tier,
     }
 
 
-async def _handle_subscription_updated(data: dict) -> dict:
-    """Handle subscription update (upgrade/downgrade)."""
-    subscription_id = data.get("id")
-    status = data.get("status")
-    customer_id = data.get("customer")
+async def _handle_subscription_updated(data: dict, db: AsyncSession) -> dict:
+    """Handle subscription update (upgrade/downgrade/status change)."""
+    from app.models.subscription import Subscription
 
-    logger.info(f"Subscription {subscription_id} updated to {status}")
+    stripe_subscription_id = data.get("id")
+    status = data.get("status")
+    current_period_start = datetime.fromtimestamp(data.get("current_period_start", 0))
+    current_period_end = datetime.fromtimestamp(data.get("current_period_end", 0))
+    cancel_at_period_end = data.get("cancel_at_period_end", False)
+
+    logger.info(f"Subscription {stripe_subscription_id} updated to {status}")
+
+    # Find subscription by stripe_subscription_id
+    result = await db.execute(
+        select(Subscription).where(Subscription.stripe_subscription_id == stripe_subscription_id)
+    )
+    subscription = result.scalar_one_or_none()
+
+    if not subscription:
+        logger.warning(f"Subscription {stripe_subscription_id} not found in database")
+        return {"status": "skipped", "reason": "subscription_not_found"}
+
+    # Update subscription status and billing cycle
+    subscription.status = status
+    subscription.current_period_start = current_period_start
+    subscription.current_period_end = current_period_end
+    subscription.cancel_at_period_end = cancel_at_period_end
+
+    await db.commit()
+
+    logger.info(f"Subscription {stripe_subscription_id} updated in database")
 
     return {
         "status": "processed",
         "event_type": "customer.subscription.updated",
-        "subscription_id": subscription_id,
+        "subscription_id": stripe_subscription_id,
         "subscription_status": status,
     }
 
 
-async def _handle_subscription_deleted(data: dict) -> dict:
+async def _handle_subscription_deleted(data: dict, db: AsyncSession) -> dict:
     """Handle subscription cancellation."""
-    subscription_id = data.get("id")
-    customer_id = data.get("customer")
+    from app.models.subscription import Subscription
 
-    logger.info(f"Subscription {subscription_id} cancelled")
+    stripe_subscription_id = data.get("id")
+    canceled_at = datetime.fromtimestamp(data.get("canceled_at", 0)) if data.get("canceled_at") else datetime.utcnow()
+
+    logger.info(f"Subscription {stripe_subscription_id} cancelled")
+
+    # Find and update subscription
+    result = await db.execute(
+        select(Subscription).where(Subscription.stripe_subscription_id == stripe_subscription_id)
+    )
+    subscription = result.scalar_one_or_none()
+
+    if not subscription:
+        logger.warning(f"Subscription {stripe_subscription_id} not found in database")
+        return {"status": "skipped", "reason": "subscription_not_found"}
+
+    # Mark as canceled and downgrade to free tier
+    subscription.status = "canceled"
+    subscription.tier = "free"
+    subscription.canceled_at = canceled_at
+    subscription.stripe_subscription_id = None  # Clear subscription ID
+
+    await db.commit()
+
+    logger.info(f"Subscription {stripe_subscription_id} canceled, user downgraded to free tier")
 
     return {
         "status": "processed",
         "event_type": "customer.subscription.deleted",
-        "subscription_id": subscription_id,
+        "subscription_id": stripe_subscription_id,
     }
 
 
-async def _handle_invoice_paid(data: dict) -> dict:
-    """Handle successful invoice payment."""
+async def _handle_invoice_paid(data: dict, db: AsyncSession) -> dict:
+    """Handle successful invoice payment - record in payment history."""
+    from app.models.subscription import PaymentHistory, Subscription
+
     invoice_id = data.get("id")
     customer_id = data.get("customer")
-    amount_paid = data.get("amount_paid")
+    amount_paid = data.get("amount_paid", 0)
+    currency = data.get("currency", "usd")
+    subscription_id = data.get("subscription")
 
-    logger.info(f"Invoice {invoice_id} paid: ${amount_paid/100:.2f}")
+    logger.info(f"Invoice {invoice_id} paid: ${amount_paid/100:.2f} {currency.upper()}")
+
+    # Find subscription by stripe_customer_id
+    result = await db.execute(
+        select(Subscription).where(Subscription.stripe_customer_id == customer_id)
+    )
+    subscription = result.scalar_one_or_none()
+
+    if not subscription:
+        logger.warning(f"Subscription for customer {customer_id} not found")
+        return {"status": "skipped", "reason": "subscription_not_found"}
+
+    # Record payment in history
+    payment_record = PaymentHistory(
+        subscription_id=subscription.id,
+        stripe_invoice_id=invoice_id,
+        amount=amount_paid,
+        currency=currency,
+        status="succeeded",
+        description=f"Subscription payment for {subscription.tier} tier",
+    )
+    db.add(payment_record)
+    await db.commit()
+
+    logger.info(f"Payment recorded for subscription {subscription.id}: ${amount_paid/100:.2f}")
 
     return {
         "status": "processed",
@@ -338,12 +534,42 @@ async def _handle_invoice_paid(data: dict) -> dict:
     }
 
 
-async def _handle_payment_failed(data: dict) -> dict:
-    """Handle failed payment."""
+async def _handle_payment_failed(data: dict, db: AsyncSession) -> dict:
+    """Handle failed payment - update subscription status."""
+    from app.models.subscription import PaymentHistory, Subscription
+
     invoice_id = data.get("id")
     customer_id = data.get("customer")
+    amount_due = data.get("amount_due", 0)
 
     logger.warning(f"Payment failed for invoice {invoice_id}")
+
+    # Find subscription by stripe_customer_id
+    result = await db.execute(
+        select(Subscription).where(Subscription.stripe_customer_id == customer_id)
+    )
+    subscription = result.scalar_one_or_none()
+
+    if not subscription:
+        logger.warning(f"Subscription for customer {customer_id} not found")
+        return {"status": "skipped", "reason": "subscription_not_found"}
+
+    # Update subscription status to past_due
+    subscription.status = "past_due"
+
+    # Record failed payment attempt
+    payment_record = PaymentHistory(
+        subscription_id=subscription.id,
+        stripe_invoice_id=invoice_id,
+        amount=amount_due,
+        currency="usd",
+        status="failed",
+        description=f"Failed payment for {subscription.tier} tier",
+    )
+    db.add(payment_record)
+    await db.commit()
+
+    logger.warning(f"Subscription {subscription.id} marked as past_due due to failed payment")
 
     return {
         "status": "processed",

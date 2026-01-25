@@ -6,7 +6,7 @@ Phase 4.2: AdminUser, AgentExecutionLog, SystemMetric (admin portal)
 Phase 4.4: InsightInteraction (analytics tracking)
 Phase 5.1: CustomAnalysis (AI research agent)
 Phase 5.2-5.4: Build tools, export, and real-time feed (no new models)
-Phase 6.1: Subscription, PaymentHistory (Stripe payments)
+Phase 6.1: Subscription, PaymentHistory, WebhookEvent (Stripe payments)
 Phase 6.4: Team, TeamMember, TeamInvitation, SharedInsight (collaboration)
 Phase 7.2: APIKey, APIKeyUsageLog (public API)
 Phase 7.3: Tenant, TenantUser (multi-tenancy)
@@ -23,6 +23,7 @@ from app.models.system_metric import SystemMetric
 from app.models.insight_interaction import InsightInteraction
 from app.models.custom_analysis import CustomAnalysis
 from app.models.subscription import PaymentHistory, Subscription
+from app.models.webhook_event import WebhookEvent
 from app.models.team import SharedInsight, Team, TeamInvitation, TeamMember
 from app.models.api_key import APIKey, APIKeyUsageLog
 from app.models.tenant import Tenant, TenantUser
@@ -46,6 +47,7 @@ __all__ = [
     # Phase 6.1: Payments
     "Subscription",
     "PaymentHistory",
+    "WebhookEvent",
     # Phase 6.4: Teams
     "Team",
     "TeamMember",
