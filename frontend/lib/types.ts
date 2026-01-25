@@ -291,3 +291,26 @@ export type AgentStatus = z.infer<typeof AgentStatusSchema>;
 export type DashboardMetrics = z.infer<typeof DashboardMetricsSchema>;
 export type InsightReview = z.infer<typeof InsightReviewSchema>;
 export type ReviewQueueResponse = z.infer<typeof ReviewQueueResponseSchema>;
+
+// ============================================
+// User Profile Types (Phase 4.1)
+// ============================================
+
+export const UserProfileSchema = z.object({
+  id: z.string(),
+  email: z.string().email(),
+  display_name: z.string().nullable().optional(),
+  avatar_url: z.string().nullable().optional(),
+  subscription_tier: z.string(),
+  preferences: z.record(z.string(), z.any()),
+  created_at: z.string(),
+});
+
+export const UserUpdateSchema = z.object({
+  display_name: z.string().optional(),
+  avatar_url: z.string().optional(),
+  preferences: z.record(z.string(), z.any()).optional(),
+});
+
+export type UserProfile = z.infer<typeof UserProfileSchema>;
+export type UserUpdate = z.infer<typeof UserUpdateSchema>;

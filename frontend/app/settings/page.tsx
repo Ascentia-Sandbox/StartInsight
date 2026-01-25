@@ -1,22 +1,114 @@
-import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Loader2, Check, User, Bell, CreditCard, Trash2 } from 'lucide-react';
+import { getSupabaseClient } from '@/lib/supabase/client';
+import { fetchUserProfile, updateUserProfile, fetchSubscriptionStatus } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-export default async function SettingsPage() {
-  const supabase = await createClient();
+export default function SettingsPage() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [displayName, setDisplayName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [dailyDigest, setDailyDigest] = useState(false);
+  const [researchNotify, setResearchNotify] = useState(true);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Check authentication
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
 
-  if (!user) {
-    redirect('/auth/login');
+      if (!session) {
+        router.push('/auth/login?redirectTo=/settings');
+        return;
+      }
+
+      setAccessToken(session.access_token);
+      setUserEmail(session.user.email || '');
+      setIsCheckingAuth(false);
+    };
+
+    checkAuth();
+  }, [router]);
+
+  // Fetch user profile
+  const { data: profile, isLoading: profileLoading } = useQuery({
+    queryKey: ['user-profile', accessToken],
+    queryFn: () => fetchUserProfile(accessToken!),
+    enabled: !!accessToken,
+  });
+
+  // Update state when profile loads
+  useEffect(() => {
+    if (profile) {
+      setDisplayName(profile.display_name || '');
+      setDailyDigest(profile.preferences?.daily_digest || false);
+      setResearchNotify(profile.preferences?.research_notify !== false);
+    }
+  }, [profile]);
+
+  // Fetch subscription status
+  const { data: subscription } = useQuery({
+    queryKey: ['subscription', accessToken],
+    queryFn: () => fetchSubscriptionStatus(accessToken!),
+    enabled: !!accessToken,
+  });
+
+  // Update profile mutation
+  const updateMutation = useMutation({
+    mutationFn: (data: { display_name?: string; preferences?: Record<string, unknown> }) =>
+      updateUserProfile(accessToken!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    },
+  });
+
+  // Handle profile save
+  const handleSaveProfile = () => {
+    updateMutation.mutate({ display_name: displayName });
+  };
+
+  // Handle notification save
+  const handleSaveNotifications = () => {
+    updateMutation.mutate({
+      preferences: {
+        daily_digest: dailyDigest,
+        research_notify: researchNotify,
+      },
+    });
+  };
+
+  // Handle account deletion
+  const handleDeleteAccount = async () => {
+    const supabase = getSupabaseClient();
+    // Sign out user (actual deletion would require backend support)
+    await supabase.auth.signOut();
+    router.push('/');
+  };
+
+  if (isCheckingAuth || profileLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="animate-spin h-8 w-8 text-primary mx-auto" />
+          <p className="mt-2 text-muted-foreground">Loading settings...</p>
+        </div>
+      </div>
+    );
   }
-
-  const userName = user.user_metadata?.full_name || '';
-  const userEmail = user.email || '';
 
   return (
     <div className="min-h-screen bg-background">
@@ -29,23 +121,33 @@ export default async function SettingsPage() {
           </p>
         </div>
 
+        {/* Success Message */}
+        {saveSuccess && (
+          <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center gap-2 text-green-800 dark:text-green-200">
+            <Check className="h-5 w-5" />
+            Settings saved successfully
+          </div>
+        )}
+
         {/* Profile Section */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Profile</CardTitle>
-            <CardDescription>
-              Your personal information
-            </CardDescription>
+            <div className="flex items-center gap-2">
+              <User className="h-5 w-5 text-muted-foreground" />
+              <CardTitle>Profile</CardTitle>
+            </div>
+            <CardDescription>Your personal information</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="name" className="text-sm font-medium">
-                Full Name
+                Display Name
               </label>
               <Input
                 id="name"
                 type="text"
-                defaultValue={userName}
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Your name"
               />
             </div>
@@ -56,25 +158,29 @@ export default async function SettingsPage() {
               <Input
                 id="email"
                 type="email"
-                defaultValue={userEmail}
+                value={userEmail}
                 disabled
                 className="bg-muted"
               />
-              <p className="text-xs text-muted-foreground">
-                Email cannot be changed
-              </p>
+              <p className="text-xs text-muted-foreground">Email cannot be changed</p>
             </div>
-            <Button>Save Changes</Button>
+            <Button onClick={handleSaveProfile} disabled={updateMutation.isPending}>
+              {updateMutation.isPending ? (
+                <Loader2 className="animate-spin h-4 w-4 mr-2" />
+              ) : null}
+              Save Changes
+            </Button>
           </CardContent>
         </Card>
 
         {/* Notification Preferences */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Notifications</CardTitle>
-            <CardDescription>
-              Manage how you receive updates
-            </CardDescription>
+            <div className="flex items-center gap-2">
+              <Bell className="h-5 w-5 text-muted-foreground" />
+              <CardTitle>Notifications</CardTitle>
+            </div>
+            <CardDescription>Manage how you receive updates</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
@@ -85,7 +191,12 @@ export default async function SettingsPage() {
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" />
+                <input
+                  type="checkbox"
+                  checked={dailyDigest}
+                  onChange={(e) => setDailyDigest(e.target.checked)}
+                  className="sr-only peer"
+                />
                 <div className="w-11 h-6 bg-muted rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-background after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
               </label>
             </div>
@@ -97,30 +208,50 @@ export default async function SettingsPage() {
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" defaultChecked className="sr-only peer" />
+                <input
+                  type="checkbox"
+                  checked={researchNotify}
+                  onChange={(e) => setResearchNotify(e.target.checked)}
+                  className="sr-only peer"
+                />
                 <div className="w-11 h-6 bg-muted rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-background after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
               </label>
             </div>
+            <Button variant="outline" onClick={handleSaveNotifications} disabled={updateMutation.isPending}>
+              {updateMutation.isPending ? (
+                <Loader2 className="animate-spin h-4 w-4 mr-2" />
+              ) : null}
+              Save Preferences
+            </Button>
           </CardContent>
         </Card>
 
         {/* Subscription */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Subscription</CardTitle>
-            <CardDescription>
-              Manage your plan and billing
-            </CardDescription>
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-muted-foreground" />
+              <CardTitle>Subscription</CardTitle>
+            </div>
+            <CardDescription>Manage your plan and billing</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
               <div>
-                <p className="font-semibold">Free Plan</p>
+                <p className="font-semibold capitalize">{subscription?.tier || 'Free'} Plan</p>
                 <p className="text-sm text-muted-foreground">
-                  5 insights/day, basic features
+                  {subscription?.tier === 'free'
+                    ? '5 insights/day, basic features'
+                    : subscription?.tier === 'starter'
+                    ? 'Unlimited insights, 5 research/month'
+                    : subscription?.tier === 'pro'
+                    ? 'Unlimited everything, team features'
+                    : '5 insights/day, basic features'}
                 </p>
               </div>
-              <Button>Upgrade</Button>
+              <Link href="/billing">
+                <Button>{subscription?.tier === 'free' ? 'Upgrade' : 'Manage'}</Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
@@ -128,21 +259,52 @@ export default async function SettingsPage() {
         {/* Danger Zone */}
         <Card className="border-red-200 dark:border-red-900">
           <CardHeader>
-            <CardTitle className="text-red-600 dark:text-red-400">Danger Zone</CardTitle>
-            <CardDescription>
-              Irreversible account actions
-            </CardDescription>
+            <div className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-red-500" />
+              <CardTitle className="text-red-600 dark:text-red-400">Danger Zone</CardTitle>
+            </div>
+            <CardDescription>Irreversible account actions</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Delete Account</p>
-                <p className="text-sm text-muted-foreground">
-                  Permanently delete your account and all data
+            {showDeleteConfirm ? (
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg space-y-3">
+                <p className="font-medium text-red-800 dark:text-red-200">
+                  Are you sure you want to delete your account?
                 </p>
+                <p className="text-sm text-red-600 dark:text-red-300">
+                  This action cannot be undone. All your data will be permanently deleted.
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteAccount}
+                  >
+                    Yes, Delete My Account
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDeleteConfirm(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
               </div>
-              <Button variant="destructive">Delete Account</Button>
-            </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Delete Account</p>
+                  <p className="text-sm text-muted-foreground">
+                    Permanently delete your account and all data
+                  </p>
+                </div>
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  Delete Account
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

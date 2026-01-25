@@ -22,6 +22,7 @@ import {
   AgentStatusSchema,
   ReviewQueueResponseSchema,
   InsightReviewSchema,
+  UserProfileSchema,
   type Insight,
   type InsightListResponse,
   type FetchInsightsParams,
@@ -44,6 +45,8 @@ import {
   type AgentStatus,
   type ReviewQueueResponse,
   type InsightReview,
+  type UserProfile,
+  type UserUpdate,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -494,4 +497,29 @@ export async function updateInsightStatus(
   const client = createAuthenticatedClient(accessToken);
   const { data } = await client.patch(`/api/admin/insights/${insightId}`, payload);
   return InsightReviewSchema.parse(data);
+}
+
+// ============================================
+// User Profile API (Phase 4.1)
+// ============================================
+
+/**
+ * Get current user profile
+ */
+export async function fetchUserProfile(accessToken: string): Promise<UserProfile> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/users/me');
+  return UserProfileSchema.parse(data);
+}
+
+/**
+ * Update user profile
+ */
+export async function updateUserProfile(
+  accessToken: string,
+  payload: UserUpdate
+): Promise<UserProfile> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.patch('/api/users/me', payload);
+  return UserProfileSchema.parse(data);
 }
