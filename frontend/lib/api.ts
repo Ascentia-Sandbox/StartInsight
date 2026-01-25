@@ -3,9 +3,33 @@ import { z } from 'zod';
 import {
   InsightSchema,
   InsightListResponseSchema,
+  WorkspaceStatusSchema,
+  SavedInsightSchema,
+  SavedInsightListResponseSchema,
+  RatingListResponseSchema,
+  UserRatingSchema,
+  TeamSchema,
+  TeamMemberSchema,
+  TeamInvitationSchema,
+  APIKeySchema,
+  APIKeyCreateResponseSchema,
+  APIKeyListResponseSchema,
+  APIKeyUsageSchema,
   type Insight,
   type InsightListResponse,
   type FetchInsightsParams,
+  type WorkspaceStatus,
+  type SavedInsight,
+  type SavedInsightListResponse,
+  type UserRating,
+  type RatingListResponse,
+  type Team,
+  type TeamMember,
+  type TeamInvitation,
+  type APIKey,
+  type APIKeyCreateResponse,
+  type APIKeyListResponse,
+  type APIKeyUsage,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -52,4 +76,275 @@ export async function fetchDailyTop(limit: number = 5): Promise<Insight[]> {
 export async function checkHealth(): Promise<{ status: string; version: string }> {
   const { data } = await apiClient.get('/health');
   return data;
+}
+
+// ============================================
+// User Workspace API (Phase 4)
+// ============================================
+
+/**
+ * Create authenticated API client with Supabase token
+ */
+export function createAuthenticatedClient(accessToken: string) {
+  return axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    timeout: 10000,
+  });
+}
+
+/**
+ * Fetch user's workspace status (saved, interested, building counts)
+ */
+export async function fetchWorkspaceStatus(accessToken: string): Promise<WorkspaceStatus> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/users/me/status');
+  return WorkspaceStatusSchema.parse(data);
+}
+
+/**
+ * Fetch user's saved insights
+ */
+export async function fetchSavedInsights(
+  accessToken: string,
+  params: { status?: string; limit?: number; offset?: number } = {}
+): Promise<SavedInsightListResponse> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/users/me/saved', { params });
+  return SavedInsightListResponseSchema.parse(data);
+}
+
+/**
+ * Fetch user's ratings
+ */
+export async function fetchUserRatings(
+  accessToken: string,
+  params: { limit?: number; offset?: number } = {}
+): Promise<RatingListResponse> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/users/me/ratings', { params });
+  return RatingListResponseSchema.parse(data);
+}
+
+/**
+ * Save an insight to user's workspace
+ */
+export async function saveInsight(
+  accessToken: string,
+  insightId: string,
+  payload?: { notes?: string; tags?: string[] }
+): Promise<SavedInsight> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post(`/api/users/insights/${insightId}/save`, payload || {});
+  return SavedInsightSchema.parse(data);
+}
+
+/**
+ * Unsave an insight from user's workspace
+ */
+export async function unsaveInsight(accessToken: string, insightId: string): Promise<void> {
+  const client = createAuthenticatedClient(accessToken);
+  await client.delete(`/api/users/insights/${insightId}/save`);
+}
+
+/**
+ * Mark an insight as interested
+ */
+export async function markInterested(accessToken: string, insightId: string): Promise<SavedInsight> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post(`/api/users/insights/${insightId}/interested`);
+  return SavedInsightSchema.parse(data);
+}
+
+/**
+ * Claim an insight (mark as building)
+ */
+export async function claimInsight(
+  accessToken: string,
+  insightId: string
+): Promise<{ status: string; claimed_at: string; insight_id: string }> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post(`/api/users/insights/${insightId}/claim`);
+  return data;
+}
+
+/**
+ * Rate an insight
+ */
+export async function rateInsight(
+  accessToken: string,
+  insightId: string,
+  payload: { rating: number; feedback?: string }
+): Promise<UserRating> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post(`/api/users/insights/${insightId}/rate`, payload);
+  return UserRatingSchema.parse(data);
+}
+
+/**
+ * Get user's rating for a specific insight
+ */
+export async function getMyRating(accessToken: string, insightId: string): Promise<UserRating | null> {
+  const client = createAuthenticatedClient(accessToken);
+  try {
+    const { data } = await client.get(`/api/users/insights/${insightId}/rate`);
+    return data ? UserRatingSchema.parse(data) : null;
+  } catch {
+    return null;
+  }
+}
+
+// ============================================
+// Teams API (Phase 6.4)
+// ============================================
+
+/**
+ * List user's teams
+ */
+export async function fetchTeams(accessToken: string): Promise<Team[]> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/teams');
+  return z.array(TeamSchema).parse(data);
+}
+
+/**
+ * Get team details
+ */
+export async function fetchTeam(accessToken: string, teamId: string): Promise<Team> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get(`/api/teams/${teamId}`);
+  return TeamSchema.parse(data);
+}
+
+/**
+ * Create a new team
+ */
+export async function createTeam(
+  accessToken: string,
+  payload: { name: string; description?: string }
+): Promise<Team> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post('/api/teams', payload);
+  return TeamSchema.parse(data);
+}
+
+/**
+ * Update team
+ */
+export async function updateTeam(
+  accessToken: string,
+  teamId: string,
+  payload: { name?: string; description?: string }
+): Promise<Team> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.patch(`/api/teams/${teamId}`, payload);
+  return TeamSchema.parse(data);
+}
+
+/**
+ * Delete team
+ */
+export async function deleteTeam(accessToken: string, teamId: string): Promise<void> {
+  const client = createAuthenticatedClient(accessToken);
+  await client.delete(`/api/teams/${teamId}`);
+}
+
+/**
+ * List team members
+ */
+export async function fetchTeamMembers(accessToken: string, teamId: string): Promise<TeamMember[]> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get(`/api/teams/${teamId}/members`);
+  return z.array(TeamMemberSchema).parse(data);
+}
+
+/**
+ * Invite member to team
+ */
+export async function inviteTeamMember(
+  accessToken: string,
+  teamId: string,
+  payload: { email: string; role?: string }
+): Promise<TeamInvitation> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post(`/api/teams/${teamId}/invitations`, payload);
+  return TeamInvitationSchema.parse(data);
+}
+
+/**
+ * Remove member from team
+ */
+export async function removeTeamMember(
+  accessToken: string,
+  teamId: string,
+  userId: string
+): Promise<void> {
+  const client = createAuthenticatedClient(accessToken);
+  await client.delete(`/api/teams/${teamId}/members/${userId}`);
+}
+
+// ============================================
+// API Keys API (Phase 7.2)
+// ============================================
+
+/**
+ * List user's API keys
+ */
+export async function fetchAPIKeys(accessToken: string): Promise<APIKeyListResponse> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/keys');
+  return APIKeyListResponseSchema.parse(data);
+}
+
+/**
+ * Create a new API key
+ */
+export async function createAPIKey(
+  accessToken: string,
+  payload: { name: string; description?: string; scopes?: string[]; expires_in_days?: number }
+): Promise<APIKeyCreateResponse> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post('/api/keys', payload);
+  return APIKeyCreateResponseSchema.parse(data);
+}
+
+/**
+ * Get API key details
+ */
+export async function fetchAPIKey(accessToken: string, keyId: string): Promise<APIKey> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get(`/api/keys/${keyId}`);
+  return APIKeySchema.parse(data);
+}
+
+/**
+ * Revoke (delete) an API key
+ */
+export async function revokeAPIKey(accessToken: string, keyId: string, reason?: string): Promise<void> {
+  const client = createAuthenticatedClient(accessToken);
+  await client.delete(`/api/keys/${keyId}`, { params: { reason } });
+}
+
+/**
+ * Get API key usage statistics
+ */
+export async function fetchAPIKeyUsage(
+  accessToken: string,
+  keyId: string,
+  days: number = 7
+): Promise<APIKeyUsage> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get(`/api/keys/${keyId}/usage`, { params: { days } });
+  return APIKeyUsageSchema.parse(data);
+}
+
+/**
+ * Get available API scopes
+ */
+export async function fetchAPIScopes(): Promise<Record<string, string>> {
+  const { data } = await apiClient.get('/api/keys/scopes');
+  return data.scopes;
 }

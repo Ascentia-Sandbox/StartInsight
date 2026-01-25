@@ -1,16 +1,80 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Loader2, Users, Share2, MessageSquare, Shield } from 'lucide-react';
+import { getSupabaseClient } from '@/lib/supabase/client';
+import { fetchTeams, createTeam } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import type { Team } from '@/lib/types';
 
 export default function TeamsPage() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [teamName, setTeamName] = useState('');
+  const [teamDescription, setTeamDescription] = useState('');
 
-  // Mock data - would come from API
-  const teams: { id: string; name: string; role: string; memberCount: number }[] = [];
+  // Check authentication
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        router.push('/auth/login?redirectTo=/teams');
+        return;
+      }
+
+      setAccessToken(session.access_token);
+      setIsCheckingAuth(false);
+    };
+
+    checkAuth();
+  }, [router]);
+
+  // Fetch teams
+  const { data: teams, isLoading } = useQuery({
+    queryKey: ['teams', accessToken],
+    queryFn: () => fetchTeams(accessToken!),
+    enabled: !!accessToken,
+  });
+
+  // Create team mutation
+  const createTeamMutation = useMutation({
+    mutationFn: (data: { name: string; description?: string }) =>
+      createTeam(accessToken!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      setShowCreateModal(false);
+      setTeamName('');
+      setTeamDescription('');
+    },
+  });
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="animate-spin h-8 w-8 text-primary mx-auto" />
+          <p className="mt-2 text-muted-foreground">Loading teams...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleCreateTeam = async (e: React.FormEvent) => {
+    e.preventDefault();
+    createTeamMutation.mutate({
+      name: teamName,
+      description: teamDescription || undefined,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -26,25 +90,16 @@ export default function TeamsPage() {
           <Button onClick={() => setShowCreateModal(true)}>Create Team</Button>
         </div>
 
-        {teams.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="animate-spin h-8 w-8 text-primary" />
+          </div>
+        ) : !teams || teams.length === 0 ? (
           // Empty State
           <Card>
             <CardContent className="p-12">
               <div className="text-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-16 w-16 mx-auto text-muted-foreground mb-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
+                <Users className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No teams yet</h3>
                 <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
                   Create a team to collaborate with colleagues on market research and share
@@ -57,14 +112,14 @@ export default function TeamsPage() {
         ) : (
           // Teams List
           <div className="space-y-4">
-            {teams.map((team) => (
-              <Card key={team.id}>
+            {teams.map((team: Team) => (
+              <Card key={team.id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
                   <div>
                     <CardTitle>{team.name}</CardTitle>
                     <CardDescription>
-                      {team.memberCount} member{team.memberCount !== 1 ? 's' : ''} &middot; You are{' '}
-                      {team.role}
+                      {team.member_count} member{team.member_count !== 1 ? 's' : ''}
+                      {team.description && ` - ${team.description}`}
                     </CardDescription>
                   </div>
                   <Button variant="outline">Manage</Button>
@@ -79,20 +134,7 @@ export default function TeamsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-primary"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                  />
-                </svg>
+                <Share2 className="h-5 w-5 text-primary" />
                 Share Insights
               </CardTitle>
             </CardHeader>
@@ -106,20 +148,7 @@ export default function TeamsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-primary"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-                  />
-                </svg>
+                <MessageSquare className="h-5 w-5 text-primary" />
                 Discuss & Comment
               </CardTitle>
             </CardHeader>
@@ -133,20 +162,7 @@ export default function TeamsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-primary"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                  />
-                </svg>
+                <Shield className="h-5 w-5 text-primary" />
                 Role-Based Access
               </CardTitle>
             </CardHeader>
@@ -173,14 +189,7 @@ export default function TeamsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    // Handle team creation
-                    setShowCreateModal(false);
-                  }}
-                  className="space-y-4"
-                >
+                <form onSubmit={handleCreateTeam} className="space-y-4">
                   <div className="space-y-2">
                     <label htmlFor="teamName" className="text-sm font-medium">
                       Team Name
@@ -193,6 +202,17 @@ export default function TeamsPage() {
                       required
                     />
                   </div>
+                  <div className="space-y-2">
+                    <label htmlFor="teamDescription" className="text-sm font-medium">
+                      Description (optional)
+                    </label>
+                    <Input
+                      id="teamDescription"
+                      value={teamDescription}
+                      onChange={(e) => setTeamDescription(e.target.value)}
+                      placeholder="What is this team for?"
+                    />
+                  </div>
                   <div className="flex gap-2 justify-end">
                     <Button
                       type="button"
@@ -201,7 +221,12 @@ export default function TeamsPage() {
                     >
                       Cancel
                     </Button>
-                    <Button type="submit">Create Team</Button>
+                    <Button type="submit" disabled={createTeamMutation.isPending}>
+                      {createTeamMutation.isPending && (
+                        <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                      )}
+                      Create Team
+                    </Button>
                   </div>
                 </form>
               </CardContent>

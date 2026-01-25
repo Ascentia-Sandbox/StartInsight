@@ -1,29 +1,99 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Loader2, Key, Info, Copy, Check } from 'lucide-react';
+import { getSupabaseClient } from '@/lib/supabase/client';
+import { fetchAPIKeys, createAPIKey, revokeAPIKey } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
-interface ApiKey {
-  id: string;
-  name: string;
-  prefix: string;
-  createdAt: string;
-  lastUsed: string | null;
-  isActive: boolean;
-}
+import type { APIKey } from '@/lib/types';
 
 export default function ApiKeysPage() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [keyName, setKeyName] = useState('');
   const [newKey, setNewKey] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
-  // Mock data - would come from API
-  const apiKeys: ApiKey[] = [];
+  // Check authentication
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        router.push('/auth/login?redirectTo=/api-keys');
+        return;
+      }
+
+      setAccessToken(session.access_token);
+      setIsCheckingAuth(false);
+    };
+
+    checkAuth();
+  }, [router]);
+
+  // Fetch API keys
+  const { data: apiKeysData, isLoading } = useQuery({
+    queryKey: ['api-keys', accessToken],
+    queryFn: () => fetchAPIKeys(accessToken!),
+    enabled: !!accessToken,
+  });
+
+  // Create API key mutation
+  const createKeyMutation = useMutation({
+    mutationFn: (data: { name: string }) =>
+      createAPIKey(accessToken!, data),
+    onSuccess: (data) => {
+      setNewKey(data.key);
+      queryClient.invalidateQueries({ queryKey: ['api-keys'] });
+    },
+  });
+
+  // Revoke API key mutation
+  const revokeKeyMutation = useMutation({
+    mutationFn: (keyId: string) =>
+      revokeAPIKey(accessToken!, keyId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['api-keys'] });
+    },
+  });
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="animate-spin h-8 w-8 text-primary mx-auto" />
+          <p className="mt-2 text-muted-foreground">Loading API keys...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const apiKeys = apiKeysData?.keys || [];
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCreateKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    createKeyMutation.mutate({ name: keyName });
+  };
+
+  const handleCloseModal = () => {
+    setShowCreateModal(false);
+    setNewKey(null);
+    setKeyName('');
   };
 
   return (
@@ -44,53 +114,31 @@ export default function ApiKeysPage() {
         <Card className="mb-8 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
           <CardContent className="pt-6">
             <div className="flex gap-4">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-blue-600 dark:text-blue-400 shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              <Info className="h-6 w-6 text-blue-600 dark:text-blue-400 shrink-0" />
               <div>
                 <p className="font-medium text-blue-800 dark:text-blue-200">API Documentation</p>
                 <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
                   Learn how to use the StartInsight API to integrate market insights into your
                   applications.{' '}
-                  <a href="/docs/api" className="underline">
+                  <Link href="/docs/api" className="underline">
                     View API Docs
-                  </a>
+                  </Link>
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {apiKeys.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="animate-spin h-8 w-8 text-primary" />
+          </div>
+        ) : apiKeys.length === 0 ? (
           // Empty State
           <Card>
             <CardContent className="p-12">
               <div className="text-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-16 w-16 mx-auto text-muted-foreground mb-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-                  />
-                </svg>
+                <Key className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No API keys yet</h3>
                 <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
                   Create an API key to access StartInsight data programmatically.
@@ -102,31 +150,42 @@ export default function ApiKeysPage() {
         ) : (
           // API Keys List
           <div className="space-y-4">
-            {apiKeys.map((key) => (
+            {apiKeys.map((key: APIKey) => (
               <Card key={key.id}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
                   <div>
                     <CardTitle className="text-base">{key.name}</CardTitle>
                     <CardDescription className="font-mono">
-                      {key.prefix}...
+                      {key.key_prefix}...
                       <span className="ml-2 text-xs">
-                        {key.lastUsed ? `Last used ${key.lastUsed}` : 'Never used'}
+                        {key.last_used_at ? `Last used ${new Date(key.last_used_at).toLocaleDateString()}` : 'Never used'}
                       </span>
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
                     <span
                       className={`px-2 py-1 text-xs rounded-full ${
-                        key.isActive
+                        key.is_active
                           ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                           : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                       }`}
                     >
-                      {key.isActive ? 'Active' : 'Revoked'}
+                      {key.is_active ? 'Active' : 'Revoked'}
                     </span>
-                    <Button variant="outline" size="sm">
-                      Revoke
-                    </Button>
+                    {key.is_active && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => revokeKeyMutation.mutate(key.id)}
+                        disabled={revokeKeyMutation.isPending}
+                      >
+                        {revokeKeyMutation.isPending ? (
+                          <Loader2 className="animate-spin h-4 w-4" />
+                        ) : (
+                          'Revoke'
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </CardHeader>
               </Card>
@@ -153,9 +212,9 @@ export default function ApiKeysPage() {
               </div>
               <p className="text-sm text-muted-foreground">
                 Need more API calls?{' '}
-                <a href="/billing" className="text-primary hover:underline">
+                <Link href="/billing" className="text-primary hover:underline">
                   Upgrade your plan
-                </a>
+                </Link>
               </p>
             </div>
           </CardContent>
@@ -166,10 +225,7 @@ export default function ApiKeysPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div
               className="absolute inset-0 bg-black/50"
-              onClick={() => {
-                setShowCreateModal(false);
-                setNewKey(null);
-              }}
+              onClick={handleCloseModal}
             />
             <Card className="relative z-10 w-full max-w-md">
               <CardHeader>
@@ -191,28 +247,25 @@ export default function ApiKeysPage() {
                         className="flex-1"
                         onClick={() => copyToClipboard(newKey)}
                       >
-                        Copy to Clipboard
+                        {copied ? (
+                          <>
+                            <Check className="h-4 w-4 mr-2" />
+                            Copied!
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-4 w-4 mr-2" />
+                            Copy to Clipboard
+                          </>
+                        )}
                       </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setShowCreateModal(false);
-                          setNewKey(null);
-                        }}
-                      >
+                      <Button variant="outline" onClick={handleCloseModal}>
                         Done
                       </Button>
                     </div>
                   </div>
                 ) : (
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      // Mock key generation
-                      setNewKey('si_live_' + Math.random().toString(36).substring(2, 15));
-                    }}
-                    className="space-y-4"
-                  >
+                  <form onSubmit={handleCreateKey} className="space-y-4">
                     <div className="space-y-2">
                       <label htmlFor="keyName" className="text-sm font-medium">
                         Key Name
@@ -229,11 +282,16 @@ export default function ApiKeysPage() {
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => setShowCreateModal(false)}
+                        onClick={handleCloseModal}
                       >
                         Cancel
                       </Button>
-                      <Button type="submit">Create Key</Button>
+                      <Button type="submit" disabled={createKeyMutation.isPending}>
+                        {createKeyMutation.isPending && (
+                          <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                        )}
+                        Create Key
+                      </Button>
                     </div>
                   </form>
                 )}

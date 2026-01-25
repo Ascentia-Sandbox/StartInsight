@@ -1,22 +1,60 @@
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
+import { useQuery } from '@tanstack/react-query';
+import { Loader2, Bookmark, Star, Search, Calendar } from 'lucide-react';
+import { getSupabaseClient } from '@/lib/supabase/client';
+import { fetchWorkspaceStatus } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import type { User } from '@supabase/supabase-js';
 
-export default async function DashboardPage() {
-  const supabase = await createClient();
+export default function DashboardPage() {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Check authentication
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
 
-  if (!user) {
-    redirect('/auth/login');
+      if (!session) {
+        router.push('/auth/login?redirectTo=/dashboard');
+        return;
+      }
+
+      setUser(session.user);
+      setAccessToken(session.access_token);
+      setIsCheckingAuth(false);
+    };
+
+    checkAuth();
+  }, [router]);
+
+  // Fetch workspace status
+  const { data: status, isLoading: statusLoading } = useQuery({
+    queryKey: ['workspace-status', accessToken],
+    queryFn: () => fetchWorkspaceStatus(accessToken!),
+    enabled: !!accessToken,
+  });
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="animate-spin h-8 w-8 text-primary mx-auto" />
+          <p className="mt-2 text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
   }
 
-  // Get user metadata
-  const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
 
   return (
     <div className="min-h-screen bg-background">
@@ -36,23 +74,18 @@ export default async function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Saved Insights</CardTitle>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                className="h-4 w-4 text-muted-foreground"
-              >
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-              </svg>
+              <Bookmark className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">
+                {statusLoading ? (
+                  <Loader2 className="animate-spin h-5 w-5" />
+                ) : (
+                  status?.saved_count || 0
+                )}
+              </div>
               <p className="text-xs text-muted-foreground">
-                Start saving insights
+                {status?.saved_count === 0 ? 'Start saving insights' : 'In your workspace'}
               </p>
             </CardContent>
           </Card>
@@ -60,23 +93,18 @@ export default async function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Rated Insights</CardTitle>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                className="h-4 w-4 text-muted-foreground"
-              >
-                <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-              </svg>
+              <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">
+                {statusLoading ? (
+                  <Loader2 className="animate-spin h-5 w-5" />
+                ) : (
+                  status?.ratings_count || 0
+                )}
+              </div>
               <p className="text-xs text-muted-foreground">
-                Rate insights to improve recommendations
+                {status?.ratings_count === 0 ? 'Rate insights to improve recommendations' : 'Feedback provided'}
               </p>
             </CardContent>
           </Card>
@@ -84,18 +112,7 @@ export default async function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Research Analyses</CardTitle>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                className="h-4 w-4 text-muted-foreground"
-              >
-                <path d="M21 21l-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0z" />
-              </svg>
+              <Search className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">0</div>
@@ -108,21 +125,7 @@ export default async function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Plan</CardTitle>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                className="h-4 w-4 text-muted-foreground"
-              >
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">Free</div>
@@ -185,12 +188,35 @@ export default async function DashboardPage() {
           <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
           <Card>
             <CardContent className="p-6">
-              <div className="text-center text-muted-foreground py-8">
-                <p>No recent activity yet.</p>
-                <p className="text-sm mt-2">
-                  Start by browsing and saving insights, or run a research analysis.
-                </p>
-              </div>
+              {status && (status.saved_count > 0 || status.ratings_count > 0) ? (
+                <div className="space-y-4">
+                  {status.saved_count > 0 && (
+                    <div className="flex items-center gap-3">
+                      <Bookmark className="h-5 w-5 text-primary" />
+                      <p>You have <strong>{status.saved_count}</strong> saved insights in your workspace.</p>
+                    </div>
+                  )}
+                  {status.ratings_count > 0 && (
+                    <div className="flex items-center gap-3">
+                      <Star className="h-5 w-5 text-yellow-500" />
+                      <p>You&apos;ve rated <strong>{status.ratings_count}</strong> insights.</p>
+                    </div>
+                  )}
+                  {status.building_count > 0 && (
+                    <div className="flex items-center gap-3">
+                      <Search className="h-5 w-5 text-green-500" />
+                      <p>You&apos;re building <strong>{status.building_count}</strong> ideas.</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center text-muted-foreground py-8">
+                  <p>No recent activity yet.</p>
+                  <p className="text-sm mt-2">
+                    Start by browsing and saving insights, or run a research analysis.
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
