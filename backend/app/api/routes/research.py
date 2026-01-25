@@ -20,6 +20,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentUser
+from app.core.rate_limits import limiter
 from app.db.session import get_db
 from app.models.custom_analysis import CustomAnalysis
 from app.agents.research_agent import (
@@ -33,7 +34,6 @@ from app.schemas.research import (
     ResearchQuotaResponse,
     ResearchRequestCreate,
 )
-from app.services.rate_limiter import check_rate_limit
 
 logger = logging.getLogger(__name__)
 
@@ -141,6 +141,7 @@ async def run_analysis_background(
 
 
 @router.post("/analyze", response_model=ResearchAnalysisResponse)
+@limiter.limit("10/hour")  # Phase 2: SlowAPI rate limiting
 async def request_analysis(
     request: ResearchRequestCreate,
     background_tasks: BackgroundTasks,
@@ -160,28 +161,11 @@ async def request_analysis(
     - Enterprise: 100 analyses
 
     **Rate Limits (per hour):**
-    - Free: 1 analysis/hour
-    - Starter: 2 analyses/hour
-    - Pro: 5 analyses/hour
-    - Enterprise: Unlimited
+    - 10 requests/hour (enforced by SlowAPI)
+
+    Note: SlowAPI handles hourly rate limiting. Monthly quota is checked separately.
     """
-    # ✅ Hourly rate limiting to prevent spam
-    hourly_rate_limit = await check_rate_limit(
-        identifier=str(current_user.id),
-        tier=current_user.subscription_tier,
-        limit_type="analyses_per_hour",
-    )
-
-    if not hourly_rate_limit["allowed"]:
-        reset_at = hourly_rate_limit["reset_at"]
-        minutes_until_reset = max(1, int((reset_at - time.time()) / 60))
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"Hourly rate limit exceeded. Try again in {minutes_until_reset} minutes. "
-                   f"Upgrade your plan for higher limits.",
-        )
-
-    # Check monthly quota
+    # Check monthly quota (SlowAPI handles hourly rate limits)
     monthly_usage = await get_monthly_usage(current_user.id, db)
     quota_limit = get_quota_limit(current_user.subscription_tier)
 

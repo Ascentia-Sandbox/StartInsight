@@ -3,10 +3,13 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
 
 from app.core.config import settings
+from app.core.rate_limits import limiter
 from app.tasks import schedule_scraping_tasks, stop_scheduler
 
 # Configure logging
@@ -62,6 +65,27 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register SlowAPI limiter (Phase 2: Code Simplification)
+app.state.limiter = limiter
+
+
+# SlowAPI exception handler for rate limit exceeded
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    """
+    Handle rate limit exceeded errors from SlowAPI.
+
+    Returns 429 Too Many Requests with retry-after header.
+    """
+    return JSONResponse(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        content={
+            "error": "Rate limit exceeded",
+            "detail": str(exc.detail),
+        },
+        headers=exc.headers or {},
+    )
 
 
 @app.get("/health", tags=["Health"])

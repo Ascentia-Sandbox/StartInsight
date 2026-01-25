@@ -25,6 +25,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from app.api.deps import AdminUser
 from app.core.config import settings
+from app.core.rate_limits import limiter
 from app.db.query_helpers import count_by_field
 from app.db.session import get_db, AsyncSessionLocal
 from app.models.agent_execution_log import AgentExecutionLog
@@ -61,6 +62,7 @@ _MAX_SSE_CONNECTIONS = 10  # Limit concurrent admin SSE streams
 
 
 @router.get("/dashboard", response_model=DashboardMetricsResponse)
+@limiter.limit("20/minute")  # Phase 2: SlowAPI rate limiting
 async def get_dashboard_metrics(
     admin: AdminUser,
     db: AsyncSession = Depends(get_db),
@@ -317,6 +319,7 @@ async def get_agent_logs(
 
 
 @router.post("/agents/{agent_type}/pause", response_model=AgentControlResponse)
+@limiter.limit("20/minute")  # Phase 2: SlowAPI rate limiting
 async def pause_agent(
     agent_type: AgentType,
     admin: AdminUser,
@@ -348,6 +351,7 @@ async def pause_agent(
 
 
 @router.post("/agents/{agent_type}/resume", response_model=AgentControlResponse)
+@limiter.limit("20/minute")  # Phase 2: SlowAPI rate limiting
 async def resume_agent(
     agent_type: AgentType,
     admin: AdminUser,
@@ -377,6 +381,7 @@ async def resume_agent(
 
 
 @router.post("/agents/{agent_type}/trigger", response_model=AgentControlResponse)
+@limiter.limit("20/minute")  # Phase 2: SlowAPI rate limiting
 async def trigger_agent(
     agent_type: AgentType,
     admin: AdminUser,
