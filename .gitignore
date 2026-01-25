@@ -109,3 +109,13 @@ Thumbs.db
 tmp/
 temp/
 *.tmp
+
+# Development folders
+ralph-claude-code/
+
+# Memory bank backups
+memory-bank/archived/
+memory-bank/*.bak
+
+# Playwright MCP artifacts
+.playwright-mcp/
