@@ -63,7 +63,7 @@ Caching/Queue: Redis - Task queue for scheduled scrapers and caching hot insight
     - Type-safe agent framework with built-in Pydantic validation.
     - Simpler API, better for structured output extraction.
     - Native async support.
-- **✅ Decision (LOCKED)**: Use PydanticAI for MVP (Phases 1-3).
+- **[x] Decision (LOCKED)**: Use PydanticAI for MVP (Phases 1-3).
   - **Reason**: Simpler API, native Pydantic validation, adequate for single-agent analysis tasks.
   - **Migration Path**: If Phase 4+ requires complex multi-agent workflows or advanced tooling, evaluate LangChain migration at that time.
   - **Current Status**: PydanticAI installed (`pydantic-ai>=0.0.13` in `pyproject.toml`).
@@ -547,7 +547,7 @@ NEXT_PUBLIC_POSTHOG_KEY=phc_...  # PostHog analytics
 
 ### PDF Generation: ReportLab vs WeasyPrint
 
-**Decision: ReportLab ✅ (primary), WeasyPrint (fallback)**
+**Decision: ReportLab [x] (primary), WeasyPrint (fallback)**
 
 **Comparison:**
 

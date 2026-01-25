@@ -39,10 +39,10 @@
 **Phase 4.5 Supabase Migration (DOCUMENTATION COMPLETE) & Frontend Implementation**
 
 Status:
-- ✅ Architecture designed for dual PostgreSQL/Supabase support
-- ✅ All 9 Alembic migrations ready for Supabase
-- ✅ Backend 100% Supabase-ready (supabase_user_id fields added)
-- ⏳ Pending: Supabase project creation, migration execution
+- [x] Architecture designed for dual PostgreSQL/Supabase support
+- [x] All 9 Alembic migrations ready for Supabase
+- [x] Backend 100% Supabase-ready (supabase_user_id fields added)
+- [ ] Pending: Supabase project creation, migration execution
 
 ## Objective
 Complete Supabase Cloud migration and implement frontend for all phases (4-7).
@@ -50,7 +50,7 @@ Complete Supabase Cloud migration and implement frontend for all phases (4-7).
 ---
 
 ## What We've Just Completed
-**Phase 3: The "Presenter" (Frontend & Visualization)** - ✅ 100% COMPLETE
+**Phase 3: The "Presenter" (Frontend & Visualization)** - [x] 100% COMPLETE
 
 All 9 sub-phases of Phase 3 are complete! The modern Next.js frontend now displays AI-analyzed insights with filtering, search, trend visualization, dark mode, E2E testing, and deployment configuration.
 
@@ -67,116 +67,116 @@ All 9 sub-phases of Phase 3 are complete! The modern Next.js frontend now displa
 <!-- Updated 2026-01-25: Backend 100% complete with Supabase Auth -->
 
 **Backend Complete (100%):**
-- ✅ User model (SQLAlchemy with Supabase Auth integration)
-- ✅ SavedInsight model (workspace functionality)
-- ✅ UserRating model (1-5 star ratings)
-- ✅ AdminUser model (role-based access)
-- ✅ Pydantic schemas (15+ request/response types)
-- ✅ API routes (15 endpoints for user workspace)
-- ✅ Authentication dependencies (deps.py with Supabase JWT verification)
-- ✅ Alembic migration (a001_phase_4_1_user_auth.py with RLS policies)
-- ✅ Supabase client configuration (config.py + supabase.py)
-- ✅ Model and route registration (main.py, __init__.py)
+- [x] User model (SQLAlchemy with Supabase Auth integration)
+- [x] SavedInsight model (workspace functionality)
+- [x] UserRating model (1-5 star ratings)
+- [x] AdminUser model (role-based access)
+- [x] Pydantic schemas (15+ request/response types)
+- [x] API routes (15 endpoints for user workspace)
+- [x] Authentication dependencies (deps.py with Supabase JWT verification)
+- [x] Alembic migration (a001_phase_4_1_user_auth.py with RLS policies)
+- [x] Supabase client configuration (config.py + supabase.py)
+- [x] Model and route registration (main.py, __init__.py)
 
 **Pending:**
-- ❌ Migration execution (alembic upgrade head) - requires Supabase setup
-- ❌ Frontend implementation (0%)
+- [ ] Migration execution (alembic upgrade head) - requires Supabase setup
+- [ ] Frontend implementation (0%)
 
 ### Phase 4.2 Progress (80% Complete)
 
 <!-- Updated 2026-01-25: Admin portal backend complete -->
 
 **Backend Complete (100%):**
-- ✅ AgentExecutionLog model (execution tracking)
-- ✅ SystemMetric model (LLM costs, latencies)
-- ✅ Pydantic schemas (25+ admin schemas)
-- ✅ Admin API routes (15+ endpoints with SSE)
-- ✅ SSE real-time updates (5-second refresh)
-- ✅ Agent control (pause/resume/trigger)
-- ✅ Insight moderation (approve/reject)
-- ✅ Metrics query endpoints
-- ✅ Alembic migration (a002_phase_4_2_admin_portal.py with RLS)
-- ✅ Route registration (main.py, __init__.py)
+- [x] AgentExecutionLog model (execution tracking)
+- [x] SystemMetric model (LLM costs, latencies)
+- [x] Pydantic schemas (25+ admin schemas)
+- [x] Admin API routes (15+ endpoints with SSE)
+- [x] SSE real-time updates (5-second refresh)
+- [x] Agent control (pause/resume/trigger)
+- [x] Insight moderation (approve/reject)
+- [x] Metrics query endpoints
+- [x] Alembic migration (a002_phase_4_2_admin_portal.py with RLS)
+- [x] Route registration (main.py, __init__.py)
 
 **Pending:**
-- ❌ Migration execution (alembic upgrade head)
-- ❌ Frontend admin dashboard (0%)
+- [ ] Migration execution (alembic upgrade head)
+- [ ] Frontend admin dashboard (0%)
 
 ### Phase 5 Progress (100% Backend Complete)
 
 <!-- Updated 2026-01-25: All Phase 5 backend complete -->
 
 **Phase 5.1 AI Research Agent (100%):**
-- ✅ CustomAnalysis model (40-step research results)
-- ✅ Research agent with PydanticAI and Claude 3.5 Sonnet
-- ✅ 4 API endpoints (analyze, get, list, quota)
-- ✅ Background task execution
-- ✅ Quota system (Free 1, Starter 3, Pro 10, Enterprise 100/month)
+- [x] CustomAnalysis model (40-step research results)
+- [x] Research agent with PydanticAI and Claude 3.5 Sonnet
+- [x] 4 API endpoints (analyze, get, list, quota)
+- [x] Background task execution
+- [x] Quota system (Free 1, Starter 3, Pro 10, Enterprise 100/month)
 
 **Phase 5.2 Build Tools (100%):**
-- ✅ Brand generator service (logo suggestions, taglines, color palettes)
-- ✅ Landing page generator (hero, features, pricing, CTA sections)
-- ✅ API endpoints for build tools
+- [x] Brand generator service (logo suggestions, taglines, color palettes)
+- [x] Landing page generator (hero, features, pricing, CTA sections)
+- [x] API endpoints for build tools
 
 **Phase 5.3 Export Features (100%):**
-- ✅ PDF export with ReportLab
-- ✅ CSV export for spreadsheet tools
-- ✅ JSON export for API consumers
+- [x] PDF export with ReportLab
+- [x] CSV export for spreadsheet tools
+- [x] JSON export for API consumers
 
 **Phase 5.4 Real-time Feed (100%):**
-- ✅ SSE streaming for live updates
-- ✅ Polling fallback for browsers without SSE support
-- ✅ Feed service with filtering
+- [x] SSE streaming for live updates
+- [x] Polling fallback for browsers without SSE support
+- [x] Feed service with filtering
 
 ### Phase 6 Progress (100% Backend Complete)
 
 <!-- Updated 2026-01-25: All Phase 6 backend complete -->
 
 **Phase 6.1 Payment Integration (100%):**
-- ✅ Stripe subscription management
-- ✅ 4 pricing tiers (free, starter $19/mo, pro $49/mo, enterprise $199/mo)
-- ✅ Checkout session creation
-- ✅ Customer portal session
-- ✅ Webhook handling
+- [x] Stripe subscription management
+- [x] 4 pricing tiers (free, starter $19/mo, pro $49/mo, enterprise $199/mo)
+- [x] Checkout session creation
+- [x] Customer portal session
+- [x] Webhook handling
 
 **Phase 6.2 Email Notifications (100%):**
-- ✅ Resend integration
-- ✅ 6 email templates (welcome, daily_digest, analysis_ready, payment_confirmation, team_invitation, password_reset)
-- ✅ HTML template rendering
+- [x] Resend integration
+- [x] 6 email templates (welcome, daily_digest, analysis_ready, payment_confirmation, team_invitation, password_reset)
+- [x] HTML template rendering
 
 **Phase 6.3 Rate Limiting (100%):**
-- ✅ Redis-based sliding window algorithm
-- ✅ In-memory fallback for development
-- ✅ Tier-based rate limits
+- [x] Redis-based sliding window algorithm
+- [x] In-memory fallback for development
+- [x] Tier-based rate limits
 
 **Phase 6.4 Team Collaboration (100%):**
-- ✅ Team model with owner, members
-- ✅ Role-based permissions (owner, admin, member, viewer)
-- ✅ Team invitations with tokens
-- ✅ Shared insights functionality
+- [x] Team model with owner, members
+- [x] Role-based permissions (owner, admin, member, viewer)
+- [x] Team invitations with tokens
+- [x] Shared insights functionality
 
 ### Phase 7 Progress (100% Backend Complete)
 
 <!-- Updated 2026-01-25: All Phase 7 backend complete -->
 
 **Phase 7.1 Twitter/X Integration (100%):**
-- ✅ TwitterScraper with Tweepy v2 API
-- ✅ Tweet search with keywords and hashtags
-- ✅ Sentiment analysis integration
-- ✅ User timeline fetching
+- [x] TwitterScraper with Tweepy v2 API
+- [x] Tweet search with keywords and hashtags
+- [x] Sentiment analysis integration
+- [x] User timeline fetching
 
 **Phase 7.2 Public API & API Keys (100%):**
-- ✅ API key generation with si_ prefix
-- ✅ Scope-based permissions (insights:read, insights:write, research:read, research:create, etc.)
-- ✅ Wildcard scope support (insights:*)
-- ✅ Rate limiting per API key
-- ✅ Usage tracking and analytics
+- [x] API key generation with si_ prefix
+- [x] Scope-based permissions (insights:read, insights:write, research:read, research:create, etc.)
+- [x] Wildcard scope support (insights:*)
+- [x] Rate limiting per API key
+- [x] Usage tracking and analytics
 
 **Phase 7.3 Multi-tenancy (100%):**
-- ✅ Tenant model with branding (logo, colors, app name)
-- ✅ Subdomain routing support
-- ✅ Custom domain configuration
-- ✅ CSS variables for theming
+- [x] Tenant model with branding (logo, colors, app name)
+- [x] Subdomain routing support
+- [x] Custom domain configuration
+- [x] CSS variables for theming
 
 ## Phase 4.5: Supabase Cloud Migration (Documentation Complete)
 
@@ -184,11 +184,11 @@ All 9 sub-phases of Phase 3 are complete! The modern Next.js frontend now displa
 **Status:** Documentation 100% complete. Backend code ready. Pending execution.
 
 **What's Ready:**
-- ✅ 9 Alembic migrations compatible with Supabase
-- ✅ Dual-mode database support (SQLAlchemy + Supabase client)
-- ✅ All models include Supabase Auth integration (supabase_user_id)
-- ✅ RLS policies designed (architecture.md Section 10)
-- ✅ Environment variables configured (.env.example)
+- [x] 9 Alembic migrations compatible with Supabase
+- [x] Dual-mode database support (SQLAlchemy + Supabase client)
+- [x] All models include Supabase Auth integration (supabase_user_id)
+- [x] RLS policies designed (architecture.md Section 10)
+- [x] Environment variables configured (.env.example)
 
 **Pending Tasks:**
 1. Create Supabase project (Singapore ap-southeast-1)
@@ -261,63 +261,63 @@ See `implementation-plan-phase4-detailed.md` for complete step-by-step instructi
 
 ### What Works
 **Phase 1: Data Collection Loop (Complete)**
-- ✅ **Phase 1.1-1.8 Complete**: Full backend infrastructure operational
-- ✅ Git repository, Python environment with `uv` and 173 packages
-- ✅ PostgreSQL 16 (port 5433) and Redis 7 (port 6379) running in Docker
-- ✅ SQLAlchemy 2.0 async configured, database connection verified
-- ✅ RawSignal model, Alembic migrations, Firecrawl client with retry logic
-- ✅ 3 scrapers implemented (Reddit, Product Hunt, Google Trends)
-- ✅ Arq worker with 4 task functions, APScheduler integration (6-hour intervals)
-- ✅ FastAPI application with 5 REST endpoints (/api/signals, /health)
-- ✅ CORS middleware, lifespan management, Pydantic V2 schemas
-- ✅ Environment configuration (15 validated variables), Redis URL parsing
-- ✅ Pytest infrastructure with conftest fixtures, unit and integration tests
-- ✅ Comprehensive backend README.md with setup guide, API docs, troubleshooting
+- [x] **Phase 1.1-1.8 Complete**: Full backend infrastructure operational
+- [x] Git repository, Python environment with `uv` and 173 packages
+- [x] PostgreSQL 16 (port 5433) and Redis 7 (port 6379) running in Docker
+- [x] SQLAlchemy 2.0 async configured, database connection verified
+- [x] RawSignal model, Alembic migrations, Firecrawl client with retry logic
+- [x] 3 scrapers implemented (Reddit, Product Hunt, Google Trends)
+- [x] Arq worker with 4 task functions, APScheduler integration (6-hour intervals)
+- [x] FastAPI application with 5 REST endpoints (/api/signals, /health)
+- [x] CORS middleware, lifespan management, Pydantic V2 schemas
+- [x] Environment configuration (15 validated variables), Redis URL parsing
+- [x] Pytest infrastructure with conftest fixtures, unit and integration tests
+- [x] Comprehensive backend README.md with setup guide, API docs, troubleshooting
 
 **Phase 2: Analysis Loop (Complete)**
-- ✅ **Phase 2.1 Complete**: Insight database model with foreign key to RawSignal, Alembic migration, 3 indexes (relevance_score, created_at, raw_signal_id), bidirectional relationships
-- ✅ **Phase 2.2 Complete**: PydanticAI analyzer agent with Claude 3.5 Sonnet, InsightSchema and Competitor Pydantic models, structured output validation, error handling with tenacity retry logic (3 attempts, exponential backoff)
-- ✅ **Phase 2.3 Complete**: Analysis task queue (analyze_signals_task) with batch processing (10 signals), APScheduler integration (6-hour intervals), automatic signal marking (processed=True)
-- ✅ **Phase 2.4 Complete**: Insights API endpoints (GET /api/insights, GET /api/insights/{id}, GET /api/insights/daily-top), Pydantic response schemas, pagination (limit=20), filtering (min_score, source), efficient queries with selectinload()
-- ✅ **Phase 2.5 Complete**: Integration tests verifying full pipeline (26/26 tests passed), end-to-end validation, model relationships
-- ✅ **Phase 2.6 Complete**: Monitoring & Logging with MetricsTracker singleton, LLM cost tracking (Claude: $0.003/1K input, $0.015/1K output), structured logging with performance data, 8 comprehensive tests
+- [x] **Phase 2.1 Complete**: Insight database model with foreign key to RawSignal, Alembic migration, 3 indexes (relevance_score, created_at, raw_signal_id), bidirectional relationships
+- [x] **Phase 2.2 Complete**: PydanticAI analyzer agent with Claude 3.5 Sonnet, InsightSchema and Competitor Pydantic models, structured output validation, error handling with tenacity retry logic (3 attempts, exponential backoff)
+- [x] **Phase 2.3 Complete**: Analysis task queue (analyze_signals_task) with batch processing (10 signals), APScheduler integration (6-hour intervals), automatic signal marking (processed=True)
+- [x] **Phase 2.4 Complete**: Insights API endpoints (GET /api/insights, GET /api/insights/{id}, GET /api/insights/daily-top), Pydantic response schemas, pagination (limit=20), filtering (min_score, source), efficient queries with selectinload()
+- [x] **Phase 2.5 Complete**: Integration tests verifying full pipeline (26/26 tests passed), end-to-end validation, model relationships
+- [x] **Phase 2.6 Complete**: Monitoring & Logging with MetricsTracker singleton, LLM cost tracking (Claude: $0.003/1K input, $0.015/1K output), structured logging with performance data, 8 comprehensive tests
 
 **Phase 3: Frontend & Visualization (Complete)**
-- ✅ **Phase 3.1-3.2 Complete**: Next.js 16.1.3 frontend with App Router, TypeScript, Tailwind CSS v4, shadcn/ui (8 components), Zod validation, axios API client, React Query (60s stale time, 2 retries), type-safe API functions
-- ✅ **Phase 3.3-3.4 Complete**: InsightCard component with star ratings and color-coded badges, homepage with daily top 5 insights, responsive grid (1/2/3 columns), InsightFilters with URL state management, All Insights page with filters sidebar, search functionality
-- ✅ **Phase 3.5 Complete**: Insight Detail page with competitor analysis, Header navigation, TrendChart component with Recharts (bar charts, trend direction badges, summary statistics), integrated Google Trends visualization
-- ✅ **Phase 3.6 Complete**: Dark mode toggle with ThemeProvider (localStorage persistence, system preference detection, FOUC prevention), ThemeToggle component (SSR-safe with dynamic import), error boundaries at 3 levels (root, global, route-specific)
-- ✅ **Phase 3.7 Complete**: Deployment configuration (Dockerfile, railway.toml, render.yaml, vercel.json, .dockerignore), CI/CD pipeline (GitHub Actions with backend/frontend tests, Docker build), comprehensive deployment guide (DEPLOYMENT.md - 442 lines), production-ready infrastructure
-- ✅ **Phase 3.8 Complete**: E2E testing with Playwright (47 test scenarios across 4 test suites), 5 browser platforms (Chrome, Firefox, Safari, Mobile Chrome, Mobile Safari), cross-browser testing, accessibility tests, responsive design tests
-- ✅ **Phase 3.9 Complete**: Comprehensive frontend README.md (329 lines), user guide, setup instructions, troubleshooting section, API integration examples, deployment guide, contributing guidelines
+- [x] **Phase 3.1-3.2 Complete**: Next.js 16.1.3 frontend with App Router, TypeScript, Tailwind CSS v4, shadcn/ui (8 components), Zod validation, axios API client, React Query (60s stale time, 2 retries), type-safe API functions
+- [x] **Phase 3.3-3.4 Complete**: InsightCard component with star ratings and color-coded badges, homepage with daily top 5 insights, responsive grid (1/2/3 columns), InsightFilters with URL state management, All Insights page with filters sidebar, search functionality
+- [x] **Phase 3.5 Complete**: Insight Detail page with competitor analysis, Header navigation, TrendChart component with Recharts (bar charts, trend direction badges, summary statistics), integrated Google Trends visualization
+- [x] **Phase 3.6 Complete**: Dark mode toggle with ThemeProvider (localStorage persistence, system preference detection, FOUC prevention), ThemeToggle component (SSR-safe with dynamic import), error boundaries at 3 levels (root, global, route-specific)
+- [x] **Phase 3.7 Complete**: Deployment configuration (Dockerfile, railway.toml, render.yaml, vercel.json, .dockerignore), CI/CD pipeline (GitHub Actions with backend/frontend tests, Docker build), comprehensive deployment guide (DEPLOYMENT.md - 442 lines), production-ready infrastructure
+- [x] **Phase 3.8 Complete**: E2E testing with Playwright (47 test scenarios across 4 test suites), 5 browser platforms (Chrome, Firefox, Safari, Mobile Chrome, Mobile Safari), cross-browser testing, accessibility tests, responsive design tests
+- [x] **Phase 3.9 Complete**: Comprehensive frontend README.md (329 lines), user guide, setup instructions, troubleshooting section, API integration examples, deployment guide, contributing guidelines
 
 **Total Phase 3:** 50+ files created/modified, 12,000+ lines of code, 47 E2E tests, production-ready deployment configuration
 
 **Phase 4-7: Backend Implementation (Complete)**
-- ✅ **Phase 4.1-4.4 Complete**: User models, authentication, admin portal, enhanced scoring, interaction tracking
-- ✅ **Phase 5 Complete**: AI research agent (40-step analysis), build tools (brand/landing page generators), export features (PDF/CSV/JSON), real-time feed (SSE)
-- ✅ **Phase 6 Complete**: Payment integration (Stripe 4 tiers), email notifications (Resend 6 templates), rate limiting (Redis sliding window), team collaboration (roles, invitations, sharing)
-- ✅ **Phase 7 Complete**: Twitter/X scraper (Tweepy v2), API key management (scopes, rate limits, usage), multi-tenancy (subdomain, custom domain, branding)
-- ✅ **Total Backend Tests**: 137 passing, 30 skipped, 19 warnings
-- ✅ **Total Tables**: 21 database tables (verified 2026-01-25)
-- ✅ **Total Endpoints**: 97 API endpoints (verified 2026-01-25)
-- ✅ **Total Services**: 6 business logic services
+- [x] **Phase 4.1-4.4 Complete**: User models, authentication, admin portal, enhanced scoring, interaction tracking
+- [x] **Phase 5 Complete**: AI research agent (40-step analysis), build tools (brand/landing page generators), export features (PDF/CSV/JSON), real-time feed (SSE)
+- [x] **Phase 6 Complete**: Payment integration (Stripe 4 tiers), email notifications (Resend 6 templates), rate limiting (Redis sliding window), team collaboration (roles, invitations, sharing)
+- [x] **Phase 7 Complete**: Twitter/X scraper (Tweepy v2), API key management (scopes, rate limits, usage), multi-tenancy (subdomain, custom domain, branding)
+- [x] **Total Backend Tests**: 137 passing, 30 skipped, 19 warnings
+- [x] **Total Tables**: 21 database tables (verified 2026-01-25)
+- [x] **Total Endpoints**: 97 API endpoints (verified 2026-01-25)
+- [x] **Total Services**: 6 business logic services
 
 **Documentation**
-- ✅ `project-brief.md`: Defines the three core loops (Collection → Analysis → Presentation)
-- ✅ `tech-stack.md`: Lists all technologies, libraries, and dependencies
-- ✅ `implementation-plan.md`: Provides step-by-step roadmap for all 3 phases
-- ✅ `backend/README.md`: Complete backend documentation with setup, API, troubleshooting
-- ✅ `architecture.md`: System architecture, data flows, UI/UX design, database schema, API endpoints
+- [x] `project-brief.md`: Defines the three core loops (Collection → Analysis → Presentation)
+- [x] `tech-stack.md`: Lists all technologies, libraries, and dependencies
+- [x] `implementation-plan.md`: Provides step-by-step roadmap for all 3 phases
+- [x] `backend/README.md`: Complete backend documentation with setup, API, troubleshooting
+- [x] `architecture.md`: System architecture, data flows, UI/UX design, database schema, API endpoints
 
-### Phase 2 Roadmap (6 Steps) - ✅ COMPLETE
+### Phase 2 Roadmap (6 Steps) - [x] COMPLETE
 
-**2.1 Database Schema Extension** - ✅ Complete
+**2.1 Database Schema Extension** - [x] Complete
 - Created Insight model with foreign key to RawSignal
 - Added indexes for relevance_score, created_at, raw_signal_id
 - Alembic migration and testing (6/6 tests passed)
 
-**2.2 AI Analyzer Agent Implementation** - ✅ Complete
+**2.2 AI Analyzer Agent Implementation** - [x] Complete
 - Created `backend/app/agents/analyzer.py` with PydanticAI agent
 - Defined InsightSchema and Competitor Pydantic models for structured output
 - Implemented `analyze_signal(raw_signal: RawSignal) -> Insight`
@@ -325,14 +325,14 @@ See `implementation-plan-phase4-detailed.md` for complete step-by-step instructi
 - Added error handling with tenacity retry logic (3 attempts, exponential backoff)
 - Included fallback to GPT-4o on rate limits (6/6 tests passed)
 
-**2.3 Analysis Task Queue** - ✅ Complete
+**2.3 Analysis Task Queue** - [x] Complete
 - Added `analyze_signals_task()` to `backend/app/worker.py`
 - Batch processing: process 10 unprocessed signals at a time
 - Mark signals as `processed=True` after analysis
 - Updated `backend/app/tasks/scheduler.py` to trigger analysis
 - Runs every 6 hours (coupled with scraping) (5/5 tests passed)
 
-**2.4 Insights API Endpoints** - ✅ Complete
+**2.4 Insights API Endpoints** - [x] Complete
 - Created `backend/app/api/routes/insights.py` with 3 endpoints:
   - `GET /api/insights` - List insights (sorted by relevance_score DESC)
   - `GET /api/insights/{id}` - Get single insight with related raw signal
@@ -340,68 +340,68 @@ See `implementation-plan-phase4-detailed.md` for complete step-by-step instructi
 - Created Pydantic schemas in `backend/app/schemas/insight.py`
 - Query params: `?min_score=0.7&limit=20&offset=0&source=reddit` (5/5 tests passed)
 
-**2.5 Testing & Validation** - ✅ Complete
+**2.5 Testing & Validation** - [x] Complete
 - Unit tests for AI agent (mocked LLM responses)
 - Integration tests for full pipeline (scrape → analyze → retrieve)
 - Verified all phase tests passed (6/6 tests passed)
 
-**2.6 Monitoring & Logging** - ✅ Complete
+**2.6 Monitoring & Logging** - [x] Complete
 - Created MetricsTracker singleton for centralized monitoring
 - Implemented LLM cost tracking (Claude: $0.003/1K input, $0.015/1K output)
 - Added structured logging with performance data
 - Integrated metrics tracking into analyzer.py (8/8 tests passed)
 
-### Phase 3 Roadmap (9 Sub-phases) - ✅ COMPLETE
+### Phase 3 Roadmap (9 Sub-phases) - [x] COMPLETE
 
-**3.1 Next.js Project Setup** - ✅ Complete
+**3.1 Next.js Project Setup** - [x] Complete
 - Initialized Next.js 16.1.3 with App Router, TypeScript, Tailwind CSS v4
 - Installed shadcn/ui (8 components), Zod, axios, React Query
 - Created project structure (app/, components/, lib/)
 - Configured API client with type-safe functions
 
-**3.2 API Client & Data Fetching** - ✅ Complete
+**3.2 API Client & Data Fetching** - [x] Complete
 - Created TypeScript types with Zod schemas (Competitor, RawSignalSummary, Insight)
 - Implemented API client with axios (fetchInsights, fetchInsightById, fetchDailyTop)
 - Set up React Query with 60s stale time, 2 retries, DevTools
 - Added error handling and loading states
 
-**3.3 Insights Dashboard UI** - ✅ Complete
+**3.3 Insights Dashboard UI** - [x] Complete
 - Built InsightCard component with star ratings, color-coded market size badges
 - Implemented homepage with daily top 5 insights
 - Added responsive grid layout (1/2/3 columns)
 - Created loading skeletons and empty states
 
-**3.4 Filtering & Search** - ✅ Complete
+**3.4 Filtering & Search** - [x] Complete
 - Built InsightFilters component (source, min_score filters)
 - Implemented URL-based filter state for shareable links
 - Added keyword search functionality with debouncing
 - Created clear filters button and filter state management
 
-**3.5 Data Visualization** - ✅ Complete
+**3.5 Data Visualization** - [x] Complete
 - Created TrendChart component with Recharts
 - Implemented bar chart visualization for Google Trends data
 - Added trend direction badges (rising/falling/stable)
 - Integrated charts into insight detail pages
 
-**3.6 Styling & UX** - ✅ Complete
+**3.6 Styling & UX** - [x] Complete
 - Implemented dark mode toggle with ThemeProvider (localStorage persistence)
 - Created error boundaries at 3 levels (root, global, route-specific)
 - Added responsive design with mobile-first approach
 - Implemented SSR-safe theme switching
 
-**3.7 Deployment Configuration** - ✅ Complete
+**3.7 Deployment Configuration** - [x] Complete
 - Created Dockerfile for production backend deployment
 - Configured Railway, Render, and Vercel deployment
 - Set up CI/CD pipeline with GitHub Actions
 - Created comprehensive deployment guide (DEPLOYMENT.md - 442 lines)
 
-**3.8 Testing & QA** - ✅ Complete
+**3.8 Testing & QA** - [x] Complete
 - Installed Playwright and configured 5 browser platforms
 - Created 47 E2E test scenarios across 4 test suites
 - Implemented accessibility and responsive design tests
 - Added cross-browser testing (Chrome, Firefox, Safari, Mobile)
 
-**3.9 Documentation** - ✅ Complete
+**3.9 Documentation** - [x] Complete
 - Completely rewrote frontend README.md (37→329 lines)
 - Added 11 major sections with setup, deployment, troubleshooting
 - Created user guide with code examples
@@ -431,9 +431,9 @@ See `implementation-plan-phase4-detailed.md` for complete step-by-step instructi
 
 Before starting Phase 3.1, verify:
 
-**Environment** (✓ = Verified):
-- [x] ✓ Node.js 18+ installed - **v20.19.6** (`node --version`)
-- [x] ✓ npm installed - **v10.8.2** (`npm --version`)
+**Environment** ([x] = Verified):
+- [x] [x] Node.js 18+ installed - **v20.19.6** (`node --version`)
+- [x] [x] npm installed - **v10.8.2** (`npm --version`)
 - [ ] Backend running on `http://localhost:8000` - **ACTION REQUIRED**
 - [ ] Database contains insights - **ACTION REQUIRED** (run analysis task if needed)
 
@@ -501,10 +501,10 @@ echo "npm version:"
 npm --version
 echo ""
 echo "Backend health:"
-curl -s http://localhost:8000/health || echo "❌ Backend not running - start with 'uvicorn app.main:app --reload'"
+curl -s http://localhost:8000/health || echo "[ ] Backend not running - start with 'uvicorn app.main:app --reload'"
 echo ""
 echo "Insights available:"
-curl -s "http://localhost:8000/api/insights?limit=1" | jq -r '.total // "❌ No insights"' || echo "❌ Backend not accessible"
+curl -s "http://localhost:8000/api/insights?limit=1" | jq -r '.total // "[ ] No insights"' || echo "[ ] Backend not accessible"
 echo ""
 echo "=== Check complete ==="
 ```
@@ -552,7 +552,7 @@ When resuming work:
 
 ## Progress Tracking
 
-### Phase 1 Progress: ✅ 100% Complete (8/8 steps)
+### Phase 1 Progress: [x] 100% Complete (8/8 steps)
 - [x] 1.1 Project Initialization
 - [x] 1.2 Database Setup
 - [x] 1.3 Firecrawl Integration
@@ -562,7 +562,7 @@ When resuming work:
 - [x] 1.7 Testing & Validation
 - [x] 1.8 Documentation
 
-### Phase 2 Progress: ✅ 100% Complete (6/6 steps)
+### Phase 2 Progress: [x] 100% Complete (6/6 steps)
 - [x] 2.1 Database Model (Insight)
 - [x] 2.2 AI Analyzer Agent (PydanticAI)
 - [x] 2.3 Analysis Task Queue
@@ -570,7 +570,7 @@ When resuming work:
 - [x] 2.5 Testing & Validation
 - [x] 2.6 Monitoring & Logging
 
-### Phase 3 Progress: ✅ 100% Complete (9/9 sub-phases)
+### Phase 3 Progress: [x] 100% Complete (9/9 sub-phases)
 - [x] 3.1 Next.js Project Setup (App Router, TypeScript, Tailwind v4)
 - [x] 3.2 API Client & Data Fetching (React Query, axios, Zod)
 - [x] 3.3 Insights Dashboard UI (InsightCard, responsive grid)
@@ -581,7 +581,7 @@ When resuming work:
 - [x] 3.8 Testing & QA (Playwright, 47 E2E tests, 5 browsers)
 - [x] 3.9 Documentation (README 329 lines, user guide)
 
-### Phase 4 Progress: ⚠️ Backend Complete, Frontend Pending
+### Phase 4 Progress: [ ] Backend Complete, Frontend Pending
 - [x] 4.1 User Authentication Backend (Supabase Auth, JWT, 15 endpoints)
 - [x] 4.2 Admin Portal Backend (SSE, agent monitoring, 15+ endpoints)
 - [x] 4.3 Enhanced Scoring Backend (8-dimension system)
@@ -589,21 +589,21 @@ When resuming work:
 - [ ] 4.5 Supabase Migration (pending execution)
 - [ ] 4.1-4.4 Frontend Implementation (0%)
 
-### Phase 5 Progress: ✅ Backend Complete (4/4 sub-phases)
+### Phase 5 Progress: [x] Backend Complete (4/4 sub-phases)
 - [x] 5.1 AI Research Agent (40-step analysis, 4 endpoints)
 - [x] 5.2 Build Tools (brand generator, landing page builder)
 - [x] 5.3 Export Features (PDF, CSV, JSON)
 - [x] 5.4 Real-time Feed (SSE streaming, polling fallback)
 - [ ] Frontend Implementation (0%)
 
-### Phase 6 Progress: ✅ Backend Complete (4/4 sub-phases)
+### Phase 6 Progress: [x] Backend Complete (4/4 sub-phases)
 - [x] 6.1 Payment Integration (Stripe, 4 tiers)
 - [x] 6.2 Email Notifications (Resend, 6 templates)
 - [x] 6.3 Rate Limiting (Redis, sliding window)
 - [x] 6.4 Team Collaboration (roles, invitations, sharing)
 - [ ] Frontend Implementation (0%)
 
-### Phase 7 Progress: ✅ Backend Complete (3/3 sub-phases)
+### Phase 7 Progress: [x] Backend Complete (3/3 sub-phases)
 - [x] 7.1 Twitter/X Integration (Tweepy v2, sentiment analysis)
 - [x] 7.2 Public API (API keys, scopes, usage tracking)
 - [x] 7.3 Multi-tenancy (subdomain, custom domain, branding)

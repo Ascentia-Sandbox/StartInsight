@@ -59,7 +59,7 @@ This document breaks down the StartInsight project into **3 distinct implementat
 
 ---
 
-## ⚠️ IMPORTANT: Code Examples vs Actual Implementation
+## [ ] IMPORTANT: Code Examples vs Actual Implementation
 
 **This document contains GUIDANCE and TEMPLATES only. All code examples are for reference.**
 
@@ -77,7 +77,7 @@ This document breaks down the StartInsight project into **3 distinct implementat
 ### Code Example Conventions in This Document:
 
 ```python
-# ✅ TEMPLATE GUIDANCE (create actual file at path/to/file.py)
+# [x] TEMPLATE GUIDANCE (create actual file at path/to/file.py)
 # This code is a TEMPLATE showing what to implement.
 # Copy this to the actual file location and modify as needed.
 
@@ -87,7 +87,7 @@ def example_function():
 ```
 
 ```python
-# ❌ DO NOT RUN THIS CODE DIRECTLY
+# [ ] DO NOT RUN THIS CODE DIRECTLY
 # This is for reference only. Create actual files in proper locations.
 ```
 
@@ -284,13 +284,13 @@ curl -s http://localhost:8000/api/signals | jq '.total' || exit 1
 
 # Firecrawl integration
 echo "Checking Firecrawl client..."
-python -c "from app.scrapers.firecrawl_client import FirecrawlClient; client = FirecrawlClient(); print('✅ Firecrawl initialized')" || exit 1
+python -c "from app.scrapers.firecrawl_client import FirecrawlClient; client = FirecrawlClient(); print('[x] Firecrawl initialized')" || exit 1
 
 # Task queue
 echo "Checking Arq worker..."
-python -c "from app.worker import WorkerSettings; print('✅ Worker config valid')" || exit 1
+python -c "from app.worker import WorkerSettings; print('[x] Worker config valid')" || exit 1
 
-echo "✅ Phase 1 Vibe Check PASSED"
+echo "[x] Phase 1 Vibe Check PASSED"
 ```
 
 **Usage:**
@@ -592,13 +592,13 @@ curl -s http://localhost:8000/api/insights/daily-top | jq 'length' || exit 1
 
 # LLM integration
 echo "Checking analyzer agent..."
-python -c "from app.agents.analyzer import analyze_signal; print('✅ Agent import successful')" || exit 1
+python -c "from app.agents.analyzer import analyze_signal; print('[x] Agent import successful')" || exit 1
 
 # Metrics tracking
 echo "Checking metrics..."
-python -c "from app.monitoring.metrics import MetricsTracker; tracker = MetricsTracker(); print('✅ Metrics initialized')" || exit 1
+python -c "from app.monitoring.metrics import MetricsTracker; tracker = MetricsTracker(); print('[x] Metrics initialized')" || exit 1
 
-echo "✅ Phase 2 Vibe Check PASSED"
+echo "[x] Phase 2 Vibe Check PASSED"
 ```
 
 **Usage:**
@@ -879,7 +879,7 @@ curl -s http://localhost:3000/api/proxy/insights | jq '.total' || exit 1
 echo "Checking dark mode..."
 curl -s http://localhost:3000/ | grep 'ThemeProvider' || exit 1
 
-echo "✅ Phase 3 Vibe Check PASSED"
+echo "[x] Phase 3 Vibe Check PASSED"
 ```
 
 **Usage:**
@@ -911,13 +911,13 @@ chmod +x frontend/scripts/vibe_check_phase_3.sh
 **Technology:** Clerk (Free up to 10K MAU, JWT-based)
 **Architecture:** JWT Bearer Token: `User → Clerk → JWT → Frontend → Backend → Database`
 
-**✅ Backend Complete:**
+**[x] Backend Complete:**
 - Models: User, SavedInsight, UserRating (see architecture.md:5.2)
 - API: 8 endpoints (GET /users/me, POST /insights/{id}/save, etc.)
 - Migration: 004_phase_4_1_user_auth.py (3 tables with indexes)
 - Dependencies: clerk-backend-api>=2.0.0
 
-**⚠️ Frontend Pending (33% remaining):**
+**[ ] Frontend Pending (33% remaining):**
 - [ ] Install @clerk/nextjs
 - [ ] Configure middleware (frontend/middleware.ts)
 - [ ] Add environment variables (CLERK_SECRET_KEY, CLERK_PUBLISHABLE_KEY)
@@ -1305,7 +1305,7 @@ SELECT 'Supabase', COUNT(*) FROM insights;
 2. Run validation:
    ```bash
    python backend/scripts/validate_migration.py
-   # Should print: ✓ Row counts match, ✓ Checksums match, ✓ Sample queries match
+   # Should print: [x] Row counts match, [x] Checksums match, [x] Sample queries match
    ```
 
 **Files Created:**
@@ -1589,10 +1589,10 @@ export async function getInsights() {
 3. Compare results:
    | Metric | PostgreSQL | Supabase | Diff |
    |--------|-----------|----------|------|
-   | p50 | 45ms | 42ms | -7% ✓ |
-   | p95 | 78ms | 71ms | -9% ✓ |
-   | p99 | 120ms | 95ms | -21% ✓ |
-   | RPS | 89 | 94 | +6% ✓ |
+   | p50 | 45ms | 42ms | -7% [x] |
+   | p95 | 78ms | 71ms | -9% [x] |
+   | p99 | 120ms | 95ms | -21% [x] |
+   | RPS | 89 | 94 | +6% [x] |
 
 **Acceptance:** Supabase p95 <100ms (target: <78ms current baseline)
 
@@ -2209,7 +2209,7 @@ async def validate_migration():
     indexes = await db.execute("SELECT indexname FROM pg_indexes WHERE tablename = 'insights'")
     assert 'idx_insights_opportunity' in indexes, "Index missing!"
 
-    print("✅ Migration validated successfully")
+    print("[x] Migration validated successfully")
 ```
 
 ### Monitoring Post-Deployment
@@ -2779,7 +2779,7 @@ export default function AnalysisResultsPage() {
 
 #### Testing Requirements (Phase 5.1)
 
-**⚠️ IMPORTANT:** This section contains TESTING GUIDANCE ONLY. Actual executable test code must be written in:
+**[ ] IMPORTANT:** This section contains TESTING GUIDANCE ONLY. Actual executable test code must be written in:
 - **Unit tests:** `tests/backend/unit/test_research_agent.py`
 - **Integration tests:** `tests/backend/integration/test_research_api.py`
 - **Test documentation:** `test-results/phase-5/test_phase_5_1.md`
@@ -2867,17 +2867,17 @@ curl -s http://localhost:8000/api/research/analysis/test | jq '.status' || echo 
 
 # Research agent
 echo "Checking research agent..."
-python -c "from app.agents.research_agent import research_agent; print('✅ Agent initialized')" || exit 1
+python -c "from app.agents.research_agent import research_agent; print('[x] Agent initialized')" || exit 1
 
 # Arq task registered
 echo "Checking research task..."
-python -c "from app.tasks.research_tasks import run_research_analysis; print('✅ Task registered')" || exit 1
+python -c "from app.tasks.research_tasks import run_research_analysis; print('[x] Task registered')" || exit 1
 
 # Frontend page
 echo "Checking frontend research page..."
 curl -s http://localhost:3000/research | grep 'AI Research Agent' || exit 1
 
-echo "✅ Phase 5.1 Vibe Check PASSED"
+echo "[x] Phase 5.1 Vibe Check PASSED"
 ```
 
 ---
@@ -3275,7 +3275,7 @@ curl -s http://localhost:8000/api/insights/export/pdf | head -c 100 | grep '%PDF
 echo "Checking Supabase realtime..."
 curl -s http://localhost:3000/ | grep 'RealtimeFeed' || exit 1
 
-echo "✅ Phase 5 Complete Vibe Check PASSED"
+echo "[x] Phase 5 Complete Vibe Check PASSED"
 ```
 
 ---
@@ -3620,9 +3620,9 @@ CREATE TABLE tenants (
 
 | Phase | Duration | Status | Completion % | Lines in Plan |
 |-------|----------|--------|--------------|---------------|
-| **Phase 1** | 2 weeks | ✅ Complete | 100% | ~250 lines |
-| **Phase 2** | 2 weeks | ✅ Complete | 100% | ~300 lines |
-| **Phase 3** | 3 weeks | ✅ Complete | 100% | ~400 lines |
+| **Phase 1** | 2 weeks | [x] Complete | 100% | ~250 lines |
+| **Phase 2** | 2 weeks | [x] Complete | 100% | ~300 lines |
+| **Phase 3** | 3 weeks | [x] Complete | 100% | ~400 lines |
 | **Phase 4.1** | 2 weeks | 🟡 In Progress | 67% | ~500 lines |
 | **Phase 4.2** | 3 weeks | ⚪ Pending | 0% | ~600 lines |
 | **Phase 4.3** | 3 weeks | ⚪ Pending | 0% | ~400 lines |
@@ -3761,14 +3761,14 @@ CREATE TABLE tenants (
 
 | Metric | Target | Current (Phase 3) | Phase 5 Target |
 |--------|--------|-------------------|----------------|
-| API Response Time (p95) | <500ms | <78ms ✅ | <100ms |
-| Database Query Time (p95) | <100ms | <50ms ✅ | <75ms |
-| LLM Analysis Time | <30s | ~15s ✅ | <10s |
+| API Response Time (p95) | <500ms | <78ms [x] | <100ms |
+| Database Query Time (p95) | <100ms | <50ms [x] | <75ms |
+| LLM Analysis Time | <30s | ~15s [x] | <10s |
 | Research Agent Time | <5min | N/A | <3min |
 | PDF Generation Time | <10s | N/A | <5s |
-| Frontend First Paint | <1.5s | <1.2s ✅ | <1.0s |
-| Lighthouse Score | >90 | 94 ✅ | >95 |
-| Test Suite Duration | <5min | <3min ✅ | <4min |
+| Frontend First Paint | <1.5s | <1.2s [x] | <1.0s |
+| Lighthouse Score | >90 | 94 [x] | >95 |
+| Test Suite Duration | <5min | <3min [x] | <4min |
 
 **Scalability Targets:**
 
@@ -4129,14 +4129,14 @@ chmod +x backend/scripts/vibe_check_phase_*.sh
 # Expected output
 === Phase 2 Vibe Check ===
 Checking database...
-✅ insights table exists
+[x] insights table exists
 Checking API endpoints...
-✅ /api/insights returns data
+[x] /api/insights returns data
 Checking analyzer agent...
-✅ Agent import successful
+[x] Agent import successful
 Checking metrics...
-✅ Metrics initialized
-✅ Phase 2 Vibe Check PASSED
+[x] Metrics initialized
+[x] Phase 2 Vibe Check PASSED
 ```
 
 **When to Run:**

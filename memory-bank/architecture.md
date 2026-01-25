@@ -57,7 +57,7 @@ graph TD
 |-----------|-----------|---------|----------|
 | **Frontend** | Next.js 14+ (App Router) | User-facing dashboard | `localhost:3000` |
 | **Backend** | FastAPI (Uvicorn ASGI) | REST API & business logic | `localhost:8000` |
-| **Database** | PostgreSQL 16+ | Primary data store | `localhost:5433` (⚠️ Non-standard port to avoid system PostgreSQL conflicts) |
+| **Database** | PostgreSQL 16+ | Primary data store | `localhost:5433` ([ ] Non-standard port to avoid system PostgreSQL conflicts) |
 | **Cache/Queue** | Redis 7+ | Task queue & caching | `localhost:6379` |
 | **Worker** | Arq (async task queue) | Background scraping & analysis | N/A (daemon) |
 | **LLM** | Claude 3.5 Sonnet (Anthropic) | AI analysis engine | API endpoint |
@@ -1221,10 +1221,10 @@ sequenceDiagram
 
 | Storage Option | Pros | Cons | Our Choice |
 |----------------|------|------|------------|
-| localStorage | Simple, survives refresh | Vulnerable to XSS | ❌ No |
-| sessionStorage | Auto-clears on close | Lost on refresh | ❌ No |
-| httpOnly Cookie | XSS-safe, auto-sent | Requires CSRF protection | ✅ Yes |
-| In-memory | Most secure | Lost on refresh | ❌ No |
+| localStorage | Simple, survives refresh | Vulnerable to XSS | [ ] No |
+| sessionStorage | Auto-clears on close | Lost on refresh | [ ] No |
+| httpOnly Cookie | XSS-safe, auto-sent | Requires CSRF protection | [x] Yes |
+| In-memory | Most secure | Lost on refresh | [ ] No |
 
 **Implementation:**
 
@@ -1321,9 +1321,9 @@ User Sign Out → Clerk invalidates session
 ### Real-Time Update Mechanism (SSE)
 
 **Architecture Decision:**
-- ✅ Server-Sent Events (SSE) - Chosen
-- ❌ WebSocket - Rejected (overkill for one-way streaming)
-- ❌ Polling - Rejected (inefficient, 30-60s delay)
+- [x] Server-Sent Events (SSE) - Chosen
+- [ ] WebSocket - Rejected (overkill for one-way streaming)
+- [ ] Polling - Rejected (inefficient, 30-60s delay)
 
 **SSE Implementation:**
 
@@ -1780,8 +1780,8 @@ graph LR
 
 | Approach | LLM Calls | Cost per Insight | Latency | Complexity | Our Choice |
 |----------|-----------|------------------|---------|------------|------------|
-| **Single-Prompt Serial** | 1 | $0.045 | 3-5s | Low | ✅ Yes |
-| **Multi-Prompt Parallel** | 4 | $0.180 | 2-3s | High | ❌ No |
+| **Single-Prompt Serial** | 1 | $0.045 | 3-5s | Low | [x] Yes |
+| **Multi-Prompt Parallel** | 4 | $0.180 | 2-3s | High | [ ] No |
 | **Hybrid** (2 calls) | 2 | $0.090 | 2-4s | Medium | Future |
 
 **Scoring Dimensions:**
@@ -2587,7 +2587,7 @@ async def analyze_idea(
 | **Auto-Reconnect** | Built-in browser support | Manual implementation |
 | **Browser Support** | All modern browsers | All modern browsers |
 | **Use Case** | Dashboard updates, logs | Real-time chat, games |
-| **Our Choice** | ✅ Yes (Admin Portal) | ❌ No (not needed) |
+| **Our Choice** | [x] Yes (Admin Portal) | [ ] No (not needed) |
 
 **When to Use Each:**
 
@@ -2845,9 +2845,9 @@ def after_cursor_execute(conn, cursor, statement, parameters, context, executema
 - **Edge Functions**: Deno runtime for serverless (Phase 5.3)
 
 **StartInsight Usage (Phase 4.5):**
-- PostgreSQL: ✅ Primary database
-- PostgREST: ⚠️ Optional (still using FastAPI for complex queries)
-- GoTrue: ❌ Not used (Clerk for authentication)
+- PostgreSQL: [x] Primary database
+- PostgREST: [ ] Optional (still using FastAPI for complex queries)
+- GoTrue: [ ] Not used (Clerk for authentication)
 - Realtime: 🔜 Phase 5.1
 - Storage: 🔜 Phase 5.2
 - Edge Functions: 🔜 Phase 5.3
@@ -3081,6 +3081,6 @@ This architecture provides a solid foundation for StartInsight's MVP while remai
 ---
 
 **Document Version**: 1.1
-**Last Updated**: 2026-01-18
+**Last Updated**: 2026-01-25
 **Author**: Lead Architect (Claude)
 **Status**: Production-Ready Blueprint
