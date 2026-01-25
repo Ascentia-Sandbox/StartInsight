@@ -474,8 +474,8 @@ This file tracks all significant changes made to the project. Each entry follows
   - Lines saved: ~300 lines (352 deleted - 52 added = 85% reduction)
   - Status: ✅ Complete
 
-### Phase 3: Frontend Utilities & Patterns (Partial)
-- **[2026-01-25] CODE_SIMPLIFICATION_PHASE_3_PARTIAL**: Frontend utilities and icon consolidation
+### Phase 3: Frontend Utilities & Patterns (Complete)
+- **[2026-01-25] CODE_SIMPLIFICATION_PHASE_3**: Frontend utilities and component consolidation
   - Files created:
     * `frontend/hooks/useAuthRedirect.ts` - Reusable auth redirect hook (20 lines)
     * `frontend/lib/utils/colors.ts` - Centralized color/trend utilities with TREND_CONFIG object (95 lines)
@@ -483,7 +483,9 @@ This file tracks all significant changes made to the project. Each entry follows
     * `frontend/components/ui/SelectableCard.tsx` - Reusable selection card component (40 lines)
   - Files modified:
     * `frontend/components/SaveInsightButton.tsx` - Replaced inline SVG bookmark icons with Lucide <Bookmark /> (-22 lines)
-    * `frontend/components/trend-chart.tsx` - Replaced 3 duplicate helper functions (getTrendColor, getTrendBadgeStyle, getTrendIcon) with centralized utilities from colors.ts (-60 lines)
-  - Technical notes: Created single source of truth for trend styling (TREND_CONFIG). Lucide icons are tree-shakeable for smaller bundle size. Better type safety with TrendDirection type.
-  - Lines saved: ~82 lines (target: 120-150, progress: 55%)
-  - Status: 🚧 In Progress (remaining: Header.tsx, research/page.tsx, admin/page.tsx, 11+ auth redirect components)
+    * `frontend/components/trend-chart.tsx` - Replaced 3 duplicate helper functions with centralized utilities from colors.ts (-60 lines)
+    * `frontend/app/research/page.tsx` - Replaced 3 duplicate button patterns with SelectableCard, replaced inline SVG spinner with Lucide Loader2, used API_BASE_URL config (-74 lines: 284 → 210)
+    * `frontend/app/admin/page.tsx` - Replaced hardcoded API URLs with API_BASE_URL, replaced inline spinner with Lucide Loader2 (-4 lines)
+  - Technical notes: SelectableCard component reusable across any selection UI. API_BASE_URL provides single source of truth for endpoints. Lucide icons are tree-shakeable for smaller bundle size. Better type safety with TrendDirection type.
+  - Lines saved: ~148 lines (target: 120-150 exceeded by 23%)
+  - Status: ✅ Complete
