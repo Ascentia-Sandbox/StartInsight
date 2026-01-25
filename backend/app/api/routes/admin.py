@@ -25,9 +25,11 @@ from sse_starlette.sse import EventSourceResponse
 
 from app.api.deps import AdminUser
 from app.core.config import settings
+from app.core.constants import InsightStatus
 from app.core.rate_limits import limiter
 from app.db.query_helpers import count_by_field
 from app.db.session import get_db, AsyncSessionLocal
+from app.models.admin_user import AdminUser as AdminUserModel
 from app.models.agent_execution_log import AgentExecutionLog
 from app.models.insight import Insight
 from app.models.system_metric import SystemMetric
@@ -447,9 +449,9 @@ async def get_review_queue(
         total = await count_by_field(db, Insight, "admin_status", status_filter)
 
     # Get status counts (uses count_by_field helper)
-    pending_count = await count_by_field(db, Insight, "admin_status", "pending")
-    approved_count = await count_by_field(db, Insight, "admin_status", "approved")
-    rejected_count = await count_by_field(db, Insight, "admin_status", "rejected")
+    pending_count = await count_by_field(db, Insight, "admin_status", InsightStatus.PENDING)
+    approved_count = await count_by_field(db, Insight, "admin_status", InsightStatus.APPROVED)
+    rejected_count = await count_by_field(db, Insight, "admin_status", InsightStatus.REJECTED)
 
     # Get insights
     result = await db.execute(query.limit(limit).offset(offset))
@@ -462,7 +464,7 @@ async def get_review_queue(
                 problem_statement=i.problem_statement,
                 proposed_solution=i.proposed_solution,
                 relevance_score=i.relevance_score,
-                admin_status=i.admin_status or "approved",
+                admin_status=i.admin_status or InsightStatus.APPROVED,
                 admin_notes=i.admin_notes,
                 source=i.raw_signal.source if i.raw_signal else "unknown",
                 created_at=i.created_at,
@@ -492,8 +494,6 @@ async def update_insight_status(
         raise HTTPException(status_code=404, detail="Insight not found")
 
     # Get admin_users record for edited_by FK
-    from app.models.admin_user import AdminUser as AdminUserModel
-
     admin_record_result = await db.execute(
         select(AdminUserModel).where(AdminUserModel.user_id == admin.id)
     )
@@ -522,7 +522,7 @@ async def update_insight_status(
         problem_statement=insight.problem_statement,
         proposed_solution=insight.proposed_solution,
         relevance_score=insight.relevance_score,
-        admin_status=insight.admin_status or "approved",
+        admin_status=insight.admin_status or InsightStatus.APPROVED,
         admin_notes=insight.admin_notes,
         source=insight.raw_signal.source if insight.raw_signal else "unknown",
         created_at=insight.created_at,

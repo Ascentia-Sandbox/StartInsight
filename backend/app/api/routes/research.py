@@ -20,6 +20,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentUser
+from app.core.constants import AnalysisStatus
 from app.core.rate_limits import limiter
 from app.db.session import get_db
 from app.models.custom_analysis import CustomAnalysis
@@ -182,7 +183,7 @@ async def request_analysis(
         idea_description=request.idea_description,
         target_market=request.target_market,
         budget_range=request.budget_range,
-        status="pending",
+        status=AnalysisStatus.PENDING,
         progress_percent=0,
         current_step="Queued for analysis",
     )
