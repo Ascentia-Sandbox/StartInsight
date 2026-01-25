@@ -191,6 +191,7 @@ class TeamInvitation(Base):
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
 
     # Invitation details
@@ -276,6 +277,7 @@ class SharedInsight(Base):
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
 
     # Share details

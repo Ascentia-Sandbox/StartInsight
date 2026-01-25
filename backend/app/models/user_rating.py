@@ -56,12 +56,12 @@ class UserRating(Base):
         doc="User who rated this insight",
     )
 
-    insight_id: Mapped[UUID] = mapped_column(
+    insight_id: Mapped[UUID | None] = mapped_column(
         PGUUID(as_uuid=True),
-        ForeignKey("insights.id", ondelete="CASCADE"),
-        nullable=False,
+        ForeignKey("insights.id", ondelete="SET NULL"),
+        nullable=True,
         index=True,
-        doc="The rated insight",
+        doc="The rated insight (NULL if insight was deleted)",
     )
 
     # Rating data

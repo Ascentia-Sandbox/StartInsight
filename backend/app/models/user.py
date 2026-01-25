@@ -106,6 +106,26 @@ class User(Base):
         doc="Most recent login timestamp",
     )
 
+    # Soft delete support (prevents permanent data loss)
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        index=True,
+        doc="Soft delete timestamp (NULL = active, non-NULL = deleted)",
+    )
+
+    deleted_by: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        nullable=True,
+        doc="Admin who deleted this user (audit trail)",
+    )
+
+    deletion_reason: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+        doc="Reason for deletion (GDPR request, ban, abuse, etc.)",
+    )
+
     # Relationships
     saved_insights: Mapped[list["SavedInsight"]] = relationship(
         "SavedInsight",

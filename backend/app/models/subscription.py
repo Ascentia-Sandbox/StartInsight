@@ -33,11 +33,19 @@ class Subscription(Base):
     )
 
     # User relationship
-    user_id: Mapped[UUID] = mapped_column(
+    user_id: Mapped[UUID | None] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False,
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
         index=True,
+        doc="User who owns this subscription (NULL if user deleted - preserves payment history)",
+    )
+
+    # Snapshot fields (preserve data for deleted users - compliance requirement)
+    user_email_snapshot: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+        doc="Email snapshot for deleted users (7-10 year retention for tax/legal)",
     )
 
     # Stripe identifiers

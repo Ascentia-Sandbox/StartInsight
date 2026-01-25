@@ -246,6 +246,14 @@ async def _verify_and_get_user(token: str, db: AsyncSession) -> User:
     user = result.scalar_one()
     await db.commit()
 
+    # ✅ Check if user is soft-deleted (account deactivated)
+    if user.deleted_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account has been deactivated. Contact support for assistance.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     logger.info(f"Authenticated user: {user.email}")
     return user
 

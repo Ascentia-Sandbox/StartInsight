@@ -51,12 +51,25 @@ class SavedInsight(Base):
         doc="User who saved this insight",
     )
 
-    insight_id: Mapped[UUID] = mapped_column(
+    insight_id: Mapped[UUID | None] = mapped_column(
         PGUUID(as_uuid=True),
-        ForeignKey("insights.id", ondelete="CASCADE"),
-        nullable=False,
+        ForeignKey("insights.id", ondelete="SET NULL"),
+        nullable=True,
         index=True,
-        doc="The saved insight",
+        doc="The saved insight (NULL if insight was deleted)",
+    )
+
+    # Snapshot fields (preserve data when insight is deleted)
+    insight_title_snapshot: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+        doc="Snapshot of insight title (preserved after insight deletion)",
+    )
+
+    insight_problem_snapshot: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+        doc="Snapshot of problem statement (preserved after insight deletion)",
     )
 
     # User notes and organization

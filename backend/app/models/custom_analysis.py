@@ -44,10 +44,10 @@ class CustomAnalysis(Base):
     # Foreign key to user
     user_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="CASCADE"),
+        ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=False,
         index=True,
-        doc="User who requested this analysis",
+        doc="User who requested this analysis (RESTRICT prevents deletion if analyses exist)",
     )
 
     # ============================================
