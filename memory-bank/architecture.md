@@ -3,7 +3,7 @@
 **Reading Priority:** CRITICAL
 **Read When:** Before implementing features, designing database models, creating APIs
 **Dependencies:** Read active-context.md for current phase, implementation-plan.md for step-by-step tasks
-**Purpose:** System architecture, database schema (9 tables planned), API endpoints (35+), SSE, authentication, admin portal
+**Purpose:** System architecture, database schema (21 tables implemented), API endpoints (97 verified), SSE, authentication, admin portal
 **Last Updated:** 2026-01-25
 ---
 
