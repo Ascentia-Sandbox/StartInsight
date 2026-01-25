@@ -50,7 +50,47 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Completed Phases (Archived)
+
+### Phase 1-3: MVP Foundation (2026-01-17 to 2026-01-18)
+- [2026-01-18] Phase 1 complete: FastAPI backend, PostgreSQL/Redis Docker, 3 scrapers, Arq worker, 5 REST endpoints
+- [2026-01-18] Phase 2 complete: PydanticAI analyzer, Insight model, 3 API endpoints, LLM cost tracking (26/26 tests)
+- [2026-01-18] Phase 3 complete: Next.js 16.1.3, shadcn/ui, dark mode, Recharts, 47 Playwright E2E tests, CI/CD
+
+### Phase 4-7: Advanced Features Backend (2026-01-25)
+- [2026-01-25] Phase 4 complete: Supabase Auth, 4 user models, 15 endpoints, admin portal (SSE), 8-dimension scoring
+- [2026-01-25] Phase 5 complete: 40-step AI research agent, brand/landing generators, PDF/CSV/JSON exports, SSE feed
+- [2026-01-25] Phase 6 complete: Stripe (4 tiers), Resend (6 templates), Redis rate limiting, team collaboration (RBAC)
+- [2026-01-25] Phase 7 complete: Twitter/X scraper, API key management (scopes), multi-tenancy (subdomain/custom domain)
+
+### Strategic Documentation (2026-01-25)
+- [2026-01-25] [LAGO-ANALYSIS]: Usage-based billing integration plan
+  - Files: memory-bank/lago-analysis.md (45K words)
+  - Tech: Lago API for AI cost tracking, prepaid credits, margin protection
+  - Status: [✓ Complete]
+
+- [2026-01-25] [IDEABROWSER-ANALYSIS]: Competitive analysis
+  - Files: memory-bank/ideabrowser-analysis.md (12K words)
+  - Tech: APAC market research, UI/UX patterns, revenue projections
+  - Status: [✓ Complete]
+
+- [2026-01-25] [SUPABASE-DOCS]: Migration plan documentation
+  - Files: architecture.md, implementation-plan.md, tech-stack.md, active-context.md
+  - Tech: Blue-green deployment, Singapore region, RLS policies, 9 migrations
+  - Status: [✓ Complete]
+
+### Infrastructure (2026-01-17 to 2026-01-25)
+- [2026-01-17] Docker: PostgreSQL 16, Redis 7, persistent volumes, health checks
+- [2026-01-18] Tests: Centralized to tests/ directory (18 files, backend/frontend)
+- [2026-01-18] Docs: Fixed 17 issues across 6 memory-bank files
+- [2026-01-25] Code: Simplified 551 lines (query helpers, constants, decorators)
+- [2026-01-25] Docs: Timeline removal & feature-based refactoring (50+ timeline references → 0, added roadmap index + Next Milestone + duration guidelines)
+
+---
+
 ## Recent Changes
+
+<!-- New entries follow simplified format (max 50 words) -->
 
 - [2026-01-25] [STRATEGIC-ANALYSIS]: Lago usage-based billing integration plan complete
   - Files created: memory-bank/lago-analysis.md (45,000+ words, 1,085 lines)
