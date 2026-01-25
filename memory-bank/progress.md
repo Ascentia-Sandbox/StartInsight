@@ -473,3 +473,17 @@ This file tracks all significant changes made to the project. Each entry follows
   - Technical notes: Replaced 352-line custom implementation with 52-line SlowAPI integration. Uses same Redis backend with better connection pooling and error handling. User-aware limiting preserved (uses user_id from request.state or IP fallback).
   - Lines saved: ~300 lines (352 deleted - 52 added = 85% reduction)
   - Status: ✅ Complete
+
+### Phase 3: Frontend Utilities & Patterns (Partial)
+- **[2026-01-25] CODE_SIMPLIFICATION_PHASE_3_PARTIAL**: Frontend utilities and icon consolidation
+  - Files created:
+    * `frontend/hooks/useAuthRedirect.ts` - Reusable auth redirect hook (20 lines)
+    * `frontend/lib/utils/colors.ts` - Centralized color/trend utilities with TREND_CONFIG object (95 lines)
+    * `frontend/lib/api/config.ts` - API base URL configuration (20 lines)
+    * `frontend/components/ui/SelectableCard.tsx` - Reusable selection card component (40 lines)
+  - Files modified:
+    * `frontend/components/SaveInsightButton.tsx` - Replaced inline SVG bookmark icons with Lucide <Bookmark /> (-22 lines)
+    * `frontend/components/trend-chart.tsx` - Replaced 3 duplicate helper functions (getTrendColor, getTrendBadgeStyle, getTrendIcon) with centralized utilities from colors.ts (-60 lines)
+  - Technical notes: Created single source of truth for trend styling (TREND_CONFIG). Lucide icons are tree-shakeable for smaller bundle size. Better type safety with TrendDirection type.
+  - Lines saved: ~82 lines (target: 120-150, progress: 55%)
+  - Status: 🚧 In Progress (remaining: Header.tsx, research/page.tsx, admin/page.tsx, 11+ auth redirect components)
