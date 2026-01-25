@@ -35,11 +35,11 @@ This file tracks all significant changes made to the project. Each entry follows
 
 **AI Agents:** 3 agents (basic analyzer, enhanced 7-dimension scoring, 40-step research agent)
 
-**Frontend Status:** Phase 1-7 Complete (100% - 17 routes including tenant-settings, all API integrations)
+**Frontend Status:** Phase 1-7 Complete (100% - 18 routes including research-queue, all API integrations)
 
-**Migration Status:** 13 Supabase migrations executed (100% complete 2026-01-25)
-- 12 schema migrations (tables, indexes, relationships)
-- 1 RLS security migration (all 20 tables protected)
+**Migration Status:** 15 Supabase migrations executed (100% complete 2026-01-25)
+- 13 schema migrations (tables, indexes, relationships, visualizations)
+- 2 RLS security migrations (all 22 tables protected)
 
 ---
 
@@ -116,6 +116,11 @@ This file tracks all significant changes made to the project. Each entry follows
 ## Recent Changes
 
 <!-- New entries follow simplified format (max 50 words) -->
+
+- [2026-01-25] [PHASE-5.2-COMPLETE]: Super Admin Sovereignty + Evidence Visualizations
+  - Files: 46 files (18 new components, 2 migrations, 12 backend, 7 docs)
+  - Tech: Research request queue with tier-based auto-approval, Recharts radar charts, 8-dimension KPI cards
+  - Status: [x] Complete (105 endpoints, 22 tables, 18 routes, committed 7bbb3ee)
 
 - [2026-01-25] [PHASE-7-FRONTEND-COMPLETE]: Final Phase 7 frontend features
   - Files: InsightFilters.tsx, InsightCard.tsx, tenant-settings/page.tsx, lib/types.ts, lib/api.ts
