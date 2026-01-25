@@ -1498,7 +1498,7 @@ uv run python -c "from supabase import create_client; print('OK')"
 #### 2.3 Dual-Write Service Implementation (4 hours)
 
 **Tasks:**
-1. Implement `DualWriteService` (see Week 1.4 design)
+1. Implement `DualWriteService` (see Task 4.5.1.4 design)
 2. Integrate into API routes:
    ```python
    # backend/app/api/routes/insights.py
@@ -1673,7 +1673,7 @@ export async function getInsights() {
 #### 3.2 Data Integrity Testing (2 hours)
 
 **Tasks:**
-1. Run validation script (see Week 1.6)
+1. Run validation script (see Task 4.5.1.6)
 2. Test edge cases:
    - Concurrent writes (PostgreSQL + Supabase)
    - Large payloads (>1MB JSON)
@@ -1788,14 +1788,14 @@ export async function getInsights() {
    kubectl set env deployment/backend USE_POSTGRES=false
    ```
 
-**Rollback Trigger:** See Week 1.8
+**Rollback Trigger:** See Task 4.5.1.8
 
 ---
 
 #### 4.2 Data Sync Verification (1 hour)
 
 **Tasks:**
-1. Run final validation script (see Week 1.6)
+1. Run final validation script (see Task 4.5.1.6)
 2. Verify no sync lag:
    ```sql
    -- Latest insert timestamps should match
@@ -2315,15 +2315,15 @@ if llm_cost_today > 50:
 
 ## Phase 5: Advanced Analysis & Export Features
 
-**Duration:** 6 weeks (Weeks 17-22 after Phase 4.5)
+**Estimated Duration:** ~6 weeks (after Phase 4.5)
 **Objective:** AI Research Agent, Build Tools, Export Features, Real-time Updates
 **Priority:** HIGH (competitive differentiation features)
 
 **Phase 5 Overview:**
-- **Phase 5.1**: AI Research Agent (Weeks 17-19, 3 weeks)
-- **Phase 5.2**: Build Tools (Week 20, 1 week)
-- **Phase 5.3**: Export Features (Week 21, 1 week)
-- **Phase 5.4**: Real-time Insight Feed (Week 22, 1 week)
+- **Phase 5.1**: AI Research Agent (~3 weeks)
+- **Phase 5.2**: Build Tools (~1 week)
+- **Phase 5.3**: Export Features (~1 week)
+- **Phase 5.4**: Real-time Insight Feed (~1 week)
 
 **Prerequisites:**
 - Phase 4 complete (user auth, admin portal, enhanced scoring)
@@ -2338,7 +2338,7 @@ if llm_cost_today > 50:
 
 ---
 
-### 5.1 AI Research Agent (Weeks 17-19)
+### 5.1 AI Research Agent
 
 **Goal:** Allow users to request deep custom analyses of their startup ideas using a 40-step research process.
 
@@ -2958,7 +2958,7 @@ echo "[x] Phase 5.1 Vibe Check PASSED"
 
 ---
 
-### 5.2 Build Tools (Week 20)
+### 5.2 Build Tools
 
 **Goal:** Auto-generate brand packages, landing pages, and ad creatives for validated ideas.
 
@@ -3131,7 +3131,7 @@ async def generate_build_package(
 
 ---
 
-### 5.3 Export Features (Week 21)
+### 5.3 Export Features
 
 **Goal:** Enable users to export insights and research reports as PDF, CSV, JSON.
 
@@ -3228,7 +3228,7 @@ async def export_insights_csv(
 
 ---
 
-### 5.4 Real-time Insight Feed (Week 22)
+### 5.4 Real-time Insight Feed
 
 **Goal:** Live-update insight feed using Supabase Realtime as new insights are analyzed.
 
@@ -3363,14 +3363,14 @@ echo "[x] Phase 5 Complete Vibe Check PASSED"
 **Priority:** HIGH (revenue generation)
 
 **Phase 6 Overview:**
-- **Phase 6.1**: Stripe Payment Integration (Weeks 23-24, 2 weeks)
-- **Phase 6.2**: Email Notifications (Week 25, 1 week)
-- **Phase 6.3**: Rate Limiting & Quotas (Week 26, 1 week)
-- **Phase 6.4**: Team Collaboration (Weeks 27-28, 2 weeks)
+- **Phase 6.1**: Stripe Payment Integration (~2 weeks)
+- **Phase 6.2**: Email Notifications (~1 week)
+- **Phase 6.3**: Rate Limiting & Quotas (~1 week)
+- **Phase 6.4**: Team Collaboration (~2 weeks)
 
 ---
 
-### 6.1 Stripe Payment Integration (Weeks 23-24)
+### 6.1 Stripe Payment Integration
 
 **Goal:** Enable subscription payments for Starter ($19/mo), Pro ($49/mo), Enterprise ($299/mo) tiers.
 
@@ -3467,7 +3467,7 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
 
 ---
 
-### 6.2 Email Notifications (Week 25)
+### 6.2 Email Notifications
 
 **Goal:** Send transactional emails (onboarding, daily digest, custom analysis ready).
 
@@ -3506,7 +3506,7 @@ async def send_analysis_ready_email(user_email: str, analysis_id: str):
 
 ---
 
-### 6.3 Rate Limiting & Quotas (Week 26)
+### 6.3 Rate Limiting & Quotas
 
 **Goal:** Enforce tier-based API rate limits and feature quotas.
 
@@ -3537,7 +3537,7 @@ async def list_insights(...):
 
 ---
 
-### 6.4 Team Collaboration (Weeks 27-28)
+### 6.4 Team Collaboration
 
 **Goal:** Allow users to invite team members and share insights.
 
@@ -3932,40 +3932,6 @@ CREATE TABLE tenants (
 - [ ] Dependency scanning automated (Dependabot)
 - [ ] Security headers configured (CSP, HSTS, X-Frame-Options)
 - [ ] Regular security audits scheduled
-
----
-
-### Migration Path Summary
-
-**Phase 4.5: PostgreSQL → Supabase Cloud**
-
-**Week 1: Planning & Setup**
-- [ ] Create Supabase Pro account (Singapore region)
-- [ ] Export PostgreSQL schema via Alembic
-- [ ] Configure RLS policies (see architecture.md Section 10.2)
-- [ ] Set up staging environment
-
-**Week 2: Backend Integration**
-- [ ] Implement DualWriteService (write to both DBs)
-- [ ] Migrate read path to Supabase (gradual, table by table)
-- [ ] Verify data consistency (automated checksums)
-
-**Week 3: Testing & Validation**
-- [ ] Run performance benchmarks (target: <100ms p95)
-- [ ] Execute load tests (1000 concurrent users)
-- [ ] Test rollback plan (<30 min recovery)
-
-**Week 4: Cutover & Cleanup**
-- [ ] Deploy to production (Friday evening, low traffic)
-- [ ] Monitor metrics (24-hour watch)
-- [ ] Deprecate PostgreSQL container
-- [ ] Update documentation
-
-**Success Criteria:**
-- Zero downtime during cutover
-- 100% data integrity (row counts match)
-- Latency improvement (target: 50ms vs 78ms current)
-- Cost reduction (64% savings: $25 vs $69/mo)
 
 ---
 
@@ -4666,7 +4632,7 @@ async def verify_jwt(token: str):
 3. **Version Control**: Commit frequently with descriptive messages.
 4. **Environment Parity**: Use Docker to ensure dev/prod parity.
 5. **Security First**: Never commit secrets. Use `.env` files and secret managers.
-6. **Performance Monitoring**: Add logging and monitoring from Day 1.
+6. **Performance Monitoring**: Add logging and monitoring from the start.
 
 ---
 
