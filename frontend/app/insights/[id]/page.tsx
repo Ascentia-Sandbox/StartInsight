@@ -50,7 +50,7 @@ export default function InsightDetailPage() {
     );
   }
 
-  const marketSizeColor = {
+  const marketSizeColor: Record<string, string> = {
     Small: 'bg-yellow-100 text-yellow-800',
     Medium: 'bg-blue-100 text-blue-800',
     Large: 'bg-green-100 text-green-800',
@@ -110,10 +110,22 @@ export default function InsightDetailPage() {
           </div>
 
           {/* 8-Dimension Scoring - IdeaBrowser competitive feature (2x more dimensions) */}
-          {insight.scores && Object.keys(insight.scores).length > 0 && (
+          {(insight.opportunity_score || insight.problem_score || insight.feasibility_score) && (
             <>
               <Separator />
-              <ScoreRadar scores={insight.scores} size="md" />
+              <ScoreRadar
+                scores={{
+                  opportunity: insight.opportunity_score ?? undefined,
+                  problem: insight.problem_score ?? undefined,
+                  feasibility: insight.feasibility_score ?? undefined,
+                  why_now: insight.why_now_score ?? undefined,
+                  go_to_market: insight.go_to_market_score ?? undefined,
+                  founder_fit: insight.founder_fit_score ?? undefined,
+                  execution_difficulty: insight.execution_difficulty_score ?? undefined,
+                  revenue_potential: insight.revenue_potential_score ?? undefined,
+                }}
+                size="md"
+              />
             </>
           )}
 

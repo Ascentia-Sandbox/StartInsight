@@ -9,13 +9,11 @@ Provides real-time updates for new insights using:
 import asyncio
 import json
 import logging
+from collections.abc import AsyncGenerator
 from datetime import datetime
-from typing import Any, AsyncGenerator
-from uuid import UUID
+from typing import Any
 
 from pydantic import BaseModel, Field
-
-from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -264,7 +262,7 @@ async def generate_sse_stream(
                 # Format as SSE
                 yield f"event: {event.event_type}\ndata: {event.model_dump_json()}\n\n"
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # Send keepalive ping
                 yield f"event: ping\ndata: {json.dumps({'timestamp': datetime.now().isoformat()})}\n\n"
 

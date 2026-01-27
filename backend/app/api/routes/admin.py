@@ -18,17 +18,15 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from redis import asyncio as aioredis
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse
 
 from app.api.deps import AdminUser
-from app.core.config import settings
 from app.core.constants import InsightStatus
 from app.core.rate_limits import limiter
 from app.db.query_helpers import count_by_field
-from app.db.session import get_db, AsyncSessionLocal
+from app.db.session import AsyncSessionLocal, get_db
 from app.models.admin_user import AdminUser as AdminUserModel
 from app.models.agent_execution_log import AgentExecutionLog
 from app.models.insight import Insight
@@ -43,7 +41,6 @@ from app.schemas.admin import (
     ExecutionLogResponse,
     InsightAdminUpdate,
     InsightReviewResponse,
-    MetricQueryRequest,
     MetricResponse,
     MetricSummaryResponse,
     ReviewQueueResponse,
@@ -66,6 +63,7 @@ _MAX_SSE_CONNECTIONS = 10  # Limit concurrent admin SSE streams
 @router.get("/dashboard", response_model=DashboardMetricsResponse)
 @limiter.limit("20/minute")  # Phase 2: SlowAPI rate limiting
 async def get_dashboard_metrics(
+    request: Request,
     admin: AdminUser,
     db: AsyncSession = Depends(get_db),
 ) -> DashboardMetricsResponse:
@@ -323,6 +321,7 @@ async def get_agent_logs(
 @router.post("/agents/{agent_type}/pause", response_model=AgentControlResponse)
 @limiter.limit("20/minute")  # Phase 2: SlowAPI rate limiting
 async def pause_agent(
+    request: Request,
     agent_type: AgentType,
     admin: AdminUser,
     db: AsyncSession = Depends(get_db),
@@ -355,6 +354,7 @@ async def pause_agent(
 @router.post("/agents/{agent_type}/resume", response_model=AgentControlResponse)
 @limiter.limit("20/minute")  # Phase 2: SlowAPI rate limiting
 async def resume_agent(
+    request: Request,
     agent_type: AgentType,
     admin: AdminUser,
     db: AsyncSession = Depends(get_db),
@@ -385,6 +385,7 @@ async def resume_agent(
 @router.post("/agents/{agent_type}/trigger", response_model=AgentControlResponse)
 @limiter.limit("20/minute")  # Phase 2: SlowAPI rate limiting
 async def trigger_agent(
+    request: Request,
     agent_type: AgentType,
     admin: AdminUser,
     db: AsyncSession = Depends(get_db),

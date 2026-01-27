@@ -9,15 +9,13 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
-from app.models import APIKey, User
+from app.models import User
 from app.services.api_key_service import (
     AVAILABLE_SCOPES,
     create_api_key,
-    get_missing_scopes,
     revoke_api_key,
 )
 

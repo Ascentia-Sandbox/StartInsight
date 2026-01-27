@@ -14,7 +14,7 @@ interface InsightData {
   id: string;
   problem_statement: string;
   proposed_solution: string;
-  market_size_estimate: 'Small' | 'Medium' | 'Large';
+  market_size_estimate: string; // Any string (e.g., "$5B-$20B", "Small", "Large")
   relevance_score: number;
   competitor_analysis?: Array<{
     name: string;

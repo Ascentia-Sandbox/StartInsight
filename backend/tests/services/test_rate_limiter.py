@@ -1,9 +1,7 @@
 """Tests for rate limiter service - Phase 6.3."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from app.services.rate_limiter import (
     TIER_LIMITS,
     InMemoryRateLimiter,

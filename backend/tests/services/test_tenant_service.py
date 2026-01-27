@@ -1,7 +1,5 @@
 """Tests for tenant service - Phase 7.3."""
 
-from datetime import datetime
-from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
@@ -9,12 +7,8 @@ import pytest
 from app.services.tenant_service import (
     TenantBrandingUpdate,
     TenantCreate,
-    configure_custom_domain,
     create_tenant,
     get_tenant_css_variables,
-    resolve_tenant_from_host,
-    update_tenant_branding,
-    verify_custom_domain,
 )
 
 

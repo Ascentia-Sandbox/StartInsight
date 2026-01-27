@@ -192,7 +192,6 @@ async def analyze_signals_task(ctx: dict[str, Any]) -> dict[str, Any]:
     from sqlalchemy import select
 
     from app.agents.analyzer import analyze_signal_with_retry
-    from app.models.insight import Insight
     from app.models.raw_signal import RawSignal
 
     logger.info("Starting signal analysis task")

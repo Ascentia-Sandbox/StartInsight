@@ -8,21 +8,19 @@ from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from fastapi.responses import PlainTextResponse, Response
-from pydantic import BaseModel, Field
+from fastapi.responses import Response
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
 from app.models import CustomAnalysis, Insight, User
 from app.services.export_service import (
-    ExportFormat,
     export_analysis_csv,
     export_analysis_json,
     export_analysis_pdf,
     export_insight_csv,
     export_insight_pdf,
-    get_export_response,
 )
 
 logger = logging.getLogger(__name__)

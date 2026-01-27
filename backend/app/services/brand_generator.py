@@ -8,12 +8,9 @@ Generates AI-powered brand packages including:
 """
 
 import logging
-from typing import Any
 
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
-
-from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 

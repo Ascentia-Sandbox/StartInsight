@@ -8,15 +8,14 @@ Provides:
 """
 
 import asyncio
+from collections.abc import AsyncGenerator, Generator
 from datetime import datetime
-from typing import AsyncGenerator, Generator
 from uuid import uuid4
 
 import pytest
 import pytest_asyncio
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
@@ -27,13 +26,10 @@ from app.models import (
     AdminUser,
     CustomAnalysis,
     Insight,
-    InsightInteraction,
     RawSignal,
     SavedInsight,
     User,
-    UserRating,
 )
-
 
 # ============================================
 # Database Fixtures

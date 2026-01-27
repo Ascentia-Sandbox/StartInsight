@@ -9,14 +9,12 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, EmailStr, Field
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
-from app.models import Team, TeamInvitation, TeamMember, User
+from app.models import User
 from app.services.team_service import (
     accept_invitation,
-    check_permission,
     create_team,
     invite_member,
     share_insight_with_team,

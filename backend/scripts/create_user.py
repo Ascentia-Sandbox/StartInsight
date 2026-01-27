@@ -5,8 +5,9 @@ Create regular user in Supabase
 import asyncio
 import os
 import sys
+
 from dotenv import load_dotenv
-from supabase import create_client, Client
+from supabase import Client, create_client
 
 load_dotenv()
 
@@ -42,12 +43,12 @@ async def create_user(email: str, password: str, full_name: str = None):
             print("❌ User profile not found in users table (trigger may have failed)")
             return
 
-        print(f"✅ User profile created in database")
-        print(f"\n🎉 User account created successfully!")
+        print("✅ User profile created in database")
+        print("\n🎉 User account created successfully!")
         print(f"Email: {email}")
         print(f"Password: {password}")
-        print(f"Subscription: free")
-        print(f"\nYou can now sign in at: http://localhost:3000/auth/login")
+        print("Subscription: free")
+        print("\nYou can now sign in at: http://localhost:3000/auth/login")
 
     except Exception as e:
         print(f"❌ Error creating user: {e}")

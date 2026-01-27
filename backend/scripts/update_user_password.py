@@ -5,8 +5,9 @@ Update user password in Supabase
 import asyncio
 import os
 import sys
+
 from dotenv import load_dotenv
-from supabase import create_client, Client
+from supabase import Client, create_client
 
 load_dotenv()
 
@@ -39,10 +40,10 @@ async def update_password(email: str, new_password: str):
         )
 
         print(f"✅ Password updated successfully for {email}")
-        print(f"\nNew credentials:")
+        print("\nNew credentials:")
         print(f"Email: {email}")
         print(f"Password: {new_password}")
-        print(f"\nYou can now sign in at: http://localhost:3000/auth/login")
+        print("\nYou can now sign in at: http://localhost:3000/auth/login")
 
     except Exception as e:
         print(f"❌ Error updating password: {e}")

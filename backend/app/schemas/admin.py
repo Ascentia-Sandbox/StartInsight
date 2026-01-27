@@ -4,12 +4,10 @@ See architecture.md Section "Admin Portal Architecture" for full specification.
 """
 
 from datetime import datetime
-from decimal import Decimal
 from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, Field
-
 
 # ============================================
 # Enums

@@ -1,7 +1,7 @@
 """Reddit scraper using PRAW + Firecrawl."""
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import praw
 from pydantic import HttpUrl

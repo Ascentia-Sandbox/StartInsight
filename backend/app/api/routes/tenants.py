@@ -12,12 +12,11 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db, require_admin
-from app.models import Tenant, User
+from app.models import User
 from app.services.tenant_service import (
     configure_custom_domain,
     create_tenant,
     get_tenant_css_variables,
-    resolve_tenant_from_host,
     update_tenant_branding,
     verify_custom_domain,
 )

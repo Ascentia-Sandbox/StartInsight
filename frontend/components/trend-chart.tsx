@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getTrendBadgeClass, getTrendIcon, TREND_CONFIG, type TrendDirection } from '@/lib/utils/colors';
 
@@ -31,22 +31,19 @@ export function TrendChart({ data, source }: TrendChartProps) {
   const trendDir = (trend_direction?.toLowerCase() || 'unknown') as TrendDirection;
   const trendColor = TREND_CONFIG[trendDir]?.color || '#94a3b8';
 
-  // Prepare chart data
+  // Prepare chart data for area chart (better storytelling with gradient)
   const chartData = [
-    {
-      name: 'Current',
-      value: current_interest || 0,
-      fill: trendColor.replace('text-', '#'), // Convert to hex for chart
-    },
     {
       name: 'Average',
       value: avg_interest || 0,
-      fill: '#94a3b8',
+    },
+    {
+      name: 'Current',
+      value: current_interest || 0,
     },
     {
       name: 'Peak',
       value: max_interest || 0,
-      fill: '#3b82f6',
     },
   ];
 
@@ -68,10 +65,16 @@ export function TrendChart({ data, source }: TrendChartProps) {
             </span>
           </div>
 
-          {/* Bar Chart */}
+          {/* Area Chart with gradient fill */}
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0.1}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" strokeOpacity={0.1} />
               <XAxis
                 dataKey="name"
                 className="text-xs"
@@ -91,8 +94,15 @@ export function TrendChart({ data, source }: TrendChartProps) {
                 labelStyle={{ color: 'hsl(var(--card-foreground))' }}
               />
               <Legend />
-              <Bar dataKey="value" name="Search Interest" radius={[8, 8, 0, 0]} />
-            </BarChart>
+              <Area
+                type="monotone"
+                dataKey="value"
+                name="Search Interest"
+                stroke="#6366f1"
+                strokeWidth={2}
+                fill="url(#colorValue)"
+              />
+            </AreaChart>
           </ResponsiveContainer>
 
           {/* Summary Stats */}

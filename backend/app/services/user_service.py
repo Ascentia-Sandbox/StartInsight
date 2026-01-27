@@ -11,7 +11,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.saved_insight import SavedInsight
-from app.models.user import User
 
 
 class UserService:

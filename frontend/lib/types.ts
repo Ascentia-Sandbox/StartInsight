@@ -41,6 +41,13 @@ export const EnhancedScoreSchema = z.object({
   label: z.string(),
 });
 
+// Trend keyword schema
+export const TrendKeywordSchema = z.object({
+  keyword: z.string(),
+  volume: z.string(),
+  growth: z.string(),
+});
+
 export const InsightSchema = z.object({
   id: z.string().uuid(),
   raw_signal_id: z.string().uuid(),
@@ -54,6 +61,16 @@ export const InsightSchema = z.object({
   // Phase 5.2: Enhanced visualizations
   community_signals_chart: z.array(CommunitySignalSchema).nullable().optional(),
   enhanced_scores: z.array(EnhancedScoreSchema).nullable().optional(),
+  trend_keywords: z.array(TrendKeywordSchema).nullable().optional(),
+  // Individual score fields for ScoreRadar component
+  opportunity_score: z.number().min(1).max(10).nullable().optional(),
+  problem_score: z.number().min(1).max(10).nullable().optional(),
+  feasibility_score: z.number().min(1).max(10).nullable().optional(),
+  why_now_score: z.number().min(1).max(10).nullable().optional(),
+  go_to_market_score: z.number().min(1).max(10).nullable().optional(),
+  founder_fit_score: z.number().min(1).max(10).nullable().optional(),
+  execution_difficulty_score: z.number().min(1).max(10).nullable().optional(),
+  revenue_potential_score: z.number().min(1).max(10).nullable().optional(),
   // Additional framework fields
   value_ladder: z.record(z.string(), z.any()).optional(),
   market_gap_analysis: z.string().optional(),
@@ -72,6 +89,7 @@ export type Competitor = z.infer<typeof CompetitorSchema>;
 export type RawSignalSummary = z.infer<typeof RawSignalSummarySchema>;
 export type CommunitySignal = z.infer<typeof CommunitySignalSchema>;
 export type EnhancedScore = z.infer<typeof EnhancedScoreSchema>;
+export type TrendKeyword = z.infer<typeof TrendKeywordSchema>;
 export type Insight = z.infer<typeof InsightSchema>;
 export type InsightListResponse = z.infer<typeof InsightListResponseSchema>;
 

@@ -26,13 +26,38 @@ UI Components: shadcn/ui - Copy-paste accessible components (based on Radix UI).
 
 State Management: React Query (TanStack Query) - Server state management.
 
-Charting: Recharts v3.6.0 (React 19 compatible) - Data visualization for trend graphs.
-  - **Implemented Components** (Phase 5+):
-    - TrendChart.tsx: Line/bar charts for Google Trends data (Phase 3)
-    - CommunitySignalsRadar.tsx: RadarChart for 4-platform engagement (Phase 5.2)
-    - ScoreBreakdown.tsx: 8-dimension KPI cards with color-coded badges (Phase 5.2)
-  - **Strategy**: Recharts + shadcn/ui for all visualizations (Tremor incompatible with React 19)
-  - **Competitive Advantage**: Dual-visualization stack (radar charts + KPI grids) vs IdeaBrowser's basic charts
+Charting: Recharts v3.6.0 (React 19 compatible) - Data visualization for trend graphs and evidence presentation.
+
+**VISUALIZATION MANDATE (Post-Ralph-Loop 2026-01-25):**
+Every insight MUST include data-driven visualizations. Evidence MUST be visual, not just textual.
+
+**Visualization Stack Strategy (Updated 2026-01-25):**
+  - **Primary**: Recharts v3.6.0 (React 19.2.3 compatible) - ✅ Installed
+  - **Complementary**: Tremor v3.16.0 for admin dashboards and KPI cards - ⚠️ Pending installation
+  - **Current Choice**: Dual-stack approach (Recharts + Tremor + shadcn/ui)
+  - **Reasoning**:
+    - Recharts: Complex custom visualizations (trend charts, radar charts) - full control
+    - Tremor: Financial charts, KPI cards, admin dashboards - cleaner API, less boilerplate
+    - shadcn/ui: Layout primitives, buttons, badges, forms
+  - **Competitive Analysis Finding**: IdeaBrowser uses Google Trends embedded charts (limited customization). StartInsight's dual-stack provides superior flexibility and visual quality.
+
+**Implemented Components (Phase 5.2 - 40% Complete):**
+  - ✅ TrendChart.tsx: Line charts for Google Trends search volume (Phase 3)
+  - ⚠️ CommunitySignalsRadar.tsx: RadarChart or AreaChart for 4-platform engagement (PLANNED)
+  - ⚠️ ScoreRadar.tsx: RadarChart for 8-dimension scoring visualization (PLANNED)
+  - ⚠️ TrendKeywordCards.tsx: Keyword cards with volume + growth badges (PLANNED)
+  - ⚠️ EvidencePanel Accordion: Collapsible sections for data sources (PLANNED)
+
+**Evidence-First Requirements:**
+Each insight requires minimum 3 visualizations:
+  1. Trend line chart (search volume over time) - ✅ IMPLEMENTED
+  2. Community signals chart (4-platform engagement) - ⚠️ PLANNED
+  3. Scoring visualization (8-dimension radar or bar chart) - ⚠️ PLANNED
+
+**Competitive Positioning:**
+  - **IdeaBrowser**: Google Trends embedded charts, basic badges
+  - **StartInsight**: Multi-chart evidence presentation (trend + community + scoring)
+  - **Advantage**: Visual evidence for every claim (charts > badges)
 
 3. Backend (The Intelligence Engine)
 Framework: FastAPI - High-performance, async Python framework. Perfect for AI/IO-bound tasks.

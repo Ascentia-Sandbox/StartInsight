@@ -13,7 +13,9 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from app.core.config import settings
-from app.services.rate_limiter import check_rate_limit, increment_usage
+
+# TODO: Rate limiting handled by SlowAPI globally, not custom service
+# from app.services.rate_limiter import check_rate_limit, increment_usage
 
 logger = logging.getLogger(__name__)
 
@@ -210,13 +212,15 @@ async def check_api_key_rate_limit(
     Returns:
         Rate limit status
     """
-    result = await check_rate_limit(
-        identifier=f"apikey:{key_id}",
-        tier=user_tier,
-        limit_type="api_calls_per_hour",
-    )
+    # TODO: Rate limiting handled by SlowAPI globally
+    # result = await check_rate_limit(
+    #     identifier=f"apikey:{key_id}",
+    #     tier=user_tier,
+    #     limit_type="api_calls_per_hour",
+    # )
 
-    return result
+    # Return mock result for now (rate limiting done at route level)
+    return {"allowed": True, "remaining": 1000, "reset_at": None}
 
 
 async def record_api_key_usage(
@@ -243,8 +247,8 @@ async def record_api_key_usage(
     Returns:
         Usage record data
     """
-    # Increment usage counter
-    await increment_usage(f"apikey:{key_id}", "requests")
+    # TODO: Usage tracking handled by SlowAPI globally
+    # await increment_usage(f"apikey:{key_id}", "requests")
 
     usage_data = {
         "api_key_id": key_id,

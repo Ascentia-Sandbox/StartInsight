@@ -4,8 +4,9 @@ Create super admin user in Supabase
 """
 import asyncio
 import os
+
 from dotenv import load_dotenv
-from supabase import create_client, Client
+from supabase import Client, create_client
 
 load_dotenv()
 
@@ -56,10 +57,10 @@ async def create_admin_user():
         }).execute()
 
         print(f"✅ Admin privileges granted: {admin_result.data[0]['id']}")
-        print(f"\n🎉 Super admin account created successfully!")
+        print("\n🎉 Super admin account created successfully!")
         print(f"Email: {admin_email}")
         print(f"Password: {admin_password}")
-        print(f"\nYou can now sign in at: http://localhost:3000/auth/login")
+        print("\nYou can now sign in at: http://localhost:3000/auth/login")
 
     except Exception as e:
         print(f"❌ Error creating admin user: {e}")
@@ -77,7 +78,7 @@ async def create_admin_user():
                     admin_check = supabase.table("admin_users").select("*").eq("user_id", internal_user_id).execute()
 
                     if admin_check.data:
-                        print(f"✅ User is already an admin")
+                        print("✅ User is already an admin")
                     else:
                         # Add admin privileges
                         admin_result = supabase.table("admin_users").insert({
@@ -85,7 +86,7 @@ async def create_admin_user():
                             "role": "super_admin",
                             "permissions": ["*"]
                         }).execute()
-                        print(f"✅ Admin privileges granted!")
+                        print("✅ Admin privileges granted!")
             except Exception as inner_e:
                 print(f"❌ Error adding admin privileges: {inner_e}")
 

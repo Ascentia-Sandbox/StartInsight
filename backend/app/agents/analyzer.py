@@ -274,7 +274,6 @@ async def fallback_gpt4o_analysis(raw_signal: RawSignal) -> Insight:
     )
 
     # Parse JSON response
-    import json
 
     insight_data = InsightSchema.model_validate_json(
         response.choices[0].message.content

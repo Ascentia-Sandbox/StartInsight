@@ -13,7 +13,7 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel
 
 from app.core.config import settings
 

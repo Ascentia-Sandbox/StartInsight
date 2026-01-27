@@ -29,49 +29,83 @@ Super Admin Agent Controller (Enhanced): Real-time monitoring and control dashbo
 
 Visual Dashboard: A clean, minimal web interface for users to browse, filter, and save insights.
 
-4. User Journey
-Daily Digest: User logs in to see the "Top 5 Insights of the Day."
+4. User Journey & Discovery Features
 
-Deep Dive: User clicks an insight (e.g., "AI for Legal Docs") and sees the underlying data:
+**Consumer-Focused Experience:**
+Users are readers, not creators. The platform emphasizes discovery, curation, and validation. Users cannot trigger or create Research Agents (admin-only capability).
 
-"300% spike in search volume."
+**Multi-Modal Discovery Paths:**
 
-"50+ negative comments on r/lawyers about current tools."
+1. **Daily Digest**: User logs in to see the "Top 5 Insights of the Day."
 
-Validation: User sees a generated MVP plan or "Glue Code" suggestions to build the solution.
+2. **Database Filtering System** (IdeaBrowser-Inspired):
+   - Status tabs: New, For You (AI-suggested), Interested, Saved, Building, Not Interested
+   - Search: Full-text search across idea titles, descriptions
+   - Pagination: 12 results per page with page controls
+   - URL filtering: ?status=no_reaction shows ideas with zero interactions
+   - Special discovery: Admin's Pick, AI Suggest based on user profile
 
-## 4.5 Evidence Engine: Data-Driven Visualization Layer
+3. **Trends Discovery Page**:
+   - Browse 180+ trending keywords with volume/growth metrics
+   - Each trend card shows: Search volume, growth percentage, embedded line chart, business implications
+   - Pagination: 12 trends per page
+   - Filtering: Sort by Most Recent, volume, growth rate
 
-StartInsight's Evidence Engine transforms raw market signals into quantified, cited insights:
+4. **Deep Dive**: User clicks an insight (e.g., "AI for Legal Docs") and sees:
+   - "300% spike in search volume" with line chart visualization
+   - "50+ negative comments on r/lawyers about current tools" with community signals chart
+   - 8-dimension scoring radar chart
+   - 3 trend keywords with volume/growth badges
 
-**Multi-Source Data Integration:**
+5. **Validation**: User sees a generated MVP plan or "Glue Code" suggestions to build the solution.
+
+## 4.5 Evidence Engine: Data-Driven Visualization Layer (Updated 2026-01-25)
+
+**VISUALIZATION MANDATE (Post-Ralph-Loop):**
+Every insight MUST include data-driven visualizations. No insight is complete without charts showing trend data, community engagement, and scoring breakdowns. Text alone is insufficient; evidence MUST be visual.
+
+**Quality Parity Achievement (Ralph Loop Iteration 1):**
+- Verdict: STARTINSIGHT_WINS (confirmed 2026-01-25)
+- Narrative quality: 9/10 (matches IdeaBrowser standard)
+- Problem statements: 500+ words with character-driven storytelling
+- Evidence density: 8 scoring dimensions, 3 trend keywords, 3-4 community platforms
+- Status: Content quality PARITY achieved, frontend visualization layer 40% complete
+
+**Multi-Source Data Integration (7 Sources):**
 - Reddit: 4+ subreddits per idea, engagement metrics, sentiment scoring
 - Facebook: 4-7 groups per topic, total members, activity frequency
 - YouTube: 14-16 channels, video views, content themes
-- Google Trends: Search volume (0-100 normalized), growth percentages
+- Google Trends: Search volume (0-100 normalized), growth percentages (+1900% indicators)
 - Twitter/X: Trending topics, tweet engagement (Phase 7.1)
 - Hacker News: Launch discussions, upvote patterns (planned)
 - Product Hunt: Launch metrics, comment sentiment (implemented)
 
-**Visualization Components:**
-- Trend charts: Line graphs (2022-2025 timeline) with volume overlays (Recharts)
-- Community Signals Radar: 4-platform engagement strength visualization (Recharts RadarChart)
-- 8-Dimension Scoring: KPI card grid with color-coded values (Recharts + shadcn/ui)
-- Evidence Timeline: Signal discovery chronology
-- Keyword cards: Volume, growth rate, competition level
-- Community signals badges: Platform-specific scores with member counts
+**Visualization Components (Evidence-First Model):**
+- Trend charts: Line graphs with volume overlays (Recharts v3.6.0) - ✅ IMPLEMENTED
+- Community Signals Radar: 4-platform engagement strength (Tremor AreaChart) - ⚠️ PLANNED
+- 8-Dimension Scoring: Radar chart + KPI cards (Tremor Metric + Badge) - ⚠️ PLANNED
+- Trend keyword cards: Volume, growth rate, competition level - ⚠️ PLANNED
+- Value ladder table: 4-tier pricing visualization - ✅ IMPLEMENTED
+- Evidence accordion: Collapsible sections per data source (Tremor Accordion) - ⚠️ PLANNED
+
+**Data Structures (Backend - 100% Complete):**
+- community_signals_chart (JSONB): Platform, communities, members, score, top_community
+- enhanced_scores (JSONB): 8-dimension scoring (opportunity, problem, feasibility, why_now, revenue, execution, gtm, founder_fit)
+- trend_keywords (JSONB): Keyword, volume, growth percentage
 
 **Citation Format:**
 - Every insight links to source URLs
 - Community signals section provides direct platform links
 - Trend charts include keyword search links for validation
 
-**Competitive Positioning:**
-- **Data Sources**: IdeaBrowser: 4 sources (Reddit, Facebook, YouTube, Other) | StartInsight: 7 sources (adds Twitter/X, Hacker News, Product Hunt)
-- **Scoring System**: IdeaBrowser: 4 dimensions | StartInsight: 8 dimensions (adds Go-to-Market, Founder Fit, Execution Difficulty, Revenue Potential)
-- **Visualizations**: IdeaBrowser: Basic charts | StartInsight: Recharts dual-stack (CommunitySignalsRadar, ScoreBreakdown, TrendChart)
+**Competitive Positioning (Post-Ralph-Loop):**
+- **Content Quality**: IdeaBrowser: 9/10 narrative | StartInsight: 9/10 narrative (PARITY)
+- **Data Sources**: IdeaBrowser: 4 sources | StartInsight: 7 sources (+75% more data)
+- **Scoring System**: IdeaBrowser: 4 dimensions | StartInsight: 8 dimensions (+100% analytical depth)
+- **Trend Keywords**: IdeaBrowser: 1-2 keywords | StartInsight: 3 keywords (+50-200% more trends)
+- **Visualization Stack**: IdeaBrowser: Google Trends embedded | StartInsight: Recharts + Tremor dual-stack
 - **AI Research Control**: IdeaBrowser: User-initiated | StartInsight: Admin-only trigger with request queue (Super Admin Sovereignty)
-- **Impact**: Visual evidence for every claim, transparent AI research governance
+- **Verdict**: STARTINSIGHT_WINS on analytical depth, PARITY on narrative quality, GAP on frontend visualization (60% remaining)
 
 5. The Three Core Loops
 StartInsight operates on three distinct, sequential processing loops that run continuously:

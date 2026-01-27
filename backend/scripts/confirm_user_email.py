@@ -5,8 +5,9 @@ Confirm user email in Supabase
 import asyncio
 import os
 import sys
+
 from dotenv import load_dotenv
-from supabase import create_client, Client
+from supabase import Client, create_client
 
 load_dotenv()
 
@@ -39,7 +40,7 @@ async def confirm_email(email: str):
         )
 
         print(f"✅ Email confirmed successfully for {email}")
-        print(f"\nUser can now sign in at: http://localhost:3000/auth/login")
+        print("\nUser can now sign in at: http://localhost:3000/auth/login")
 
     except Exception as e:
         print(f"❌ Error confirming email: {e}")

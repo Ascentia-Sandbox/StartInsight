@@ -98,7 +98,16 @@ export async function fetchDailyTop(limit: number = 5): Promise<Insight[]> {
   const { data } = await apiClient.get('/api/insights/daily-top', {
     params: { limit },
   });
-  return z.array(InsightSchema).parse(data);
+
+  // Use safeParse to get detailed validation errors
+  const result = z.array(InsightSchema).safeParse(data);
+
+  if (!result.success) {
+    console.error('Validation errors:', JSON.stringify(result.error.format(), null, 2));
+    throw new Error(result.error.message);
+  }
+
+  return result.data;
 }
 
 /**

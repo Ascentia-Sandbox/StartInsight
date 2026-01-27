@@ -5,7 +5,6 @@ from sqlalchemy import select
 
 from app.db.query_helpers import count_by_field, paginate_query
 from app.models.saved_insight import SavedInsight
-from app.models.user_rating import UserRating
 
 
 @pytest.mark.asyncio

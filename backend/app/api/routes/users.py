@@ -24,10 +24,9 @@ from app.api.deps import CurrentUser
 from app.db.query_helpers import count_by_field
 from app.db.session import get_db
 from app.models.insight import Insight
-from app.models.saved_insight import SavedInsight
-from app.models.user import User
-from app.models.user_rating import UserRating
 from app.models.insight_interaction import InsightInteraction
+from app.models.saved_insight import SavedInsight
+from app.models.user_rating import UserRating
 from app.schemas.user import (
     ClaimResponse,
     InteractionCreate,
@@ -36,7 +35,6 @@ from app.schemas.user import (
     RatingCreate,
     RatingListResponse,
     RatingResponse,
-    RatingUpdate,
     SavedInsightCreate,
     SavedInsightListResponse,
     SavedInsightResponse,

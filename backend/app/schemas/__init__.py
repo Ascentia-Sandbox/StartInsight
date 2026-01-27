@@ -5,25 +5,6 @@ Phase 4.1: User authentication and workspace
 Phase 4.2: Admin portal
 """
 
-from app.schemas.enhanced_insight import (
-    EnhancedInsightCreate,
-    EnhancedInsightResponse,
-    EnhancedScoreBase,
-    EnhancedScoreResponse,
-    ExecutionStep,
-    ProofSignal,
-    ScoreFilter,
-    ScoreRanking,
-    ValueLadderTier,
-)
-from app.schemas.research import (
-    ResearchAnalysisListResponse,
-    ResearchAnalysisResponse,
-    ResearchAnalysisSummary,
-    ResearchProgressUpdate,
-    ResearchQuotaResponse,
-    ResearchRequestCreate,
-)
 from app.schemas.admin import (
     AdminRole,
     AdminUserCreate,
@@ -48,11 +29,30 @@ from app.schemas.admin import (
     ReviewQueueResponse,
     SSEMessage,
 )
+from app.schemas.enhanced_insight import (
+    EnhancedInsightCreate,
+    EnhancedInsightResponse,
+    EnhancedScoreBase,
+    EnhancedScoreResponse,
+    ExecutionStep,
+    ProofSignal,
+    ScoreFilter,
+    ScoreRanking,
+    ValueLadderTier,
+)
 from app.schemas.insight import (
     CompetitorResponse,
     InsightListResponse,
     InsightResponse,
     RawSignalSummary,
+)
+from app.schemas.research import (
+    ResearchAnalysisListResponse,
+    ResearchAnalysisResponse,
+    ResearchAnalysisSummary,
+    ResearchProgressUpdate,
+    ResearchQuotaResponse,
+    ResearchRequestCreate,
 )
 from app.schemas.signals import (
     PaginatedResponse,

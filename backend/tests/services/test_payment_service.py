@@ -1,6 +1,6 @@
 """Tests for payment service - Phase 6.1."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 

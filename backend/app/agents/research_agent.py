@@ -16,7 +16,6 @@ See architecture.md "Research Agent Architecture" for specification.
 import asyncio
 import logging
 import time
-from typing import Any
 
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
@@ -27,7 +26,6 @@ from tenacity import (
     wait_exponential,
 )
 
-from app.core.config import settings
 from app.monitoring.metrics import get_metrics_tracker
 from app.schemas.research import (
     ACPFramework,
@@ -271,7 +269,7 @@ Please provide a comprehensive 40-step analysis following all frameworks:
                 agent.run(prompt),
                 timeout=MAX_ANALYSIS_TIMEOUT_SECONDS,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise Exception(
                 f"Analysis timed out after {MAX_ANALYSIS_TIMEOUT_SECONDS}s. "
                 "This may indicate an API issue or overly complex analysis."

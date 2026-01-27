@@ -10,15 +10,18 @@ See architecture.md "Research Agent Architecture" for full specification.
 """
 
 import logging
-import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.agents.research_agent import (
+    analyze_idea_with_retry,
+    get_quota_limit,
+)
 from app.api.deps import AdminUser, CurrentUser
 from app.core.constants import AnalysisStatus
 from app.core.rate_limits import limiter
@@ -26,10 +29,6 @@ from app.db.session import get_db
 from app.models.custom_analysis import CustomAnalysis
 from app.models.research_request import ResearchRequest
 from app.models.user import User
-from app.agents.research_agent import (
-    analyze_idea_with_retry,
-    get_quota_limit,
-)
 from app.schemas.research import (
     ResearchAnalysisListResponse,
     ResearchAnalysisResponse,
@@ -263,14 +262,14 @@ async def get_analysis(
     # Include results if completed
     if analysis.status == "completed":
         from app.schemas.research import (
-            MarketAnalysis,
-            CompetitorProfile,
-            ValueEquation,
-            MarketMatrix,
             ACPFramework,
-            ValidationSignal,
+            CompetitorProfile,
             ExecutionPhase,
+            MarketAnalysis,
+            MarketMatrix,
             RiskAssessment,
+            ValidationSignal,
+            ValueEquation,
         )
 
         if analysis.market_analysis:

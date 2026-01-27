@@ -11,52 +11,6 @@ Phase 7.2: API Key Service (public API)
 Phase 7.3: Tenant Service (multi-tenancy)
 """
 
-from app.services.brand_generator import BrandPackage, generate_brand_package
-from app.services.export_service import (
-    ExportFormat,
-    export_analysis_csv,
-    export_analysis_json,
-    export_analysis_pdf,
-    export_insight_csv,
-    export_insight_pdf,
-)
-from app.services.landing_page import LandingPageTemplate, generate_landing_page
-from app.services.realtime_feed import (
-    InsightFeedMessage,
-    subscribe_to_insights,
-    unsubscribe_from_insights,
-)
-from app.services.payment_service import (
-    PRICING_TIERS,
-    PricingTier,
-    check_tier_limit,
-    create_checkout_session,
-    create_customer_portal_session,
-    get_tier_limits,
-    handle_webhook_event,
-)
-from app.services.email_service import (
-    send_analysis_ready_email,
-    send_daily_digest,
-    send_email,
-    send_password_reset,
-    send_payment_confirmation,
-    send_team_invitation,
-    send_welcome_email,
-)
-from app.services.rate_limiter import (
-    check_rate_limit,
-    get_usage_stats,
-    increment_usage,
-)
-from app.services.team_service import (
-    TeamCreate,
-    TeamMemberAdd,
-    accept_invitation,
-    create_team,
-    invite_member,
-    share_insight_with_team,
-)
 from app.services.api_key_service import (
     APIKeyCreate,
     APIKeyResponse,
@@ -66,6 +20,54 @@ from app.services.api_key_service import (
     record_api_key_usage,
     revoke_api_key,
     validate_api_key,
+)
+from app.services.brand_generator import BrandPackage, generate_brand_package
+from app.services.email_service import (
+    send_analysis_ready_email,
+    send_daily_digest,
+    send_email,
+    send_password_reset,
+    send_payment_confirmation,
+    send_team_invitation,
+    send_welcome_email,
+)
+from app.services.export_service import (
+    ExportFormat,
+    export_analysis_csv,
+    export_analysis_json,
+    export_analysis_pdf,
+    export_insight_csv,
+    export_insight_pdf,
+)
+from app.services.landing_page import LandingPageTemplate, generate_landing_page
+from app.services.payment_service import (
+    PRICING_TIERS,
+    PricingTier,
+    check_tier_limit,
+    create_checkout_session,
+    create_customer_portal_session,
+    get_tier_limits,
+    handle_webhook_event,
+)
+from app.services.realtime_feed import (
+    InsightFeedMessage,
+    subscribe_to_insights,
+    unsubscribe_from_insights,
+)
+
+# Rate limiting is handled by SlowAPI (not a custom service)
+# from app.services.rate_limiter import (
+#     check_rate_limit,
+#     get_usage_stats,
+#     increment_usage,
+# )
+from app.services.team_service import (
+    TeamCreate,
+    TeamMemberAdd,
+    accept_invitation,
+    create_team,
+    invite_member,
+    share_insight_with_team,
 )
 from app.services.tenant_service import (
     TenantBrandingUpdate,
@@ -110,10 +112,10 @@ __all__ = [
     "send_payment_confirmation",
     "send_team_invitation",
     "send_password_reset",
-    # Phase 6.3: Rate Limiting
-    "check_rate_limit",
-    "get_usage_stats",
-    "increment_usage",
+    # Phase 6.3: Rate Limiting (handled by SlowAPI, not custom service)
+    # "check_rate_limit",
+    # "get_usage_stats",
+    # "increment_usage",
     # Phase 6.4: Teams
     "TeamCreate",
     "TeamMemberAdd",

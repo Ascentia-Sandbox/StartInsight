@@ -11,7 +11,7 @@ from typing import Any, TypeVar
 
 from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import DeclarativeMeta, Query
+from sqlalchemy.orm import DeclarativeMeta
 
 from app.models import User
 

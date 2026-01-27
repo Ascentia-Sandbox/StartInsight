@@ -633,87 +633,165 @@ AND timestamp >= CURRENT_DATE
 - StartInsight: 13 admin endpoints, SSE real-time streaming, documented architecture
 - Impact: Transparent system control, cost management, operational visibility
 
-### 9.5 Evidence Engine Architecture
+### 9.5 Evidence Engine Architecture (Updated 2026-01-25 - Post-Ralph-Loop)
 
-**Purpose:** Transform raw market signals into quantified, cited insights with multi-source data visualization
+**VISUALIZATION MANDATE:**
+Every insight MUST include data-driven visualizations. Evidence MUST be visual. Text narratives support charts, not replace them.
 
-**Data Layer:**
+**Data Visualization Pipeline (Scraper → AI → Database → Frontend):**
+
+```mermaid
+graph LR
+    A[Reddit Scraper] -->|PRAW API| B[Raw Signals Table]
+    C[Firecrawl Scraper] -->|Web to Markdown| B
+    D[Google Trends] -->|pytrends| B
+    B -->|Triggers| E[Enhanced Analyzer Agent]
+    E -->|Gemini 2.0 Flash| F[Insight Analysis]
+    F -->|JSONB| G[(Insights Table)]
+    G -->|API Response| H[Frontend Next.js]
+    H -->|TrendChart.tsx| I[Recharts Line Chart]
+    H -->|CommunitySignalsRadar.tsx| J[Tremor AreaChart]
+    H -->|ScoreRadar.tsx| K[Recharts Radar]
+    H -->|TrendKeywordCards.tsx| L[shadcn/ui Cards]
+    I -->|Rendered| M[User Browser]
+    J -->|Rendered| M
+    K -->|Rendered| M
+    L -->|Rendered| M
+```
+
+**Frontend Component Strategy:**
+
+| Evidence Type | Backend Storage | Frontend Component | Library | Status |
+|--------------|----------------|-------------------|---------|--------|
+| Search volume trends | trend_keywords JSONB | TrendChart.tsx | Recharts LineChart | ✅ Complete |
+| Community engagement | community_signals_chart JSONB | CommunitySignalsRadar.tsx | Tremor AreaChart | ⚠️ Planned |
+| 8-dimension scores | enhanced_scores JSONB | ScoreRadar.tsx | Recharts RadarChart | ⚠️ Planned |
+| Keyword volume/growth | trend_keywords JSONB | TrendKeywordCards.tsx | shadcn/ui Badge + Card | ⚠️ Planned |
+| Evidence citations | source_urls array | DataCitationLink.tsx | shadcn/ui Link | ✅ Complete |
+
+**Quality Parity Achievement:**
+- Ralph Loop Iteration 1: STARTINSIGHT_WINS (2026-01-25)
+- Content quality: 9/10 (matches IdeaBrowser)
+- Problem statements: 500+ words with character-driven storytelling
+- Community platforms: 3-4 (PARITY with IdeaBrowser)
+- Trend keywords: 3 (EXCEEDS IdeaBrowser's 1-2)
+- Scoring depth: 8 dimensions (EXCEEDS IdeaBrowser's 4)
+
+**Data Layer (Backend - 100% Complete):**
 
 1. **Signal Aggregation**
    - Input: 7 data sources (Reddit, Product Hunt, Google Trends, Twitter/X, Hacker News, Facebook, YouTube)
-   - Processing: Firecrawl markdown conversion, metadata extraction
-   - Storage: raw_signals table with JSONB metadata field
+   - Processing: Firecrawl markdown conversion, PydanticAI analysis with Gemini 2.0 Flash
+   - Storage: insights table with JSONB columns (community_signals_chart, enhanced_scores, trend_keywords)
 
-2. **Metadata Schema (JSONB fields)**
-```json
-{
-  "community_signals": {
-    "reddit": {
-      "score": 8,
-      "subreddits": ["r/lawyers", "r/legal", "r/legaltech"],
-      "members": 2500000,
-      "top_post_url": "https://reddit.com/r/lawyers/..."
-    },
-    "facebook": {
-      "score": 7,
-      "groups": 4,
-      "members": 150000
-    },
-    "youtube": {
-      "score": 7,
-      "channels": 15,
-      "views": "500K+"
-    }
+2. **Insights Table Schema (JSONB Columns)**
+```sql
+-- community_signals_chart: Array of platform engagement data
+[
+  {
+    "platform": "Reddit",
+    "communities": "4 subreddits",
+    "members": "2.5M+ members",
+    "score": 8,
+    "top_community": "r/legaltech"
   },
-  "trend_data": {
-    "volume": "1.0K",
-    "growth": "+1900%",
-    "chart_data": [
-      {"date": "2024-01", "volume": 10},
-      {"date": "2024-12", "volume": 190}
-    ]
+  {
+    "platform": "Facebook",
+    "communities": "4 groups",
+    "members": "150K+ members",
+    "score": 7,
+    "top_community": "Legal Tech Innovators"
+  },
+  {
+    "platform": "YouTube",
+    "communities": "15 channels",
+    "members": "N/A",
+    "score": 7,
+    "top_community": "LegalEagle"
   }
+]
+
+-- enhanced_scores: 8-dimension scoring object
+{
+  "opportunity": 8,
+  "problem": 8,
+  "feasibility": 8,
+  "why_now": 9,
+  "revenue_potential": 8,
+  "execution_difficulty": 6,
+  "go_to_market": 8,
+  "founder_fit": 7
 }
+
+-- trend_keywords: Array of trending search terms
+[
+  {
+    "keyword": "legal document automation",
+    "volume": "1.0K",
+    "growth": "+1900%"
+  },
+  {
+    "keyword": "contract analysis AI",
+    "volume": "27.1K",
+    "growth": "+86%"
+  },
+  {
+    "keyword": "law firm software",
+    "volume": "74.0K",
+    "growth": "+514%"
+  }
+]
 ```
 
-**Visualization Layer (Frontend):**
+**Visualization Layer (Frontend - 40% Complete):**
 
-1. **Community Signals Component**
-   - Display platform-specific relevance scores
-   - Show member counts and engagement metrics
-   - Link to original sources
+1. **TrendChart.tsx** (✅ IMPLEMENTED - Phase 3)
+   - Recharts LineChart for search volume over time
+   - X-axis: Date range (2022-2025)
+   - Y-axis: Search volume (0-100 normalized)
+   - Tooltip: Volume + date on hover
+   - Status: Production-ready
 
-2. **Trend Chart Component**
-   - Enhanced from existing TrendChart
-   - Add volume label, growth badge, trend direction indicator
+2. **CommunitySignalsRadar.tsx** (⚠️ PLANNED - Phase 5.2)
+   - Recharts RadarChart or AreaChart for 4-platform engagement
+   - Data: Platform name + engagement score (1-10)
+   - Visual: Radar overlay showing relative strength
+   - Status: Backend data ready, component not built
 
-3. **Evidence-Based Scoring Display**
-   - ScoreCard component (radar chart with 8 dimensions)
-   - Score breakdown tooltips
-   - Data source attribution
+3. **ScoreRadar.tsx** (⚠️ PLANNED - Phase 5.2)
+   - Recharts RadarChart for 8-dimension scoring
+   - Dimensions: Opportunity, Problem, Feasibility, Why Now, Revenue, Execution, GTM, Founder Fit
+   - Color-coded: 8-10 (green), 5-7 (amber), 1-4 (red)
+   - Status: Backend data ready, component not built
 
-**Frontend Components:**
+4. **TrendKeywordCards.tsx** (⚠️ PLANNED - Phase 5.2)
+   - shadcn/ui Card grid for trending keywords
+   - Display: Keyword, volume, growth percentage
+   - Badges: Volume size (1K, 27K, 74K), Growth color-coded by percentage
+   - Status: Backend data ready, component not built
 
-**CommunitySignalsBadge.tsx**
-- Display platform-specific relevance scores
-- Props: platform, score (1-10), members (optional)
+5. **EvidencePanel.tsx** (⚠️ ENHANCEMENT NEEDED)
+   - Current: Basic collapsible sections
+   - Planned: Integrate all visualization components (CommunitySignalsRadar, ScoreRadar, TrendKeywordCards)
+   - Layout: Accordion sections per data source type
+   - Status: Exists but needs chart integration
 
-**DataCitation.tsx**
-- Link to original source with preview
-- Props: platform, url, snippet
+**Frontend Component Stack:**
 
-**TrendIndicator.tsx**
-- Visual growth indicator (arrow up/down, percentage)
-- Props: growth (number), direction (rising/falling/stable)
-
-**EvidencePanel.tsx** (NEW)
-- Collapsible panel showing all data sources
-- Components: CommunitySignalsBadge[], TrendChart, DataCitation[]
+| Component | Library | Status | Purpose |
+|-----------|---------|--------|---------|
+| TrendChart | Recharts v3.6.0 | ✅ IMPLEMENTED | Search volume line chart |
+| CommunitySignalsRadar | Recharts RadarChart | ⚠️ PLANNED | 4-platform engagement visualization |
+| ScoreRadar | Recharts RadarChart | ⚠️ PLANNED | 8-dimension scoring visualization |
+| TrendKeywordCards | shadcn/ui Card + Badge | ⚠️ PLANNED | Keyword volume + growth cards |
+| EvidencePanel | shadcn/ui Accordion | ⚠️ PARTIAL | Container for all evidence components |
 
 **Competitive Advantage:**
-- IdeaBrowser: 4 community sources (Reddit, Facebook, YouTube, Other)
-- StartInsight: 7 community sources (adds Twitter/X, Hacker News, Product Hunt)
-- Impact: Users can verify data sources, trace insights to original discussions
+- **IdeaBrowser**: Google Trends embedded, 4 platform badges (no charts)
+- **StartInsight**: Multi-chart evidence stack (3 chart types minimum per insight)
+- **Data Depth**: IdeaBrowser 4 dimensions → StartInsight 8 dimensions (+100%)
+- **Keyword Coverage**: IdeaBrowser 1-2 keywords → StartInsight 3 keywords (+50-200%)
+- **Verdict**: STARTINSIGHT_WINS on analytical depth (post-Ralph-Loop), GAP on visualization (60% remaining)
 
 ### 9.6 Builder Integration Architecture
 

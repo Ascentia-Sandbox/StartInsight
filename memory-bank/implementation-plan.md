@@ -686,6 +686,76 @@ Every insight MUST include data-driven visualizations. Evidence MUST be visual. 
 
 **Files:** backend/app/services/export_service.py, frontend/components/ExportButtons.tsx
 
+### 5.3 Visualization Deployment (3-Day Sprint)
+
+**Status:** [ ] Not Started
+**Priority:** HIGH (Critical Gap - Visual Quality 4/10 vs IdeaBrowser 8/10)
+**Dependencies:** Phase 4.3.5 (Evidence Engine components exist but not deployed)
+
+**Objective:** Deploy all 4 visualization components to insight detail page to achieve IdeaBrowser visual parity
+
+**Context:** Visual Quality Audit (2026-01-25) found:
+- Content Quality: 9/10 (PARITY with IdeaBrowser)
+- Visualization Quality: 4/10 vs IdeaBrowser 8/10 (CRITICAL GAP)
+- All components code-complete but NOT deployed to insight detail page
+
+**Tasks:**
+
+- [ ] **Task 5.3.1**: Deploy ScoreRadar to insight detail page
+  - **Target File**: frontend/app/insights/[id]/page.tsx
+  - **Integration**: Pass 8-dimension scores from insight.enhanced_scores JSONB to ScoreRadar component
+  - **Component**: Use existing frontend/components/evidence/score-radar.tsx
+  - **Success Metric**: Renders 8-bar radar chart with tooltips showing dimension names and scores (1-10 scale)
+
+- [ ] **Task 5.3.2**: Deploy CommunitySignalsRadar to insight detail page
+  - **Target File**: frontend/app/insights/[id]/page.tsx
+  - **Integration**: Pass community_signals data from insight.raw_signal.extra_metadata.community_signals to CommunitySignalsRadar component
+  - **Component**: Use existing frontend/components/evidence/community-signals-radar.tsx
+  - **Success Metric**: Renders radar chart with 4 platforms (Reddit, Facebook, YouTube, Other) showing engagement scores
+
+- [ ] **Task 5.3.3**: Deploy TrendKeywordCards to insight detail page
+  - **Target File**: frontend/app/insights/[id]/page.tsx
+  - **Integration**: Pass trend_keywords array from insight.trend_keywords JSONB to TrendKeywordCards component
+  - **Component**: Use existing frontend/components/evidence/trend-keyword-cards.tsx
+  - **Success Metric**: Renders 3 keyword cards with volume badges (1K, 27K, 74K) and growth indicators (+1900%, +86%)
+
+- [ ] **Task 5.3.4**: Convert TrendChart from BarChart to AreaChart
+  - **Target File**: frontend/components/trend-chart.tsx
+  - **Improvement**: Replace Recharts BarChart with AreaChart or LineChart component
+  - **Data Source**: Add 30-day timeseries data from new backend endpoint
+  - **Styling**: Reduce gridline opacity to 10% for cleaner visual
+  - **Success Metric**: Renders smooth area chart with gradient fill, matching IdeaBrowser aesthetic
+
+- [ ] **Task 5.3.5**: Backend timeseries endpoint
+  - **Target File**: backend/app/api/routes/insights.py
+  - **Improvement**: Add GET /api/insights/{id}/trend-data endpoint
+  - **Data Source**: Fetch 30-day Google Trends data from raw_signal.extra_metadata.trend_data
+  - **Response Schema**: Return {dates: string[], values: number[]} array for 30 data points
+  - **Success Metric**: Returns valid timeseries data for TrendChart visualization
+
+**Acceptance Criteria:**
+- All 4 visualization components render on insight detail page without errors
+- Visual Score increases from 4/10 to 8/10 (IdeaBrowser parity)
+- No new TypeScript compilation errors
+- Page load time remains <2s with all charts rendered
+- Mobile responsive (charts adapt to viewport width)
+
+**Technical Notes:**
+- Use existing components from Phase 4.3.5 (already code-complete)
+- Data schema already exists in JSONB columns (no migration needed)
+- Focus on integration, not component creation
+- Test with multiple insights to verify data variety
+
+**Estimated Effort:** 3 days (S-M complexity per task)
+
+**Files:**
+- frontend/app/insights/[id]/page.tsx (main integration point)
+- frontend/components/evidence/score-radar.tsx (existing)
+- frontend/components/evidence/community-signals-radar.tsx (existing)
+- frontend/components/evidence/trend-keyword-cards.tsx (existing)
+- frontend/components/trend-chart.tsx (modification needed)
+- backend/app/api/routes/insights.py (new endpoint)
+
 ### 5.4 Real-time Feed
 
 **Status:** [x] Backend Complete, [x] Frontend Complete
@@ -706,12 +776,16 @@ Every insight MUST include data-driven visualizations. Evidence MUST be visual. 
 
 ### Phase 5 Summary
 
-**Backend:** [x] 100% Complete (19 endpoints, 3 models, 4 services)
-**Frontend:** [x] 100% Complete (3 pages: research, build, feed)
+**Backend:** [x] 100% Complete (19 endpoints, 3 models, 4 services) | [ ] Phase 5.3.5 pending (1 endpoint)
+**Frontend:** [x] 95% Complete (3 pages: research, build, feed) | [ ] Phase 5.3 visualization deployment pending
 **Migration:** [x] 100% Complete (Phase 5 tables in Supabase)
 **Testing:** [x] Backend 32 tests passing, [x] Frontend API integration verified
 
 **Total Code:** ~1,800 lines backend, ~900 lines frontend
+
+**Remaining Work:**
+- Phase 5.3: Visualization Deployment (5 tasks, 3-day sprint, HIGH priority)
+- Impact: Closes visual quality gap from 4/10 to 8/10 (IdeaBrowser parity)
 
 ---
 
@@ -888,13 +962,16 @@ Every insight MUST include data-driven visualizations. Evidence MUST be visual. 
 | **Phase 4.3** | [x] 100% | [x] 100% | [x] 100% | **[x] 8D Scoring (ADVANTAGE)** | **100%** |
 | **Phase 4.5** | [x] 100% | [x] 100% | [x] 100% | **[x] APAC Region (ADVANTAGE)** | **100%** |
 | **Phase 5.1** | [x] 100% | [x] 100% | [x] 100% | **[x] Research Agent (40 steps vs 3-9)** | **100%** |
+| **Phase 5.3** | [ ] 20% | [ ] 0% | [x] 100% | **[ ] Visual Parity (4/10 → 8/10)** | **40%** |
 | **Phase 5.4** | [x] 100% | [x] 100% | [x] 100% | **[x] Real-time Feed (ADVANTAGE)** | **100%** |
 | **Phase 6.4** | [x] 100% | [x] 100% | [x] 100% | **[x] Team Collaboration (ADVANTAGE)** | **100%** |
 | **Phase 7.2** | [x] 100% | [x] 100% | [x] 100% | **[x] Public API (ADVANTAGE)** | **100%** |
 | **Phase 7.1** | [x] 100% | [x] 100% | [x] 100% | **[x] Twitter/X Scraper** | **100%** |
 | **Phase 7.3** | [x] 100% | [x] 100% | [x] 100% | **[x] White-label (ADVANTAGE)** | **100%** |
 
-**Overall:** 100% Complete (Backend + Frontend + Migration)
+**Overall:** 95% Complete (Backend + Frontend + Migration)
+
+**Current Gap:** Phase 5.3 Visualization Deployment (5 tasks, 3-day sprint)
 
 **IdeaBrowser Competitive Advantages (ADVANTAGE markers):**
 1. Super Admin Agent Controller (Phase 4.2) - Real-time monitoring, SSE streaming
@@ -906,7 +983,7 @@ Every insight MUST include data-driven visualizations. Evidence MUST be visual. 
 7. Public API (Phase 7.2) - 97 endpoints vs closed ecosystem
 8. White-label Multi-tenancy (Phase 7.3) - Agency reseller program
 
-**Next Priority:** Frontend enhancements for Evidence Engine and Builder Integration (optional polish)
+**Next Priority:** Phase 5.3 Visualization Deployment (CRITICAL - closes visual quality gap to achieve IdeaBrowser parity)
 
 **Deployment:** 37% Complete (Phase 1-3 deployed, Phase 4-7 pending production deployment)
 

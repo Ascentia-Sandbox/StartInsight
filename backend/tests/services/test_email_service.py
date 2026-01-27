@@ -1,6 +1,6 @@
 """Tests for email service - Phase 6.2."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 

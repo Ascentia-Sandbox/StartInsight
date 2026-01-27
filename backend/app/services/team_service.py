@@ -11,7 +11,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
 
-from app.core.config import settings
 from app.services.email_service import send_team_invitation
 
 logger = logging.getLogger(__name__)

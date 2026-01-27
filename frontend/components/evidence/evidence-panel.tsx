@@ -11,6 +11,7 @@ import { TrendIndicator, TrendStats } from './trend-indicator';
 import { DataCitationLink } from './data-citation-link';
 import { CommunitySignalsRadar } from './community-signals-radar';
 import { ScoreBreakdown } from './score-breakdown';
+import { TrendKeywordCards } from './trend-keyword-cards';
 
 interface EvidenceData {
   community_signals?: Record<string, {
@@ -34,6 +35,11 @@ interface EvidenceData {
     dimension: string;
     value: number;
     label: string;
+  }>;
+  trend_keywords?: Array<{
+    keyword: string;
+    volume: string;
+    growth: string;
   }>;
   trend_data?: {
     keyword?: string;
@@ -68,16 +74,19 @@ export function EvidencePanel({
   const communitySignals = evidence.community_signals;
   const communitySignalsChart = evidence.community_signals_chart;
   const enhancedScores = evidence.enhanced_scores;
+  const trendKeywords = evidence.trend_keywords;
   const trendData = evidence.trend_data;
   const hasCommunitySignals = communitySignals && Object.keys(communitySignals).length > 0;
   const hasCommunitySignalsChart = communitySignalsChart && communitySignalsChart.length > 0;
   const hasEnhancedScores = enhancedScores && enhancedScores.length > 0;
+  const hasTrendKeywords = trendKeywords && trendKeywords.length > 0;
   const hasTrendData = trendData && (trendData.growth || trendData.current_interest);
 
   // Count total data sources
   const sourceCount = (hasCommunitySignals ? Object.keys(communitySignals!).length : 0) +
                       (hasCommunitySignalsChart ? communitySignalsChart!.length : 0) +
                       (hasEnhancedScores ? 1 : 0) +
+                      (hasTrendKeywords ? 1 : 0) +
                       (hasTrendData ? 1 : 0) +
                       (primarySource ? 1 : 0);
 
@@ -169,7 +178,16 @@ export function EvidencePanel({
           </div>
         )}
 
-        {hasEnhancedScores && hasTrendData && <Separator />}
+        {hasEnhancedScores && (hasTrendKeywords || hasTrendData) && <Separator />}
+
+        {/* Trend Keywords Section */}
+        {hasTrendKeywords && (
+          <div className="space-y-3">
+            <TrendKeywordCards keywords={trendKeywords!} />
+          </div>
+        )}
+
+        {hasTrendKeywords && hasTrendData && <Separator />}
 
         {/* Trend Data Section */}
         {hasTrendData && (

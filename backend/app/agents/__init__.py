@@ -13,10 +13,10 @@ from app.agents.enhanced_analyzer import (
     upgrade_insight_scoring,
 )
 from app.agents.research_agent import (
+    RESEARCH_QUOTA_LIMITS,
     analyze_idea,
     analyze_idea_with_retry,
     get_quota_limit,
-    RESEARCH_QUOTA_LIMITS,
 )
 
 __all__ = [

@@ -12,7 +12,7 @@ import logging
 from datetime import datetime, timedelta
 from functools import lru_cache
 
-from supabase import create_client, Client
+from supabase import Client, create_client
 from supabase.lib.client_options import ClientOptions
 
 from app.core.config import settings
@@ -25,7 +25,7 @@ _admin_client_cache_time: datetime | None = None
 _ADMIN_CACHE_TTL_MINUTES = 10
 
 
-@lru_cache()
+@lru_cache
 def get_supabase_client() -> Client | None:
     """
     Get Supabase client with anon key (public access).
