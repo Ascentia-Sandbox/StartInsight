@@ -445,6 +445,10 @@ See `.env.example` for all available environment variables.
 - Configure production environment variables
 - Set up monitoring (Sentry, uptime checks)
 
+### 🔧 Current Branch: SI-Claude-vllm
+
+This branch is used for Claude vLLM integration testing.
+
 See `../memory-bank/active-context.md` for deployment checklist and `../memory-bank/implementation-plan.md` for complete roadmap.
 
 ## Contributing
