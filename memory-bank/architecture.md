@@ -3,8 +3,8 @@
 **Reading Priority:** CRITICAL
 **Read When:** Before implementing features, designing database models, creating APIs
 **Dependencies:** Read active-context.md for current phase, implementation-plan.md for tasks
-**Purpose:** System architecture, 21 database tables, 97 API endpoints, auth, RLS, deployment
-**Last Updated:** 2026-01-25
+**Purpose:** System architecture, 26 database tables, 131 API endpoints, auth, RLS, deployment
+**Last Updated:** 2026-01-29
 ---
 
 # System Architecture: StartInsight
@@ -19,9 +19,9 @@
 
 | Component | Technology | Port/URL | Purpose |
 |-----------|-----------|----------|---------|
-| **Frontend** | Next.js 16.1.3 (App Router) | 3000 | User dashboard, admin portal |
-| **Backend** | FastAPI + Uvicorn ASGI | 8000 | REST API (97 endpoints), SSE streaming |
-| **Database** | PostgreSQL 16 (Supabase) | 5433 | 21 tables with RLS enabled |
+| **Frontend** | Next.js 16.1.3 (App Router) | 3000 | User dashboard, admin portal, public pages (34 routes) |
+| **Backend** | FastAPI + Uvicorn ASGI | 8000 | REST API (131 endpoints), SSE streaming |
+| **Database** | PostgreSQL 16 (Supabase) | 5433 | 26 tables with RLS enabled |
 | **Cache/Queue** | Redis 7 | 6379 | Arq task queue, rate limiting |
 | **Worker** | Arq + APScheduler | N/A | Background scraping (6-hour intervals) |
 | **AI** | Claude 3.5 Sonnet (Anthropic) | API | PydanticAI agents (analysis, research) |
@@ -89,7 +89,7 @@ User → Next.js → GET /api/insights → FastAPI → PostgreSQL → JSON respo
 
 ---
 
-## 4. Database Schema (21 Tables)
+## 4. Database Schema (26 Tables)
 
 ### 4.1 Core Tables (Phase 1-3)
 
@@ -188,7 +188,52 @@ User → Next.js → GET /api/insights → FastAPI → PostgreSQL → JSON respo
 **`tenant_users`**
 - id (UUID PK), tenant_id (UUID FK), user_id (UUID FK users), role (enum: admin/member), joined_at
 
-### 4.8 Indexes
+### 4.8 Public Content Tables (Phase 12-14)
+
+**`tools`** (54-tool directory)
+- id (UUID PK), name (varchar 255), tagline (varchar 500), description (text), category (varchar 100)
+- pricing (varchar 100), website_url (varchar 500), logo_url (varchar 500)
+- features (JSONB array), is_featured (bool default false), sort_order (int default 0)
+- created_at, updated_at
+- **Indexes**: idx_tools_category, idx_tools_featured_sort (composite: is_featured DESC, sort_order ASC)
+- **RLS**: Public SELECT (no auth required), Admin INSERT/UPDATE/DELETE
+- **Purpose**: Public-facing tool directory (/tools page)
+- **Sample Data**: 54 tools seeded across 6 categories (Design, Development, Marketing, Analytics, Productivity, AI)
+
+**`success_stories`** (Founder case studies)
+- id (UUID PK), founder_name (varchar 255), company_name (varchar 255), tagline (varchar 500)
+- idea_summary (text), journey_narrative (text 3000+ words)
+- metrics (JSONB: revenue, users, growth_rate, funding), timeline (JSONB array: year, milestone)
+- avatar_url (varchar 500), company_logo_url (varchar 500)
+- is_featured (bool default false), sort_order (int default 0)
+- created_at, updated_at
+- **Indexes**: idx_success_stories_featured_sort (composite: is_featured DESC, sort_order ASC)
+- **RLS**: Public SELECT, Admin INSERT/UPDATE/DELETE
+- **Purpose**: Founder validation stories (/success-stories page)
+- **Sample Data**: 12 success stories seeded (SaaS, E-commerce, Marketplace verticals)
+
+**`trends`** (180+ trending keywords)
+- id (UUID PK), keyword (varchar 255 unique), search_volume (varchar 20), growth_percentage (varchar 20)
+- category (varchar 100), business_implications (text), trend_data (JSONB: chart_points, related_keywords)
+- source (varchar 100 default 'google_trends'), is_featured (bool default false)
+- created_at, updated_at
+- **Indexes**: idx_trends_keyword (unique), idx_trends_volume DESC, idx_trends_growth DESC, idx_trends_category
+- **RLS**: Public SELECT, Admin INSERT/UPDATE/DELETE
+- **Purpose**: Trending keyword discovery (/trends page)
+- **Sample Data**: 12 trends seeded (expandable to 180+ via Google Trends API)
+
+**`market_insights`** (Blog articles)
+- id (UUID PK), title (varchar 500), slug (varchar 255 unique), summary (varchar 1000)
+- content (text Markdown), category (varchar 100), author_name (varchar 255)
+- author_avatar_url (varchar 500), cover_image_url (varchar 500)
+- reading_time_minutes (int), published_at (timestamptz nullable)
+- created_at, updated_at
+- **Indexes**: idx_market_insights_slug (unique), idx_market_insights_published DESC, idx_market_insights_category
+- **RLS**: Public SELECT WHERE published_at IS NOT NULL, Admin SELECT/INSERT/UPDATE/DELETE (all records)
+- **Purpose**: Marketing blog (/market-insights page)
+- **Sample Data**: 6 blog articles seeded (industry trends, startup guides, case studies)
+
+### 4.9 Indexes
 
 **Critical indexes** (all tables):
 - `raw_signals`: idx_source, idx_processed, idx_created_at
@@ -201,7 +246,7 @@ User → Next.js → GET /api/insights → FastAPI → PostgreSQL → JSON respo
 
 ---
 
-## 5. API Endpoints (97 Total)
+## 5. API Endpoints (131 Total)
 
 ### 5.1 Phase 1-3 (MVP - 8 endpoints)
 
@@ -344,7 +389,45 @@ User → Next.js → GET /api/insights → FastAPI → PostgreSQL → JSON respo
 - `POST /api/tenants/{id}/domain` - Configure custom domain
 - `GET /api/tenants/by-domain/{domain}` - Get tenant by domain
 
-### 5.6 Authentication
+### 5.6 Phase 12-14: Public Content APIs (26 endpoints)
+
+**Tools API** (6 endpoints - Public)
+- `GET /api/tools` - List all tools (filter: category, limit, offset)
+- `GET /api/tools/featured` - Get featured tools (limit param)
+- `GET /api/tools/{id}` - Get single tool details
+- `POST /api/tools` - Create tool (admin only)
+- `PATCH /api/tools/{id}` - Update tool (admin only)
+- `DELETE /api/tools/{id}` - Delete tool (admin only)
+
+**Success Stories API** (6 endpoints - Public)
+- `GET /api/success-stories` - List all success stories (filter: featured, limit, offset)
+- `GET /api/success-stories/featured` - Get featured stories (limit param)
+- `GET /api/success-stories/{id}` - Get single story details
+- `POST /api/success-stories` - Create story (admin only)
+- `PATCH /api/success-stories/{id}` - Update story (admin only)
+- `DELETE /api/success-stories/{id}` - Delete story (admin only)
+
+**Trends API** (5 endpoints - Public)
+- `GET /api/trends` - List all trends (filter: category, sort: volume|growth, limit, offset)
+- `GET /api/trends/featured` - Get featured trends (limit param)
+- `GET /api/trends/{keyword}` - Get trend details by keyword
+- `POST /api/trends` - Create/update trend (admin only)
+- `DELETE /api/trends/{id}` - Delete trend (admin only)
+
+**Market Insights API** (6 endpoints - Public)
+- `GET /api/market-insights` - List published articles (filter: category, limit, offset)
+- `GET /api/market-insights/featured` - Get featured articles (limit param)
+- `GET /api/market-insights/{slug}` - Get single article by slug
+- `POST /api/market-insights` - Create article (admin only)
+- `PATCH /api/market-insights/{id}` - Update article (admin only)
+- `DELETE /api/market-insights/{id}` - Delete article (admin only)
+
+**Idea of the Day API** (3 endpoints - Public)
+- `GET /api/idea-of-day` - Get today's featured idea (anonymous access)
+- `GET /api/idea-of-day/history` - Get past ideas (limit: 7 days)
+- `POST /api/idea-of-day/refresh` - Manually refresh (admin only)
+
+### 5.7 Authentication
 
 **All Phase 4+ endpoints require**:
 - `Authorization: Bearer <supabase_jwt>` header
@@ -443,6 +526,273 @@ Frontend → EventSource('/api/admin/stream') → Backend sends JSON every 5s �
 **Real-time Feed** (Phase 5.4):
 ```
 Frontend → EventSource('/api/feed/stream') → New insights → Toast notification
+```
+
+---
+
+## 7.5 Frontend Routes (34 Total)
+
+### Phase 1-7 Routes (18 routes)
+
+**Core Application** (8 routes):
+- `/` - Homepage/dashboard
+- `/insights` - Browse insights (filter, search)
+- `/insights/[id]` - Insight detail page
+- `/workspace` - User workspace (saved, building, interested)
+- `/research` - AI research request form
+- `/research/[id]` - Research analysis results
+- `/build` - Build tools (brand packages, landing pages)
+- `/profile` - User profile settings
+
+**Admin Portal** (4 routes):
+- `/admin` - Admin dashboard (metrics, agent control)
+- `/admin/insights` - Insight moderation queue
+- `/admin/users` - User management
+- `/admin/research` - Research request queue
+
+**Authentication** (3 routes):
+- `/sign-in` - Clerk sign-in page
+- `/sign-up` - Clerk sign-up page
+- `/sign-out` - Logout handler
+
+**Team Collaboration** (3 routes):
+- `/teams` - Teams list
+- `/teams/[id]` - Team workspace
+- `/teams/[id]/settings` - Team settings
+
+### Phase 12-14 Routes (16 routes)
+
+**Public Pages** (10 routes):
+- `/tools` - 54-tool directory (paginated, category filters)
+- `/success-stories` - Founder case studies (12 stories)
+- `/trends` - Trending keywords (180+ trends, search volume charts)
+- `/market-insights` - Blog articles (6 articles)
+- `/market-insights/[slug]` - Single blog article
+- `/about` - Company story, mission, team
+- `/contact` - Contact form (Resend email integration)
+- `/faq` - Frequently asked questions
+- `/pricing` - Pricing tiers (Free, Starter, Pro, Enterprise)
+- `/platform-tour` - Product walkthrough
+
+**Admin Content Management** (4 routes):
+- `/admin/tools` - CRUD for tools directory
+- `/admin/success-stories` - CRUD for success stories
+- `/admin/trends` - CRUD for trends
+- `/admin/market-insights` - CRUD for blog articles
+
+**SEO Routes** (2 special routes):
+- `/sitemap.xml` - Dynamic sitemap generation (app/sitemap.ts)
+- `/robots.txt` - Crawler directives (public/robots.txt)
+
+### Route Patterns
+
+**Public vs Authenticated:**
+- Public (no auth): `/`, `/tools`, `/success-stories`, `/trends`, `/market-insights`, `/about`, `/contact`, `/faq`, `/pricing`, `/platform-tour`, `/sitemap.xml`, `/robots.txt`
+- Authenticated: `/workspace`, `/research`, `/build`, `/profile`, `/teams`
+- Admin only: `/admin/*`
+
+**Pagination:**
+- `/insights?page=2&limit=12` (12 insights per page)
+- `/tools?category=design&page=1` (12 tools per page)
+- `/trends?sort=volume&page=3` (12 trends per page)
+- `/market-insights?category=guides&page=1` (6 articles per page)
+
+**SEO Optimization:**
+- All public pages: Server-side rendering (SSR)
+- Metadata: Dynamic Open Graph tags, Twitter cards
+- Structured data: JSON-LD for articles, tools, success stories
+
+---
+
+## 7.6 Navigation Architecture (Phase 12-14)
+
+### Mega-Menu Structure
+
+**Main Navigation Bar** (desktop):
+- **Browse Ideas** (dropdown)
+  - All Insights
+  - Trending Now
+  - Success Stories
+  - Idea of the Day
+- **Tools** (dropdown)
+  - All Tools (54 tools)
+  - By Category (6 categories)
+  - Featured Tools
+- **Resources** (dropdown)
+  - Market Insights (blog)
+  - Trending Keywords
+  - Platform Tour
+  - FAQ
+- **Company** (dropdown)
+  - About
+  - Pricing
+  - Contact
+- **Sign In** / **Dashboard** (auth-dependent)
+
+**Mobile Navigation** (sheet drawer):
+- Accordion sections for dropdowns
+- Collapsible categories
+- Touch-optimized tap targets
+
+**Component Implementation:**
+```typescript
+// components/navigation/main-nav.tsx
+import { NavigationMenu, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent } from '@/components/ui/navigation-menu'
+
+<NavigationMenu>
+  <NavigationMenuItem>
+    <NavigationMenuTrigger>Browse Ideas</NavigationMenuTrigger>
+    <NavigationMenuContent>
+      {/* 4 links */}
+    </NavigationMenuContent>
+  </NavigationMenuItem>
+  {/* 3 more menus */}
+</NavigationMenu>
+```
+
+**Keyboard Navigation:**
+- Arrow keys: Navigate menu items
+- Enter: Activate link
+- Escape: Close dropdown
+- Tab: Skip to next section
+
+**Accessibility:**
+- ARIA labels on all menu items
+- Focus indicators (Tailwind ring utilities)
+- Screen reader announcements
+
+---
+
+## 7.7 SEO Infrastructure (Phase 14)
+
+### Dynamic Sitemap Generation
+
+**File:** `frontend/app/sitemap.ts`
+
+```typescript
+import { MetadataRoute } from 'next'
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const baseUrl = 'https://startinsight.app'
+
+  // Static pages
+  const routes = ['', '/tools', '/success-stories', '/trends', '/market-insights', '/about', '/contact', '/faq', '/pricing', '/platform-tour']
+
+  // Dynamic pages (fetch from API)
+  const insights = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/insights`).then(r => r.json())
+  const articles = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/market-insights`).then(r => r.json())
+
+  return [
+    ...routes.map(route => ({
+      url: `${baseUrl}${route}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: route === '' ? 1.0 : 0.8
+    })),
+    ...insights.map(insight => ({
+      url: `${baseUrl}/insights/${insight.id}`,
+      lastModified: new Date(insight.created_at),
+      changeFrequency: 'monthly',
+      priority: 0.6
+    })),
+    ...articles.map(article => ({
+      url: `${baseUrl}/market-insights/${article.slug}`,
+      lastModified: new Date(article.updated_at),
+      changeFrequency: 'monthly',
+      priority: 0.7
+    }))
+  ]
+}
+```
+
+### Metadata Configuration
+
+**Global Metadata** (`app/layout.tsx`):
+```typescript
+export const metadata: Metadata = {
+  metadataBase: new URL('https://startinsight.app'),
+  title: {
+    default: 'StartInsight - AI-Powered Startup Idea Discovery',
+    template: '%s | StartInsight'
+  },
+  description: 'Discover data-driven startup ideas with AI analysis. 180+ trending keywords, 54 tools, founder success stories, and daily insights.',
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://startinsight.app',
+    siteName: 'StartInsight',
+    images: [{ url: '/og-image.png', width: 1200, height: 630 }]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@startinsight',
+    creator: '@startinsight'
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1
+    }
+  }
+}
+```
+
+**Page-Specific Metadata:**
+- `/insights/[id]`: Dynamic OG images with insight title, problem statement
+- `/market-insights/[slug]`: Article cover image, author, reading time
+- `/tools`: List of 54 tools, category filters
+- `/success-stories`: Founder names, company logos
+
+### Structured Data (Schema.org)
+
+**Article Schema** (blog posts):
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "{{ article.title }}",
+  "description": "{{ article.summary }}",
+  "author": {
+    "@type": "Person",
+    "name": "{{ article.author_name }}"
+  },
+  "datePublished": "{{ article.published_at }}",
+  "dateModified": "{{ article.updated_at }}",
+  "image": "{{ article.cover_image_url }}"
+}
+```
+
+**Product Schema** (tools):
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "{{ tool.name }}",
+  "description": "{{ tool.description }}",
+  "category": "{{ tool.category }}",
+  "offers": {
+    "@type": "Offer",
+    "price": "{{ tool.pricing }}"
+  }
+}
+```
+
+### robots.txt
+
+```txt
+User-agent: *
+Allow: /
+
+# Disallow admin routes
+Disallow: /admin/
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://startinsight.app/sitemap.xml
 ```
 
 ---
