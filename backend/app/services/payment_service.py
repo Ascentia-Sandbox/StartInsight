@@ -6,6 +6,7 @@ Handles subscription management, checkout sessions, and webhooks.
 import logging
 from datetime import datetime
 from typing import Any
+from urllib.parse import urlparse
 
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -156,15 +157,16 @@ async def create_checkout_session(
         if not cancel_url.startswith("https://"):
             raise ValueError("cancel_url must use HTTPS in production")
 
-        # Validate URLs belong to allowed domains (prevent redirect attacks)
-        allowed_domains = settings.cors_origins_list
-        success_domain = success_url.split("/")[2] if len(success_url.split("/")) > 2 else ""
-        cancel_domain = cancel_url.split("/")[2] if len(cancel_url.split("/")) > 2 else ""
+        # Validate URLs belong to allowed domains (prevent open redirect attacks)
+        allowed_origins = settings.cors_origins_list
+        allowed_hosts = {urlparse(origin).hostname for origin in allowed_origins if urlparse(origin).hostname}
+        success_host = urlparse(success_url).hostname
+        cancel_host = urlparse(cancel_url).hostname
 
-        if not any(domain in success_url for domain in allowed_domains):
-            raise ValueError(f"success_url domain not in allowed CORS origins: {success_domain}")
-        if not any(domain in cancel_url for domain in allowed_domains):
-            raise ValueError(f"cancel_url domain not in allowed CORS origins: {cancel_domain}")
+        if success_host not in allowed_hosts:
+            raise ValueError(f"success_url domain not in allowed CORS origins: {success_host}")
+        if cancel_host not in allowed_hosts:
+            raise ValueError(f"cancel_url domain not in allowed CORS origins: {cancel_host}")
 
     stripe = get_stripe_client()
     if not stripe or not settings.stripe_secret_key:
@@ -263,7 +265,13 @@ async def handle_webhook_event(
     """
     stripe = get_stripe_client()
     if not stripe or not settings.stripe_webhook_secret:
-        logger.warning("Stripe webhooks not configured")
+        # CRITICAL: Fail hard in production to prevent webhook forgery
+        if settings.environment == "production":
+            logger.error("Stripe webhook secret not configured in production!")
+            raise ValueError("STRIPE_WEBHOOK_SECRET is required in production")
+
+        # Development only: allow skip with warning
+        logger.warning("Stripe webhooks not configured - development mode only")
         return {"status": "skipped", "reason": "not_configured"}
 
     try:

@@ -90,11 +90,16 @@ class InsightResponse(BaseModel):
     why_now_score: int | None = Field(default=None, ge=1, le=10)
     go_to_market_score: int | None = Field(default=None, ge=1, le=10)
     founder_fit_score: int | None = Field(default=None, ge=1, le=10)
-    execution_difficulty_score: int | None = Field(default=None, ge=1, le=10)
-    revenue_potential_score: int | None = Field(default=None, ge=1, le=10)
+    execution_difficulty_score: int | None = Field(
+        default=None, ge=1, le=10, validation_alias="execution_difficulty"
+    )
+    revenue_potential_score: str | None = Field(
+        default=None, validation_alias="revenue_potential"
+    )
 
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 
 class InsightListResponse(BaseModel):
