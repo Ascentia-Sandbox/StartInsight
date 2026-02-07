@@ -1,12 +1,16 @@
 /**
- * Next.js Middleware for Supabase Auth
+ * Next.js Middleware - Composed Authentication + i18n
  *
- * - Refreshes auth session
- * - Protects routes that require authentication
+ * Handles:
+ * 1. Supabase authentication and session refresh
+ * 2. Route protection for authenticated pages
+ * 3. Locale routing (English-only)
  */
 
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import createIntlMiddleware from 'next-intl/middleware';
+import { locales } from './i18n';
 
 // Routes that require authentication
 const protectedRoutes = ['/dashboard', '/workspace', '/settings', '/research', '/build', '/teams', '/billing'];
@@ -14,8 +18,19 @@ const protectedRoutes = ['/dashboard', '/workspace', '/settings', '/research', '
 // Routes that require admin role
 const adminRoutes = ['/admin'];
 
+// Create i18n middleware instance
+const intlMiddleware = createIntlMiddleware({
+  locales,
+  defaultLocale: 'en',
+  localePrefix: 'as-needed'
+});
+
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
+  // Step 1: Handle i18n routing first
+  const intlResponse = intlMiddleware(request);
+
+  // Step 2: Create Supabase client for auth
+  let response = NextResponse.next({
     request,
   });
 
@@ -29,11 +44,11 @@ export async function middleware(request: NextRequest) {
         },
         setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          supabaseResponse = NextResponse.next({
+          response = NextResponse.next({
             request,
           });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            response.cookies.set(name, value, options)
           );
         },
       },
@@ -47,21 +62,18 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // Check if route requires authentication
-  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
-  const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
+  // Extract pathname without locale prefix (if present)
+  const locale = pathname.split('/')[1];
+  const pathWithoutLocale = locales.includes(locale as any)
+    ? pathname.slice(locale.length + 1) || '/'
+    : pathname;
 
-  // Redirect to login if accessing protected route without auth
-  if (isProtectedRoute && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/auth/login';
-    url.searchParams.set('redirectTo', pathname);
-    return NextResponse.redirect(url);
-  }
+  // Check if route requires authentication (check path without locale)
+  const isProtectedRoute = protectedRoutes.some((route) => pathWithoutLocale.startsWith(route));
+  const isAdminRoute = adminRoutes.some((route) => pathWithoutLocale.startsWith(route));
 
-  // Redirect to home if accessing admin route without admin role
-  // Note: This is a basic check - full admin verification happens server-side
-  if (isAdminRoute && !user) {
+  // Redirect to login if accessing protected or admin route without auth
+  if ((isProtectedRoute || isAdminRoute) && !user) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth/login';
     url.searchParams.set('redirectTo', pathname);
@@ -69,13 +81,21 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect logged-in users away from auth pages
-  if (user && pathname.startsWith('/auth/')) {
+  if (user && (pathWithoutLocale.startsWith('/auth/') || pathname.startsWith('/auth/'))) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);
   }
 
-  return supabaseResponse;
+  // Merge i18n response with auth response
+  // Copy headers from intl response to auth response
+  if (intlResponse) {
+    intlResponse.headers.forEach((value, key) => {
+      response.headers.set(key, value);
+    });
+  }
+
+  return response;
 }
 
 export const config = {

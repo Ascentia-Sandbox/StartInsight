@@ -602,10 +602,8 @@ def _get_price_id(tier: str, billing_cycle: str) -> str | None:
 
 
 def get_tier_limits(tier: str) -> dict[str, int]:
-    """Get limits for a subscription tier."""
-    if tier in PRICING_TIERS:
-        return PRICING_TIERS[tier].limits
-    return PRICING_TIERS["free"].limits
+    """Get limits for a subscription tier. Falls back to free tier if unknown."""
+    return PRICING_TIERS.get(tier, PRICING_TIERS["free"]).limits
 
 
 def check_tier_limit(tier: str, limit_name: str, current_usage: int) -> bool:

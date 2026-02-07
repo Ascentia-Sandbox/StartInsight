@@ -10,12 +10,12 @@ Supports:
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 
 from app.core.config import settings
 from app.scrapers.base_scraper import BaseScraper
+from app.scrapers.firecrawl_client import ScrapeResult
 
 logger = logging.getLogger(__name__)
 
@@ -296,45 +296,128 @@ class TwitterScraper(BaseScraper):
             sentiment=None,  # Set by sentiment analyzer
         )
 
-    async def scrape(self, **kwargs) -> list[dict[str, Any]]:
+    async def scrape(self, **kwargs) -> list[ScrapeResult]:
         """
         Scrape Twitter for startup signals.
 
-        Implements BaseScraper interface.
+        Implements BaseScraper interface. Returns list[ScrapeResult] to match
+        the interface contract defined in BaseScraper.
+
+        Args:
+            **kwargs: Optional arguments
+                - max_results: Maximum tweets to return (default: 50)
+                - min_engagement: Minimum engagement threshold (default: 5)
 
         Returns:
-            List of raw signal dictionaries
+            List of ScrapeResult objects with properly formatted tweet data
         """
-        tweets = await self.get_startup_discussions(
-            max_results=kwargs.get("max_results", 50)
-        )
+        if not self.client:
+            logger.warning("Twitter client not available")
+            return []
 
-        signals = []
+        max_results = kwargs.get("max_results", 50)
+        min_engagement = kwargs.get("min_engagement", 5)
+
+        tweets = await self.get_startup_discussions(max_results=max_results)
+
+        results: list[ScrapeResult] = []
         for tweet in tweets:
             # Filter by engagement threshold
             engagement = tweet.like_count + tweet.retweet_count + tweet.reply_count
-            if engagement < 5:  # Minimum engagement threshold
+            if engagement < min_engagement:
                 continue
 
-            signals.append({
-                "source": "twitter",
-                "source_url": f"https://twitter.com/{tweet.author_username}/status/{tweet.id}",
-                "title": f"@{tweet.author_username}: {tweet.text[:50]}...",
-                "content": tweet.text,
-                "author": tweet.author_username,
-                "metadata": {
-                    "tweet_id": tweet.id,
-                    "likes": tweet.like_count,
-                    "retweets": tweet.retweet_count,
-                    "replies": tweet.reply_count,
-                    "author_followers": tweet.author_followers,
-                    "hashtags": tweet.hashtags,
-                    "created_at": tweet.created_at,
-                },
-            })
+            # Generate tweet URL
+            tweet_url = f"https://twitter.com/{tweet.author_username}/status/{tweet.id}"
 
-        logger.info(f"Twitter scraper found {len(signals)} signals")
-        return signals
+            # Generate title
+            title = f"@{tweet.author_username}: {tweet.text[:50]}..."
+
+            # Add sentiment analysis
+            sentiment = analyze_tweet_sentiment(tweet.text)
+
+            # Format tweet as markdown content for LLM analysis
+            content = self._format_tweet_markdown(tweet, sentiment)
+
+            result = ScrapeResult(
+                url=HttpUrl(tweet_url),
+                title=title,
+                content=content,
+                metadata={
+                    "source": "twitter",
+                    "tweet_id": tweet.id,
+                    "author_id": tweet.author_id,
+                    "author_username": tweet.author_username,
+                    "author_name": tweet.author_name,
+                    "author_followers": tweet.author_followers,
+                    "created_at": tweet.created_at,
+                    "like_count": tweet.like_count,
+                    "retweet_count": tweet.retweet_count,
+                    "reply_count": tweet.reply_count,
+                    "quote_count": tweet.quote_count,
+                    "hashtags": tweet.hashtags,
+                    "mentions": tweet.mentions,
+                    "urls": tweet.urls,
+                    "lang": tweet.lang,
+                    "sentiment": sentiment,
+                    "engagement_score": engagement,
+                },
+            )
+            results.append(result)
+
+        logger.info(f"Twitter scraper found {len(results)} signals (ScrapeResult format)")
+        self.log_scrape_summary(results)
+        return results
+
+    def _format_tweet_markdown(self, tweet: TweetData, sentiment: str) -> str:
+        """
+        Format tweet data as markdown content for LLM analysis.
+
+        Args:
+            tweet: TweetData object
+            sentiment: Pre-computed sentiment ("positive", "neutral", or "negative")
+
+        Returns:
+            Formatted markdown content
+        """
+        content_parts = [
+            f"# Tweet by @{tweet.author_username}",
+            "",
+            tweet.text,
+            "",
+            "---",
+            "",
+            "## Engagement Metrics",
+            "",
+            f"- **Likes:** {tweet.like_count:,}",
+            f"- **Retweets:** {tweet.retweet_count:,}",
+            f"- **Replies:** {tweet.reply_count:,}",
+            f"- **Quotes:** {tweet.quote_count:,}",
+            "",
+            "## Author Info",
+            "",
+            f"- **Username:** @{tweet.author_username}",
+        ]
+
+        if tweet.author_name:
+            content_parts.append(f"- **Name:** {tweet.author_name}")
+        content_parts.append(f"- **Followers:** {tweet.author_followers:,}")
+
+        content_parts.extend([
+            "",
+            "## Analysis",
+            "",
+            f"- **Sentiment:** {sentiment}",
+            f"- **Posted:** {tweet.created_at}",
+        ])
+
+        if tweet.hashtags:
+            content_parts.append(f"- **Hashtags:** {', '.join(f'#{h}' for h in tweet.hashtags)}")
+
+        if tweet.urls:
+            content_parts.append(f"- **Links:** {len(tweet.urls)} external URL(s)")
+
+        return "\n".join(content_parts)
 
 
 # ============================================================

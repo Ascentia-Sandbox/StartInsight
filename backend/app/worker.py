@@ -8,6 +8,7 @@ from arq.connections import RedisSettings
 
 from app.core.config import settings
 from app.db.session import AsyncSessionLocal
+from app.scrapers.base_scraper import BaseScraper
 from app.scrapers.sources import (
     GoogleTrendsScraper,
     ProductHuntScraper,
@@ -17,126 +18,62 @@ from app.scrapers.sources import (
 logger = logging.getLogger(__name__)
 
 
-async def scrape_reddit_task(ctx: dict[str, Any]) -> dict[str, Any]:
+async def _run_scraper(source_name: str, scraper: BaseScraper) -> dict[str, Any]:
     """
-    Background task to scrape Reddit for startup discussions.
+    Run a scraper and return a standardized result dict.
 
     Args:
-        ctx: Arq context dictionary
+        source_name: Identifier for the data source (e.g., "reddit")
+        scraper: Configured scraper instance to execute
 
     Returns:
-        Task result with count of signals saved
+        Task result with status and count of signals saved
     """
-    logger.info("Starting Reddit scraping task")
+    logger.info(f"Starting {source_name} scraping task")
 
     try:
-        scraper = RedditScraper(
-            subreddits=["startups", "SaaS"],
-            limit=25,
-            time_filter="day",
-        )
-
         async with AsyncSessionLocal() as session:
             signals = await scraper.run(session)
             await session.commit()
 
-        logger.info(f"Reddit scraping complete: {len(signals)} signals saved")
+        logger.info(f"{source_name} scraping complete: {len(signals)} signals saved")
         return {
             "status": "success",
-            "source": "reddit",
+            "source": source_name,
             "signals_saved": len(signals),
         }
 
     except Exception as e:
-        logger.error(f"Reddit scraping failed: {type(e).__name__} - {e}")
+        logger.error(f"{source_name} scraping failed: {type(e).__name__} - {e}")
         return {
             "status": "error",
-            "source": "reddit",
+            "source": source_name,
             "error": str(e),
         }
+
+
+async def scrape_reddit_task(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Background task to scrape Reddit for startup discussions."""
+    return await _run_scraper(
+        "reddit",
+        RedditScraper(subreddits=["startups", "SaaS"], limit=25, time_filter="day"),
+    )
 
 
 async def scrape_product_hunt_task(ctx: dict[str, Any]) -> dict[str, Any]:
-    """
-    Background task to scrape Product Hunt for daily launches.
-
-    Args:
-        ctx: Arq context dictionary
-
-    Returns:
-        Task result with count of signals saved
-    """
-    logger.info("Starting Product Hunt scraping task")
-
-    try:
-        scraper = ProductHuntScraper(
-            days_back=1,  # Today's products
-            limit=10,
-        )
-
-        async with AsyncSessionLocal() as session:
-            signals = await scraper.run(session)
-            await session.commit()
-
-        logger.info(
-            f"Product Hunt scraping complete: {len(signals)} signals saved"
-        )
-        return {
-            "status": "success",
-            "source": "product_hunt",
-            "signals_saved": len(signals),
-        }
-
-    except Exception as e:
-        logger.error(
-            f"Product Hunt scraping failed: {type(e).__name__} - {e}"
-        )
-        return {
-            "status": "error",
-            "source": "product_hunt",
-            "error": str(e),
-        }
+    """Background task to scrape Product Hunt for daily launches."""
+    return await _run_scraper(
+        "product_hunt",
+        ProductHuntScraper(days_back=1, limit=10),
+    )
 
 
 async def scrape_trends_task(ctx: dict[str, Any]) -> dict[str, Any]:
-    """
-    Background task to scrape Google Trends for search volume data.
-
-    Args:
-        ctx: Arq context dictionary
-
-    Returns:
-        Task result with count of signals saved
-    """
-    logger.info("Starting Google Trends scraping task")
-
-    try:
-        scraper = GoogleTrendsScraper(
-            keywords=None,  # Use default keywords
-            timeframe="now 7-d",  # Last 7 days
-            geo="US",
-        )
-
-        async with AsyncSessionLocal() as session:
-            signals = await scraper.run(session)
-            await session.commit()
-
-        logger.info(
-            f"Google Trends scraping complete: {len(signals)} signals saved"
-        )
-        return {
-            "status": "success",
-            "source": "google_trends",
-            "signals_saved": len(signals),
-        }
-
-    except Exception as e:
-        logger.error(f"Google Trends scraping failed: {type(e).__name__} - {e}")
-        return {
-            "status": "error",
-            "source": "google_trends",
-            "error": str(e),
-        }
+    """Background task to scrape Google Trends for search volume data."""
+    return await _run_scraper(
+        "google_trends",
+        GoogleTrendsScraper(keywords=None, timeframe="now 7-d", geo="US"),
+    )
 
 
 async def hourly_trends_update_task(ctx: dict[str, Any]) -> dict[str, Any]:
@@ -208,7 +145,7 @@ async def hourly_trends_update_task(ctx: dict[str, Any]) -> dict[str, Any]:
 
                     # Get latest data point
                     results = await scraper.scrape()
-                    if not results or len(results) == 0:
+                    if not results:
                         continue
 
                     latest_result = results[0]
