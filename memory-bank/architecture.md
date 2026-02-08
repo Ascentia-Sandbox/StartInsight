@@ -4,7 +4,7 @@
 **Read When:** Before implementing features, designing database models, creating APIs
 **Dependencies:** Read active-context.md for current phase, implementation-plan.md for tasks
 **Purpose:** System architecture, 69 database tables, 230 API endpoints, auth, RLS, deployment
-**Last Updated:** 2026-02-08
+**Last Updated:** 2026-02-09
 ---
 
 # System Architecture: StartInsight
@@ -13,7 +13,7 @@
 
 **Architecture**: Modular monolith with decoupled frontend/backend
 **Core Loops**: Collect → Analyze → Present (3 independent data flows)
-**Deployment**: Railway (backend), Vercel (frontend), Supabase (database - Singapore ap-southeast-1)
+**Deployment**: Railway (backend), Vercel (frontend), Supabase Pro (database - sole source for dev + prod, ~$30/mo PMF)
 
 ### Stack
 
@@ -21,16 +21,17 @@
 |-----------|-----------|----------|---------|
 | **Frontend** | Next.js 16.1.3 (App Router) | 3000 | User dashboard, admin portal, public pages (34 routes) |
 | **Backend** | FastAPI + Uvicorn ASGI | 8000 | REST API (230 endpoints), SSE streaming |
-| **Database** | PostgreSQL 16 (Supabase) | 5433 | 69 tables with RLS enabled |
+| **Database** | PostgreSQL 16 (Supabase Pro) | 5432 | 69 tables with RLS enabled, single source for dev + prod |
 | **Cache/Queue** | Redis 7 | 6379 | Arq task queue, rate limiting |
 | **Worker** | Arq + APScheduler | N/A | Background scraping (6-hour intervals) |
-| **AI** | Claude 3.5 Sonnet (Anthropic) | API | PydanticAI agents (6 agents: analysis, research, competitive intel, market intel, content generation, enhanced analysis) |
-| **Scraper** | Firecrawl, PRAW, pytrends, Tweepy | API | Reddit, Product Hunt, Trends, Twitter/X |
+| **AI** | Gemini 2.0 Flash (Google) | API | PydanticAI agents (6 agents: analysis, research, competitive intel, market intel, content generation, enhanced analysis) |
+| **Scraper** | Crawl4AI, PRAW, pytrends | API | Reddit, Product Hunt, Trends (self-hosted, $0 cost) |
 | **Auth** | Supabase Auth | API | JWT-based, RLS integration |
 | **Payments** | Stripe | API | Checkout, subscriptions, webhooks |
 | **Email** | Resend | API | Transactional emails (6 templates) |
 
-**Connection String**: `postgresql://postgres:[password]@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres`
+**Connection String**: `postgresql+asyncpg://postgres.[REF]:[PASSWORD]@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres`
+**Pool Config**: 20 size, 30 max overflow, SSL required (Supabase Pro: 200 connections, 8GB storage)
 
 ---
 
@@ -1299,8 +1300,11 @@ Sitemap: https://startinsight.app/sitemap.xml
 
 **Backend (.env)**:
 ```bash
-# Database
-DATABASE_URL=postgresql://postgres:[password]@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres
+# Database (Supabase Pro - Session Pooler)
+DATABASE_URL=postgresql+asyncpg://postgres.[PROJECT_REF]:[PASSWORD]@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres
+DB_POOL_SIZE=20
+DB_MAX_OVERFLOW=30
+DB_SSL=true
 SUPABASE_URL=https://mxduetfcsgttwwgszjae.supabase.co
 SUPABASE_ANON_KEY=eyJhbGc...
 

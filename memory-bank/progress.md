@@ -4,7 +4,7 @@
 **Read When:** After completing tasks (for logging), before starting work (to avoid duplication)
 **Dependencies:** Read active-context.md to know what phase you're in before logging
 **Purpose:** Completion log (Phase 1-10 complete + Production Readiness), recent changes, upcoming tasks
-**Last Updated:** 2026-02-08
+**Last Updated:** 2026-02-09
 ---
 
 # StartInsight - Progress Log
@@ -14,6 +14,11 @@ This file tracks all significant changes made to the project. Each entry follows
 ---
 
 ## Recent Progress (2026-02-08)
+
+- [2026-02-08] [SUPABASE-PRO-MIGRATION]: Removed local PostgreSQL, Supabase Pro as sole database
+  - Files: docker-compose.yml, config.py, cache.py, frontend/lib/env.ts, DEPLOYMENT-GUIDE.md, backend/README.md, PMF-DEPLOYMENT.md
+  - Tech: Supabase Pro pooler ($25/mo), pool 20/30 with SSL, Redis SSL fix, Next.js literal env vars
+  - Status: [✓ Complete - ~$30/mo total cost, development and production on same database]
 
 - [2026-02-08] [PMF-OPTIMIZATION]: Minimal-cost deployment configuration ($483/mo → $5/mo)
   - Files: crawl4ai_client.py, config.py, email_service.py, scheduler.py, Dockerfile, .env.example, PMF-DEPLOYMENT.md

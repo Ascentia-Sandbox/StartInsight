@@ -82,8 +82,8 @@ graph LR
     G[Upstash Redis] -.->|Queue| B
 ```
 
-**Cloud Infrastructure:**
-- **Database**: Supabase Cloud PostgreSQL (Singapore, ap-southeast-1)
+**Cloud Infrastructure (Supabase Pro):**
+- **Database**: Supabase Pro PostgreSQL (Singapore, ap-southeast-1), 200 connection pool limit
 - **Cache/Queue**: Upstash Redis (Singapore)
 - **Backend**: Railway or local development
 - **Frontend**: Vercel or local development
@@ -110,7 +110,7 @@ graph LR
 ### Backend
 - **Framework**: FastAPI (async-first)
 - **Language**: Python 3.11+
-- **Database**: Supabase PostgreSQL (ap-southeast-1, Singapore)
+- **Database**: Supabase Pro PostgreSQL (ap-southeast-1, Singapore)
 - **ORM**: SQLAlchemy 2.0 (async)
 - **Queue**: Redis + Arq (async task queue)
 - **AI**: PydanticAI + Gemini 2.0 Flash ($0.10/M tokens)
@@ -137,7 +137,7 @@ graph LR
 - **Rate Limiting**: SlowAPI + Redis (tier-based quotas)
 
 ### DevOps
-- **Database**: Supabase Cloud (PostgreSQL 15+, Row-Level Security)
+- **Database**: Supabase Pro (PostgreSQL 15+, Row-Level Security, DB_SSL=True)
 - **Cache**: Redis 7
 - **Package Managers**: `uv` (Python), `npm` (Node.js)
 - **Migrations**: Alembic + Supabase migrations (25+ total)
@@ -273,12 +273,13 @@ For troubleshooting, production deployment, and advanced configuration, see:
 
 StartInsight uses **cloud services by default** to ensure consistency between development and production:
 
-### Supabase Cloud PostgreSQL (Singapore)
+### Supabase Pro PostgreSQL (Singapore)
 
+- **Tier:** Supabase Pro ($25/mo) - sole database, no local PostgreSQL required
 - **Region:** ap-southeast-1 (Singapore) - Optimized for APAC market
 - **Latency:** <50ms for Southeast Asia (vs 180ms US-based)
 - **Cost:** $25/mo (Supabase Pro) vs $69/mo (Neon) = 64% savings
-- **Features:** PostgreSQL 15+, Row-Level Security, connection pooling, real-time subscriptions
+- **Features:** PostgreSQL 15+, Row-Level Security, connection pooling (200 limit), real-time subscriptions, SSL required
 
 ### Upstash Redis (Singapore)
 
@@ -543,7 +544,8 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 - Signup Conversion: 2% → 4% (+100%)
 - Organic Traffic: 500 → 2,500/mo (+400%)
 - Revenue Impact: +$9,500/mo MRR (doubled paid conversion)
-- Cost: $703-752/mo (including marketing)
+- PMF Validation Cost: ~$30/mo (Supabase Pro $25 + Redis $5)
+- Full Production Cost: $703-752/mo (including marketing)
 
 **Competitive Position**:
 - 100% feature parity with IdeaBrowser

@@ -84,7 +84,8 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect non-admin users away from admin routes
-  if (isAdminRoute && user && user.app_metadata?.role !== 'admin') {
+  const adminRoles = ['admin', 'superadmin'];
+  if (isAdminRoute && user && !adminRoles.includes(user.app_metadata?.role)) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);

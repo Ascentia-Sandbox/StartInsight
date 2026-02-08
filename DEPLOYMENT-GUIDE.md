@@ -1,7 +1,8 @@
 # StartInsight - Deployment & Product Reference
 
 > Comprehensive deployment, infrastructure, and operational reference for StartInsight.
-> Sourced from actual codebase configuration files as of 2026-02-08.
+> Sourced from actual codebase configuration files as of 2026-02-09.
+> **Infrastructure:** Supabase Pro as sole database (no local PostgreSQL needed).
 
 ---
 
@@ -66,14 +67,14 @@ StartInsight is an AI-powered startup insight platform that scrapes signals from
 
 | Provider | Service | Purpose | Plan |
 |----------|---------|---------|------|
-| **Railway** | Backend hosting | FastAPI + Docker | Pro ($20/mo) |
-| **Vercel** | Frontend hosting | Next.js 16 | Pro ($20/mo) |
-| **Supabase** | PostgreSQL (Singapore) | Primary database | Pro ($25/mo) |
-| **Upstash** | Redis | Cache + task queue | Pay-as-you-go (~$40/mo) |
-| **Google** | Gemini 2.0 Flash | Primary LLM | API ($15-75/mo) |
-| **Firecrawl** | Web scraping | Signal collection | Growth ($149/mo) |
-| **Sentry** | Error tracking | Backend + frontend | Team ($26/mo) |
-| **Resend** | Transactional email | Notifications | Pro ($35/mo) |
+| **Railway** | Backend hosting | FastAPI + Docker | Pro ($20/mo) or Free ($5 credit) |
+| **Vercel** | Frontend hosting | Next.js 16 | Pro ($20/mo) or Hobby (Free) |
+| **Supabase** | PostgreSQL (Australia) | Sole database (dev + prod) | Pro ($25/mo) |
+| **Upstash** | Redis | Cache + task queue | Pay-as-you-go (~$40/mo) or Railway Free |
+| **Google** | Gemini 2.0 Flash | Primary LLM | Free tier (1.5K req/day) or API |
+| **Crawl4AI** | Web scraping | Self-hosted scraper | $0 (runs in Railway) |
+| **Sentry** | Error tracking | Backend + frontend | Free (5K events) or Team ($26/mo) |
+| **Resend** | Transactional email | Notifications | Free (3K emails) or Pro ($35/mo) |
 | **Stripe** | Payment processing | Subscriptions | 2.9% + $0.30/tx |
 
 ### PMF Validation Cost (~$30/mo)
@@ -92,16 +93,16 @@ StartInsight is an AI-powered startup insight platform that scrapes signals from
 
 ### Production Cost (at 10K users)
 
-| Component | Cost |
-|-----------|------|
-| Supabase (Pro) | $25 |
-| Upstash Redis | $40 |
-| Railway (Backend) | $100 |
-| Vercel (Frontend) | $20 |
-| AI/LLM (Gemini) | $75 |
-| Auth + Email | $145 |
-| Marketing | $78 |
-| **Total** | **~$483/mo** |
+| Component | Cost | Notes |
+|-----------|------|-------|
+| Supabase (Pro) | $25 | Sole database (200 connections, 8GB) |
+| Upstash Redis | $40 | Cache + task queue |
+| Railway (Backend) | $100 | FastAPI hosting |
+| Vercel (Frontend) | $20 | Next.js hosting |
+| AI/LLM (Gemini) | $75 | Primary agent (97% cheaper than Claude) |
+| Auth + Email | $145 | Supabase Auth + Resend |
+| Marketing | $78 | Resend Pro + Vercel Analytics |
+| **Total** | **~$483/mo** | **PMF: ~$30/mo** (94% reduction) |
 
 ### Revenue Projections (10K users)
 
@@ -332,7 +333,7 @@ uv pip install --system -r pyproject.toml
 # Copy environment file
 cp .env.example .env  # Edit with your API keys
 
-# Start Docker services (Redis only -- database is Supabase Pro)
+# Start Docker services (Redis only -- database is Supabase Pro, no local PostgreSQL needed)
 docker compose up -d
 
 # Run database migrations
@@ -381,10 +382,16 @@ docker compose up -d
 docker compose --profile tools up -d
 ```
 
-**Database connection string** (Supabase Pro):
+**Database connection string** (Supabase Pro - Session Pooler):
 ```
-postgresql+asyncpg://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+postgresql+asyncpg://postgres.[PROJECT_REF]:[PASSWORD]@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres
 ```
+
+**Connection Pool Configuration:**
+- Pool size: 20 (restore from 5 for Pro tier)
+- Max overflow: 30 (restore from 10 for Pro tier)
+- SSL: Required (`DB_SSL=true`)
+- Supabase Pro: 200 connections, 8GB storage, $25/mo
 
 ---
 
@@ -880,8 +887,9 @@ MetricsTracker with per-model pricing (Gemini/Claude/GPT) for monitoring AI spen
    - No 500 errors
 
 3. **Supabase Dashboard**
-   - Connection pooling: <50/200 connections (<25%)
+   - Connection pooling: <50/200 connections (<25%) — Supabase Pro provides 200 connections
    - Alert if >160/200 (>80%)
+   - Pool configured: 20 size + 30 overflow = 50 max per backend instance
 
 ### Hour 2-24: Regular Monitoring (every 2 hours)
 
@@ -962,8 +970,9 @@ psql $DATABASE_URL -c "SELECT count(*) FROM pg_stat_activity WHERE datname='post
 
 **Solutions:**
 1. **Immediate:** Restart Railway service (frees connections)
-2. **Short-term:** Increase `DB_POOL_SIZE`/`DB_MAX_OVERFLOW` or upgrade Supabase
+2. **Short-term:** Increase `DB_POOL_SIZE`/`DB_MAX_OVERFLOW` (currently 20/30 for Supabase Pro with 200 total connections)
 3. **Long-term:** Identify slow queries holding connections; add query timeouts
+4. **Note:** Supabase Pro provides 200 connections, sufficient for 4 backend instances (50 connections each)
 
 ### Rate limiting too aggressive
 

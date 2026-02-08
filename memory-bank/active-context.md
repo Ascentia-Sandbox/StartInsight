@@ -4,7 +4,7 @@
 **Read When:** Before every task to understand current phase status
 **Dependencies:** Read project-brief.md first for context
 **Purpose:** Current phase tracking, immediate tasks, blockers, what's working/next
-**Last Updated:** 2026-02-08
+**Last Updated:** 2026-02-09
 ---
 
 # Active Context: StartInsight Development
@@ -14,6 +14,7 @@
 **Testing Complete:** 291 backend tests (85% coverage), 47 E2E tests (5 browsers)
 **Production Status:** All phases integrated, testing verified, deployment ready
 **Database:** 69 tables, 230 API endpoints, 6 AI agents
+**Infrastructure:** Supabase Pro ($25/mo) as sole database, Railway Free backend, Vercel frontend (~$30/mo PMF deployment)
 
 ## Phase Completion Criteria
 
@@ -62,13 +63,15 @@
 - ✅ **Security Hardened:** Authentication middleware, route protection, RLS policies
 - 📊 **Deployment Status:** Code complete, ready for production launch
 
-**Recent Milestones (2026-02-08):**
-1. ✅ Phase 8.1 Content Quality Management - Auto-approval system operational
-2. ✅ Phase 8.2-8.4 Pipeline Dashboard & AI Agent Control - Real-time monitoring ready
-3. ✅ Phase 9.1-9.6 User Engagement - Preferences, chat, community, gamification complete
-4. ✅ Phase 10 Integration Ecosystem - Webhooks, OAuth, external integrations deployed
-5. ✅ Data Quality Improvements - Post-LLM validation gates, deduplication, rate limiting
-6. ✅ Testing Infrastructure - 338 total tests verify production readiness
+**Recent Milestones (2026-02-09):**
+1. ✅ Supabase Pro Migration - Removed local PostgreSQL, single database source for dev + prod
+2. ✅ Phase 8.1 Content Quality Management - Auto-approval system operational
+3. ✅ Phase 8.2-8.4 Pipeline Dashboard & AI Agent Control - Real-time monitoring ready
+4. ✅ Phase 9.1-9.6 User Engagement - Preferences, chat, community, gamification complete
+5. ✅ Phase 10 Integration Ecosystem - Webhooks, OAuth, external integrations deployed
+6. ✅ Data Quality Improvements - Post-LLM validation gates, deduplication, rate limiting
+7. ✅ Testing Infrastructure - 338 total tests verify production readiness
+8. ✅ PMF Cost Optimization - $483/mo → ~$30/mo (94% reduction with Crawl4AI + free tiers)
 
 ## Testing Status (Verified 2026-02-08)
 

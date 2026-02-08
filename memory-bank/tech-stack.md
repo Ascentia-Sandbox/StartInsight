@@ -4,7 +4,7 @@
 **Read When:** When choosing libraries, verifying dependencies, resolving conflicts, cost planning
 **Dependencies:** Read project-brief.md for "Glue Coding" philosophy
 **Purpose:** Phase 1-10 dependencies, cost analysis, revenue projections ($59K MRR at 10K users)
-**Last Updated:** 2026-02-08
+**Last Updated:** 2026-02-09
 ---
 
 Tech Stack: StartInsight
@@ -69,11 +69,13 @@ Process Manager: Uvicorn (ASGI server)
 Validation: Pydantic V2 - Data validation and settings management.
 
 4. Database & Storage (The Vault)
-Primary Database: PostgreSQL - Robust relational database.
+Primary Database: PostgreSQL (Supabase Pro) - Single source for development and production.
 
-Local Dev: Docker container.
-
-Production: Neon or Railway (Managed Postgres).
+Infrastructure:
+- **Development**: Supabase Pro connection pooler (session mode, port 5432)
+- **Production**: Same Supabase Pro database (no separate local PostgreSQL)
+- **Connection Pool**: 20 size, 30 max overflow, SSL required
+- **Cost**: $25/mo (8GB storage, 200 connections)
 
 ORM: SQLAlchemy (Async) or Prisma Client Python - Type-safe database interaction.
 
@@ -356,12 +358,15 @@ CONTACT_EMAIL=hello@startinsight.app           # Recipient for contact form
 - **Example**:
   ```bash
   # .env file
-  DATABASE_URL=postgresql+asyncpg://postgres.[REF]:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+  DATABASE_URL=postgresql+asyncpg://postgres.[REF]:[PASSWORD]@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres
   REDIS_URL=redis://localhost:6379
   GOOGLE_API_KEY=AIza...  # Primary: Gemini
   ANTHROPIC_API_KEY=sk-ant-...  # Fallback: Claude
   API_HOST=0.0.0.0
   API_PORT=8000
+  DB_POOL_SIZE=20
+  DB_MAX_OVERFLOW=30
+  DB_SSL=true
   ```
   ```python
   # backend/app/core/config.py (auto-mapped)
@@ -789,7 +794,7 @@ NEXT_PUBLIC_POSTHOG_KEY=phc_...  # PostHog analytics
 | 1,000 users| $19 (Pro)  | $10   | $20     | $20      | $25      | $0         | $94      |
 | 10,000 users| $69 (Scale)| $40   | $100    | $20      | $75      | $145       | $449     |
 
-### Phase 4.5+ Costs (Supabase Cloud Singapore)
+### Phase 4.5+ Costs (Supabase Pro - Sole Database)
 
 | User Scale | Supabase | Redis | Backend | Frontend | AI (LLM) | Auth/Email | Total/mo | Savings |
 |------------|----------|-------|---------|----------|----------|------------|----------|---------|
@@ -797,7 +802,8 @@ NEXT_PUBLIC_POSTHOG_KEY=phc_...  # PostHog analytics
 | 1,000 users| $25 (Pro)| $10   | $20     | $20      | $25      | $0         | $100     | -$6/mo  |
 | 10,000 users| $25 (Pro)| $40   | $100    | $20      | $75      | $145       | $405     | $44/mo  |
 
-**Migration Status:** Phase 4.5 complete (executed 2026-01-25)
+**Migration Status:** Phase 4.5 complete (2026-01-25), Local PostgreSQL removed (2026-02-09)
+**Infrastructure:** Supabase Pro as single database for development and production
 **Break-even Point:** 340 users (Supabase becomes cost-effective)
 
 ### Phase 12-14+ Costs (Public Content Infrastructure)
@@ -807,6 +813,18 @@ NEXT_PUBLIC_POSTHOG_KEY=phc_...  # PostHog analytics
 | 100 users  | $25 (Pro)| $0    | $5      | $0       | $10      | $0         | $29       | $69      | +$29/mo      |
 | 1,000 users| $25 (Pro)| $10   | $20     | $20      | $25      | $0         | $49       | $149     | +$49/mo      |
 | 10,000 users| $25 (Pro)| $40   | $100    | $20      | $75      | $145       | $78       | $483     | +$78/mo      |
+
+**PMF Deployment Cost (2026-02-08):**
+| Service | Tier | Monthly Cost | Notes |
+|---------|------|-------------|-------|
+| Supabase | Pro | $25 | Single database (dev + prod) |
+| Railway | Free | $5 | $5 starter credit |
+| Vercel | Hobby | $0 | Frontend hosting |
+| Redis | Railway | $0 | Included in Railway |
+| Gemini AI | Free | $0 | 1,500 requests/day |
+| Resend | Free | $0 | 3K emails/month |
+| Crawl4AI | Self-hosted | $0 | Runs in Railway container |
+| **TOTAL PMF** | | **~$30/mo** | 94% reduction from $483/mo |
 
 **Marketing Costs Breakdown (10K users):**
 - Email Marketing: $35/mo (Resend Pro - 50K emails/month for blog subscribers)
