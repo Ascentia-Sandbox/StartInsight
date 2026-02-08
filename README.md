@@ -65,7 +65,7 @@ Unlike traditional brainstorming tools, StartInsight relies on **real-time marke
 - **Export Tools**: PDF/CSV/JSON exports with brand customization
 - **Row-Level Security**: Supabase RLS policies on all 69 tables
 - **SEO Infrastructure**: Dynamic sitemap, robots.txt, Open Graph tags, Schema.org structured data
-- **Comprehensive Testing**: 47 E2E tests (Playwright), 137 backend tests (pytest, 85% coverage)
+- **Comprehensive Testing**: 291 backend tests (22 files, 85% coverage), 47 E2E tests (8 suites, 5 browsers)
 
 ---
 
@@ -139,9 +139,10 @@ graph LR
 ### DevOps
 - **Database**: Supabase Cloud (PostgreSQL 15+, Row-Level Security)
 - **Cache**: Redis 7
-- **Package Managers**: `uv` (Python), `pnpm` (Node.js)
+- **Package Managers**: `uv` (Python), `npm` (Node.js)
 - **Migrations**: Alembic + Supabase migrations (25+ total)
 - **Linting**: Ruff (Python), ESLint + Prettier (TypeScript)
+- **Testing**: pytest (backend), Playwright (E2E, 5 browsers)
 
 ---
 
@@ -362,20 +363,23 @@ StartInsight/
 
 ```bash
 # Backend Development
-cd backend && uv run uvicorn app.main:app --reload
+cd backend && uvicorn app.main:app --reload
 
 # Frontend Development
-cd frontend && pnpm dev
+cd frontend && npm run dev
 
 # Database Migrations
-cd backend && uv run alembic upgrade head
+cd backend && alembic upgrade head
 
-# Run Tests
-cd backend && uv run pytest
+# Backend Tests (291 tests, 85% coverage)
+cd backend && pytest tests/ -v --cov=app
+
+# Frontend E2E Tests (47 tests, 5 browsers)
+cd frontend && npx playwright test
 
 # Lint & Format
 cd backend && uv run ruff check . --fix
-cd frontend && pnpm lint --fix
+cd frontend && npm run lint --fix
 ```
 
 ### Database Utilities
@@ -429,18 +433,47 @@ Comprehensive documentation is maintained in the `memory-bank/` directory:
 
 ## 🧪 Testing
 
-```bash
-# Run all tests
-cd backend && uv run pytest
+### Backend Testing (pytest)
 
-# Run with coverage
-uv run pytest --cov=app --cov-report=html
+**Stats**: 291 tests across 22 files, 85% coverage
+
+```bash
+# Run all backend tests
+cd backend && pytest tests/ -v
+
+# Run with coverage report
+pytest tests/ --cov=app --cov-report=html
 
 # Run specific test file
-uv run pytest tests/test_scrapers.py
+pytest tests/services/test_payment_service.py -v
 
-# Run with verbose output
-uv run pytest -v
+# Run specific test category
+pytest tests/unit/ -v        # Unit tests only
+pytest tests/services/ -v    # Service tests only
+```
+
+### Frontend Testing (Playwright)
+
+**Stats**: 47 E2E tests across 8 suites, 5 browser platforms (Chrome, Firefox, Safari, Mobile Chrome, Mobile Safari)
+
+```bash
+# Run all E2E tests
+cd frontend && npx playwright test
+
+# Run with browser UI
+npx playwright test --headed
+
+# Run specific browser
+npx playwright test --project=chromium
+
+# Run specific test file
+npx playwright test tests/frontend/e2e/auth.spec.ts
+
+# Interactive mode
+npx playwright test --ui
+
+# Generate test report
+npx playwright show-report
 ```
 
 ---
@@ -488,9 +521,9 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 **Backend**: 230 API endpoints, 69 database tables, 15+ services
 **Frontend**: 34 routes (dashboard, workspace, research, admin, teams, 10 public pages, 4 admin content pages)
 **Database**: 25+ Alembic migrations applied, Row-Level Security enabled
-**AI Agents**: 6 agents (enhanced analyzer, 40-step research, competitive intel, market intel, content generator)
-**Testing**: 137 backend tests (pytest, 85% coverage), 47 E2E tests (Playwright)
-**Content**: 84 items (54 tools, 12 success stories, 12 trends, 6 blog articles)
+**AI Agents**: 6 agents (enhanced analyzer, 40-step research, competitive intel, market intel, content generator, quality reviewer)
+**Testing**: 291 backend tests (22 files, 85% coverage), 47 E2E tests (8 suites, 5 browsers, WCAG 2.1 AA)
+**Content**: 84+ items (54 tools, 12 success stories, 180+ trends, 13 blog articles)
 
 **Completed**:
 - ✅ Phase 1-3: MVP Foundation (scrapers, analyzer, Next.js dashboard)
@@ -535,9 +568,11 @@ MIT License - See [LICENSE](LICENSE) file for details.
 ## 🙏 Acknowledgments
 
 - **FastAPI**: For the excellent async Python framework
-- **Anthropic**: For Claude 3.5 Sonnet (the AI powering insights)
+- **Google**: For Gemini 2.0 Flash (97% cost reduction, primary LLM)
+- **Anthropic**: For Claude 3.5 Sonnet (fallback LLM, quality validation)
 - **Firecrawl**: For making web scraping sane again
 - **Next.js**: For the best React production framework
+- **Playwright**: For comprehensive cross-browser E2E testing
 
 ---
 
