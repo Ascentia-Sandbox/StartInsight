@@ -63,7 +63,9 @@ import {
   type DomainConfig,
 } from './types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import { config } from './env';
+
+const API_BASE_URL = config.apiUrl;
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -523,6 +525,292 @@ export async function updateInsightStatus(
 }
 
 // ============================================
+// Admin User Management
+// ============================================
+
+export interface AdminUserListItem {
+  id: string;
+  email: string;
+  display_name: string | null;
+  subscription_tier: string;
+  created_at: string;
+  last_active: string | null;
+  admin_role: string | null;
+  is_suspended: boolean;
+  language: string;
+  last_login_at: string | null;
+}
+
+export interface AdminUserDetail {
+  id: string;
+  email: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  subscription_tier: string;
+  created_at: string;
+  insights_saved: number;
+  research_count: number;
+  total_sessions: number;
+  admin_role: string | null;
+  is_suspended: boolean;
+  language: string;
+  last_login_at: string | null;
+}
+
+export async function fetchAdminUsers(
+  accessToken: string,
+  params: { search?: string; tier?: string; limit?: number; offset?: number } = {}
+): Promise<AdminUserListItem[]> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/analytics/users/list', { params });
+  return data;
+}
+
+export async function fetchAdminUserDetail(
+  accessToken: string,
+  userId: string
+): Promise<AdminUserDetail> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get(`/admin/analytics/users/${userId}`);
+  return data;
+}
+
+export async function createAdminUser(
+  accessToken: string,
+  payload: { email: string; display_name?: string; subscription_tier?: string; language?: string }
+): Promise<{ status: string; user_id: string }> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post('/admin/analytics/users', payload);
+  return data;
+}
+
+export async function updateAdminUser(
+  accessToken: string,
+  userId: string,
+  updates: { subscription_tier?: string; is_suspended?: boolean; display_name?: string; language?: string }
+): Promise<{ status: string; user_id: string }> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.patch(`/admin/analytics/users/${userId}`, updates);
+  return data;
+}
+
+export async function deleteAdminUser(
+  accessToken: string,
+  userId: string,
+  reason: string = ''
+): Promise<{ status: string; user_id: string }> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.delete(`/admin/analytics/users/${userId}`, { params: { reason } });
+  return data;
+}
+
+export async function bulkAdminUserAction(
+  accessToken: string,
+  payload: { user_ids: string[]; action: string; tier?: string; reason?: string }
+): Promise<{ status: string; affected: number }> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post('/admin/analytics/users/bulk', payload);
+  return data;
+}
+
+// ============================================
+// Audit Logs API
+// ============================================
+
+export interface AuditLogEntry {
+  id: string;
+  user_id: string | null;
+  action: string;
+  resource_type: string;
+  resource_id: string | null;
+  details: Record<string, unknown> | null;
+  ip_address: string | null;
+  created_at: string;
+}
+
+export interface AuditLogStats {
+  total_events: number;
+  by_action: Record<string, number>;
+  by_resource: Record<string, number>;
+  period_days: number;
+}
+
+export async function fetchAuditLogs(
+  accessToken: string,
+  params: { action?: string; resource_type?: string; days?: number; limit?: number } = {}
+): Promise<AuditLogEntry[]> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/agents/audit-logs', { params });
+  return data;
+}
+
+export async function fetchAuditLogStats(
+  accessToken: string,
+  days: number = 7
+): Promise<AuditLogStats> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/agents/audit-logs/stats', { params: { days } });
+  return data;
+}
+
+export async function fetchAuditLogActions(
+  accessToken: string
+): Promise<{ action: string; count: number }[]> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/agents/audit-logs/actions');
+  return data;
+}
+
+// ============================================
+// Agent Configuration API (Phase 8.4-8.5 - Admin Only)
+// ============================================
+
+export interface AgentConfig {
+  id: string;
+  agent_name: string;
+  is_enabled: boolean;
+  model_name: string;
+  temperature: number;
+  max_tokens: number;
+  rate_limit_per_hour: number;
+  cost_limit_daily_usd: number;
+  custom_prompts: Record<string, unknown> | null;
+  updated_at: string;
+}
+
+export interface AgentStats {
+  agent_name: string;
+  executions_24h: number;
+  success_rate: number;
+  avg_duration_ms: number;
+  tokens_used_24h: number;
+  cost_24h_usd: number;
+}
+
+/**
+ * List all agent configurations (admin only)
+ */
+export async function fetchAgentConfigurations(accessToken: string): Promise<AgentConfig[]> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/agents/configurations');
+  return data;
+}
+
+/**
+ * Get a specific agent configuration (admin only)
+ */
+export async function fetchAgentConfiguration(accessToken: string, agentName: string): Promise<AgentConfig> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get(`/admin/agents/configurations/${agentName}`);
+  return data;
+}
+
+/**
+ * Update agent configuration (admin only)
+ */
+export async function updateAgentConfiguration(
+  accessToken: string,
+  agentName: string,
+  payload: {
+    is_enabled?: boolean;
+    model_name?: string;
+    temperature?: number;
+    max_tokens?: number;
+    rate_limit_per_hour?: number;
+    cost_limit_daily_usd?: number;
+    custom_prompts?: Record<string, unknown>;
+  }
+): Promise<AgentConfig> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.patch(`/admin/agents/configurations/${agentName}`, payload);
+  return data;
+}
+
+/**
+ * Toggle agent on/off (admin only)
+ */
+export async function toggleAgentEnabled(
+  accessToken: string,
+  agentName: string
+): Promise<{ agent_name: string; is_enabled: boolean }> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post(`/admin/agents/configurations/${agentName}/toggle`);
+  return data;
+}
+
+/**
+ * Create a new agent configuration (admin only)
+ */
+export async function createAgentConfiguration(
+  accessToken: string,
+  payload: {
+    agent_name: string;
+    is_enabled?: boolean;
+    model_name?: string;
+    temperature?: number;
+    max_tokens?: number;
+    rate_limit_per_hour?: number;
+    cost_limit_daily_usd?: number;
+    custom_prompts?: Record<string, unknown>;
+  }
+): Promise<AgentConfig> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post('/admin/agents/configurations', payload);
+  return data;
+}
+
+/**
+ * Delete an agent configuration (admin only)
+ */
+export async function deleteAgentConfiguration(
+  accessToken: string,
+  agentName: string
+): Promise<void> {
+  const client = createAuthenticatedClient(accessToken);
+  await client.delete(`/admin/agents/configurations/${agentName}`);
+}
+
+/**
+ * Get agent execution statistics (admin only)
+ */
+export async function fetchAgentExecutionStats(accessToken: string): Promise<AgentStats[]> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/agents/stats');
+  return data;
+}
+
+/**
+ * Get execution logs for a specific agent (admin only)
+ */
+export interface AgentExecutionLog {
+  id: string;
+  agent_type: string;
+  source: string | null;
+  status: string;
+  started_at: string;
+  completed_at: string | null;
+  duration_ms: number | null;
+  items_processed: number;
+  items_failed: number;
+  error_message: string | null;
+  extra_metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export async function fetchAgentLogs(
+  accessToken: string,
+  agentType: string,
+  limit = 20,
+  offset = 0
+): Promise<{ items: AgentExecutionLog[]; total: number }> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get(`/api/admin/agents/${agentType}/logs`, {
+    params: { limit, offset },
+  });
+  return data;
+}
+
+// ============================================
 // User Profile API (Phase 4.1)
 // ============================================
 
@@ -646,6 +934,31 @@ export async function verifyTenantDomain(
 export async function removeTenantDomain(accessToken: string, tenantId: string): Promise<void> {
   const client = createAuthenticatedClient(accessToken);
   await client.delete(`/api/tenants/${tenantId}/domain`);
+}
+
+// ============================================
+// Email Preferences API (Phase 9.1)
+// ============================================
+
+/**
+ * Fetch user's email preferences
+ */
+export async function fetchEmailPreferences(accessToken: string) {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/preferences/email');
+  return data as { daily_digest: boolean; weekly_digest: boolean; instant_alerts: boolean };
+}
+
+/**
+ * Update user's email preferences
+ */
+export async function updateEmailPreferences(
+  accessToken: string,
+  payload: { daily_digest?: boolean; weekly_digest?: boolean; instant_alerts?: boolean }
+) {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.patch('/api/preferences/email', payload);
+  return data;
 }
 
 // ============================================

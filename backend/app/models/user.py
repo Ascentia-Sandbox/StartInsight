@@ -84,6 +84,15 @@ class User(Base):
         doc="User preferences as JSON (theme, email_digest, etc.)",
     )
 
+    # Phase 15: APAC Language Support
+    language: Mapped[str] = mapped_column(
+        String(10),
+        default="en",
+        nullable=False,
+        index=True,
+        doc="User's preferred language (ISO 639-1 + region): en, zh-CN, id-ID, vi-VN, th-TH, tl-PH",
+    )
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

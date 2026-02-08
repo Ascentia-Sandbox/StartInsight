@@ -9,7 +9,7 @@ Phase 5: Authentication added to sensitive endpoints.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Literal
 from uuid import UUID
 
@@ -123,8 +123,12 @@ async def list_signals(
         # Order by created_at descending (newest first)
         query = query.order_by(RawSignal.created_at.desc())
 
-        # Get total count
-        count_query = select(func.count()).select_from(query.subquery())
+        # Get total count (direct count with same filters, avoids subquery)
+        count_query = select(func.count(RawSignal.id))
+        if source:
+            count_query = count_query.where(RawSignal.source == source)
+        if processed is not None:
+            count_query = count_query.where(RawSignal.processed == processed)
         total_result = await db.execute(count_query)
         total = total_result.scalar() or 0
 
@@ -149,8 +153,8 @@ async def list_signals(
         )
 
     except Exception as e:
-        logger.error(f"Error listing signals: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error listing signals: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 @router.get("/signals/{signal_id}", response_model=RawSignalResponse)
@@ -227,8 +231,8 @@ async def get_signal_stats(
         )
 
     except Exception as e:
-        logger.error(f"Error getting signal stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error getting signal stats: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 @router.post("/signals/trigger-scraping", response_model=TriggerScrapingResponse)
@@ -260,7 +264,7 @@ async def trigger_scraping(
     # Rate limiting check
     if _last_trigger_time:
         cooldown_end = _last_trigger_time + timedelta(minutes=_trigger_cooldown_minutes)
-        if datetime.utcnow() < cooldown_end:
+        if datetime.now(UTC) < cooldown_end:
             logger.warning(
                 f"Scraping trigger rate limited. User: {current_user.email}"
             )
@@ -285,7 +289,7 @@ async def trigger_scraping(
         result = await trigger_scraping_now()
 
         # Update rate limit timestamp
-        _last_trigger_time = datetime.utcnow()
+        _last_trigger_time = datetime.now(UTC)
 
         return TriggerScrapingResponse(
             status="queued",
@@ -296,10 +300,10 @@ async def trigger_scraping(
         )
 
     except Exception as e:
-        logger.error(f"Error triggering scraping: {e}")
+        logger.error(f"Error triggering scraping: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to queue scraping job: {str(e)}",
+            detail="Failed to queue scraping job. Please try again.",
         )
 
 
@@ -319,7 +323,7 @@ async def get_trigger_status(
 
     if _last_trigger_time:
         cooldown_end = _last_trigger_time + timedelta(minutes=_trigger_cooldown_minutes)
-        can_trigger = datetime.utcnow() >= cooldown_end
+        can_trigger = datetime.now(UTC) >= cooldown_end
         next_allowed = cooldown_end if not can_trigger else None
     else:
         can_trigger = True

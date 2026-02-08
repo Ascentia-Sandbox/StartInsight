@@ -177,6 +177,13 @@ class Insight(Base):
         doc="4-tier value ladder: lead_magnet, frontend, core, backend",
     )
 
+    # Market Sizing: TAM/SAM/SOM breakdown
+    market_sizing: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        doc="TAM/SAM/SOM market sizing data",
+    )
+
     # Market Gap Analysis: 200-500 word competitor gap analysis
     market_gap_analysis: Mapped[str | None] = mapped_column(
         Text,
@@ -225,12 +232,40 @@ class Insight(Base):
         doc="8-dimension scoring breakdown (dimension, value, label)",
     )
 
+    # Trend Predictions: AI-generated forecast for next 7 days (Phase 9.1)
+    trend_predictions: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        doc="Time-series forecast predictions (dates, values, confidence_intervals)",
+    )
+
     # Trend Keywords: Search volume and growth data
     trend_keywords: Mapped[dict | None] = mapped_column(
         JSONB,
         nullable=True,
         default=list,
         doc="Trending keywords with search volume and growth percentage",
+    )
+
+    # ============================================
+    # Phase 15: APAC Language Support
+    # ============================================
+
+    # Language of the insight content
+    language: Mapped[str] = mapped_column(
+        String(10),
+        default="en",
+        nullable=False,
+        index=True,
+        doc="Language of the insight content (en, zh-CN, id-ID, vi-VN, th-TH, tl-PH)",
+    )
+
+    # Translations in other languages
+    translations: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        default=dict,
+        doc="Translations: {zh-CN: {problem_statement: ..., proposed_solution: ...}}",
     )
 
     # Timestamps
@@ -265,6 +300,14 @@ class Insight(Base):
         lazy="selectin",
         cascade="all, delete-orphan",
         doc="Teams this insight is shared with (Phase 6.4)",
+    )
+
+    # Phase 9.2: Competitor profiles relationship
+    competitors: Mapped[list["CompetitorProfile"]] = relationship(
+        "CompetitorProfile",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        doc="Competitor companies for this startup idea (Phase 9.2)",
     )
 
     def __repr__(self) -> str:

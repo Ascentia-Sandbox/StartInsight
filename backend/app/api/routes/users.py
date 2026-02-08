@@ -11,7 +11,7 @@ See architecture.md "API Architecture Phase 4+" for full specification.
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -95,7 +95,7 @@ async def update_user_profile(
             **update_data.preferences,
         }
 
-    current_user.updated_at = datetime.utcnow()
+    current_user.updated_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(current_user)
 
@@ -330,7 +330,7 @@ async def update_saved_insight(
     if update_data.status is not None:
         saved_insight.status = update_data.status
         if update_data.status == "building":
-            saved_insight.claimed_at = datetime.utcnow()
+            saved_insight.claimed_at = datetime.now(UTC)
 
     await db.commit()
     await db.refresh(saved_insight)
@@ -382,7 +382,7 @@ async def claim_insight(
         raise HTTPException(status_code=404, detail="Insight not found")
 
     # Use UserService to get or create SavedInsight with building status
-    claimed_at = datetime.utcnow()
+    claimed_at = datetime.now(UTC)
     saved_insight = await UserService.get_or_create_saved_insight(
         db=db,
         user_id=current_user.id,
@@ -465,7 +465,7 @@ async def rate_insight(
         # Update existing rating
         existing_rating.rating = rating_data.rating
         existing_rating.feedback = rating_data.feedback
-        existing_rating.rated_at = datetime.utcnow()
+        existing_rating.rated_at = datetime.now(UTC)
         await db.commit()
         await db.refresh(existing_rating)
         rating = existing_rating

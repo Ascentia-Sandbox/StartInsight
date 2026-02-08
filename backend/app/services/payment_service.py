@@ -4,7 +4,7 @@ Handles subscription management, checkout sessions, and webhooks.
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -467,7 +467,7 @@ async def _handle_subscription_deleted(data: dict, db: AsyncSession) -> dict:
     from app.models.subscription import Subscription
 
     stripe_subscription_id = data.get("id")
-    canceled_at = datetime.fromtimestamp(data.get("canceled_at", 0)) if data.get("canceled_at") else datetime.utcnow()
+    canceled_at = datetime.fromtimestamp(data.get("canceled_at", 0)) if data.get("canceled_at") else datetime.now(UTC)
 
     logger.info(f"Subscription {stripe_subscription_id} cancelled")
 

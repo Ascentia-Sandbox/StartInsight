@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Providers } from "./providers";
-import { Header } from "@/components/Header";
-import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,26 +13,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "StartInsight - AI-Powered Startup Market Intelligence",
-  description: "Discover emerging startup opportunities through AI-analyzed market signals",
+  title: "StartInsight - AI-Powered Startup Idea Discovery",
+  description:
+    "Discover your next million-dollar startup idea with AI-powered market intelligence.",
 };
 
+// Root Layout wraps ALL routes including those outside [locale].
+// The [locale]/layout.tsx adds providers, header, etc. (no html/body).
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ThemeProvider>
-          <Providers>
-            <Header />
-            <main>{children}</main>
-          </Providers>
-        </ThemeProvider>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        {children}
       </body>
     </html>
   );

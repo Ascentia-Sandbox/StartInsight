@@ -11,14 +11,17 @@ from sqlalchemy.ext.asyncio import (
 
 from app.core.config import settings
 
-# Create async engine
+# Create async engine with production-ready connection pool
 engine: AsyncEngine = create_async_engine(
     settings.async_database_url,
     echo=settings.environment == "development",
     future=True,
     pool_pre_ping=True,  # Verify connections before using
-    pool_size=5,  # Number of connections to maintain
-    max_overflow=10,  # Max connections beyond pool_size
+    pool_size=settings.db_pool_size,
+    max_overflow=settings.db_max_overflow,
+    pool_timeout=settings.db_pool_timeout,
+    pool_recycle=settings.db_pool_recycle,
+    connect_args={"ssl": "require"} if settings.db_ssl else {},
 )
 
 # Create async session factory

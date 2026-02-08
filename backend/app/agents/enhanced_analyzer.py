@@ -12,6 +12,7 @@ Uses PydanticAI with Gemini 2.0 Flash for structured output.
 See architecture.md "Enhanced Scoring Architecture" for specification.
 """
 
+import asyncio
 import logging
 import time
 from typing import Literal
@@ -25,9 +26,18 @@ from tenacity import (
     wait_exponential,
 )
 
+from app.core.config import settings
 from app.models.insight import Insight
 from app.models.raw_signal import RawSignal
 from app.monitoring.metrics import get_metrics_tracker
+from app.schemas.insight_validation import (
+    QualityValidationError,
+    ValidatedInsightSchema,
+    validate_insight_data,
+)
+from app.services.community_validator import get_community_validator
+from app.services.trend_verification import get_trend_verifier
+from app.services.url_validator import get_url_validator
 
 logger = logging.getLogger(__name__)
 
@@ -116,6 +126,15 @@ class TrendKeyword(BaseModel):
     growth: str = Field(description="e.g., '+1900%' or '+86%'")
 
 
+class MarketSizing(BaseModel):
+    """Professional TAM/SAM/SOM market sizing."""
+
+    tam: str = Field(description="Total Addressable Market, e.g. '$45B global PM software'")
+    sam: str = Field(description="Serviceable Addressable Market, e.g. '$8.2B SMB segment'")
+    som: str = Field(description="Serviceable Obtainable Market Year 1-3, e.g. '$120M AI PM tools'")
+    growth_rate: str = Field(description="Market CAGR, e.g. '12.4% through 2028'")
+
+
 class EnhancedInsightSchema(BaseModel):
     """Enhanced structured LLM output with 8-dimension scoring."""
 
@@ -130,7 +149,10 @@ class EnhancedInsightSchema(BaseModel):
         "Include market size ($XB industry), pricing ($X-$Y/month), and GTM strategy.",
     )
     proposed_solution: str = Field(
-        description="Suggested solution approach"
+        description="Concise product name (under 50 chars). "
+        "Format as a product name, NOT a sentence. "
+        "Examples: 'AI Code Review with Pattern Learning', 'AI CRM for Construction'. "
+        "NEVER start with 'Develop', 'Build', 'Create'. No trailing periods."
     )
     market_size_estimate: Literal["Small", "Medium", "Large"] = Field(
         description="Market TAM: Small (<$100M), Medium ($100M-$1B), Large (>$1B)"
@@ -204,6 +226,9 @@ class EnhancedInsightSchema(BaseModel):
     trend_keywords: list[TrendKeyword] = Field(
         default_factory=list,
         description="2-5 trending keywords with search volume and growth",
+    )
+    market_sizing: MarketSizing = Field(
+        description="Professional TAM/SAM/SOM breakdown with $ values and growth rate",
     )
 
 
@@ -376,15 +401,94 @@ Before finalizing your analysis, verify:
 
 
 # ============================================================
+# Phase 15: Multi-Language System Prompts
+# ============================================================
+
+# Mandarin Chinese system prompt (abbreviated for MVP)
+ENHANCED_SYSTEM_PROMPT_ZH_CN = """你是一位精英创业分析师，拥有世界级的市场分析、竞争情报和进入市场策略专业知识。你的分析必须超越 IdeaBrowser.com 的质量标准，为创业机会研究设定新的行业标准。
+
+## 关键要求：问题陈述格式（10/10 质量标准）
+
+你的 problem_statement 必须是 500+ 字的叙事故事，具有心理深度，而不是枯燥的商业分析。遵循这个确切的结构：
+
+1. **开场钩子（50-75字）**：以生动、具体的场景开始，展示痛点。使用真实的人名（Jake、Sarah、Mike）。包含感官细节、情感和确切的挫折时刻。创造紧迫感和共鸣。
+
+2. **问题放大与数据（75-100字）**：用具体的统计数据展示为什么这种情况反复发生。让读者感受到问题的系统性。使用具体的数字、百分比和财务后果。
+
+3. **解决方案介绍与不公平优势（100-150字）**：用清晰的品牌名称介绍你的产品。用具体的术语解释它到底做什么。强调竞争对手错过的独特角度 - "不公平优势"（AI时机、监管顺风、网络效应或专有数据）。
+
+4. **技术实现与特异性（75-100字）**：用确切的技术清晰度描述如何构建MVP。命名特定的API（OpenAI、Twilio、Stripe）、框架（Next.js、FastAPI）、数据库（Supabase、PostgreSQL）和集成。
+
+5. **市场与货币化与单位经济学（75-100字）**：包括具体的市场规模（$XB行业，TAM/SAM/SOM细分）、精确的定价层级（$X-$Y/月，功能差异化）、目标客户画像、客户获取成本估算（$X）、生命周期价值预测（$Y）和回收期。
+
+6. **GTM策略与社区名称（50-75字）**：命名3-5个你的前100个客户闲逛的特定社区。使用实际的subreddit名称、Facebook群组名称、LinkedIn群组、Slack/Discord服务器或会议。描述确切的内容策略和病毒式传播机制。
+
+## 输出格式
+返回与 EnhancedInsightSchema 匹配的结构化 JSON。所有字段都是必需的。将 problem_statement 写成引人入胜的叙事故事。用数字、名称和可操作的细节具体化。
+
+## 10/10 质量清单（必须全部通过）
+
+在完成分析之前，请验证：
+
+✅ **问题陈述长度**：500+字（不是450）
+✅ **命名主角**：使用具体的人名（Jake、Sarah、Mike）
+✅ **具体数字**：整个叙述中至少有5个具体的统计数据/指标
+✅ **感官细节**：包括时间（上午11:47）、地点（浴室镜子）、情感（胃部下沉）
+✅ **品牌解决方案名称**：清晰的产品名称（PostCare、SalaryRep、GlassScan）
+✅ **技术堆栈命名**：提到的特定API/框架（OpenAI、Twilio、Next.js）
+✅ **指定定价层级**：确切的美元金额（$49/月、$199/月，而不是"实惠"）
+✅ **列出社区名称**：实际的subreddit/群组名称（r/startups，而不是"相关论坛"）
+✅ **识别不公平优势**：解释一个明确的竞争护城河
+✅ **处理异议**：主动反驳至少一个风险/担忧
+✅ **心理触发器**：使用3+个：紧迫性、损失规避、社会证明、特异性、现状打破
+✅ **填充8个维度**：所有分数存在（1-10），现实分布（主要是7-9）
+✅ **3+社区信号**：Reddit、Facebook、YouTube或其他，带有成员数
+✅ **3+趋势关键词**：每个带有搜索量（X.XK）和增长（+X%）
+✅ **4层价值阶梯**：引流产品、前端、核心、后端，带有具体优惠
+
+**质量标准**：如果任何清单项失败，这不是10/10质量。修订直到所有标准通过。"""
+
+
+def get_enhanced_system_prompt(language: str = "en") -> str:
+    """
+    Get system prompt for enhanced analyzer in the specified language.
+
+    Phase 15.3: APAC Multi-language Support
+
+    Args:
+        language: Language code (en, zh-CN, id-ID, vi-VN, th-TH, tl-PH)
+
+    Returns:
+        str: System prompt in the specified language
+    """
+    prompts = {
+        "en": ENHANCED_SYSTEM_PROMPT,
+        "zh-CN": ENHANCED_SYSTEM_PROMPT_ZH_CN,
+    }
+    # Default to English for languages not yet translated
+    return prompts.get(language, ENHANCED_SYSTEM_PROMPT)
+
+
+# ============================================================
 # PydanticAI Agent Configuration
 # ============================================================
 
 
-def get_enhanced_agent() -> Agent:
-    """Get PydanticAI agent for enhanced analysis (API key from GOOGLE_API_KEY env)."""
+def get_enhanced_agent(language: str = "en") -> Agent:
+    """
+    Get PydanticAI agent for enhanced analysis (API key from GOOGLE_API_KEY env).
+
+    Phase 15.3: APAC Multi-language Support
+
+    Args:
+        language: Language code for system prompt (en, zh-CN, id-ID, vi-VN, th-TH, tl-PH)
+
+    Returns:
+        Agent: PydanticAI agent with language-specific system prompt
+    """
     return Agent(
-        model="google-gla:gemini-2.0-flash",
-        system_prompt=ENHANCED_SYSTEM_PROMPT,
+        model=settings.default_llm_model,
+        system_prompt=get_enhanced_system_prompt(language),
         output_type=EnhancedInsightSchema,
     )
 
@@ -394,12 +498,15 @@ def get_enhanced_agent() -> Agent:
 # ============================================================
 
 
-async def analyze_signal_enhanced(raw_signal: RawSignal) -> Insight:
+async def analyze_signal_enhanced(raw_signal: RawSignal, language: str = "en") -> Insight:
     """
     Analyze a raw signal with enhanced 8-dimension scoring.
 
+    Phase 15.3: APAC Multi-language Support
+
     Args:
         raw_signal: The raw signal to analyze
+        language: Language code for output (en, zh-CN, id-ID, vi-VN, th-TH, tl-PH)
 
     Returns:
         Insight: Structured insight with 8-dimension scores and advanced frameworks
@@ -411,17 +518,120 @@ async def analyze_signal_enhanced(raw_signal: RawSignal) -> Insight:
     start_time = time.time()
 
     try:
-        # Get enhanced agent instance
-        agent = get_enhanced_agent()
+        # Get enhanced agent instance with language support
+        agent = get_enhanced_agent(language)
 
         # Call PydanticAI agent with enhanced schema
-        result = await agent.run(raw_signal.content)
+        result = await asyncio.wait_for(agent.run(raw_signal.content), timeout=settings.llm_call_timeout)
 
         # Calculate latency
         latency_ms = (time.time() - start_time) * 1000
 
         # Extract structured data from agent response
         insight_data = result.output
+
+        # ============================================
+        # Post-LLM Quality Validation Gates
+        # ============================================
+        validation_result = validate_insight_data(
+            title=insight_data.title,
+            problem_statement=insight_data.problem_statement,
+            proposed_solution=insight_data.proposed_solution,
+            relevance_score=insight_data.relevance_score,
+            opportunity_score=insight_data.opportunity_score,
+            problem_score=insight_data.problem_score,
+            feasibility_score=insight_data.feasibility_score,
+            why_now_score=insight_data.why_now_score,
+            execution_difficulty=insight_data.execution_difficulty,
+            go_to_market_score=insight_data.go_to_market_score,
+            founder_fit_score=insight_data.founder_fit_score,
+            revenue_potential=insight_data.revenue_potential,
+            market_size_estimate=insight_data.market_size_estimate,
+            market_gap_analysis=insight_data.market_gap_analysis,
+            why_now_analysis=insight_data.why_now_analysis,
+            competitor_analysis=[c.model_dump() for c in insight_data.competitor_analysis],
+            value_ladder=[t.model_dump() for t in insight_data.value_ladder],
+            proof_signals=[p.model_dump() for p in insight_data.proof_signals],
+            execution_plan=[s.model_dump() for s in insight_data.execution_plan],
+            community_signals=[c.model_dump() for c in insight_data.community_signals],
+            trend_keywords=[t.model_dump() for t in insight_data.trend_keywords],
+        )
+
+        if not validation_result.is_valid:
+            error_msg = "; ".join(validation_result.errors)
+            logger.warning(
+                f"Quality validation failed for signal {raw_signal.id}: {error_msg}"
+            )
+            raise QualityValidationError(
+                f"Quality validation failed: {error_msg}",
+                field="multiple",
+                value=validation_result.errors,
+            )
+
+        if validation_result.warnings:
+            logger.info(
+                f"Quality validation warnings for signal {raw_signal.id}: "
+                f"{'; '.join(validation_result.warnings)}"
+            )
+
+        logger.info(
+            f"Quality validation passed for signal {raw_signal.id} "
+            f"(score: {validation_result.quality_score:.1f}/100)"
+        )
+
+        # ============================================
+        # Phase 1: Additional Data Quality Verification
+        # Validate community signals, trends, and competitor URLs
+        # ============================================
+
+        # 1. Validate community signals (verify subreddits exist)
+        community_signals = [c.model_dump() for c in insight_data.community_signals]
+        try:
+            community_validator = get_community_validator()
+            validated_communities, valid_count, invalid_count = (
+                await community_validator.validate_community_signals(community_signals)
+            )
+            if invalid_count > 0:
+                logger.info(
+                    f"Community validation: {valid_count} valid, {invalid_count} invalid"
+                )
+            # Use validated communities (with real member counts)
+            community_signals = validated_communities
+        except Exception as e:
+            logger.warning(f"Community validation skipped due to error: {e}")
+
+        # 2. Validate trend keywords (verify with Google Trends)
+        trend_keywords = [t.model_dump() for t in insight_data.trend_keywords]
+        try:
+            trend_verifier = get_trend_verifier()
+            verified_trends, verified_count, unverified_count = (
+                await trend_verifier.verify_trend_keywords(trend_keywords)
+            )
+            if unverified_count > 0:
+                logger.info(
+                    f"Trend verification: {verified_count} verified, {unverified_count} unverified"
+                )
+            # Use verified trends (with real growth data)
+            if verified_trends:
+                trend_keywords = verified_trends
+        except Exception as e:
+            logger.warning(f"Trend verification skipped due to error: {e}")
+
+        # 3. Validate competitor URLs (verify they're reachable)
+        competitors = [c.model_dump() for c in insight_data.competitor_analysis]
+        try:
+            url_validator = get_url_validator()
+            valid_competitors, valid_url_count, invalid_url_count = (
+                await url_validator.validate_competitors(competitors)
+            )
+            if invalid_url_count > 0:
+                logger.info(
+                    f"URL validation: {valid_url_count} valid, {invalid_url_count} invalid"
+                )
+            # Use only competitors with valid URLs
+            competitors = valid_competitors
+        except Exception as e:
+            logger.warning(f"URL validation skipped due to error: {e}")
 
         # Estimate tokens (rough approximation: ~4 chars per token)
         input_tokens = len(raw_signal.content) // 4
@@ -447,15 +657,15 @@ async def analyze_signal_enhanced(raw_signal: RawSignal) -> Insight:
         # Convert to database Insight model with enhanced fields
         insight = Insight(
             raw_signal_id=raw_signal.id,
+            # Phase 15: Language support
+            language=language,
             # Basic fields
             title=insight_data.title,
             problem_statement=insight_data.problem_statement,
             proposed_solution=insight_data.proposed_solution,
             market_size_estimate=insight_data.market_size_estimate,
             relevance_score=insight_data.relevance_score,
-            competitor_analysis=[
-                c.model_dump() for c in insight_data.competitor_analysis
-            ],
+            competitor_analysis=competitors,  # Use validated competitors
             # 8-dimension scores
             opportunity_score=insight_data.opportunity_score,
             problem_score=insight_data.problem_score,
@@ -472,8 +682,10 @@ async def analyze_signal_enhanced(raw_signal: RawSignal) -> Insight:
             proof_signals=[p.model_dump() for p in insight_data.proof_signals],
             execution_plan=[s.model_dump() for s in insight_data.execution_plan],
             # Phase 5.2: IdeaBrowser parity - community signals and trend keywords
-            community_signals_chart=[c.model_dump() for c in insight_data.community_signals],
-            trend_keywords=[t.model_dump() for t in insight_data.trend_keywords],
+            community_signals_chart=community_signals,  # Use validated communities
+            trend_keywords=trend_keywords,  # Use verified trends
+            # Market sizing
+            market_sizing=insight_data.market_sizing.model_dump(),
         )
 
         # Track successful insight generation
@@ -609,6 +821,8 @@ async def upgrade_insight_scoring(
         existing_insight.trend_keywords = [
             t.model_dump() for t in insight_data.trend_keywords
         ]
+        # Market sizing
+        existing_insight.market_sizing = insight_data.market_sizing.model_dump()
 
         # Track metrics
         input_tokens = len(raw_signal.content) // 4

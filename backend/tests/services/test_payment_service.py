@@ -109,9 +109,11 @@ class TestHandleWebhookEvent:
     """Tests for handle_webhook_event function."""
 
     @pytest.mark.asyncio
-    async def test_webhook_without_stripe_key(self):
-        """Test webhook returns error without Stripe API key."""
+    async def test_webhook_without_stripe_key(self, db_session):
+        """Test webhook returns skipped without Stripe webhook secret."""
         with patch("app.services.payment_service.settings") as mock_settings:
-            mock_settings.stripe_secret_key = None
-            result = await handle_webhook_event(b"payload", "sig_123")
-            assert result["status"] == "error"
+            mock_settings.stripe_webhook_secret = None
+            mock_settings.environment = "development"
+            result = await handle_webhook_event(b"payload", "sig_123", db_session)
+            assert result["status"] == "skipped"
+            assert result["reason"] == "not_configured"

@@ -26,8 +26,13 @@ const intlMiddleware = createIntlMiddleware({
 });
 
 export async function middleware(request: NextRequest) {
-  // Step 1: Handle i18n routing first
-  const intlResponse = intlMiddleware(request);
+  const pathname = request.nextUrl.pathname;
+
+  // Skip i18n middleware for admin routes (they live outside [locale])
+  const isAdminPath = pathname.startsWith('/admin');
+
+  // Step 1: Handle i18n routing (skip for admin pages)
+  const intlResponse = isAdminPath ? null : intlMiddleware(request);
 
   // Step 2: Create Supabase client for auth
   let response = NextResponse.next({
@@ -60,8 +65,6 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const pathname = request.nextUrl.pathname;
-
   // Extract pathname without locale prefix (if present)
   const locale = pathname.split('/')[1];
   const pathWithoutLocale = locales.includes(locale as any)
@@ -72,11 +75,18 @@ export async function middleware(request: NextRequest) {
   const isProtectedRoute = protectedRoutes.some((route) => pathWithoutLocale.startsWith(route));
   const isAdminRoute = adminRoutes.some((route) => pathWithoutLocale.startsWith(route));
 
-  // Redirect to login if accessing protected or admin route without auth
+  // Redirect to login if accessing protected route without auth
   if ((isProtectedRoute || isAdminRoute) && !user) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth/login';
     url.searchParams.set('redirectTo', pathname);
+    return NextResponse.redirect(url);
+  }
+
+  // Redirect non-admin users away from admin routes
+  if (isAdminRoute && user && user.app_metadata?.role !== 'admin') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/dashboard';
     return NextResponse.redirect(url);
   }
 

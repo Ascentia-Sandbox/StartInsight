@@ -12,9 +12,9 @@ const datetimeValidator = z.string().refine(
 // Zod schemas for runtime validation
 export const CompetitorSchema = z.object({
   name: z.string(),
-  url: z.string().url(),
+  url: z.string(),
   description: z.string(),
-  market_position: z.enum(['Small', 'Medium', 'Large']).nullable().optional(),
+  market_position: z.string().nullable().optional(),
 });
 
 export const RawSignalSummarySchema = z.object({
@@ -26,12 +26,14 @@ export const RawSignalSummarySchema = z.object({
 });
 
 // Community Signal Schema (Phase 5.2: Visualization)
+// Flexible: AI agents may produce varying field formats
 export const CommunitySignalSchema = z.object({
-  platform: z.enum(['Reddit', 'Facebook', 'YouTube', 'Other']),
-  score: z.number().min(1).max(10),
-  members: z.number().min(0),
-  engagement_rate: z.number().min(0).max(1),
-  top_url: z.string().url().nullable().optional(),
+  platform: z.string().nullable().optional(),
+  community: z.string().nullable().optional(),
+  score: z.number().min(0).max(10),
+  members: z.union([z.string(), z.number()]),
+  engagement_rate: z.number().min(0).max(1).nullable().optional(),
+  top_url: z.string().nullable().optional(),
 });
 
 // Enhanced Score Schema (Phase 5.2: 8-Dimension Visualization)
@@ -62,6 +64,36 @@ export const InsightSchema = z.object({
   community_signals_chart: z.array(CommunitySignalSchema).nullable().optional(),
   enhanced_scores: z.array(EnhancedScoreSchema).nullable().optional(),
   trend_keywords: z.array(TrendKeywordSchema).nullable().optional(),
+  // Market sizing (TAM/SAM/SOM)
+  market_sizing: z.object({
+    tam: z.string(),
+    sam: z.string(),
+    som: z.string(),
+    growth_rate: z.string(),
+  }).nullable().optional(),
+  // Advanced frameworks
+  value_ladder: z.array(z.object({
+    tier: z.string().nullable().optional(),
+    name: z.string(),
+    price: z.string(),
+    description: z.string().nullable().optional(),
+    features: z.array(z.string()).optional(),
+  })).nullable().optional(),
+  market_gap_analysis: z.string().nullable().optional(),
+  why_now_analysis: z.string().nullable().optional(),
+  proof_signals: z.array(z.object({
+    signal_type: z.string(),
+    description: z.string(),
+    source: z.string(),
+    confidence: z.string(),
+  })).nullable().optional(),
+  execution_plan: z.array(z.object({
+    step_number: z.number(),
+    title: z.string(),
+    description: z.string(),
+    estimated_time: z.string(),
+    resources_needed: z.array(z.string()).optional(),
+  })).nullable().optional(),
   // Individual score fields for ScoreRadar component
   opportunity_score: z.number().min(1).max(10).nullable().optional(),
   problem_score: z.number().min(1).max(10).nullable().optional(),
@@ -70,11 +102,7 @@ export const InsightSchema = z.object({
   go_to_market_score: z.number().min(1).max(10).nullable().optional(),
   founder_fit_score: z.number().min(1).max(10).nullable().optional(),
   execution_difficulty_score: z.number().min(1).max(10).nullable().optional(),
-  revenue_potential_score: z.number().min(1).max(10).nullable().optional(),
-  // Additional framework fields
-  value_ladder: z.record(z.string(), z.any()).optional(),
-  market_gap_analysis: z.string().optional(),
-  why_now_analysis: z.string().optional(),
+  revenue_potential_score: z.union([z.string(), z.number()]).nullable().optional(),
 });
 
 export const InsightListResponseSchema = z.object({
@@ -97,6 +125,8 @@ export type InsightListResponse = z.infer<typeof InsightListResponseSchema>;
 export interface FetchInsightsParams {
   min_score?: number;
   source?: string;
+  sort?: 'relevance' | 'founder_fit' | 'opportunity' | 'feasibility' | 'newest';
+  featured?: boolean;
   limit?: number;
   offset?: number;
 }
@@ -295,7 +325,7 @@ export const ExecutionLogSchema = z.object({
 
 export const AgentStatusSchema = z.object({
   agent_type: z.string(),
-  state: z.enum(['running', 'paused', 'triggered']),
+  state: z.enum(['running', 'paused', 'triggered', 'error']),
   last_run: z.string().nullable().optional(),
   last_status: z.string().nullable().optional(),
   items_processed_today: z.number(),

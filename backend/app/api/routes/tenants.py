@@ -7,17 +7,20 @@ import logging
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db, require_admin
+from app.core.config import settings
 from app.models import User
+from app.models.tenant import Tenant, TenantUser
 from app.services.tenant_service import (
     configure_custom_domain,
-    create_tenant,
+    generate_tenant_slug,
     get_tenant_css_variables,
-    update_tenant_branding,
+    validate_subdomain,
     verify_custom_domain,
 )
 
@@ -94,6 +97,109 @@ class DomainConfigResponse(BaseModel):
 
 
 # ============================================================
+# Helpers
+# ============================================================
+
+
+def _tenant_to_response(tenant: Tenant) -> TenantResponse:
+    """Convert a Tenant model to response."""
+    return TenantResponse(
+        id=str(tenant.id),
+        name=tenant.name,
+        slug=tenant.slug,
+        subdomain=tenant.subdomain,
+        custom_domain=tenant.custom_domain,
+        custom_domain_verified=tenant.custom_domain_verified,
+        app_name=tenant.app_name,
+        logo_url=tenant.logo_url,
+        primary_color=tenant.primary_color,
+        status=tenant.status,
+        created_at=tenant.created_at.isoformat(),
+    )
+
+
+def _tenant_to_branding_response(tenant: Tenant) -> TenantBrandingResponse:
+    """Convert a Tenant model to branding response."""
+    tenant_data = {
+        "primary_color": tenant.primary_color or "#3B82F6",
+        "secondary_color": tenant.secondary_color or "#10B981",
+        "accent_color": tenant.accent_color or "#F59E0B",
+        "app_name": tenant.app_name or "StartInsight",
+    }
+    return TenantBrandingResponse(
+        logo_url=tenant.logo_url,
+        favicon_url=tenant.favicon_url,
+        primary_color=tenant.primary_color or "#3B82F6",
+        secondary_color=tenant.secondary_color or "#10B981",
+        accent_color=tenant.accent_color or "#F59E0B",
+        app_name=tenant.app_name or "StartInsight",
+        tagline=tenant.tagline or "AI-powered startup insights",
+        css_variables=get_tenant_css_variables(tenant_data),
+    )
+
+
+async def _get_tenant_with_access(
+    tenant_id: UUID,
+    user_id: UUID,
+    db: AsyncSession,
+) -> Tenant:
+    """Get tenant and verify user has access. Raises 404/403."""
+    tenant_result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
+    tenant = tenant_result.scalar_one_or_none()
+    if not tenant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tenant not found",
+        )
+
+    membership = await db.execute(
+        select(TenantUser).where(
+            TenantUser.tenant_id == tenant_id,
+            TenantUser.user_id == user_id,
+            TenantUser.status == "active",
+        )
+    )
+    if not membership.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this tenant",
+        )
+
+    return tenant
+
+
+async def _require_tenant_admin(
+    tenant_id: UUID,
+    user_id: UUID,
+    db: AsyncSession,
+) -> Tenant:
+    """Get tenant and require admin/owner role."""
+    tenant_result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
+    tenant = tenant_result.scalar_one_or_none()
+    if not tenant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tenant not found",
+        )
+
+    membership_result = await db.execute(
+        select(TenantUser).where(
+            TenantUser.tenant_id == tenant_id,
+            TenantUser.user_id == user_id,
+            TenantUser.status == "active",
+        )
+    )
+    membership = membership_result.scalar_one_or_none()
+    if not membership or membership.role not in ("owner", "admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only tenant owners and admins can perform this action",
+        )
+
+    return tenant
+
+
+# ============================================================
 # Tenant CRUD Endpoints
 # ============================================================
 
@@ -110,34 +216,62 @@ async def create_new_tenant(
     Requires authentication. Creates a white-label instance.
     Enterprise feature - requires enterprise subscription.
     """
-    try:
-        tenant_data = await create_tenant(
-            name=request.name,
-            owner_id=current_user.id,
-            subdomain=request.subdomain,
-        )
+    slug = generate_tenant_slug(request.name)
 
-        # TODO: Save to database
+    # Validate subdomain
+    subdomain = request.subdomain or slug
+    if request.subdomain:
+        is_valid, error = validate_subdomain(request.subdomain)
+        if not is_valid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=error or "Invalid subdomain",
+            )
 
-        return TenantResponse(
-            id=tenant_data["slug"],
-            name=tenant_data["name"],
-            slug=tenant_data["slug"],
-            subdomain=tenant_data["subdomain"],
-            custom_domain=None,
-            custom_domain_verified=False,
-            app_name=None,
-            logo_url=None,
-            primary_color=None,
-            status=tenant_data["status"],
-            created_at=tenant_data["created_at"],
-        )
-
-    except ValueError as e:
+    # Check subdomain uniqueness
+    existing = await db.execute(
+        select(Tenant).where(Tenant.subdomain == subdomain)
+    )
+    if existing.scalar_one_or_none():
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Subdomain is already taken",
         )
+
+    tenant = Tenant(
+        name=request.name,
+        slug=slug,
+        subdomain=subdomain,
+        owner_id=current_user.id,
+        status="active",
+        features={
+            "enable_research": True,
+            "enable_teams": True,
+            "enable_export": True,
+            "enable_api": False,
+            "enable_white_label": False,
+        },
+        max_users=settings.default_max_users,
+        max_teams=settings.default_max_teams,
+        max_api_keys=settings.default_max_api_keys,
+    )
+    db.add(tenant)
+    await db.flush()
+
+    # Add owner as first user
+    tenant_user = TenantUser(
+        tenant_id=tenant.id,
+        user_id=current_user.id,
+        role="owner",
+        status="active",
+    )
+    db.add(tenant_user)
+    await db.commit()
+    await db.refresh(tenant)
+
+    logger.info(f"Tenant created: {request.name} (slug: {slug}) by {current_user.id}")
+
+    return _tenant_to_response(tenant)
 
 
 @router.get("/current", response_model=TenantResponse)
@@ -150,11 +284,26 @@ async def get_current_tenant(
 
     Requires authentication.
     """
-    # TODO: Query database for user's tenant
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="No tenant found for user",
+    query = (
+        select(Tenant)
+        .join(TenantUser, TenantUser.tenant_id == Tenant.id)
+        .where(
+            TenantUser.user_id == current_user.id,
+            TenantUser.status == "active",
+        )
+        .order_by(Tenant.created_at.desc())
+        .limit(1)
     )
+    result = await db.execute(query)
+    tenant = result.scalar_one_or_none()
+
+    if not tenant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No tenant found for user",
+        )
+
+    return _tenant_to_response(tenant)
 
 
 @router.get("/{tenant_id}", response_model=TenantResponse)
@@ -168,11 +317,8 @@ async def get_tenant(
 
     Requires authentication. User must be tenant member.
     """
-    # TODO: Query database
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Tenant not found",
-    )
+    tenant = await _get_tenant_with_access(tenant_id, current_user.id, db)
+    return _tenant_to_response(tenant)
 
 
 # ============================================================
@@ -191,18 +337,8 @@ async def get_tenant_branding(
 
     Requires authentication.
     """
-    # TODO: Query database
-    # Return default branding for now
-    return TenantBrandingResponse(
-        logo_url=None,
-        favicon_url=None,
-        primary_color="#3B82F6",
-        secondary_color="#10B981",
-        accent_color="#F59E0B",
-        app_name="StartInsight",
-        tagline="AI-powered startup insights",
-        css_variables=get_tenant_css_variables({}),
-    )
+    tenant = await _get_tenant_with_access(tenant_id, current_user.id, db)
+    return _tenant_to_branding_response(tenant)
 
 
 @router.patch("/{tenant_id}/branding", response_model=TenantBrandingResponse)
@@ -217,29 +353,29 @@ async def update_branding(
 
     Requires authentication. User must be tenant owner or admin.
     """
-    from app.services.tenant_service import TenantBrandingUpdate
+    tenant = await _require_tenant_admin(tenant_id, current_user.id, db)
 
-    branding_update = TenantBrandingUpdate(**request.model_dump(exclude_none=True))
-    result = await update_tenant_branding(tenant_id, branding_update)
+    if request.logo_url is not None:
+        tenant.logo_url = request.logo_url
+    if request.favicon_url is not None:
+        tenant.favicon_url = request.favicon_url
+    if request.primary_color is not None:
+        tenant.primary_color = request.primary_color
+    if request.secondary_color is not None:
+        tenant.secondary_color = request.secondary_color
+    if request.accent_color is not None:
+        tenant.accent_color = request.accent_color
+    if request.app_name is not None:
+        tenant.app_name = request.app_name
+    if request.tagline is not None:
+        tenant.tagline = request.tagline
 
-    # Build CSS variables
-    tenant_data = {
-        "primary_color": request.primary_color or "#3B82F6",
-        "secondary_color": request.secondary_color or "#10B981",
-        "accent_color": request.accent_color or "#F59E0B",
-        "app_name": request.app_name or "StartInsight",
-    }
+    await db.commit()
+    await db.refresh(tenant)
 
-    return TenantBrandingResponse(
-        logo_url=request.logo_url,
-        favicon_url=request.favicon_url,
-        primary_color=request.primary_color,
-        secondary_color=request.secondary_color,
-        accent_color=request.accent_color,
-        app_name=request.app_name,
-        tagline=request.tagline,
-        css_variables=get_tenant_css_variables(tenant_data),
-    )
+    logger.info(f"Tenant branding updated: {tenant_id}")
+
+    return _tenant_to_branding_response(tenant)
 
 
 # ============================================================
@@ -260,20 +396,26 @@ async def configure_domain(
     Requires authentication. User must be tenant owner.
     Returns DNS instructions for domain verification.
     """
+    tenant = await _require_tenant_admin(tenant_id, current_user.id, db)
+
     try:
         result = await configure_custom_domain(tenant_id, request.custom_domain)
-
-        return DomainConfigResponse(
-            custom_domain=result["custom_domain"],
-            verified=result["custom_domain_verified"],
-            dns_instructions=result["dns_instructions"],
-        )
-
-    except ValueError as e:
+    except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Invalid domain format. Please provide a valid domain name.",
         )
+
+    # Save domain to tenant
+    tenant.custom_domain = result["custom_domain"]
+    tenant.custom_domain_verified = False
+    await db.commit()
+
+    return DomainConfigResponse(
+        custom_domain=result["custom_domain"],
+        verified=result["custom_domain_verified"],
+        dns_instructions=result["dns_instructions"],
+    )
 
 
 @router.post("/{tenant_id}/domain/verify")
@@ -287,8 +429,19 @@ async def verify_domain(
 
     Requires authentication. Checks if DNS is properly configured.
     """
-    # TODO: Get domain from database
-    result = await verify_custom_domain(tenant_id, "example.com")
+    tenant = await _require_tenant_admin(tenant_id, current_user.id, db)
+
+    if not tenant.custom_domain:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No custom domain configured for this tenant",
+        )
+
+    result = await verify_custom_domain(tenant_id, tenant.custom_domain)
+
+    if result["verified"]:
+        tenant.custom_domain_verified = True
+        await db.commit()
 
     return {
         "domain": result["domain"],
@@ -308,8 +461,13 @@ async def remove_custom_domain(
 
     Requires authentication. Reverts to subdomain access.
     """
-    # TODO: Remove domain from database
-    pass
+    tenant = await _require_tenant_admin(tenant_id, current_user.id, db)
+
+    tenant.custom_domain = None
+    tenant.custom_domain_verified = False
+    await db.commit()
+
+    logger.info(f"Custom domain removed for tenant {tenant_id}")
 
 
 # ============================================================
@@ -328,18 +486,28 @@ async def resolve_tenant_branding(
     Public endpoint - no authentication required.
     Used by frontend to load correct branding.
     """
-    # TODO: Query database for tenant by subdomain
-    # Return default branding for now
-    return TenantBrandingResponse(
-        logo_url=None,
-        favicon_url=None,
-        primary_color="#3B82F6",
-        secondary_color="#10B981",
-        accent_color="#F59E0B",
-        app_name="StartInsight",
-        tagline="AI-powered startup insights",
-        css_variables=get_tenant_css_variables({}),
+    result = await db.execute(
+        select(Tenant).where(
+            Tenant.subdomain == subdomain,
+            Tenant.status == "active",
+        )
     )
+    tenant = result.scalar_one_or_none()
+
+    if not tenant:
+        # Return default branding
+        return TenantBrandingResponse(
+            logo_url=None,
+            favicon_url=None,
+            primary_color="#3B82F6",
+            secondary_color="#10B981",
+            accent_color="#F59E0B",
+            app_name="StartInsight",
+            tagline="AI-powered startup insights",
+            css_variables=get_tenant_css_variables({}),
+        )
+
+    return _tenant_to_branding_response(tenant)
 
 
 # ============================================================
@@ -349,6 +517,8 @@ async def resolve_tenant_branding(
 
 @router.get("/admin/list")
 async def list_all_tenants(
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
     current_user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
@@ -357,17 +527,40 @@ async def list_all_tenants(
 
     Requires admin authentication.
     """
-    # TODO: Query all tenants
+    total = await db.scalar(select(func.count(Tenant.id))) or 0
+
+    query = (
+        select(Tenant)
+        .order_by(Tenant.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    result = await db.execute(query)
+    tenants = result.scalars().all()
+
     return {
-        "tenants": [],
-        "total": 0,
+        "tenants": [
+            {
+                "id": str(t.id),
+                "name": t.name,
+                "slug": t.slug,
+                "subdomain": t.subdomain,
+                "status": t.status,
+                "owner_id": str(t.owner_id) if t.owner_id else None,
+                "created_at": t.created_at.isoformat(),
+            }
+            for t in tenants
+        ],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
     }
 
 
 @router.patch("/admin/{tenant_id}/status")
 async def update_tenant_status(
     tenant_id: UUID,
-    status: str,
+    new_status: str = Query(..., alias="status"),
     current_user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
@@ -378,11 +571,24 @@ async def update_tenant_status(
     Can suspend or reactivate tenants.
     """
     valid_statuses = ["active", "suspended", "pending", "trial"]
-    if status not in valid_statuses:
+    if new_status not in valid_statuses:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid status. Must be one of: {valid_statuses}",
         )
 
-    # TODO: Update tenant status in database
-    return {"tenant_id": str(tenant_id), "status": status}
+    tenant_result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
+    tenant = tenant_result.scalar_one_or_none()
+
+    if not tenant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tenant not found",
+        )
+
+    tenant.status = new_status
+    await db.commit()
+
+    logger.info(f"Tenant {tenant_id} status updated to {new_status} by admin {current_user.id}")
+
+    return {"tenant_id": str(tenant_id), "status": new_status}

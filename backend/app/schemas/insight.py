@@ -1,10 +1,10 @@
 """Pydantic schemas for Insight API responses."""
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, field_validator
 
 
 class CompetitorResponse(BaseModel):
@@ -16,14 +16,75 @@ class CompetitorResponse(BaseModel):
     market_position: str | None = None
 
 
-class CommunitySignal(BaseModel):
-    """Community signal data for visualization."""
+class CompetitorListItemResponse(BaseModel):
+    """Competitor list item in API response."""
 
-    platform: Literal["Reddit", "Facebook", "YouTube", "Other"]
-    score: int = Field(ge=1, le=10, description="Engagement score from 1-10")
-    members: int = Field(ge=0, description="Total community members")
-    engagement_rate: float = Field(ge=0.0, le=1.0, description="Engagement rate as decimal (0-1)")
-    top_url: HttpUrl | None = Field(default=None, description="URL to top post/discussion")
+    id: UUID
+    name: str
+    url: str
+    description: str | None = None
+    value_proposition: str | None = None
+    target_audience: str | None = None
+    market_position: str | None = None
+    metrics: dict[str, Any] | None = None
+    features: list[str] | None = None
+    strengths: list[str] | None = None
+    weaknesses: list[str] | None = None
+    positioning_x: float | None = None
+    positioning_y: float | None = None
+    last_scraped_at: datetime | None = None
+    scrape_status: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CompetitorSnapshotResponse(BaseModel):
+    """Competitor snapshot in API response."""
+
+    id: UUID
+    snapshot_data: dict[str, Any] | None = None
+    changes_detected: dict[str, Any] | None = None
+    scraped_at: datetime
+    scrape_method: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class CompetitorDetailResponse(CompetitorListItemResponse):
+    """Detailed competitor profile with snapshots."""
+
+    insight_id: UUID
+    scrape_error: str | None = None
+    analysis_generated_at: datetime | None = None
+    analysis_model: str | None = None
+    snapshots: list[CompetitorSnapshotResponse] = []
+
+    class Config:
+        from_attributes = True
+
+
+class MessageResponse(BaseModel):
+    """Simple message response."""
+
+    message: str
+
+
+class CommunitySignal(BaseModel):
+    """Community signal data for visualization.
+
+    Flexible schema: AI agents may produce varying field formats.
+    """
+
+    platform: str | None = Field(default=None, description="Platform name (e.g., Reddit, Facebook)")
+    community: str | None = Field(default=None, description="Community name (e.g., Sales Hacker)")
+    score: int = Field(ge=0, le=10, description="Engagement score from 0-10")
+    members: str | int = Field(description="Community members (e.g., '150K+ members' or 5000)")
+    engagement_rate: float | None = Field(default=None, ge=0.0, le=1.0, description="Engagement rate as decimal (0-1)")
+    top_url: str | None = Field(default=None, description="URL to top post/discussion")
 
 
 class EnhancedScore(BaseModel):
@@ -83,6 +144,16 @@ class InsightResponse(BaseModel):
         description="Trending keywords with search volume and growth percentage"
     )
 
+    # Market sizing (TAM/SAM/SOM)
+    market_sizing: dict[str, Any] | None = None
+
+    # Advanced frameworks
+    value_ladder: list[dict[str, Any]] | None = None
+    market_gap_analysis: str | None = None
+    why_now_analysis: str | None = None
+    proof_signals: list[dict[str, Any]] | None = None
+    execution_plan: list[dict[str, Any]] | None = None
+
     # Individual score fields for frontend compatibility
     opportunity_score: int | None = Field(default=None, ge=1, le=10)
     problem_score: int | None = Field(default=None, ge=1, le=10)
@@ -96,6 +167,14 @@ class InsightResponse(BaseModel):
     revenue_potential_score: str | None = Field(
         default=None, validation_alias="revenue_potential"
     )
+
+    @field_validator("value_ladder", mode="before")
+    @classmethod
+    def normalize_value_ladder(cls, v: Any) -> list[dict[str, Any]] | None:
+        """Unwrap {'tiers': [...]} dict format to plain list."""
+        if isinstance(v, dict) and "tiers" in v:
+            return v["tiers"]
+        return v
 
     class Config:
         from_attributes = True

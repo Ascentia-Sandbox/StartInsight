@@ -6,7 +6,7 @@ Phase 15.4: APAC Multi-language Support - Accept-Language header negotiation
 import asyncio
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 
@@ -16,11 +16,20 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.api.deps import AdminUser, CurrentUser
 from app.core.rate_limits import limiter
 from app.db.session import get_db
 from app.models.insight import Insight
 from app.models.raw_signal import RawSignal
-from app.schemas.insight import InsightListResponse, InsightResponse
+from app.schemas.insight import (
+    CompetitorDetailResponse,
+    CompetitorListItemResponse,
+    CompetitorSnapshotResponse,
+    InsightListResponse,
+    InsightResponse,
+    MessageResponse,
+)
+from app.core.config import settings
 from app.services.trend_prediction import generate_trend_predictions
 
 logger = logging.getLogger(__name__)
@@ -255,7 +264,7 @@ async def get_daily_top(
     - **limit**: Number of insights to return (max 20, default 5)
     """
     # Calculate 24 hours ago
-    yesterday = datetime.utcnow() - timedelta(days=1)
+    yesterday = datetime.now(UTC) - timedelta(days=1)
 
     # Build query
     query = (
@@ -293,7 +302,7 @@ async def get_idea_of_the_day(
     import hashlib
 
     # Calculate 7 days ago for freshness filter
-    week_ago = datetime.utcnow() - timedelta(days=7)
+    week_ago = datetime.now(UTC) - timedelta(days=7)
 
     # Get qualifying insights (high quality, recent)
     query = (
@@ -313,7 +322,7 @@ async def get_idea_of_the_day(
         return None
 
     # Deterministic selection based on today's date
-    today_str = datetime.utcnow().strftime("%Y-%m-%d")
+    today_str = datetime.now(UTC).strftime("%Y-%m-%d")
     date_hash = int(hashlib.md5(today_str.encode()).hexdigest(), 16)
     selected_index = date_hash % len(candidates)
 
@@ -533,7 +542,7 @@ async def stream_trend_data(
         """
         # Track last seen timestamp to only send new data
         last_timestamp = None
-        max_duration = 3600  # 1 hour max stream duration
+        max_duration = settings.sse_max_duration
         start_time = time.time()
 
         try:
@@ -597,7 +606,7 @@ async def stream_trend_data(
 
                     # Send heartbeat to keep connection alive
                     else:
-                        yield f"event: heartbeat\ndata: {{\"timestamp\": \"{datetime.utcnow().isoformat()}\"}}\n\n"
+                        yield f"event: heartbeat\ndata: {{\"timestamp\": \"{datetime.now(UTC).isoformat()}\"}}\n\n"
 
                 # Session auto-closed here (connection returned to pool)
 
@@ -608,8 +617,8 @@ async def stream_trend_data(
             logger.info(f"SSE stream cancelled for insight {insight_id}")
             yield f"event: close\ndata: {{\"message\": \"Stream closed\"}}\n\n"
         except Exception as e:
-            logger.error(f"Error in SSE stream for insight {insight_id}: {e}")
-            yield f"event: error\ndata: {{\"error\": \"{str(e)}\"}}\n\n"
+            logger.error(f"Error in SSE stream for insight {insight_id}: {e}", exc_info=True)
+            yield f"event: error\ndata: {{\"error\": \"Internal server error\"}}\n\n"
         finally:
             logger.info(f"SSE stream ended for insight {insight_id}")
 
@@ -671,7 +680,7 @@ async def get_trend_predictions(
         forecast_date_str = insight.trend_predictions.get("metadata", {}).get("forecast_date")
         if forecast_date_str:
             forecast_date = datetime.fromisoformat(forecast_date_str)
-            age_hours = (datetime.utcnow() - forecast_date).total_seconds() / 3600
+            age_hours = (datetime.now(UTC) - forecast_date).total_seconds() / 3600
 
             if age_hours < 24:
                 logger.info(
@@ -722,10 +731,10 @@ async def get_trend_predictions(
         logger.warning(f"Prediction failed for insight {insight_id}: {e}")
         raise HTTPException(
             status_code=400,
-            detail=str(e)
+            detail="Invalid prediction parameters. Please check your input."
         )
     except Exception as e:
-        logger.error(f"Unexpected error generating predictions: {type(e).__name__} - {e}")
+        logger.error(f"Unexpected error generating predictions: {type(e).__name__} - {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="Failed to generate predictions. Please try again later."
@@ -740,6 +749,7 @@ async def get_trend_predictions(
 async def scrape_competitors(
     insight_id: UUID,
     competitor_urls: list[str],
+    current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """
@@ -805,18 +815,21 @@ async def scrape_competitors(
         }
 
     except Exception as e:
-        logger.error(f"Competitor scraping failed: {type(e).__name__} - {e}")
+        logger.error(f"Competitor scraping failed: {type(e).__name__} - {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to scrape competitors: {str(e)}"
+            detail="Failed to scrape competitors. Please try again."
         )
 
 
 @router.get("/{insight_id}/competitors")
 async def list_competitors(
     insight_id: UUID,
+    current_user: CurrentUser,
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
     db: AsyncSession = Depends(get_db),
-) -> list[dict]:
+) -> dict:
     """
     List all competitors for an insight.
 
@@ -832,54 +845,67 @@ async def list_competitors(
     if not insight:
         raise HTTPException(status_code=404, detail="Insight not found")
 
-    # Get competitors
-    stmt = select(CompetitorProfile).where(
-        CompetitorProfile.insight_id == insight_id
-    ).order_by(
-        CompetitorProfile.created_at.desc()
+    # Count total
+    total = await db.scalar(
+        select(func.count(CompetitorProfile.id)).where(
+            CompetitorProfile.insight_id == insight_id
+        )
+    ) or 0
+
+    # Get competitors with pagination
+    stmt = (
+        select(CompetitorProfile)
+        .where(CompetitorProfile.insight_id == insight_id)
+        .order_by(CompetitorProfile.created_at.desc())
+        .limit(limit)
+        .offset(offset)
     )
 
     result = await db.execute(stmt)
     competitors = result.scalars().all()
 
-    logger.info(f"Listed {len(competitors)} competitors for insight {insight_id}")
+    return {
+        "competitors": [
+            CompetitorListItemResponse(
+                id=c.id,
+                name=c.name,
+                url=c.url,
+                description=c.description,
+                value_proposition=c.value_proposition,
+                target_audience=c.target_audience,
+                market_position=c.market_position,
+                metrics=c.metrics,
+                features=c.features,
+                strengths=c.strengths,
+                weaknesses=c.weaknesses,
+                positioning_x=c.positioning_x,
+                positioning_y=c.positioning_y,
+                last_scraped_at=c.last_scraped_at,
+                scrape_status=c.scrape_status,
+                created_at=c.created_at,
+                updated_at=c.updated_at,
+            ).model_dump()
+            for c in competitors
+        ],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }
 
-    return [
-        {
-            "id": str(c.id),
-            "name": c.name,
-            "url": c.url,
-            "description": c.description,
-            "value_proposition": c.value_proposition,
-            "target_audience": c.target_audience,
-            "market_position": c.market_position,
-            "metrics": c.metrics,
-            "features": c.features,
-            "strengths": c.strengths,
-            "weaknesses": c.weaknesses,
-            "positioning_x": c.positioning_x,
-            "positioning_y": c.positioning_y,
-            "last_scraped_at": c.last_scraped_at.isoformat() if c.last_scraped_at else None,
-            "scrape_status": c.scrape_status,
-            "created_at": c.created_at.isoformat(),
-            "updated_at": c.updated_at.isoformat(),
-        }
-        for c in competitors
-    ]
 
-
-@router.get("/{insight_id}/competitors/{competitor_id}")
+@router.get("/{insight_id}/competitors/{competitor_id}", response_model=CompetitorDetailResponse)
 async def get_competitor_detail(
     insight_id: UUID,
     competitor_id: UUID,
+    current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> CompetitorDetailResponse:
     """
     Get detailed competitor profile with snapshot history.
 
     Returns full competitor data including all historical snapshots.
     """
-    from app.models.competitor_profile import CompetitorProfile, CompetitorSnapshot
+    from app.models.competitor_profile import CompetitorProfile
 
     # Get competitor profile
     stmt = (
@@ -897,47 +923,50 @@ async def get_competitor_detail(
 
     logger.info(f"Retrieved competitor {competitor_id} for insight {insight_id}")
 
-    return {
-        "id": str(competitor.id),
-        "insight_id": str(competitor.insight_id),
-        "name": competitor.name,
-        "url": competitor.url,
-        "description": competitor.description,
-        "value_proposition": competitor.value_proposition,
-        "target_audience": competitor.target_audience,
-        "market_position": competitor.market_position,
-        "metrics": competitor.metrics,
-        "features": competitor.features,
-        "strengths": competitor.strengths,
-        "weaknesses": competitor.weaknesses,
-        "positioning_x": competitor.positioning_x,
-        "positioning_y": competitor.positioning_y,
-        "last_scraped_at": competitor.last_scraped_at.isoformat() if competitor.last_scraped_at else None,
-        "scrape_status": competitor.scrape_status,
-        "scrape_error": competitor.scrape_error,
-        "analysis_generated_at": competitor.analysis_generated_at.isoformat() if competitor.analysis_generated_at else None,
-        "analysis_model": competitor.analysis_model,
-        "created_at": competitor.created_at.isoformat(),
-        "updated_at": competitor.updated_at.isoformat(),
-        "snapshots": [
-            {
-                "id": str(s.id),
-                "snapshot_data": s.snapshot_data,
-                "changes_detected": s.changes_detected,
-                "scraped_at": s.scraped_at.isoformat(),
-                "scrape_method": s.scrape_method,
-            }
-            for s in sorted(competitor.snapshots, key=lambda x: x.scraped_at, reverse=True)
+    snapshots = sorted(competitor.snapshots, key=lambda x: x.scraped_at, reverse=True)[:50]
+
+    return CompetitorDetailResponse(
+        id=competitor.id,
+        insight_id=competitor.insight_id,
+        name=competitor.name,
+        url=competitor.url,
+        description=competitor.description,
+        value_proposition=competitor.value_proposition,
+        target_audience=competitor.target_audience,
+        market_position=competitor.market_position,
+        metrics=competitor.metrics,
+        features=competitor.features,
+        strengths=competitor.strengths,
+        weaknesses=competitor.weaknesses,
+        positioning_x=competitor.positioning_x,
+        positioning_y=competitor.positioning_y,
+        last_scraped_at=competitor.last_scraped_at,
+        scrape_status=competitor.scrape_status,
+        scrape_error=competitor.scrape_error,
+        analysis_generated_at=competitor.analysis_generated_at,
+        analysis_model=competitor.analysis_model,
+        created_at=competitor.created_at,
+        updated_at=competitor.updated_at,
+        snapshots=[
+            CompetitorSnapshotResponse(
+                id=s.id,
+                snapshot_data=s.snapshot_data,
+                changes_detected=s.changes_detected,
+                scraped_at=s.scraped_at,
+                scrape_method=s.scrape_method,
+            )
+            for s in snapshots
         ],
-    }
+    )
 
 
-@router.delete("/{insight_id}/competitors/{competitor_id}")
+@router.delete("/{insight_id}/competitors/{competitor_id}", response_model=MessageResponse)
 async def delete_competitor(
     insight_id: UUID,
     competitor_id: UUID,
+    admin: AdminUser,
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> MessageResponse:
     """
     Delete a competitor profile.
 
@@ -964,12 +993,13 @@ async def delete_competitor(
 
     logger.info(f"Deleted competitor {competitor_id} from insight {insight_id}")
 
-    return {"message": f"Competitor '{competitor.name}' deleted successfully"}
+    return MessageResponse(message=f"Competitor '{competitor.name}' deleted successfully")
 
 
 @router.post("/{insight_id}/competitors/analyze")
 async def analyze_competitors_ai(
     insight_id: UUID,
+    current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """
@@ -1014,10 +1044,10 @@ async def analyze_competitors_ai(
 
     except ValueError as e:
         logger.warning(f"Competitive analysis failed: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid analysis parameters. Please check your input.")
 
     except Exception as e:
-        logger.error(f"Unexpected error during competitive analysis: {type(e).__name__} - {e}")
+        logger.error(f"Unexpected error during competitive analysis: {type(e).__name__} - {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="Failed to generate competitive analysis. Please try again later."

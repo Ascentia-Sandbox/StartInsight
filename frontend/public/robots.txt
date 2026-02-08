@@ -1,0 +1,42 @@
+# StartInsight Robots.txt
+# https://startinsight.app
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://startinsight.app/sitemap.xml
+
+# Disallow admin pages
+Disallow: /admin/
+Disallow: /api/
+
+# Disallow auth pages from being indexed
+Disallow: /auth/callback
+
+# Disallow private user pages
+Disallow: /dashboard/
+Disallow: /workspace/
+Disallow: /settings/
+Disallow: /billing/
+Disallow: /teams/
+Disallow: /api-keys/
+Disallow: /tenant-settings/
+
+# Allow public pages
+Allow: /insights/
+Allow: /trends/
+Allow: /pricing/
+Allow: /features/
+Allow: /platform-tour/
+Allow: /tools/
+Allow: /success-stories/
+Allow: /market-insights/
+Allow: /faq/
+Allow: /about/
+Allow: /contact/
+Allow: /auth/login
+Allow: /auth/signup
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1

@@ -48,37 +48,67 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+
+  /* IdeaBrowser-inspired Light Theme Colors */
+  --background: oklch(1 0 0); /* #FFFFFF */
+  --foreground: oklch(0.285 0 0); /* #1F2937 - darker text for better contrast */
+  --card: oklch(0.988 0 0); /* #F9FAFB - very light gray */
+  --card-foreground: oklch(0.285 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.285 0 0);
+
+  /* Primary: IdeaBrowser-style purple/blue (#5B59FF) */
+  --primary: oklch(0.571 0.241 276.514); /* #5B59FF */
+  --primary-foreground: oklch(1 0 0);
+
+  /* Secondary: Light gray backgrounds */
+  --secondary: oklch(0.988 0 0); /* #F9FAFB */
+  --secondary-foreground: oklch(0.285 0 0);
+
+  /* Muted: Slightly darker gray for subtle elements */
+  --muted: oklch(0.96 0 0); /* #F3F4F6 */
+  --muted-foreground: oklch(0.534 0 0); /* #6B7280 - gray-500 */
+
+  /* Accent: Success green (#10B981) */
+  --accent: oklch(0.696 0.17 162.48); /* #10B981 */
+  --accent-foreground: oklch(1 0 0);
+
+  /* Destructive: Keep red for errors */
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
+
+  /* Borders: Light gray (#E5E7EB) */
+  --border: oklch(0.922 0 0); /* #E5E7EB */
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --ring: oklch(0.571 0.241 276.514); /* Match primary */
+
+  /* Chart colors: Vibrant but professional */
+  --chart-1: oklch(0.571 0.241 276.514); /* Primary blue/purple */
+  --chart-2: oklch(0.696 0.17 162.48); /* Success green */
+  --chart-3: oklch(0.769 0.188 70.08); /* Warning yellow */
+  --chart-4: oklch(0.627 0.265 303.9); /* Pink/purple */
+  --chart-5: oklch(0.645 0.246 16.439); /* Orange */
+
+  /* Sidebar: Light theme */
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.285 0 0);
+  --sidebar-primary: oklch(0.571 0.241 276.514);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.988 0 0);
+  --sidebar-accent-foreground: oklch(0.285 0 0);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-ring: oklch(0.571 0.241 276.514);
+
+  /* Spacing scale - IdeaBrowser-inspired generous spacing */
+  --space-xs: 8px;
+  --space-sm: 16px;
+  --space-md: 24px;
+  --space-lg: 32px;
+  --space-xl: 48px;
+  --space-2xl: 64px;
+
+  /* Content width constraints */
+  --content-width: 1200px;
+  --narrow-width: 800px;
 }
 
 .dark {
@@ -121,5 +151,128 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  /* Typography Hierarchy - IdeaBrowser-inspired large, bold headlines */
+  h1 {
+    font-size: 2.25rem; /* 36px */
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  h2 {
+    font-size: 1.5rem; /* 24px */
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-size: 1.125rem; /* 18px */
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  /* Display heading for hero sections */
+  .text-display {
+    font-size: 3rem; /* 48px */
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  /* Body text improvements */
+  p {
+    line-height: 1.6;
+  }
+
+  /* Accessibility: Enhanced focus indicators for keyboard navigation */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  /* Skip to content link for keyboard users */
+  .skip-to-content {
+    @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50;
+    @apply bg-primary text-primary-foreground px-4 py-2 rounded-md;
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  /* Screen reader only class */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* Interactive States - IdeaBrowser-inspired hover effects */
+  button:not(:disabled):hover {
+    transform: translateY(-2px);
+    transition: transform 150ms ease-out, box-shadow 150ms ease-out;
+  }
+
+  /* Card hover effects */
+  .card-hover {
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+
+  .card-hover:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  /* Link hover effects */
+  a:hover {
+    text-decoration: underline;
+  }
+
+  /* Smooth transitions for theme switching */
+  * {
+    transition-property: background-color, border-color, color;
+    transition-duration: 150ms;
+    transition-timing-function: ease;
+  }
+
+  /* Mobile touch optimizations */
+  button, a, [role="button"] {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.05);
+  }
+
+  /* Prevent text selection on interactive elements */
+  button, [role="button"] {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Smooth momentum scrolling on iOS */
+  .overflow-auto, .overflow-x-auto, .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Mobile-specific touch target enforcement */
+@media (pointer: coarse) {
+  button:not([data-tour-overlay] button),
+  a:not([data-tour-overlay] a),
+  [role="button"],
+  select,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Ensure select triggers have proper touch targets */
+  [data-slot="select-trigger"] {
+    min-height: 44px;
   }
 }

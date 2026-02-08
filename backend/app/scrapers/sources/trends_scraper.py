@@ -1,6 +1,8 @@
 """Google Trends scraper using pytrends."""
 
+import asyncio
 import logging
+import random
 
 import pandas as pd
 from pydantic import HttpUrl
@@ -10,6 +12,13 @@ from app.scrapers.base_scraper import BaseScraper
 from app.scrapers.firecrawl_client import ScrapeResult
 
 logger = logging.getLogger(__name__)
+
+# Default delay between API calls (seconds)
+DEFAULT_BATCH_DELAY = 2.0
+# Maximum retries for 429 errors
+MAX_RETRIES = 3
+# Base delay for exponential backoff (seconds)
+BACKOFF_BASE = 5.0
 
 
 class GoogleTrendsScraper(BaseScraper):
@@ -88,25 +97,51 @@ class GoogleTrendsScraper(BaseScraper):
         for i in range(0, len(self.keywords), batch_size):
             batch = self.keywords[i : i + batch_size]
 
-            try:
-                results = await self._scrape_keyword_batch(batch)
-                all_results.extend(results)
-                logger.info(
-                    f"Scraped trends for batch: {', '.join(batch)}"
-                )
-            except Exception as e:
-                logger.error(
-                    f"Error scraping trends for batch {batch}: "
-                    f"{type(e).__name__} - {e}"
-                )
-                continue
+            # Retry with exponential backoff for rate limits
+            for retry in range(MAX_RETRIES):
+                try:
+                    results = await self._scrape_keyword_batch(batch)
+                    all_results.extend(results)
+                    logger.info(
+                        f"Scraped trends for batch: {', '.join(batch)}"
+                    )
+                    break  # Success, exit retry loop
+                except Exception as e:
+                    error_str = str(e).lower()
+                    if "429" in error_str or "too many" in error_str:
+                        # Rate limited - exponential backoff with jitter
+                        delay = BACKOFF_BASE * (2 ** retry) + random.uniform(0, 1)
+                        logger.warning(
+                            f"Rate limited (attempt {retry + 1}/{MAX_RETRIES}), "
+                            f"waiting {delay:.1f}s before retry"
+                        )
+                        await asyncio.sleep(delay)
+                        if retry == MAX_RETRIES - 1:
+                            logger.error(
+                                f"Max retries exceeded for batch {batch}: {e}"
+                            )
+                    else:
+                        logger.error(
+                            f"Error scraping trends for batch {batch}: "
+                            f"{type(e).__name__} - {e}"
+                        )
+                        break  # Non-retryable error
 
-        # Also get rising queries
+            # Add delay between batches to avoid rate limits
+            if i + batch_size < len(self.keywords):
+                await asyncio.sleep(DEFAULT_BATCH_DELAY)
+
+        # Also get rising queries (with delay to avoid rate limits)
+        await asyncio.sleep(DEFAULT_BATCH_DELAY)
         try:
             rising_results = await self._scrape_rising_queries()
             all_results.extend(rising_results)
         except Exception as e:
-            logger.error(f"Error scraping rising queries: {e}")
+            error_str = str(e).lower()
+            if "429" in error_str or "too many" in error_str:
+                logger.warning(f"Rising queries rate limited, skipping: {e}")
+            else:
+                logger.error(f"Error scraping rising queries: {e}")
 
         self.log_scrape_summary(all_results)
         return all_results

@@ -10,7 +10,7 @@ See architecture.md "Research Agent Architecture" for full specification.
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -53,7 +53,7 @@ router = APIRouter(prefix="/api/research", tags=["research"])
 
 async def get_monthly_usage(user_id: UUID, db: AsyncSession) -> int:
     """Get user's research analyses count for current month."""
-    first_of_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    first_of_month = datetime.now(UTC).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     count_query = (
         select(func.count())
@@ -85,7 +85,7 @@ async def run_analysis_background(
 
             # Update status to processing
             analysis.status = "processing"
-            analysis.started_at = datetime.utcnow()
+            analysis.started_at = datetime.now(UTC)
             analysis.current_step = "Initializing research agent..."
             analysis.progress_percent = 5
             await db.commit()
@@ -105,7 +105,7 @@ async def run_analysis_background(
             analysis.status = "completed"
             analysis.progress_percent = 100
             analysis.current_step = "Analysis complete"
-            analysis.completed_at = datetime.utcnow()
+            analysis.completed_at = datetime.now(UTC)
 
             # Store analysis results
             analysis.market_analysis = result.market_analysis.model_dump()
@@ -365,7 +365,7 @@ async def get_quota(
     quota_limit = get_quota_limit(current_user.subscription_tier)
 
     # Calculate reset date (first of next month)
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     if now.month == 12:
         next_month = now.replace(year=now.year + 1, month=1, day=1)
     else:
@@ -429,7 +429,7 @@ async def create_research_request(
     # Auto-approve for paid tiers (Starter, Pro, Enterprise)
     if current_user.subscription_tier in ["starter", "pro", "enterprise"]:
         research_request.status = "approved"
-        research_request.reviewed_at = datetime.utcnow()
+        research_request.reviewed_at = datetime.now(UTC)
         research_request.admin_id = None  # System auto-approval
         await db.commit()
 
@@ -561,26 +561,20 @@ async def list_all_requests(
     result = await db.execute(query)
     requests = result.scalars().all()
 
-    # Fetch user emails
-    items = []
-    for r in requests:
-        # Get user email (join with users table)
-        user_query = select(User.email).where(User.id == r.user_id)
-        user_result = await db.execute(user_query)
-        user_email = user_result.scalar_one_or_none()
-
-        items.append(
-            ResearchRequestSummary(
-                id=r.id,
-                user_id=r.user_id,
-                user_email=user_email,
-                status=r.status,
-                idea_description=r.idea_description,
-                target_market=r.target_market,
-                created_at=r.created_at,
-                reviewed_at=r.reviewed_at,
-            )
+    # Build response items using eagerly-loaded user relationship
+    items = [
+        ResearchRequestSummary(
+            id=r.id,
+            user_id=r.user_id,
+            user_email=r.user.email if r.user else None,
+            status=r.status,
+            idea_description=r.idea_description,
+            target_market=r.target_market,
+            created_at=r.created_at,
+            reviewed_at=r.reviewed_at,
         )
+        for r in requests
+    ]
 
     return ResearchRequestListResponse(items=items, total=total)
 
@@ -615,7 +609,7 @@ async def update_request_status(
 
     # Update request
     research_request.admin_id = admin_user.id
-    research_request.reviewed_at = datetime.utcnow()
+    research_request.reviewed_at = datetime.now(UTC)
     research_request.admin_notes = action.notes
 
     if action.action == "approve":

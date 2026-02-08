@@ -56,6 +56,14 @@ class RawSignal(Base):
         comment="Scraped content in markdown format"
     )
 
+    content_hash: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,  # Nullable for backward compatibility
+        index=True,
+        unique=True,
+        comment="SHA-256 hash of content for deduplication"
+    )
+
     extra_metadata: Mapped[dict[str, Any]] = mapped_column(
         JSON,
         nullable=False,

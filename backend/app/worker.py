@@ -92,7 +92,7 @@ async def hourly_trends_update_task(ctx: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Task result with count of insights updated
     """
-    from datetime import datetime, timedelta
+    from datetime import UTC, datetime, timedelta
     from sqlalchemy import select, desc
 
     from app.models.insight import Insight
@@ -159,7 +159,7 @@ async def hourly_trends_update_task(ctx: dict[str, Any]) -> dict[str, Any]:
                         }
 
                     # Add new data point
-                    now = datetime.utcnow()
+                    now = datetime.now(UTC)
                     signal.extra_metadata["trend_data_realtime"]["timestamps"].append(
                         now.isoformat()
                     )

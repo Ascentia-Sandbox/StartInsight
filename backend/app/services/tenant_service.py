@@ -189,7 +189,7 @@ async def configure_custom_domain(
         raise ValueError("Invalid domain format")
 
     # Generate verification token
-    verification_token = f"startinsight-verify={secrets.token_hex(16)}"
+    verification_token = f"{settings.tenant_base_domain.split('.')[0]}-verify={secrets.token_hex(16)}"
 
     domain_config = {
         "custom_domain": domain.lower(),
@@ -198,9 +198,9 @@ async def configure_custom_domain(
         "dns_instructions": {
             "type": "CNAME",
             "name": domain.lower(),
-            "value": "custom.startinsight.ai",
+            "value": f"custom.{settings.tenant_base_domain}",
             "txt_record": {
-                "name": f"_startinsight.{domain.lower()}",
+                "name": f"_{settings.tenant_base_domain.split('.')[0]}.{domain.lower()}",
                 "value": verification_token,
             },
         },
@@ -264,8 +264,8 @@ async def resolve_tenant_from_host(host: str) -> dict[str, Any] | None:
     # In production, query database for custom_domain match
 
     # Check if it's a subdomain of startinsight.ai
-    if host.endswith(".startinsight.ai"):
-        subdomain = host.replace(".startinsight.ai", "")
+    if host.endswith(f".{settings.tenant_base_domain}"):
+        subdomain = host.replace(f".{settings.tenant_base_domain}", "")
         if subdomain and subdomain != "www" and subdomain != "app":
             # In production, query database for subdomain match
             logger.debug(f"Resolved tenant from subdomain: {subdomain}")

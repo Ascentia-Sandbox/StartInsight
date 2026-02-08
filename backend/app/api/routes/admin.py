@@ -13,7 +13,7 @@ See architecture.md "Admin Portal Architecture" for full specification.
 import asyncio
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 
@@ -28,6 +28,7 @@ from app.core.rate_limits import limiter
 from app.db.query_helpers import count_by_field
 from app.db.session import AsyncSessionLocal, get_db
 from app.models.admin_user import AdminUser as AdminUserModel
+from app.models.agent_control import AgentConfiguration
 from app.models.agent_execution_log import AgentExecutionLog
 from app.models.insight import Insight
 from app.models.system_metric import SystemMetric
@@ -142,7 +143,7 @@ async def admin_event_stream(
                     # Send error event but keep connection alive
                     yield {
                         "event": "error",
-                        "data": json.dumps({"error": str(e)}),
+                        "data": json.dumps({"error": "Internal metrics error"}),
                     }
                     await asyncio.sleep(5)
 
@@ -163,7 +164,7 @@ async def _gather_admin_metrics(db: AsyncSession) -> dict:
     - Combined insight/metric queries
     - Reduced from 9 queries to 3 queries
     """
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
 
     # ✅ OPTIMIZATION #1: Get agent states in single query (was 4 queries)
     # Uses PostgreSQL DISTINCT ON to get most recent log per agent type
@@ -222,7 +223,7 @@ async def _gather_admin_metrics(db: AsyncSession) -> dict:
         "pending_insights": int(metrics_row.pending_insights),
         "total_insights_today": int(metrics_row.total_insights_today),
         "errors_today": int(metrics_row.errors_today),
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
 
 
@@ -240,7 +241,7 @@ async def list_agents(
     List all agents with their current status.
     """
     agents = ["reddit_scraper", "product_hunt_scraper", "trends_scraper", "analyzer"]
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
     results = []
 
     for agent_type in agents:
@@ -322,7 +323,7 @@ async def get_agent_logs(
 @limiter.limit("20/minute")  # Phase 2: SlowAPI rate limiting
 async def pause_agent(
     request: Request,
-    agent_type: AgentType,
+    agent_type: str,
     admin: AdminUser,
     db: AsyncSession = Depends(get_db),
 ) -> AgentControlResponse:
@@ -330,10 +331,18 @@ async def pause_agent(
     Pause agent execution.
 
     Agent will skip next scheduled run until resumed.
+    Accepts any configured agent name (e.g., competitive_intel, enhanced_analyzer).
     """
+    # Validate agent exists in configurations
+    config = await db.execute(
+        select(AgentConfiguration).where(AgentConfiguration.agent_name == agent_type)
+    )
+    if not config.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail=f"Agent '{agent_type}' not found")
+
     # Log admin action
     log = AgentExecutionLog(
-        agent_type=agent_type.value,
+        agent_type=agent_type,
         status="skipped",
         error_message=f"Paused by admin {admin.email}",
         extra_metadata={"action": "pause", "admin_id": str(admin.id)},
@@ -345,9 +354,9 @@ async def pause_agent(
 
     return AgentControlResponse(
         status="paused",
-        agent_type=agent_type.value,
+        agent_type=agent_type,
         triggered_by=admin.email,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(UTC),
     )
 
 
@@ -355,16 +364,24 @@ async def pause_agent(
 @limiter.limit("20/minute")  # Phase 2: SlowAPI rate limiting
 async def resume_agent(
     request: Request,
-    agent_type: AgentType,
+    agent_type: str,
     admin: AdminUser,
     db: AsyncSession = Depends(get_db),
 ) -> AgentControlResponse:
     """
     Resume paused agent execution.
+    Accepts any configured agent name.
     """
+    # Validate agent exists
+    config = await db.execute(
+        select(AgentConfiguration).where(AgentConfiguration.agent_name == agent_type)
+    )
+    if not config.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail=f"Agent '{agent_type}' not found")
+
     # Log admin action
     log = AgentExecutionLog(
-        agent_type=agent_type.value,
+        agent_type=agent_type,
         status="running",
         error_message=f"Resumed by admin {admin.email}",
         extra_metadata={"action": "resume", "admin_id": str(admin.id)},
@@ -376,9 +393,9 @@ async def resume_agent(
 
     return AgentControlResponse(
         status="running",
-        agent_type=agent_type.value,
+        agent_type=agent_type,
         triggered_by=admin.email,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(UTC),
     )
 
 
@@ -386,16 +403,24 @@ async def resume_agent(
 @limiter.limit("20/minute")  # Phase 2: SlowAPI rate limiting
 async def trigger_agent(
     request: Request,
-    agent_type: AgentType,
+    agent_type: str,
     admin: AdminUser,
     db: AsyncSession = Depends(get_db),
 ) -> AgentControlResponse:
     """
     Manually trigger agent execution (out of schedule).
+    Accepts any configured agent name.
     """
+    # Validate agent exists
+    config = await db.execute(
+        select(AgentConfiguration).where(AgentConfiguration.agent_name == agent_type)
+    )
+    if not config.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail=f"Agent '{agent_type}' not found")
+
     # Create execution log
     log = AgentExecutionLog(
-        agent_type=agent_type.value,
+        agent_type=agent_type,
         status="running",
         extra_metadata={"action": "manual_trigger", "admin_id": str(admin.id)},
     )
@@ -411,10 +436,10 @@ async def trigger_agent(
 
     return AgentControlResponse(
         status="triggered",
-        agent_type=agent_type.value,
+        agent_type=agent_type,
         triggered_by=admin.email,
         job_id=str(log.id),
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(UTC),
     )
 
 
@@ -511,7 +536,7 @@ async def update_insight_status(
     # Track who edited
     if admin_record:
         insight.edited_by = admin_record.id
-    insight.edited_at = datetime.utcnow()
+    insight.edited_at = datetime.now(UTC)
 
     await db.commit()
     await db.refresh(insight)
@@ -591,7 +616,7 @@ async def get_metrics_summary(
     """
     Get aggregated summary for a metric type.
     """
-    start_time = datetime.utcnow() - timedelta(hours=hours)
+    start_time = datetime.now(UTC) - timedelta(hours=hours)
 
     # Aggregate metrics
     result = await db.execute(
@@ -616,7 +641,7 @@ async def get_metrics_summary(
         min_value=float(row.min_value or 0),
         max_value=float(row.max_value or 0),
         period_start=start_time,
-        period_end=datetime.utcnow(),
+        period_end=datetime.now(UTC),
     )
 
 
@@ -629,7 +654,7 @@ async def get_error_summary(
     """
     Get error summary for the specified time period.
     """
-    start_time = datetime.utcnow() - timedelta(hours=hours)
+    start_time = datetime.now(UTC) - timedelta(hours=hours)
 
     # Get total errors (multiple WHERE conditions, keep manual)
     total_result = await db.execute(

@@ -13,6 +13,7 @@ import logging
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
 
+from app.core.config import settings
 from app.services.brand_generator import BrandPackage
 
 logger = logging.getLogger(__name__)
@@ -151,7 +152,7 @@ Be specific to the product. Avoid generic startup cliches."""
 def get_landing_page_agent() -> Agent:
     """Get PydanticAI agent for landing page generation (API key from GOOGLE_API_KEY env)."""
     return Agent(
-        model="google-gla:gemini-2.0-flash",
+        model=settings.default_llm_model,
         system_prompt=LANDING_PAGE_SYSTEM_PROMPT,
         output_type=LandingPageTemplate,
     )

@@ -3,7 +3,7 @@
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -13,16 +13,10 @@ logger = logging.getLogger(__name__)
 # LLM Cost Tracking
 # ============================================================
 
-# Claude 3.5 Sonnet pricing (as of Jan 2024)
-CLAUDE_SONNET_PRICING = {
-    "input_tokens": 0.003 / 1000,  # $0.003 per 1K input tokens
-    "output_tokens": 0.015 / 1000,  # $0.015 per 1K output tokens
-}
-
-# GPT-4o pricing (as of Jan 2024)
-GPT4O_PRICING = {
-    "input_tokens": 0.005 / 1000,  # $0.005 per 1K input tokens
-    "output_tokens": 0.015 / 1000,  # $0.015 per 1K output tokens
+LLM_PRICING = {
+    "claude-3-5-sonnet": {"input_tokens": 0.003 / 1000, "output_tokens": 0.015 / 1000},
+    "gpt-4o": {"input_tokens": 0.005 / 1000, "output_tokens": 0.015 / 1000},
+    "gemini-2.0-flash": {"input_tokens": 0.0001 / 1000, "output_tokens": 0.0004 / 1000},
 }
 
 
@@ -44,12 +38,14 @@ class LLMCallMetrics:
     def __post_init__(self):
         """Calculate cost after initialization."""
         if self.success and self.input_tokens > 0:
-            if "claude" in self.model.lower():
-                pricing = CLAUDE_SONNET_PRICING
-            elif "gpt" in self.model.lower():
-                pricing = GPT4O_PRICING
-            else:
-                pricing = CLAUDE_SONNET_PRICING  # Default
+            model_lower = self.model.lower()
+            pricing = None
+            for key, prices in LLM_PRICING.items():
+                if key in model_lower:
+                    pricing = prices
+                    break
+            if pricing is None:
+                pricing = LLM_PRICING["gemini-2.0-flash"]  # Default (primary model)
 
             self.cost_usd = (
                 self.input_tokens * pricing["input_tokens"]
@@ -152,7 +148,7 @@ class MetricsTracker:
             error: Error message if failed
         """
         call_metrics = LLMCallMetrics(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             model=model,
             prompt_length=len(prompt),
             response_length=len(response) if response else 0,

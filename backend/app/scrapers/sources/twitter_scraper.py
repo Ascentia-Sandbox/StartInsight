@@ -9,7 +9,7 @@ Supports:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from pydantic import BaseModel, Field, HttpUrl
 
@@ -108,9 +108,9 @@ class TwitterScraper(BaseScraper):
         try:
             # Default to last 7 days
             if not start_time:
-                start_time = datetime.utcnow() - timedelta(days=7)
+                start_time = datetime.now(UTC) - timedelta(days=7)
             if not end_time:
-                end_time = datetime.utcnow()
+                end_time = datetime.now(UTC)
 
             # Build query with startup-related filters
             full_query = f"{query} -is:retweet lang:en"

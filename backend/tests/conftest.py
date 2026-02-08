@@ -16,6 +16,8 @@ import pytest
 import pytest_asyncio
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import JSON
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
@@ -30,6 +32,47 @@ from app.models import (
     SavedInsight,
     User,
 )
+
+# ============================================
+# SQLite Compatibility for PostgreSQL types
+# ============================================
+
+# Register PostgreSQL types to use SQLite-compatible types
+from sqlalchemy.dialects import sqlite
+from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.types import TypeDecorator
+import json
+
+# Override JSONB to use TEXT for SQLite (SQLAlchemy's JSON handles serialization)
+@compiles(JSONB, "sqlite")
+def compile_jsonb_sqlite(element, compiler, **kw):
+    return "TEXT"
+
+
+# Create a custom ARRAY type for SQLite that serializes to JSON
+class SQLiteArrayAdapter(TypeDecorator):
+    """ARRAY type that works with SQLite by serializing to JSON."""
+
+    impl = JSON
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        return value  # Let JSON type handle serialization
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return None
+        return value
+
+
+# Override ARRAY compilation for SQLite
+@compiles(ARRAY, "sqlite")
+def compile_array_sqlite(element, compiler, **kw):
+    return "TEXT"
+
 
 # ============================================
 # Database Fixtures
@@ -174,12 +217,10 @@ async def test_signal(db_session: AsyncSession) -> RawSignal:
     signal = RawSignal(
         id=uuid4(),
         source="reddit",
-        source_url="https://reddit.com/r/startups/test",
+        url="https://reddit.com/r/startups/test",
         content="Looking for a tool to automate my startup research process. "
         "Currently spending 20+ hours per week manually analyzing markets.",
-        title="Need help with market research automation",
-        author="test_author",
-        metadata={"subreddit": "startups", "upvotes": 150},
+        extra_metadata={"subreddit": "startups", "upvotes": 150, "title": "Need help with market research automation", "author": "test_author"},
     )
     db_session.add(signal)
     await db_session.commit()
@@ -286,3 +327,14 @@ def auth_override(test_user: User):
         return test_user
 
     return {get_current_user: mock_get_current_user}
+
+
+# ============================================
+# Aliases for backwards compatibility
+# ============================================
+
+
+@pytest_asyncio.fixture(scope="function")
+async def async_db_session(db_session: AsyncSession) -> AsyncSession:
+    """Alias for db_session for backwards compatibility."""
+    return db_session

@@ -1,94 +1,125 @@
 #!/usr/bin/env python3
 """
-Create super admin user in Supabase
+Create super admin user in Supabase (via REST API) and local database.
+
+Uses httpx for Supabase Auth Admin API and SQLAlchemy for local DB.
+NO Supabase SDK per CLAUDE.md rules.
 """
 import asyncio
 import os
+import sys
 
+import httpx
 from dotenv import load_dotenv
-from supabase import Client, create_client
+from sqlalchemy import select
+
+# Add backend to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from app.db.session import AsyncSessionLocal  # noqa: E402
+from app.models.admin_user import AdminUser  # noqa: E402
+from app.models.user import User  # noqa: E402
 
 load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
-async def create_admin_user():
-    """Create admin user with service role key"""
-    # Use service role client (bypasses RLS)
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-    admin_email = "ascentiaholding@gmail.com"
-    admin_password = "admin"
+async def supabase_admin_request(
+    method: str, path: str, json: dict | None = None
+) -> dict:
+    """Make an authenticated request to Supabase Auth Admin API."""
+    async with httpx.AsyncClient() as client:
+        response = await client.request(
+            method,
+            f"{SUPABASE_URL}/auth/v1/admin/{path}",
+            headers={
+                "apikey": SUPABASE_SERVICE_ROLE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                "Content-Type": "application/json",
+            },
+            json=json,
+        )
+        response.raise_for_status()
+        return response.json()
+
+
+async def create_admin_user(admin_email: str, admin_password: str):
+    """Create admin user with service role key."""
 
     print(f"Creating admin user: {admin_email}")
 
     try:
-        # Create user using Admin API
-        response = supabase.auth.admin.create_user({
-            "email": admin_email,
-            "password": admin_password,
-            "email_confirm": True,  # Auto-confirm email
-            "user_metadata": {
-                "full_name": "Super Admin"
-            }
-        })
+        # Create user via Supabase Auth Admin REST API
+        user_data = await supabase_admin_request(
+            "POST",
+            "users",
+            json={
+                "email": admin_email,
+                "password": admin_password,
+                "email_confirm": True,
+                "user_metadata": {"full_name": "Super Admin"},
+            },
+        )
 
-        user = response.user
-        print(f"✅ User created successfully: {user.id}")
+        supabase_uid = user_data["id"]
+        print(f"Supabase user created: {supabase_uid}")
 
-        # The trigger should have created the user profile automatically
-        # Now we need to add them to admin_users table
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 422:
+            print("User already exists in Supabase. Continuing to add admin privileges...")
+            # Look up existing user in local DB
+            supabase_uid = None
+        else:
+            print(f"Error creating Supabase user: {e}")
+            raise
 
-        # First get the internal user ID from our users table
-        user_query = supabase.table("users").select("id").eq("supabase_user_id", user.id).execute()
+    # Add admin privileges via SQLAlchemy
+    async with AsyncSessionLocal() as session:
+        # Find user in local DB
+        if supabase_uid:
+            result = await session.execute(
+                select(User).where(User.supabase_user_id == supabase_uid)
+            )
+        else:
+            result = await session.execute(
+                select(User).where(User.email == admin_email)
+            )
+        user = result.scalar_one_or_none()
 
-        if not user_query.data:
-            print("❌ User profile not found in users table (trigger may have failed)")
+        if not user:
+            print("User profile not found in local database (trigger may have failed)")
             return
 
-        internal_user_id = user_query.data[0]["id"]
+        # Check if already admin
+        admin_result = await session.execute(
+            select(AdminUser).where(AdminUser.user_id == user.id)
+        )
+        existing_admin = admin_result.scalar_one_or_none()
 
-        # Add to admin_users table
-        admin_result = supabase.table("admin_users").insert({
-            "user_id": internal_user_id,
-            "role": "super_admin",
-            "permissions": ["*"]  # All permissions
-        }).execute()
+        if existing_admin:
+            print("User is already an admin")
+            return
 
-        print(f"✅ Admin privileges granted: {admin_result.data[0]['id']}")
-        print("\n🎉 Super admin account created successfully!")
+        # Add admin privileges
+        admin = AdminUser(
+            user_id=user.id,
+            role="super_admin",
+            permissions={"*": True},
+        )
+        session.add(admin)
+        await session.commit()
+
+        print(f"Admin privileges granted: {admin.id}")
+        print(f"\nSuper admin account ready!")
         print(f"Email: {admin_email}")
         print(f"Password: {admin_password}")
-        print("\nYou can now sign in at: http://localhost:3000/auth/login")
+        print("\nSign in at: http://localhost:3000/auth/login")
 
-    except Exception as e:
-        print(f"❌ Error creating admin user: {e}")
-        # If user already exists, try to add admin privileges
-        if "already registered" in str(e).lower() or "duplicate" in str(e).lower():
-            print("\nUser already exists. Trying to add admin privileges...")
-            try:
-                # Get user by email
-                existing_user = supabase.table("users").select("id, supabase_user_id").eq("email", admin_email).execute()
-
-                if existing_user.data:
-                    internal_user_id = existing_user.data[0]["id"]
-
-                    # Check if already admin
-                    admin_check = supabase.table("admin_users").select("*").eq("user_id", internal_user_id).execute()
-
-                    if admin_check.data:
-                        print("✅ User is already an admin")
-                    else:
-                        # Add admin privileges
-                        admin_result = supabase.table("admin_users").insert({
-                            "user_id": internal_user_id,
-                            "role": "super_admin",
-                            "permissions": ["*"]
-                        }).execute()
-                        print("✅ Admin privileges granted!")
-            except Exception as inner_e:
-                print(f"❌ Error adding admin privileges: {inner_e}")
 
 if __name__ == "__main__":
-    asyncio.run(create_admin_user())
+    if len(sys.argv) < 3:
+        print("Usage: python create_admin.py <email> <password>")
+        sys.exit(1)
+    asyncio.run(create_admin_user(sys.argv[1], sys.argv[2]))

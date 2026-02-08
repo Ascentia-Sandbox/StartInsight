@@ -1,7 +1,7 @@
 """Reddit scraper using PRAW + Firecrawl."""
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 import praw
 from pydantic import HttpUrl
@@ -112,7 +112,7 @@ class RedditScraper(BaseScraper):
             try:
                 # Skip if post is too old (older than 7 days)
                 post_age_days = (
-                    datetime.utcnow() - datetime.utcfromtimestamp(submission.created_utc)
+                    datetime.now(UTC) - datetime.fromtimestamp(submission.created_utc, tz=UTC)
                 ).days
                 if post_age_days > 7:
                     logger.debug(f"Skipping old post: {submission.title} ({post_age_days} days old)")

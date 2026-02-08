@@ -250,7 +250,8 @@ async def send_email(
         if bcc:
             params["bcc"] = bcc
 
-        response = resend_client.Emails.send(params)
+        import asyncio
+        response = await asyncio.to_thread(resend_client.Emails.send, params)
 
         logger.info(f"Email sent: {template} to {to}, id={response.get('id')}")
         return {
@@ -382,14 +383,37 @@ async def send_password_reset(email: str, name: str, reset_url: str) -> dict:
 
 
 def _render_template(template: str, variables: dict[str, Any]) -> str:
-    """Simple template rendering with {{variable}} syntax."""
+    """Simple template rendering with {{variable}} and {{#list}}...{{/list}} syntax."""
+    import re
+
     result = template
 
+    # Handle list sections first: {{#key}}...{{/key}}
+    for key, value in variables.items():
+        if not isinstance(value, list):
+            continue
+        pattern = re.compile(
+            r"\{\{#" + re.escape(key) + r"\}\}(.*?)\{\{/" + re.escape(key) + r"\}\}",
+            re.DOTALL,
+        )
+        match = pattern.search(result)
+        if match:
+            inner_template = match.group(1)
+            rendered_items = []
+            for item in value:
+                rendered_item = inner_template
+                if isinstance(item, dict):
+                    for k, v in item.items():
+                        rendered_item = rendered_item.replace(
+                            "{{" + k + "}}", str(v) if v else ""
+                        )
+                rendered_items.append(rendered_item)
+            result = result[: match.start()] + "".join(rendered_items) + result[match.end() :]
+
+    # Handle scalar variables: {{key}}
     for key, value in variables.items():
         if isinstance(value, list):
-            # Handle list variables (like insights) - simple approach
             continue
-        placeholder = "{{" + key + "}}"
-        result = result.replace(placeholder, str(value) if value else "")
+        result = result.replace("{{" + key + "}}", str(value) if value else "")
 
     return result

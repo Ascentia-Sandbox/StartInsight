@@ -26,6 +26,7 @@ from tenacity import (
     wait_exponential,
 )
 
+from app.core.config import settings
 from app.monitoring.metrics import get_metrics_tracker
 from app.schemas.research import (
     ACPFramework,
@@ -192,7 +193,7 @@ Return a structured JSON object matching the ResearchResult schema."""
 def get_research_agent() -> Agent:
     """Get PydanticAI agent for research analysis (API key from GOOGLE_API_KEY env)."""
     return Agent(
-        model="google-gla:gemini-2.0-flash",
+        model=settings.default_llm_model,
         system_prompt=RESEARCH_SYSTEM_PROMPT,
         output_type=ResearchResult,
     )

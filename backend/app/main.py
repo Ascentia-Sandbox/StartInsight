@@ -2,7 +2,6 @@
 
 import logging
 import uuid
-
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
@@ -16,6 +15,9 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
 from app.core.rate_limits import limiter
+from app.middleware.api_version import APIVersionMiddleware
+from app.middleware.request_size_limit import RequestSizeLimitMiddleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.tasks import schedule_scraping_tasks, stop_scheduler
 
 # Sentry error tracking (production)
@@ -27,8 +29,8 @@ if settings.sentry_dsn and settings.environment == "production":
     sentry_sdk.init(
         dsn=settings.sentry_dsn,
         environment=settings.environment,
-        traces_sample_rate=0.1,  # 10% transaction sampling
-        profiles_sample_rate=0.1,  # 10% profiling
+        traces_sample_rate=settings.sentry_traces_sample_rate,
+        profiles_sample_rate=settings.sentry_profiles_sample_rate,
         integrations=[
             FastApiIntegration(transaction_style="url"),
             SqlalchemyIntegration(),
@@ -38,11 +40,9 @@ if settings.sentry_dsn and settings.environment == "production":
             None if event.get("request", {}).get("url", "").endswith("/health") else event
     )
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
+# Configure structured logging
+from app.core.logging import setup_logging
+setup_logging()
 
 logger = logging.getLogger(__name__)
 
@@ -54,10 +54,10 @@ async def lifespan(app: FastAPI):
 
     Handles:
     - Startup: Initialize task scheduler
-    - Shutdown: Stop task scheduler gracefully
+    - Shutdown: Stop task scheduler, close DB pool, close Redis
     """
     # Startup
-    logger.info("Starting StartInsight API")
+    logger.info(f"Starting StartInsight API v{settings.app_version}")
 
     # Initialize task scheduler
     try:
@@ -68,19 +68,43 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # Shutdown
-    logger.info("Shutting down StartInsight API")
-    await stop_scheduler()
+    # Graceful shutdown
+    logger.info("Initiating graceful shutdown...")
+
+    # 1. Stop accepting new scheduled tasks
+    try:
+        await stop_scheduler()
+        logger.info("Task scheduler stopped")
+    except Exception as e:
+        logger.error(f"Error stopping scheduler: {e}")
+
+    # 2. Close Redis connections
+    try:
+        from app.core.cache import close_redis
+        await close_redis()
+        logger.info("Redis connections closed")
+    except Exception as e:
+        logger.error(f"Error closing Redis: {e}")
+
+    # 3. Close database connection pool
+    try:
+        from app.db.session import close_db
+        await close_db()
+        logger.info("Database connections closed")
+    except Exception as e:
+        logger.error(f"Error closing database: {e}")
+
+    logger.info("Shutdown complete")
 
 
 # Create FastAPI application
 app = FastAPI(
     title="StartInsight API",
     description="AI-powered business intelligence engine for startup idea discovery",
-    version="0.1.0",
+    version=settings.app_version,
     lifespan=lifespan,
-    docs_url="/docs",
-    redoc_url="/redoc",
+    docs_url=None if settings.environment == "production" else "/docs",
+    redoc_url=None if settings.environment == "production" else "/redoc",
 )
 
 # Request ID middleware for correlation (add BEFORE CORS)
@@ -100,15 +124,22 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         return response
 
 
+from app.middleware.tracing import TracingMiddleware
+app.add_middleware(TracingMiddleware)
 app.add_middleware(RequestIDMiddleware)
+
+# Security headers and API version (BEFORE CORS)
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RequestSizeLimitMiddleware)
+app.add_middleware(APIVersionMiddleware)
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=[m.strip() for m in settings.cors_allowed_methods.split(",")],
+    allow_headers=[h.strip() for h in settings.cors_allowed_headers.split(",")],
 )
 
 # Register SlowAPI limiter (Phase 2: Code Simplification)
@@ -248,7 +279,8 @@ async def root():
         "message": "Welcome to StartInsight API",
         "docs": "/docs",
         "health": "/health",
-        "version": "0.1.0",
+        "version": settings.app_version,
+        "api_version": "v1",
     }
 
 
@@ -263,14 +295,14 @@ from app.api.routes import (  # noqa: E402
     community,
     content_review,
     export,
-    gamification,
-    integrations,
-    pipeline,
     feed,
+    gamification,
     health,
     insights,
+    integrations,
     market_insights,
     payments,
+    pipeline,
     preferences,
     research,
     signals,
@@ -300,6 +332,7 @@ app.include_router(pipeline.router, tags=["Pipeline Monitoring"])  # Phase 8.2
 app.include_router(analytics.router, tags=["Analytics"])  # Phase 8.3
 app.include_router(agent_control.router, tags=["Agent Control"])  # Phase 8.4-8.5
 app.include_router(preferences.router, tags=["User Preferences"])  # Phase 9.1
+app.include_router(preferences.email_router)  # CAN-SPAM unsubscribe
 app.include_router(community.router, tags=["Community"])  # Phase 9.3
 app.include_router(gamification.router, tags=["Gamification"])  # Phase 9.6
 app.include_router(integrations.router, tags=["Integrations"])  # Phase 10
