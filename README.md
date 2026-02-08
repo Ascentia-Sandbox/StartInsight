@@ -350,7 +350,7 @@ StartInsight/
 │   ├── agents/                # Custom Claude agents
 │   └── skills/                # Code quality standards
 │
-├── docker-compose.yml         # PostgreSQL + Redis setup
+├── docker-compose.yml         # Redis setup (database is Supabase Pro)
 ├── CLAUDE.md                  # Claude Code guidelines
 └── README.md                  # This file
 ```

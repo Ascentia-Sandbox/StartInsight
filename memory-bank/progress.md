@@ -15,6 +15,11 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ## Recent Progress (2026-02-08)
 
+- [2026-02-08] [PMF-OPTIMIZATION]: Minimal-cost deployment configuration ($483/mo → $5/mo)
+  - Files: crawl4ai_client.py, config.py, email_service.py, scheduler.py, Dockerfile, .env.example, PMF-DEPLOYMENT.md
+  - Tech: Crawl4AI ($0 vs Firecrawl $149), Railway Free, Supabase Free, Resend Free, Gemini Free
+  - Status: [✓ Complete - 99% cost reduction for <100 user PMF validation]
+
 - [2026-02-08] [TESTING-COMPLETE]: Comprehensive testing infrastructure verified
   - Files: 22 backend test files, 8 E2E test suites
   - Tech: 291 pytest tests (85% coverage), 47 Playwright tests (5 browsers), WCAG 2.1 AA compliance

@@ -291,7 +291,19 @@ async def send_daily_digest(
     dashboard_url: str,
     unsubscribe_url: str,
 ) -> dict:
-    """Send daily insight digest."""
+    """
+    Send daily insight digest.
+
+    PMF Optimization: Disabled by default to save email quota.
+    Set ENABLE_DAILY_DIGEST=true to enable.
+    """
+    from app.core.config import settings
+
+    # PMF optimization: skip daily digest to stay in Resend Free tier (3K/mo)
+    if not settings.enable_daily_digest:
+        logger.info(f"Daily digest disabled for PMF mode (recipient: {email})")
+        return {"status": "skipped", "reason": "feature_disabled_pmf"}
+
     return await send_email(
         to=email,
         template="daily_digest",

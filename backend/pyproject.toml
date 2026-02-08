@@ -23,7 +23,9 @@ dependencies = [
     "anthropic>=0.25.0",
     "openai>=1.12.0",
     # Web Scraping
-    "firecrawl-py>=0.0.16",
+    "firecrawl-py>=0.0.16",  # Keep as fallback during transition
+    "crawl4ai>=0.2.0",  # PMF optimization: $0 cost replacement for Firecrawl
+    "playwright>=1.40.0",  # Required for Crawl4AI browser automation
     "praw>=7.7.1",
     "pytrends>=4.9.2",
     "tweepy>=4.14.0",  # Phase 7.1: Twitter/X integration

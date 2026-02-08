@@ -14,7 +14,13 @@ FROM python:3.12-slim AS runtime
 WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# Install Playwright dependencies for Crawl4AI (PMF optimization)
+RUN apt-get update && \
+    apt-get install -y curl wget gnupg && \
+    playwright install --with-deps chromium && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini ./

@@ -455,7 +455,7 @@ system_metrics, tenants, tenant_users
 **Phase 1: Data Collection Loop (Complete)**
 - [x] **Phase 1.1-1.8 Complete**: Full backend infrastructure operational
 - [x] Git repository, Python environment with `uv` and 173 packages
-- [x] PostgreSQL 16 (port 5433) and Redis 7 (port 6379) running in Docker
+- [x] Supabase Pro PostgreSQL (ap-southeast-1) + Redis 7 (port 6379 local / Upstash production)
 - [x] SQLAlchemy 2.0 async configured, database connection verified
 - [x] RawSignal model, Alembic migrations, Firecrawl client with retry logic
 - [x] 3 scrapers implemented (Reddit, Product Hunt, Google Trends)

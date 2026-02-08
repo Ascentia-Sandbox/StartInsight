@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     scrape_interval_hours: int = 6
     analysis_batch_size: int = 10
 
+    # PMF Optimization Flags (minimal-cost deployment)
+    use_crawl4ai: bool = True  # Use Crawl4AI instead of Firecrawl (save $149/mo)
+    enable_daily_digest: bool = False  # Disable to save email quota (stay in Resend Free tier)
+
     # Supabase (Phase 4+ - Asia Pacific)
     supabase_url: str | None = None
     supabase_anon_key: str | None = None
@@ -99,12 +103,12 @@ class Settings(BaseSettings):
     default_llm_model: str = "google-gla:gemini-2.0-flash"
     llm_call_timeout: int = 120  # seconds
 
-    # Database Connection Pool
+    # Database Connection Pool (Supabase Pro tier: 200 connections)
     db_pool_size: int = 20
     db_max_overflow: int = 30
     db_pool_timeout: int = 30
     db_pool_recycle: int = 3600
-    db_ssl: bool = False
+    db_ssl: bool = True  # Supabase requires SSL
 
     # Redis Extended Config
     redis_ssl: bool = False

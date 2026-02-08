@@ -63,15 +63,19 @@ async def schedule_scraping_tasks() -> None:
         name="Analyze Raw Signals (PydanticAI)",
     )
 
-    # Schedule daily digest emails at 09:00 UTC
-    scheduler.add_job(
-        func=redis.enqueue_job,
-        args=("send_daily_digests_task",),
-        trigger=CronTrigger(hour=9, minute=0),
-        id="send_daily_digests",
-        replace_existing=True,
-        name="Send Daily Digest Emails",
-    )
+    # Schedule daily digest emails at 09:00 UTC (PMF: disabled by default)
+    if settings.enable_daily_digest:
+        scheduler.add_job(
+            func=redis.enqueue_job,
+            args=("send_daily_digests_task",),
+            trigger=CronTrigger(hour=9, minute=0),
+            id="send_daily_digests",
+            replace_existing=True,
+            name="Send Daily Digest Emails",
+        )
+        logger.info("Daily digest emails enabled (09:00 UTC)")
+    else:
+        logger.info("Daily digest emails disabled (PMF optimization - save email quota)")
 
     # Schedule daily insight agent at 08:00 UTC
     scheduler.add_job(

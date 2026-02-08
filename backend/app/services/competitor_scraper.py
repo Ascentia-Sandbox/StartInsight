@@ -5,13 +5,13 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from firecrawl import FirecrawlApp
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.models.competitor_profile import CompetitorProfile, CompetitorSnapshot
+from app.scrapers import get_scraper_client
 
 logger = logging.getLogger(__name__)
 
@@ -46,24 +46,18 @@ class CompetitorData(BaseModel):
 
 class CompetitorScraperService:
     """
-    Service to scrape competitor websites using Firecrawl.
+    Service to scrape competitor websites using the configured scraper client.
 
     Extracts structured data about competitors (pricing, features, messaging)
     and creates/updates CompetitorProfile records.
+
+    Uses Crawl4AI ($0 cost) by default for PMF validation,
+    with fallback to Firecrawl if needed.
     """
 
-    def __init__(self, api_key: str | None = None):
-        """
-        Initialize competitor scraper.
-
-        Args:
-            api_key: Firecrawl API key (defaults to settings.firecrawl_api_key)
-        """
-        self.api_key = api_key or settings.firecrawl_api_key
-        if not self.api_key:
-            raise ValueError("Firecrawl API key is required. Set FIRECRAWL_API_KEY environment variable.")
-
-        self.client = FirecrawlApp(api_key=self.api_key)
+    def __init__(self):
+        """Initialize competitor scraper with configured client."""
+        self.client = get_scraper_client()
 
     async def scrape_competitor(
         self,
@@ -88,25 +82,15 @@ class CompetitorScraperService:
         logger.info(f"Scraping competitor website: {url}")
 
         try:
-            # Use Firecrawl to scrape and extract structured data
-            result = self.client.scrape_url(
-                url,
-                params={
-                    "formats": ["markdown", "html"],
-                    "onlyMainContent": True,
-                    "waitFor": 2000,  # Wait 2 seconds for JS to load
-                },
-            )
+            # Use configured scraper client to extract structured data
+            scrape_result = await self.client.scrape_url(url)
 
-            if not result.get("success"):
-                raise Exception(f"Firecrawl scrape failed: {result.get('error', 'Unknown error')}")
-
-            markdown_content = result.get("markdown", "")
-            html_content = result.get("html", "")
-            metadata = result.get("metadata", {})
+            # Extract content from ScrapeResult object
+            markdown_content = scrape_result.content
+            metadata = scrape_result.metadata
 
             # Extract company name from metadata or URL
-            company_name = metadata.get("title", "").split("|")[0].strip()
+            company_name = scrape_result.title.split("|")[0].strip() if scrape_result.title else ""
             if not company_name:
                 company_name = url.split("//")[1].split("/")[0].replace("www.", "")
 
@@ -116,7 +100,7 @@ class CompetitorScraperService:
             # Parse competitor data from markdown content
             competitor_data = self._parse_competitor_data(
                 markdown_content=markdown_content,
-                html_content=html_content,
+                html_content="",  # Not provided by scraper client
                 metadata=metadata,
                 url=url,
             )

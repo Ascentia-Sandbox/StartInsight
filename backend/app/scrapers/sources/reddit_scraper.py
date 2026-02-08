@@ -7,8 +7,9 @@ import praw
 from pydantic import HttpUrl
 
 from app.core.config import settings
+from app.scrapers import get_scraper_client
 from app.scrapers.base_scraper import BaseScraper
-from app.scrapers.firecrawl_client import ScrapeResult, get_firecrawl_client
+from app.scrapers.firecrawl_client import ScrapeResult
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +54,8 @@ class RedditScraper(BaseScraper):
             user_agent=f"StartInsight Scraper v1.0 by u/{settings.reddit_username or 'StartInsight'}",
         )
 
-        # Initialize Firecrawl client for content extraction
-        self.firecrawl = get_firecrawl_client()
+        # Initialize scraper client for content extraction (auto-selects based on config)
+        self.scraper_client = get_scraper_client()
 
         logger.info(
             f"Reddit scraper initialized for: {', '.join(self.subreddits)} "

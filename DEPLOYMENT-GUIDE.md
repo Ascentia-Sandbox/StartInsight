@@ -76,7 +76,21 @@ StartInsight is an AI-powered startup insight platform that scrapes signals from
 | **Resend** | Transactional email | Notifications | Pro ($35/mo) |
 | **Stripe** | Payment processing | Subscriptions | 2.9% + $0.30/tx |
 
-### Monthly Cost (at 10K users)
+### PMF Validation Cost (~$30/mo)
+
+| Service | Tier | Monthly Cost | Notes |
+|---------|------|-------------|-------|
+| **Supabase** | **Pro** | **$25** | 8GB, 200 connections (already paid) |
+| **Railway** | Free | $5 | $5 starter credit, single container |
+| **Vercel** | Hobby (Free) | $0 | Frontend hosting |
+| **Redis** | Railway addon | $0 | Included in Railway |
+| **Gemini AI** | Free tier | $0 | 1,500 requests/day |
+| **Resend** | Free tier | $0 | 3K emails/month |
+| **Sentry** | Free tier | $0 | 5K events/month |
+| **Crawl4AI** | Self-hosted | $0 | Runs in Railway container |
+| **TOTAL** | | **~$30/mo** | |
+
+### Production Cost (at 10K users)
 
 | Component | Cost |
 |-----------|------|
@@ -133,7 +147,7 @@ StartInsight is an AI-powered startup insight platform that scrapes signals from
 | `DB_MAX_OVERFLOW` | int | `30` | No |
 | `DB_POOL_TIMEOUT` | int | `30` | No |
 | `DB_POOL_RECYCLE` | int | `3600` | No |
-| `DB_SSL` | bool | `False` | No |
+| `DB_SSL` | bool | `True` | No |
 
 #### Redis
 
@@ -318,7 +332,7 @@ uv pip install --system -r pyproject.toml
 # Copy environment file
 cp .env.example .env  # Edit with your API keys
 
-# Start Docker services (Postgres on 5433, Redis on 6379)
+# Start Docker services (Redis only -- database is Supabase Pro)
 docker compose up -d
 
 # Run database migrations
@@ -352,26 +366,24 @@ arq app.worker.WorkerSettings
 
 ### Docker Compose Services
 
-From `docker-compose.yml`:
+From `docker-compose.yml` (database is Supabase Pro -- no local PostgreSQL):
 
 | Service | Image | Port | Purpose |
 |---------|-------|------|---------|
-| `postgres` | postgres:16-alpine | 5433:5432 | Local database |
 | `redis` | redis:7-alpine | 6379:6379 | Cache + task queue |
 | `redis-commander` | rediscommander (tools profile) | 8081:8081 | Redis GUI |
-| `pgadmin` | dpage/pgadmin4 (tools profile) | 5050:80 | PostgreSQL GUI |
 
 ```bash
-# Start core services
+# Start Redis
 docker compose up -d
 
-# Start with dev tools (pgAdmin + Redis Commander)
+# Start with dev tools (Redis Commander)
 docker compose --profile tools up -d
 ```
 
-**Dev database connection string:**
+**Database connection string** (Supabase Pro):
 ```
-postgresql+asyncpg://startinsight:startinsight_dev_password@localhost:5433/startinsight
+postgresql+asyncpg://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
 ```
 
 ---
@@ -418,7 +430,7 @@ alembic current
 
 ### Connection Pool Configuration
 
-From `config.py` — applied via SQLAlchemy `create_async_engine`:
+From `config.py` — applied via SQLAlchemy `create_async_engine` (Supabase Pro: 200 connections):
 
 | Setting | Default | Description |
 |---------|---------|-------------|
@@ -426,8 +438,9 @@ From `config.py` — applied via SQLAlchemy `create_async_engine`:
 | `DB_MAX_OVERFLOW` | 30 | Extra connections beyond pool |
 | `DB_POOL_TIMEOUT` | 30s | Wait for available connection |
 | `DB_POOL_RECYCLE` | 3600s | Recycle connections after 1 hour |
+| `DB_SSL` | true | Required for Supabase |
 
-**Effective max connections:** 50 (20 pool + 30 overflow)
+**Effective max connections:** 50 (20 pool + 30 overflow) out of 200 available (Supabase Pro)
 
 ---
 
@@ -669,9 +682,9 @@ Copy DSNs from Settings -> Client Keys (DSN).
 
 **Vercel (Frontend)** - set all [required frontend variables](#frontend-vercel---from-frontendlibenvts) listed in Section 3.
 
-#### 4. Upgrade Supabase (optional)
+#### 4. Supabase Pro (already active)
 
-Upgrade to Pro tier ($25/mo) for 500 connections (vs 60 on Free).
+Supabase Pro ($25/mo) provides 8GB storage and 200 connections. DATABASE_URL must point to Supabase Pro with SSL enabled (`DB_SSL=true`).
 
 ### Step-by-Step Deployment
 
@@ -867,8 +880,8 @@ MetricsTracker with per-model pricing (Gemini/Claude/GPT) for monitoring AI spen
    - No 500 errors
 
 3. **Supabase Dashboard**
-   - Connection pooling: <50/500 connections (<10%)
-   - Alert if >400/500 (>80%)
+   - Connection pooling: <50/200 connections (<25%)
+   - Alert if >160/200 (>80%)
 
 ### Hour 2-24: Regular Monitoring (every 2 hours)
 
@@ -883,7 +896,7 @@ MetricsTracker with per-model pricing (Gemini/Claude/GPT) for monitoring AI spen
 | Error Rate | <1% | >5% |
 | Uptime | >99.9% | <99.5% |
 | Response Time (p95) | <1s | >3s |
-| Connection Pool Usage | <50/500 | >400/500 |
+| Connection Pool Usage | <50/200 | >160/200 |
 | Cache Hit Rate | >80% | <60% |
 | Sentry Events | <100/day | >500/day |
 

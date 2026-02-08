@@ -356,7 +356,7 @@ CONTACT_EMAIL=hello@startinsight.app           # Recipient for contact form
 - **Example**:
   ```bash
   # .env file
-  DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5433/startinsight
+  DATABASE_URL=postgresql+asyncpg://postgres.[REF]:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
   REDIS_URL=redis://localhost:6379
   GOOGLE_API_KEY=AIza...  # Primary: Gemini
   ANTHROPIC_API_KEY=sk-ant-...  # Fallback: Claude
@@ -597,7 +597,7 @@ dev = [
 # ============================================
 # PHASE 1-3 (Existing)
 # ============================================
-DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5433/startinsight
+DATABASE_URL=postgresql+asyncpg://postgres.[REF]:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
 REDIS_URL=redis://localhost:6379
 FIRECRAWL_API_KEY=fc-***
 REDDIT_CLIENT_ID=***
@@ -1109,7 +1109,7 @@ SUPABASE_ANON_KEY=eyJhbGc...  # Public key (client-side)
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...  # Private key (server-side only)
 
 # Keep during transition
-DATABASE_URL=postgresql+asyncpg://startinsight:password@localhost:5433/startinsight
+DATABASE_URL=postgresql+asyncpg://postgres.[REF]:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
 ```
 
 ### 9.5 Migration Strategy (3 Options)

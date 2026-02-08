@@ -20,8 +20,9 @@ from typing import Any
 from bs4 import BeautifulSoup
 from pydantic import HttpUrl
 
+from app.scrapers import get_scraper_client
 from app.scrapers.base_scraper import BaseScraper
-from app.scrapers.firecrawl_client import ScrapeResult, get_firecrawl_client
+from app.scrapers.firecrawl_client import ScrapeResult
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +78,7 @@ class ProductHuntScraper(BaseScraper):
         self.days_back = days_back
         self.limit = limit
         self.wait_for_js = wait_for_js
-        self.firecrawl = get_firecrawl_client()
+        self.scraper_client = get_scraper_client()  # Auto-selects based on config
 
         logger.info(
             f"Product Hunt scraper initialized "
@@ -141,7 +142,7 @@ class ProductHuntScraper(BaseScraper):
         try:
             # Use Firecrawl to get the page with JavaScript rendering
             # Request both markdown and HTML for different parsing strategies
-            result = await self.firecrawl.scrape_url(url)
+            result = await self.scraper_client.scrape_url(url)
 
             # Try to get raw HTML from Firecrawl metadata if available
             html_content = result.metadata.get("rawHtml", "")
@@ -538,7 +539,7 @@ class ProductHuntScraper(BaseScraper):
         logger.info(f"Scraping single product: {product_url}")
 
         try:
-            result = await self.firecrawl.scrape_url(product_url)
+            result = await self.scraper_client.scrape_url(product_url)
 
             # Extract product name from title
             product_name = result.title.replace(" - Product Hunt", "").strip()

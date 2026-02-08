@@ -26,7 +26,7 @@ from tenacity import (
 )
 
 from app.models.raw_signal import RawSignal
-from app.scrapers.firecrawl_client import ScrapeResult
+from app.scrapers.firecrawl_client import ScrapeResult  # Shared by both clients
 
 logger = logging.getLogger(__name__)
 

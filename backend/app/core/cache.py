@@ -48,14 +48,15 @@ async def get_redis() -> redis.Redis:
     global _redis_pool
 
     if _redis_pool is None:
-        _redis_pool = redis.from_url(
-            settings.redis_url,
-            encoding="utf-8",
-            decode_responses=True,
-            socket_connect_timeout=settings.redis_socket_connect_timeout,
-            socket_timeout=settings.redis_socket_timeout,
-            ssl=settings.redis_ssl if settings.redis_ssl else None,
-        )
+        kwargs = {
+            "encoding": "utf-8",
+            "decode_responses": True,
+            "socket_connect_timeout": settings.redis_socket_connect_timeout,
+            "socket_timeout": settings.redis_socket_timeout,
+        }
+        if settings.redis_ssl:
+            kwargs["ssl"] = True
+        _redis_pool = redis.from_url(settings.redis_url, **kwargs)
 
     return _redis_pool
 
