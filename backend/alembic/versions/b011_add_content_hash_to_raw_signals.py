@@ -8,9 +8,9 @@ Phase: AI Agent Data Quality Improvement - Phase 3.2
 Purpose: Enable content deduplication to prevent storing duplicate scraped content.
 """
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = 'b011_content_hash'

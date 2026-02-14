@@ -4,7 +4,7 @@
 **Read When:** When planning implementation steps, checking phase requirements
 **Dependencies:** Read active-context.md to know current phase, architecture.md for system design
 **Purpose:** Phase completion status, deployment readiness, testing requirements
-**Last Updated:** 2026-02-09
+**Last Updated:** 2026-02-14
 ---
 
 # Implementation Plan: StartInsight
@@ -35,8 +35,115 @@
 | **9** | User Engagement Features | ✅ 100% | ✅ 100% | ✅ 100% | **COMPLETE** (2026-02-04) |
 | **10** | Integration Ecosystem | ✅ 100% | ✅ 100% | ✅ 100% | **COMPLETE** (2026-02-04) |
 | **12-14** | Public Content & SEO | ✅ 100% | ✅ 100% | ✅ 100% | **COMPLETE** (2026-01-29) |
+| **15.4** | Content Editing Enhancements | ✅ 100% | ✅ 100% | N/A | **COMPLETE** (2026-02-14) |
+| **16.2** | Dynamic Schedule Management | ✅ 100% | ✅ 100% | ✅ 100% | **COMPLETE** (2026-02-14) |
+| **A** | Superadmin Content Completeness | ✅ 100% | ✅ 100% | N/A | **COMPLETE** (2026-02-14) |
+| **B** | AI Chat Strategist | ✅ 100% | ✅ 100% | ✅ 100% | **COMPLETE** (2026-02-14) |
+| **C** | Idea Builder | ✅ 100% | ✅ 100% | N/A | **COMPLETE** (2026-02-14) |
+| **D** | Content Volume & Quality | ✅ 100% | N/A | N/A | **COMPLETE** (2026-02-14) |
+| **E** | Analytics Dashboard Enhancements | ✅ 100% | ✅ 100% | N/A | **COMPLETE** (2026-02-14) |
+| **F** | UX Polish (Dark Mode + Mobile + Live Logs) | ✅ 100% | ✅ 100% | N/A | **COMPLETE** (2026-02-14) |
+| **G** | Design System Revolution | ✅ 100% | ✅ 100% | N/A | **COMPLETE** (2026-02-14) |
+| **H** | Content Pipeline & Data Sources | ✅ 100% | ✅ 100% | N/A | **COMPLETE** (2026-02-14) |
+| **I** | Admin Portal Excellence | ✅ 100% | ✅ 100% | N/A | **COMPLETE** (2026-02-14) |
+| **J** | Public Pages Editorial Redesign | N/A | ✅ 100% | N/A | **COMPLETE** (2026-02-14) |
+| **K** | Data-Driven Evidence & Social Proof | ✅ 100% | ✅ 100% | N/A | **COMPLETE** (2026-02-14) |
+| **L** | Competitive Differentiators | ✅ 100% | ✅ 100% | N/A | **COMPLETE** (2026-02-14) |
 
-**Overall:** 100% Complete (Backend + Frontend + Migration)
+**Overall:** Phase 1-10 Complete + Phases A-L Complete (Professional Overhaul — Beat IdeaBrowser)
+
+### Phase A: Superadmin Content Completeness (2026-02-14)
+**Delivered:** Full CRUD for insights, agent schedule editor, cost analytics, 3 new admin pages, sidebar updated to 14 nav items
+- A1: Admin Create Insight (synthetic RawSignal for FK, Sheet dialog form)
+- A2: Agent schedule editor UI (cron/interval/manual, next/last run display)
+- A3: Agent cost analytics chart (7d/30d/90d period, cost breakdown by agent)
+- A4: Pipeline Monitoring admin page (scraper status, trigger/pause, health history)
+- A5: Content Review admin page (approve/reject workflow, stats, status filter)
+- A6: Integrations admin page (Slack/Discord webhooks) + sidebar nav update
+
+### Phase B: AI Chat Strategist (2026-02-14)
+**Delivered:** Conversational AI with 3 strategist modes, SSE streaming, chat session management
+- B1: Chat schemas (ChatCreate, ChatMessageCreate, ChatResponse, ChatListResponse)
+- B2: Chat agent (PydanticAI + Gemini Flash, 3 modes: pressure_test, gtm_planning, pricing_strategy)
+- B3: Chat API routes (5 endpoints: POST/GET/GET/{id}/POST/{id}/messages/DELETE, SSE streaming)
+- B4: Frontend chat page (message bubbles, mode selector, session sidebar, SSE streaming)
+- B5: IdeaChat model updated with `mode` column + Alembic migration c002
+- B6: Insight detail page updated with "AI Chat Strategist" CTA card
+
+### Phase C: Idea Builder (2026-02-14)
+**Delivered:** One-click brand + landing page generation from insight data with visual preview
+- C1: POST /api/build/from-insight/{insight_id} endpoint (brand + landing page combined)
+- C2: Builder page with configuration form (company name, pricing toggle)
+- C3: Visual preview: hero section, features grid, pricing table, FAQ accordion, SEO metadata
+- C4: Brand package display: color swatches, typography, logo concept, brand voice
+- C5: Copy HTML/CSS buttons, regenerate action
+- C6: Insight detail page updated with "Idea Builder" CTA card
+
+### Phase D: Content Volume & Quality (2026-02-14)
+**Delivered:** All 9 AI agents now have Arq task wrappers and automated schedules (17 total tasks)
+- D1: `run_content_generator_auto_task` — auto-generates blog/social content for top 5 insights (every 3 days)
+- D2: `run_competitive_intel_auto_task` — auto-analyzes competitors for insights with stale data (weekly Thu)
+- D3: `run_market_intel_auto_task` — auto-generates market reports for high-scoring insights (weekly Fri)
+- D4: All 3 registered in WorkerSettings.functions + scheduled in scheduler.py
+
+### Phase E: Analytics Dashboard Enhancements (2026-02-14)
+**Delivered:** Revenue MRR growth/churn calculations, time range picker, period-scoped queries
+- E1: MRR growth MoM — estimate from new paid users and churned subscriptions
+- E2: Churn rate — calculated from canceled subscriptions in period / active at start
+- E3: `avg_insights_viewed` — calculated from InsightInteraction view events
+- E4: Time range picker (7d/30d/90d) — passes `days` param to all 4 analytics endpoints
+- E5: Revenue MetricCard now shows MRR growth trend arrow and churn rate subtitle
+
+### Phase F: UX Polish (2026-02-14)
+**Delivered:** Dark mode audit (50+ fixes), mobile-responsive forms, live agent log streaming
+- F1: Dark mode — added dark: variants to all hardcoded colors across 9 admin pages (red, green, yellow, blue, amber, violet, pink, indigo)
+- F2: Mobile forms — changed `grid-cols-2` to `sm:grid-cols-2` across all dialog forms (tools, trends, insights, users, agents, market-insights, success-stories, pipeline)
+- F3: Live agent logs — SSE terminal viewer in agents sheet (pause/resume, clear, auto-scroll, error highlighting, 100-entry buffer)
+- Sidebar hamburger menu was already implemented (lg:hidden responsive toggle)
+
+### Phase G: Design System Revolution (2026-02-14)
+**Delivered:** Distinctive "Data Intelligence" aesthetic replacing generic IdeaBrowser clone look
+- G1: Typography — Instrument Serif (display), Satoshi (body), JetBrains Mono (data) via Google Fonts + Fontshare CDN
+- G2: Color system — deep teal primary (#0D7377), warm amber accent (#D4A017), off-white background, all IdeaBrowser refs removed
+- G3: Motion — framer-motion animation presets (stagger, fade-up, counter, skeleton-to-data)
+- G4: Background textures — dot grid, hero gradient mesh, card noise overlay, teal card hover glow
+
+### Phase H: Content Pipeline & Data Source Expansion (2026-02-14)
+**Delivered:** 6 active scrapers (was 3), 150+ signals/day target, real trend data
+- H1: Worker task audit — all 13 scheduler tasks verified registered (0 gaps)
+- H2: Twitter/X scraper activated — registered in worker + scheduler (every 6 hours)
+- H3: Hacker News scraper created — HN Algolia API, 50+ score filter, 30 results/run
+- H4: Mock trend data removed — TrendChart accepts real data prop, "Search Interest" badge fallback
+- H5: Throughput increased — Reddit 50 (was 25), PH 30 (was 10), Google Trends 6 regions (was US-only)
+
+### Phase I: Admin Portal Excellence (2026-02-14)
+**Delivered:** Dashboard charts, pagination, export, command palette, bulk operations
+- I1: 4 Recharts charts on admin dashboard (content volume, agent activity, user growth, quality)
+- I2: Reusable AdminPagination component integrated into insights, users, tools pages
+- I3: CSV/JSON export endpoint + frontend download buttons
+- I4: Cmd+K command palette (16 items, arrow nav, category groups, both layouts)
+- I5: Bulk operations — row checkboxes, select all, bulk delete with confirmation, bulk export
+
+### Phase J: Public Pages Editorial Redesign (2026-02-14)
+**Delivered:** Story-driven homepage, magazine-style detail pages, redesigned cards
+- J1: Homepage — hero gradient + serif title, latest insights grid, 8-dimension deep-dive, CTA
+- J2: InsightCard — teal score bar, source badges (platform colors), market size circles, relative dates
+- J3: Insight detail — editorial hero, score dashboard, problem/solution columns, evidence section, sticky action bar
+- J4: Market insights — AI-generated badge, reading time, enhanced author bio
+
+### Phase K: Data-Driven Evidence & Social Proof (2026-02-14)
+**Delivered:** Confidence visualization, engagement metrics, public stats API
+- K1: Confidence badges on InsightCards (High/Medium/Needs Verification)
+- K2: GET /api/insights/{id}/engagement endpoint + display in detail hero
+- K3: Evidence Score badge, Google Trends verification banner, data point count
+- K4: GET /api/insights/stats/public endpoint, homepage fetches real counters
+
+### Phase L: Competitive Differentiators (2026-02-14)
+**Delivered:** Enhanced validator, 5 chat modes, competitive landscape viz, weekly digest
+- L1: Validate page — hero gradient, font-data scores, free tier badge for unauthenticated users
+- L2: Chat strategist — 5 modes (general, pressure_test, gtm, pricing, competitive) with distinct system prompts
+- L3: Competitive map — Recharts ScatterChart (Market Maturity × Innovation Score), quadrant labels
+- L4: Weekly email digest task — Monday 9am, top 10 insights by relevance
 
 ---
 
@@ -567,7 +674,7 @@ psql $DATABASE_URL -c "SELECT COUNT(*) FROM information_schema.tables WHERE tabl
 
 ---
 
-**Last Updated:** 2026-02-09
+**Last Updated:** 2026-02-14
 **Status:** Production Deployment Ready ✅
 **Infrastructure:** Supabase Pro as sole database (~$30/mo PMF deployment)
 **Next Action:** Deploy to Railway (backend) + Vercel (frontend)

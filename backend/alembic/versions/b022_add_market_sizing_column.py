@@ -4,9 +4,10 @@ Revision ID: b022
 Revises: c22518f05cbf
 Create Date: 2026-02-08
 """
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "b022"

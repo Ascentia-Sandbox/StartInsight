@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, Suspense, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Loader2,
@@ -70,6 +70,7 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { formatDateMYT } from "@/lib/utils";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 
 const TIERS = ["free", "starter", "pro", "enterprise"] as const;
 
@@ -126,12 +127,30 @@ function StatusBadge({ suspended }: { suspended: boolean }) {
 }
 
 export default function AdminUsersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="animate-spin h-8 w-8 text-primary" />
+        </div>
+      }
+    >
+      <AdminUsersContent />
+    </Suspense>
+  );
+}
+
+function AdminUsersContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [search, setSearch] = useState("");
   const [tierFilter, setTierFilter] = useState<string>("all");
+
+  const currentPage = Number(searchParams.get("page")) || 1;
+  const perPage = Number(searchParams.get("per_page")) || 25;
 
   // Dialog states
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -327,7 +346,7 @@ export default function AdminUsersPage() {
       <div className="flex items-center justify-center min-h-[50vh]">
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
-            <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+            <AlertTriangle className="h-12 w-12 text-yellow-500 dark:text-yellow-400 mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
             <p className="text-muted-foreground">
               You do not have permission to view user management.
@@ -345,6 +364,13 @@ export default function AdminUsersPage() {
     },
     {} as Record<string, number>
   );
+
+  const totalUsers = users?.length || 0;
+  const paginatedUsers = useMemo(() => {
+    if (!users) return [];
+    const start = (currentPage - 1) * perPage;
+    return users.slice(start, start + perPage);
+  }, [users, currentPage, perPage]);
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl">
@@ -372,10 +398,10 @@ export default function AdminUsersPage() {
                 {tier}
               </CardTitle>
               {tier === "enterprise" && (
-                <Crown className="h-4 w-4 text-amber-500" />
+                <Crown className="h-4 w-4 text-amber-500 dark:text-amber-400" />
               )}
               {tier === "pro" && (
-                <Shield className="h-4 w-4 text-violet-500" />
+                <Shield className="h-4 w-4 text-violet-500 dark:text-violet-400" />
               )}
             </CardHeader>
             <CardContent>
@@ -485,13 +511,14 @@ export default function AdminUsersPage() {
               <p>No users found.</p>
             </div>
           ) : (
+            <>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-10">
                     <Checkbox
                       checked={
-                        users.length > 0 && selectedIds.size === users.length
+                        paginatedUsers.length > 0 && selectedIds.size === users.length
                       }
                       onCheckedChange={toggleAll}
                     />
@@ -505,7 +532,7 @@ export default function AdminUsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user) => (
+                {paginatedUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell>
                       <Checkbox
@@ -561,7 +588,7 @@ export default function AdminUsersPage() {
                           onClick={() => setDeletingUser(user)}
                           title="Delete user"
                         >
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                          <Trash2 className="h-4 w-4 text-red-500 dark:text-red-400" />
                         </Button>
                       </div>
                     </TableCell>
@@ -569,6 +596,14 @@ export default function AdminUsersPage() {
                 ))}
               </TableBody>
             </Table>
+            <div className="px-4 pb-4">
+              <AdminPagination
+                totalItems={totalUsers}
+                currentPage={currentPage}
+                perPage={perPage}
+              />
+            </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -609,7 +644,7 @@ export default function AdminUsersPage() {
                 placeholder="John Doe"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Subscription Tier</Label>
                 <Select
@@ -695,7 +730,7 @@ export default function AdminUsersPage() {
                 }
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Subscription Tier</Label>
                 <Select

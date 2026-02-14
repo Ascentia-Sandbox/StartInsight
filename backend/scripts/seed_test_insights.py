@@ -7,18 +7,18 @@ needing external APIs, useful for development and testing.
 """
 
 import asyncio
+import random
 import sys
 import uuid
 from datetime import datetime, timedelta
-import random
 
 sys.path.insert(0, "/home/wysetime-pcc/Nero/StartInsight/backend")
 
 from sqlalchemy import text
+
 from app.db.session import AsyncSessionLocal
 from app.models.insight import Insight
 from app.models.raw_signal import RawSignal
-
 
 # Sample startup opportunities data
 STARTUP_IDEAS = [

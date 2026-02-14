@@ -7,13 +7,13 @@ Sprint 2.3: Provides structured JSON logging with:
 - Performance timing helpers
 """
 
-import logging
 import json
+import logging
 import time
 import uuid
-from typing import Any
 from contextvars import ContextVar
 from functools import wraps
+from typing import Any
 
 from app.core.config import settings
 

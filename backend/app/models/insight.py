@@ -268,6 +268,44 @@ class Insight(Base):
         doc="Translations: {zh-CN: {problem_statement: ..., proposed_solution: ...}}",
     )
 
+    # ============================================
+    # Admin Moderation Fields (Phase 4.2 / Phase 15)
+    # ============================================
+
+    admin_status: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True,
+        index=True,
+        server_default="approved",
+        doc="Admin moderation status: pending, approved, rejected",
+    )
+
+    admin_notes: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+        doc="Admin notes for moderation decisions",
+    )
+
+    admin_override_score: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
+        doc="Admin-overridden relevance score (0.0-1.0)",
+    )
+
+    edited_by: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("admin_users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+        doc="Admin user who last edited this insight",
+    )
+
+    edited_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        doc="When this insight was last edited by admin",
+    )
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

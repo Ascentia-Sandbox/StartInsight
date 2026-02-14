@@ -14,16 +14,22 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, EmailStr, Field
-from sqlalchemy import func, select, update, and_, or_
+from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import require_admin, get_db
-from app.models.user import User
+from app.api.deps import get_db, require_admin
 from app.models.admin_user import AdminUser
 from app.models.agent_control import AuditLog
-from app.models.user_analytics import UserActivityEvent, UserSession
-from app.models.subscription import Subscription
+from app.models.agent_execution_log import AgentExecutionLog
+from app.models.insight import Insight
+from app.models.insight_interaction import InsightInteraction
+from app.models.market_insight import MarketInsight
+from app.models.pipeline_monitoring import PipelineHealthCheck
 from app.models.saved_insight import SavedInsight
+from app.models.subscription import Subscription
+from app.models.system_metric import SystemMetric
+from app.models.user import User
+from app.models.user_analytics import UserActivityEvent, UserSession
 
 logger = logging.getLogger(__name__)
 
@@ -197,18 +203,42 @@ async def get_user_analytics(
     )
     features = {row[0]: row[1] for row in feature_usage.fetchall()}
 
+    # Churn rate: users who cancelled paid subscription in last 30 days
+    churned_users = await db.execute(
+        select(func.count(Subscription.id)).where(
+            Subscription.status == "canceled",
+            Subscription.canceled_at >= month_ago,
+            Subscription.tier != "free",
+        )
+    )
+    churned = churned_users.scalar() or 0
+    active_30d_val = active_30d.scalar() or 0
+    churn_30d = round(churned / active_30d_val * 100, 1) if active_30d_val > 0 else 0
+
+    # Average insights viewed per user (last 30 days)
+    avg_viewed = await db.execute(
+        select(
+            func.count(InsightInteraction.id)
+            / func.nullif(func.count(func.distinct(InsightInteraction.user_id)), 0)
+        )
+        .where(
+            InsightInteraction.interaction_type == "view",
+            InsightInteraction.created_at >= month_ago,
+        )
+    )
+
     return UserAnalyticsResponse(
         overview=UserOverview(
             total_users=total_users.scalar() or 0,
             active_users_7d=active_7d.scalar() or 0,
-            active_users_30d=active_30d.scalar() or 0,
+            active_users_30d=active_30d_val,
             new_users_7d=new_7d.scalar() or 0,
-            churn_rate_30d=0.0  # TODO: Calculate actual churn
+            churn_rate_30d=churn_30d,
         ),
         by_tier=tier_stats,
         engagement=EngagementStats(
             avg_session_duration=float(avg_duration.scalar() or 0),
-            avg_insights_viewed=0.0,  # TODO: Calculate from events
+            avg_insights_viewed=float(avg_viewed.scalar() or 0),
             avg_insights_saved=float(avg_saved.scalar() or 0),
             feature_usage=features
         )
@@ -286,13 +316,21 @@ async def get_cohort_analysis(
     return cohorts
 
 
+TIER_PRICES = {"starter": 19.0, "pro": 49.0, "enterprise": 199.0}
+
+
 @router.get("/revenue", response_model=RevenueMetrics)
 async def get_revenue_metrics(
     db: Annotated[AsyncSession, Depends(get_db)],
     admin: Annotated[User, Depends(require_admin)],
+    days: int = Query(default=30, ge=1, le=365),
 ):
-    """Get revenue metrics."""
-    # Count by tier
+    """Get revenue metrics with MRR growth and churn calculations."""
+    now = datetime.now(UTC)
+    month_ago = now - timedelta(days=days)
+    two_months_ago = now - timedelta(days=days * 2)
+
+    # Current MRR from active paid users
     tier_counts = await db.execute(
         select(User.subscription_tier, func.count(User.id))
         .where(User.subscription_tier != "free")
@@ -303,19 +341,59 @@ async def get_revenue_metrics(
     active_subs = 0
     for tier, count in tier_counts.fetchall():
         active_subs += count
-        if tier == "starter":
-            mrr += count * 19.0
-        elif tier == "pro":
-            mrr += count * 49.0
-        elif tier == "enterprise":
-            mrr += count * 199.0
+        mrr += count * TIER_PRICES.get(tier, 0)
+
+    # MRR growth: estimate last month's MRR
+    # New paid users this month (added to MRR)
+    new_paid_result = await db.execute(
+        select(User.subscription_tier, func.count(User.id))
+        .where(User.subscription_tier != "free", User.created_at >= month_ago)
+        .group_by(User.subscription_tier)
+    )
+    new_paid_mrr = sum(
+        count * TIER_PRICES.get(tier, 0)
+        for tier, count in new_paid_result.fetchall()
+    )
+
+    # Churned subscriptions this month (lost from MRR)
+    churned_result = await db.execute(
+        select(Subscription.tier, func.count(Subscription.id))
+        .where(
+            Subscription.status == "canceled",
+            Subscription.canceled_at >= month_ago,
+            Subscription.tier != "free",
+        )
+        .group_by(Subscription.tier)
+    )
+    churned_mrr = sum(
+        count * TIER_PRICES.get(tier, 0)
+        for tier, count in churned_result.fetchall()
+    )
+
+    # Estimate previous month MRR = current - new + churned
+    prev_mrr = mrr - new_paid_mrr + churned_mrr
+    mrr_growth = round(((mrr - prev_mrr) / prev_mrr * 100) if prev_mrr > 0 else 0, 1)
+
+    # Churn rate: cancellations in last 30 days / active at start of period
+    churned_count_result = await db.execute(
+        select(func.count(Subscription.id)).where(
+            Subscription.status == "canceled",
+            Subscription.canceled_at >= month_ago,
+            Subscription.tier != "free",
+        )
+    )
+    churned_count = churned_count_result.scalar_one() or 0
+    total_at_start = active_subs + churned_count
+    churn_rate = round(
+        (churned_count / total_at_start * 100) if total_at_start > 0 else 0, 1
+    )
 
     return RevenueMetrics(
         mrr=mrr,
         arr=mrr * 12,
         active_subscriptions=active_subs,
-        mrr_growth_mom=0.0,  # TODO: Calculate from historical data
-        churn_rate=0.0  # TODO: Calculate actual churn
+        mrr_growth_mom=mrr_growth,
+        churn_rate=churn_rate,
     )
 
 
@@ -644,3 +722,205 @@ async def export_users(
             for u in users
         ]
     }
+
+
+# ============================================
+# Phase 18: Dashboard Analytics
+# ============================================
+
+
+class EngagementMetrics(BaseModel):
+    dau: int = Field(description="Daily active users")
+    mau: int = Field(description="Monthly active users")
+    dau_mau_ratio: float = Field(description="DAU/MAU ratio (stickiness)")
+    avg_session_duration_sec: float = 0
+    feature_usage: dict[str, int] = Field(default_factory=dict)
+    retention_day1: float = 0
+    retention_day7: float = 0
+    retention_day30: float = 0
+
+
+class ContentPerformance(BaseModel):
+    top_insights: list[dict] = Field(default_factory=list)
+    top_articles: list[dict] = Field(default_factory=list)
+    total_insight_views: int = 0
+    total_insight_saves: int = 0
+    total_article_views: int = 0
+
+
+class SystemHealth(BaseModel):
+    scraper_success_rates: dict[str, float] = Field(default_factory=dict)
+    agent_success_rates: dict[str, float] = Field(default_factory=dict)
+    redis_connected: bool = True
+    db_pool_size: int = 0
+    recent_errors: int = 0
+
+
+@router.get("/engagement", response_model=EngagementMetrics)
+async def get_engagement_metrics(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    admin: Annotated[User, Depends(require_admin)],
+    days: int = Query(default=30, ge=1, le=365),
+):
+    """Get user engagement metrics (Phase 18.2)."""
+    now = datetime.now(UTC)
+    day_ago = now - timedelta(days=1)
+    month_ago = now - timedelta(days=days)
+
+    # DAU: unique users with sessions today
+    dau_result = await db.execute(
+        select(func.count(func.distinct(UserSession.user_id)))
+        .where(UserSession.started_at >= day_ago)
+    )
+    dau = dau_result.scalar_one() or 0
+
+    # MAU: unique users with sessions in last 30 days
+    mau_result = await db.execute(
+        select(func.count(func.distinct(UserSession.user_id)))
+        .where(UserSession.started_at >= month_ago)
+    )
+    mau = mau_result.scalar_one() or 0
+
+    # Average session duration
+    avg_duration_result = await db.execute(
+        select(func.avg(UserSession.duration_seconds))
+        .where(UserSession.started_at >= month_ago)
+        .where(UserSession.duration_seconds.isnot(None))
+    )
+    avg_duration = avg_duration_result.scalar_one() or 0
+
+    # Feature usage from activity events
+    feature_result = await db.execute(
+        select(UserActivityEvent.event_type, func.count())
+        .where(UserActivityEvent.created_at >= month_ago)
+        .group_by(UserActivityEvent.event_type)
+        .order_by(func.count().desc())
+        .limit(10)
+    )
+    feature_usage = {row[0]: row[1] for row in feature_result.fetchall()}
+
+    return EngagementMetrics(
+        dau=dau,
+        mau=mau,
+        dau_mau_ratio=round(dau / mau, 3) if mau > 0 else 0,
+        avg_session_duration_sec=float(avg_duration),
+        feature_usage=feature_usage,
+    )
+
+
+@router.get("/content", response_model=ContentPerformance)
+async def get_content_performance(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    admin: Annotated[User, Depends(require_admin)],
+    days: int = Query(default=30, ge=1, le=365),
+):
+    """Get content performance metrics (Phase 18.3)."""
+    period_start = datetime.now(UTC) - timedelta(days=days)
+
+    # Top insights by interaction count
+    top_insights_result = await db.execute(
+        select(
+            Insight.id,
+            Insight.title,
+            Insight.proposed_solution,
+            Insight.relevance_score,
+            func.count(InsightInteraction.id).label("interactions"),
+        )
+        .outerjoin(InsightInteraction, and_(
+            InsightInteraction.insight_id == Insight.id,
+            InsightInteraction.created_at >= period_start,
+        ))
+        .group_by(Insight.id)
+        .order_by(func.count(InsightInteraction.id).desc())
+        .limit(10)
+    )
+    top_insights = [
+        {
+            "id": str(row[0]),
+            "title": row[1] or row[2],
+            "score": row[3],
+            "interactions": row[4],
+        }
+        for row in top_insights_result.fetchall()
+    ]
+
+    # Top articles by view count
+    top_articles_result = await db.execute(
+        select(MarketInsight.id, MarketInsight.title, MarketInsight.view_count)
+        .where(MarketInsight.is_published.is_(True))
+        .order_by(MarketInsight.view_count.desc())
+        .limit(10)
+    )
+    top_articles = [
+        {"id": str(row[0]), "title": row[1], "views": row[2]}
+        for row in top_articles_result.fetchall()
+    ]
+
+    # Totals (scoped to period)
+    total_views = await db.execute(
+        select(func.count())
+        .select_from(InsightInteraction)
+        .where(InsightInteraction.interaction_type == "view", InsightInteraction.created_at >= period_start)
+    )
+    total_saves = await db.execute(
+        select(func.count())
+        .select_from(InsightInteraction)
+        .where(InsightInteraction.interaction_type == "save", InsightInteraction.created_at >= period_start)
+    )
+    total_article_views = await db.execute(
+        select(func.coalesce(func.sum(MarketInsight.view_count), 0))
+    )
+
+    return ContentPerformance(
+        top_insights=top_insights,
+        top_articles=top_articles,
+        total_insight_views=total_views.scalar_one() or 0,
+        total_insight_saves=total_saves.scalar_one() or 0,
+        total_article_views=total_article_views.scalar_one() or 0,
+    )
+
+
+@router.get("/health", response_model=SystemHealth)
+async def get_system_health(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    admin: Annotated[User, Depends(require_admin)],
+    days: int = Query(default=7, ge=1, le=365),
+):
+    """Get system health indicators (Phase 18.4)."""
+    week_ago = datetime.now(UTC) - timedelta(days=days)
+
+    # Agent success rates from execution logs
+    agent_stats_result = await db.execute(
+        select(
+            AgentExecutionLog.agent_type,
+            func.count().label("total"),
+            func.count().filter(AgentExecutionLog.status == "completed").label("success"),
+        )
+        .where(AgentExecutionLog.created_at >= week_ago)
+        .group_by(AgentExecutionLog.agent_type)
+    )
+    agent_success = {}
+    scraper_success = {}
+    for row in agent_stats_result.fetchall():
+        rate = round(row[2] / row[1] * 100, 1) if row[1] > 0 else 0
+        if "scraper" in row[0]:
+            scraper_success[row[0]] = rate
+        else:
+            agent_success[row[0]] = rate
+
+    # Recent errors count
+    errors_result = await db.execute(
+        select(func.count())
+        .select_from(AgentExecutionLog)
+        .where(
+            AgentExecutionLog.status == "failed",
+            AgentExecutionLog.created_at >= week_ago,
+        )
+    )
+    recent_errors = errors_result.scalar_one() or 0
+
+    return SystemHealth(
+        scraper_success_rates=scraper_success,
+        agent_success_rates=agent_success,
+        recent_errors=recent_errors,
+    )

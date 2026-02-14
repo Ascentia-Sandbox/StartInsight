@@ -24,7 +24,6 @@ from app.schemas.public_content import (
 )
 from app.services.trend_prediction import generate_trend_predictions
 
-
 # ============================================================================
 # PREDICTION SCHEMAS
 # ============================================================================
@@ -284,8 +283,8 @@ async def get_trend_predictions(
             # If no historical data, generate synthetic data based on current volume
             if len(historical_dates) < 7:
                 # Generate 30 days of synthetic historical data
-                from datetime import UTC, datetime, timedelta
                 import random
+                from datetime import UTC, datetime, timedelta
 
                 base_volume = trend.search_volume or 50
                 historical_dates = [
@@ -377,8 +376,8 @@ async def get_trend_prediction_by_keyword(
 
     # Generate synthetic data if needed
     if len(historical_dates) < 7:
-        from datetime import UTC, datetime, timedelta
         import random
+        from datetime import UTC, datetime, timedelta
 
         base_volume = trend.search_volume or 50
         historical_dates = [
@@ -465,8 +464,8 @@ async def compare_trends(
         historical_values = trend_data.get("values", [])
 
         if len(historical_dates) < 7:
-            from datetime import UTC, datetime, timedelta
             import random
+            from datetime import UTC, datetime, timedelta
 
             base_volume = trend.search_volume or 50
             historical_dates = [

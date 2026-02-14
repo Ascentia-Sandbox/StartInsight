@@ -13,8 +13,13 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from sqlalchemy.ext.asyncio import (  # noqa: E402
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+
 from app.core.config import settings  # noqa: E402
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker  # noqa: E402
 
 # Manual overrides for titles the automated rules can't handle well.
 # Key = first 70 chars of original proposed_solution (avoids collisions)

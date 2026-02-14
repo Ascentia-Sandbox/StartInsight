@@ -4,13 +4,14 @@ Tests the CommunityValidator class which validates that community
 signals reference real communities (currently Reddit subreddits).
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from app.services.community_validator import (
+    CommunitySignalData,
     CommunityValidator,
     SubredditValidationResult,
-    CommunitySignalData,
     get_community_validator,
 )
 

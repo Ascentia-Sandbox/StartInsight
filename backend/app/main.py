@@ -1,6 +1,7 @@
 """FastAPI application entry point."""
 
 import logging
+import os
 import uuid
 from contextlib import asynccontextmanager
 
@@ -8,6 +9,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from jose import JWTError
 from slowapi.errors import RateLimitExceeded
 from sqlalchemy.exc import IntegrityError, OperationalError
@@ -42,6 +44,7 @@ if settings.sentry_dsn and settings.environment == "production":
 
 # Configure structured logging
 from app.core.logging import setup_logging
+
 setup_logging()
 
 logger = logging.getLogger(__name__)
@@ -125,6 +128,7 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
 
 
 from app.middleware.tracing import TracingMiddleware
+
 app.add_middleware(TracingMiddleware)
 app.add_middleware(RequestIDMiddleware)
 
@@ -312,6 +316,8 @@ from app.api.routes import (  # noqa: E402
     tools,
     trends,
     users,
+    validator,
+    chat,
 )
 
 app.include_router(health.router, tags=["Health"])  # Production monitoring
@@ -341,3 +347,9 @@ app.include_router(tools.router, tags=["Tools"])  # Phase 12.3
 app.include_router(success_stories.router, tags=["Success Stories"])  # Phase 12.3
 app.include_router(trends.router, tags=["Trends"])  # Phase 12.3
 app.include_router(market_insights.router, tags=["Market Insights"])  # Phase 12.3
+app.include_router(validator.router, tags=["Idea Validator"])  # Phase 19.1
+app.include_router(chat.router, tags=["Chat Strategist"])  # Phase B
+
+# Static file serving for uploaded images (Phase 20.1)
+os.makedirs("uploads/images", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")

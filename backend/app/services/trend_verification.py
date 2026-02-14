@@ -15,8 +15,8 @@ from functools import lru_cache
 from typing import Any
 
 import pandas as pd
-from pytrends.request import TrendReq
 from pytrends.exceptions import ResponseError
+from pytrends.request import TrendReq
 
 logger = logging.getLogger(__name__)
 

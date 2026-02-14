@@ -374,7 +374,7 @@ export default function AdminSuccessStoriesPage() {
                     <TableCell>{formatMetrics(story.metrics)}</TableCell>
                     <TableCell>
                       {story.source_url ? (
-                        <a href={story.source_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-blue-600 hover:underline">
+                        <a href={story.source_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline">
                           <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
                           <span className="truncate max-w-[120px]">{story.source_url.replace(/^https?:\/\//, '').split('/')[0]}</span>
                         </a>
@@ -385,7 +385,7 @@ export default function AdminSuccessStoriesPage() {
                     <TableCell>
                       <div className="flex gap-2">
                         {story.is_featured && (
-                          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                          <Star className="h-4 w-4 text-yellow-500 dark:text-yellow-400 fill-yellow-500 dark:fill-yellow-400" />
                         )}
                         <Badge variant={story.is_published ? "default" : "secondary"}>
                           {story.is_published ? "Published" : "Draft"}
@@ -405,7 +405,7 @@ export default function AdminSuccessStoriesPage() {
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => handleDelete(story)}>
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                          <Trash2 className="h-4 w-4 text-red-500 dark:text-red-400" />
                         </Button>
                       </div>
                     </TableCell>
@@ -434,7 +434,7 @@ export default function AdminSuccessStoriesPage() {
             </div>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="founder_name">Founder Name</Label>
                 <Input
@@ -483,7 +483,7 @@ export default function AdminSuccessStoriesPage() {
                 rows={6}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="metrics_json">Metrics (JSON)</Label>
                 <Textarea
@@ -507,7 +507,7 @@ export default function AdminSuccessStoriesPage() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="avatar_url">Founder Avatar URL</Label>
                 <Input

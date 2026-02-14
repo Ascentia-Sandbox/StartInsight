@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -9,6 +9,10 @@ import {
   FileText, AlertTriangle, Users, Wrench, TrendingUp, BarChart3,
   Trophy, BookOpen, ExternalLink,
 } from 'lucide-react';
+import {
+  BarChart, Bar, AreaChart, Area, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from 'recharts';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import {
   fetchAdminDashboard, fetchAgentStatus, pauseAgent, resumeAgent,
@@ -21,6 +25,65 @@ import type { AgentStatus, DashboardMetrics } from '@/lib/types';
 import { formatDateTimeMYT } from '@/lib/utils';
 import { toast } from 'sonner';
 import { config } from '@/lib/env';
+
+// Chart color palette
+const CHART_COLORS = {
+  teal: '#0D7377',
+  amber: '#D4A017',
+  emerald: '#10B981',
+  coral: '#E5604E',
+  slateBlue: '#4A6FA5',
+} as const;
+
+// -------------------------------------------------
+// TODO: Replace mock chart data with real API calls
+// when backend analytics endpoints are available.
+// -------------------------------------------------
+function generateMockChartData() {
+  const days = 14;
+  const now = new Date();
+  const contentVolume = [];
+  const agentActivity = [];
+  const userGrowth = [];
+  const qualityScores = [];
+
+  let cumulativeUsers = 42;
+
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+    contentVolume.push({
+      date: label,
+      reddit: Math.floor(Math.random() * 30) + 10,
+      hackernews: Math.floor(Math.random() * 20) + 5,
+      twitter: Math.floor(Math.random() * 15) + 3,
+      producthunt: Math.floor(Math.random() * 10) + 2,
+    });
+
+    agentActivity.push({
+      date: label,
+      scraper: Math.floor(Math.random() * 8) + 2,
+      analyzer: Math.floor(Math.random() * 6) + 1,
+      reviewer: Math.floor(Math.random() * 4) + 1,
+    });
+
+    cumulativeUsers += Math.floor(Math.random() * 5);
+    userGrowth.push({
+      date: label,
+      users: cumulativeUsers,
+    });
+
+    qualityScores.push({
+      date: label,
+      avgScore: +(Math.random() * 2 + 6.5).toFixed(1),
+    });
+  }
+
+  return { contentVolume, agentActivity, userGrowth, qualityScores };
+}
+// -------------------------------------------------
 
 export default function AdminDashboard() {
   const [isMounted, setIsMounted] = useState(false);
@@ -218,6 +281,9 @@ function AdminContent() {
 
   const isLoading = metricsLoading || agentsLoading;
 
+  // TODO: Replace with real data from analytics endpoints
+  const chartData = useMemo(() => generateMockChartData(), []);
+
   return (
     <div className="p-6 lg:p-8 max-w-7xl">
       {/* Header */}
@@ -351,6 +417,122 @@ function AdminContent() {
                 </CardContent>
               </Card>
             </Link>
+          </div>
+
+          {/* Analytics Charts (2x2 grid) */}
+          <h2 className="text-lg font-semibold mb-3">Analytics Overview</h2>
+          <div className="grid gap-4 md:grid-cols-2 mb-6">
+            {/* 1. Content Volume - Stacked BarChart */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Content Volume</CardTitle>
+                <CardDescription>Signals scraped per day by source</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={240}>
+                  <BarChart data={chartData.contentVolume} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                    <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                    <Tooltip
+                      contentStyle={{ borderRadius: 8, fontSize: 12, border: '1px solid hsl(var(--border))' }}
+                    />
+                    <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
+                    <Bar dataKey="reddit" stackId="a" fill={CHART_COLORS.teal} name="Reddit" radius={[0, 0, 0, 0]} />
+                    <Bar dataKey="hackernews" stackId="a" fill={CHART_COLORS.amber} name="HackerNews" />
+                    <Bar dataKey="twitter" stackId="a" fill={CHART_COLORS.slateBlue} name="Twitter" />
+                    <Bar dataKey="producthunt" stackId="a" fill={CHART_COLORS.emerald} name="ProductHunt" radius={[2, 2, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* 2. Agent Activity - BarChart */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Agent Activity</CardTitle>
+                <CardDescription>Agent executions per day</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={240}>
+                  <BarChart data={chartData.agentActivity} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                    <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                    <Tooltip
+                      contentStyle={{ borderRadius: 8, fontSize: 12, border: '1px solid hsl(var(--border))' }}
+                    />
+                    <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
+                    <Bar dataKey="scraper" fill={CHART_COLORS.teal} name="Scraper" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="analyzer" fill={CHART_COLORS.coral} name="Analyzer" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="reviewer" fill={CHART_COLORS.slateBlue} name="Reviewer" radius={[2, 2, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* 3. User Growth - AreaChart */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">User Growth</CardTitle>
+                <CardDescription>Cumulative users over time</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={240}>
+                  <AreaChart data={chartData.userGrowth} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="userGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={CHART_COLORS.emerald} stopOpacity={0.3} />
+                        <stop offset="95%" stopColor={CHART_COLORS.emerald} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                    <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                    <Tooltip
+                      contentStyle={{ borderRadius: 8, fontSize: 12, border: '1px solid hsl(var(--border))' }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="users"
+                      stroke={CHART_COLORS.emerald}
+                      strokeWidth={2}
+                      fill="url(#userGradient)"
+                      name="Users"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* 4. Content Quality - LineChart */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Content Quality</CardTitle>
+                <CardDescription>Average quality score trend</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={240}>
+                  <LineChart data={chartData.qualityScores} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                    <YAxis domain={[5, 10]} tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                    <Tooltip
+                      contentStyle={{ borderRadius: 8, fontSize: 12, border: '1px solid hsl(var(--border))' }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="avgScore"
+                      stroke={CHART_COLORS.amber}
+                      strokeWidth={2}
+                      dot={{ fill: CHART_COLORS.amber, r: 3 }}
+                      activeDot={{ r: 5 }}
+                      name="Avg Score"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Quick Actions */}

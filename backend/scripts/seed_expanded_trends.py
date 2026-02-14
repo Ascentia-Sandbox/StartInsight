@@ -9,12 +9,12 @@ Run with: uv run python scripts/seed_expanded_trends.py
 
 import asyncio
 import logging
-from datetime import datetime
 import random
+from datetime import datetime
 
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select, delete
 
 from app.core.config import settings
 from app.models.trend import Trend

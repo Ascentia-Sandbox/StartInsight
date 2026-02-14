@@ -4,13 +4,14 @@ Tests the URLValidator class which validates that competitor
 URLs are reachable and resolve correctly.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 from app.services.url_validator import (
-    URLValidator,
-    URLValidationResult,
     CompetitorData,
+    URLValidationResult,
+    URLValidator,
     get_url_validator,
 )
 

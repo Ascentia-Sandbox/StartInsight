@@ -103,8 +103,9 @@ async def run_google_trends_scraper() -> int:
 async def run_analysis() -> int:
     """Run enhanced analyzer on unprocessed signals."""
     from sqlalchemy import select, update
-    from app.models.raw_signal import RawSignal
+
     from app.agents.enhanced_analyzer import analyze_signal_enhanced_with_retry
+    from app.models.raw_signal import RawSignal
 
     logger.info("=" * 60)
     logger.info("Starting Signal Analysis")

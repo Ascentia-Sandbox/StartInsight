@@ -9,9 +9,10 @@ Revises: b011_add_content_hash_to_raw_signals
 Create Date: 2026-02-04
 """
 
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "b012"

@@ -25,47 +25,68 @@ Unlike traditional brainstorming tools, StartInsight relies on **real-time marke
 
 ## ✨ Features
 
-### Current (Phase 1-10, 12-14 Complete)
+### Current (Phase 1-10, 12-14, A-L Complete)
 
 **Data Intelligence**
-- **Automated Data Collection**: 4 scrapers (Reddit, Product Hunt, Google Trends, Twitter/X) with rate limiting and deduplication
+- **Automated Data Collection**: 6 scrapers (Reddit, Product Hunt, Google Trends, Twitter/X, Hacker News, Firecrawl) — 150+ signals/day target
 - **AI-Powered Analysis**: Gemini 2.0 Flash with 8-dimension scoring (97% cost reduction vs Claude)
-- **6 AI Agents**: Enhanced analyzer, 40-step research agent, competitive intel, market intel, content generator
-- **Evidence Visualizations**: Radar charts, KPI cards, community engagement metrics, trend predictions (Prophet ML)
+- **8 AI Agents**: Enhanced analyzer, 40-step research agent, competitive intel, market intel, content generator, chat strategist, quality reviewer, weekly digest
+- **Evidence Visualizations**: Radar charts, KPI cards, confidence badges, trend verification, engagement metrics
 - **Content Quality Gates**: Post-LLM validation (300+ word minimum), SHA-256 deduplication, auto-approval at 0.85
+
+**Design System (Phase G) — "Data Intelligence" Aesthetic**
+- **Typography**: Instrument Serif (editorial headings), Satoshi (body), JetBrains Mono (data/scores)
+- **Color System**: Deep teal primary, warm amber accent — distinctive identity, not a generic SaaS clone
+- **Motion**: Framer Motion staggered reveals, counter animations, skeleton morphing
+- **Textures**: Dot grid backgrounds, gradient mesh heroes, card noise overlays
+
+**Content Pipeline (Phase H)**
+- **6 Active Scrapers**: Reddit (50/run), Product Hunt (30/run), Google Trends (6 regions), Twitter/X, Hacker News (50+ score filter), Firecrawl
+- **Real Trend Data**: No more synthetic charts — real Google Trends data with "Search Interest" badge fallback
+- **Multi-Region**: Google Trends scraped across US, UK, Germany, Japan, Singapore, Australia
+
+**Admin Portal Excellence (Phase I)**
+- **Dashboard Charts**: 4 Recharts visualizations (content volume, agent activity, user growth, quality trends)
+- **Cmd+K Command Palette**: Global keyboard shortcut, 16 commands, arrow key navigation, category groups
+- **Data Pagination**: Reusable pagination with URL state (page/per_page), integrated in 3+ admin pages
+- **Export**: CSV/JSON export endpoints with frontend download buttons
+- **Bulk Operations**: Row selection, bulk delete with confirmation, bulk export
+
+**Public Editorial Design (Phase J)**
+- **Story-Driven Homepage**: Hero gradient with serif titles, animated counters, latest insights grid, 8-dimension deep-dive
+- **InsightCard Redesign**: Teal score bar, platform-colored source badges, market size circles, relative dates
+- **Magazine Detail Pages**: Editorial hero, score dashboard, problem/solution columns, evidence section, sticky action bar
+- **Market Insights**: AI-generated badges, reading time estimates, enhanced author bios
+
+**Evidence & Social Proof (Phase K)**
+- **Confidence Badges**: High/Medium/Needs Verification on every insight card
+- **Public Stats API**: Real-time counters (total insights, signals, avg quality) on homepage
+- **Engagement Metrics**: View/save/share counts on insight detail pages
+- **Evidence Scoring**: Evidence Score badges, Google Trends verification, data point counts
+
+**Competitive Differentiators (Phase L)**
+- **5 Chat Strategist Modes**: General, Pressure Test, GTM Planning, Pricing Strategy, Competitive Analysis
+- **Competitive Landscape Map**: Recharts ScatterChart with Market Maturity × Innovation Score quadrants
+- **Enhanced Validator**: Hero gradient, radar chart results, free tier badge
+- **Weekly Email Digest**: Top 10 insights every Monday, scheduled via Arq worker
 
 **Enterprise Features (Phase 8-10)**
 - **Superadmin Control Center**: Content quality management, pipeline monitoring, AI agent prompt control, cost tracking
-- **User Engagement**: Preferences & email digests, AI idea chat, community voting/comments/polls, gamification (achievements, points, credits, leaderboards), social networking (founder profiles, idea clubs)
-- **Integration Ecosystem**: External integrations, webhooks with retry logic, OAuth connections, competitive intelligence scraper
-
-**Public Content (Phase 12-14)**
-- **Tools Directory**: 54 tools across 6 categories (Design, Development, Marketing, Analytics, Productivity, AI)
-- **Success Stories**: 12 founder case studies with timelines, metrics, and narratives
-- **Trending Keywords**: 180+ keywords with search volume, growth charts, and business implications
-- **Blog**: Market insights articles with Markdown rendering and SEO optimization
+- **User Engagement**: Preferences & email digests, AI idea chat, community voting/comments/polls, gamification
+- **Integration Ecosystem**: External integrations, webhooks with retry logic, OAuth connections
 
 **User Features**
 - **Visual Dashboard**: Next.js interface with insights, trend graphs, filters, dark mode
 - **Workspace Management**: Save insights, rate quality, claim for development
 - **Team Collaboration**: RBAC with owner/admin/member roles, shared insights
-- **Custom Research**: Submit research requests with tier-based approval (Free: manual, Starter/Pro/Enterprise: auto-approved)
-- **Public Pages**: 10 pages (tools, success stories, trends, blog, about, contact, FAQ, pricing, platform tour, features)
-
-**Admin Portal**
-- **Super Admin Sovereignty**: Full control over AI agents, research approval queue, system monitoring
-- **Real-time Monitoring**: SSE streaming dashboard, agent status control (pause/resume/trigger)
-- **Revenue Analytics**: Stripe 4-tier subscriptions, usage tracking, payment history
-- **Multi-Tenancy**: Subdomain routing, custom domains, tenant branding
-- **Content Management**: CRUD interfaces for tools, success stories, trends, and blog articles
+- **Custom Research**: Submit research requests with tier-based approval
 
 **Developer Features**
-- **Public API**: 230 REST endpoints with comprehensive documentation
+- **Public API**: 230+ REST endpoints with comprehensive documentation
 - **API Key Management**: Scoped keys with usage tracking, rate limiting
-- **Export Tools**: PDF/CSV/JSON exports with brand customization
+- **Export Tools**: CSV/JSON exports with brand customization
 - **Row-Level Security**: Supabase RLS policies on all 69 tables
-- **SEO Infrastructure**: Dynamic sitemap, robots.txt, Open Graph tags, Schema.org structured data
-- **Comprehensive Testing**: 291 backend tests (22 files, 85% coverage), 47 E2E tests (8 suites, 5 browsers)
+- **Comprehensive Testing**: 233+ backend tests passing, 47 E2E tests (8 suites, 5 browsers)
 
 ---
 
@@ -73,12 +94,12 @@ Unlike traditional brainstorming tools, StartInsight relies on **real-time marke
 
 ```mermaid
 graph LR
-    A[Reddit/PH/Trends] -->|Firecrawl| B[Arq Worker]
+    A[Reddit/PH/Trends/HN/Twitter] -->|6 Scrapers| B[Arq Worker]
     B -->|Raw Signals| C[(Supabase PostgreSQL)]
     C -->|Unprocessed| D[Gemini 2.0 Flash]
-    D -->|Insights| C
+    D -->|8-Dim Insights| C
     C -->|API| E[FastAPI]
-    E -->|JSON| F[Next.js Dashboard]
+    E -->|JSON/SSE| F[Next.js Dashboard]
     G[Upstash Redis] -.->|Queue| B
 ```
 
@@ -119,9 +140,11 @@ graph LR
 ### Frontend
 - **Framework**: Next.js 16.1.3 (App Router, React 19.2.3)
 - **Language**: TypeScript
-- **Styling**: Tailwind CSS 4.0
-- **Components**: shadcn/ui (25 components)
-- **Charts**: Recharts (radar, line, area, bar)
+- **Styling**: Tailwind CSS 4.0, teal/amber "Data Intelligence" design system
+- **Typography**: Instrument Serif (headings), Satoshi (body), JetBrains Mono (data)
+- **Components**: shadcn/ui (25+ components), Cmd+K command palette
+- **Charts**: Recharts (radar, scatter, line, area, bar)
+- **Animation**: Framer Motion (stagger reveals, counters, skeleton morphing)
 - **State**: TanStack Query (React Query)
 - **Markdown**: react-markdown + remark-gfm + rehype-sanitize
 

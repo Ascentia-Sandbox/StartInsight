@@ -24,20 +24,54 @@ Phase 12.2: Tool, SuccessStory, Trend, MarketInsight (IdeaBrowser public content
 """
 
 from app.models.admin_user import AdminUser
+from app.models.agent_control import AgentConfiguration, AuditLog
 from app.models.agent_execution_log import AgentExecutionLog
 from app.models.api_key import APIKey, APIKeyUsageLog
+
+# Phase 9.3: Community
+from app.models.community import CommentUpvote, IdeaComment, IdeaPoll, IdeaVote, PollResponse
 from app.models.competitor_profile import CompetitorProfile, CompetitorSnapshot
 from app.models.content_review import ContentReviewQueue, ContentSimilarity
-from app.models.pipeline_monitoring import AdminAlert, AdminAlertIncident, APIQuotaUsage, PipelineHealthCheck
-from app.models.user_analytics import UserActivityEvent, UserSession
-from app.models.agent_control import AgentConfiguration, AuditLog
 from app.models.custom_analysis import CustomAnalysis
+
+# Phase 9.6: Gamification
+from app.models.gamification import (
+    Achievement,
+    CreditTransaction,
+    UserAchievement,
+    UserCredits,
+    UserPoints,
+)
+
+# Phase 9.2: Idea Chat
+from app.models.idea_chat import IdeaChat, IdeaChatMessage
 from app.models.insight import Insight
 from app.models.insight_interaction import InsightInteraction
+
+# Phase 10: Integrations
+from app.models.integrations import (
+    BotSubscription,
+    BrowserExtensionToken,
+    ExternalIntegration,
+    IntegrationSync,
+    IntegrationWebhook,
+)
 from app.models.market_insight import MarketInsight
+from app.models.pipeline_monitoring import (
+    AdminAlert,
+    AdminAlertIncident,
+    APIQuotaUsage,
+    PipelineHealthCheck,
+)
+
+# Phase 17: Content Automation Pipeline
+from app.models.pipeline_run import PipelineRun
 from app.models.raw_signal import RawSignal
 from app.models.research_request import ResearchRequest
 from app.models.saved_insight import SavedInsight
+
+# Phase 9.5: Social
+from app.models.social import ClubMember, ClubPost, FounderConnection, FounderProfile, IdeaClub
 from app.models.subscription import PaymentHistory, Subscription
 from app.models.success_story import SuccessStory
 from app.models.system_metric import SystemMetric
@@ -46,20 +80,12 @@ from app.models.tenant import Tenant, TenantUser
 from app.models.tool import Tool
 from app.models.trend import Trend
 from app.models.user import User
+from app.models.user_analytics import UserActivityEvent, UserSession
+
+# Phase 9.1: User Preferences
+from app.models.user_preferences import EmailPreferences, EmailSend, UserPreferences
 from app.models.user_rating import UserRating
 from app.models.webhook_event import WebhookEvent
-# Phase 9.1: User Preferences
-from app.models.user_preferences import UserPreferences, EmailPreferences, EmailSend
-# Phase 9.2: Idea Chat
-from app.models.idea_chat import IdeaChat, IdeaChatMessage
-# Phase 9.3: Community
-from app.models.community import IdeaVote, IdeaComment, CommentUpvote, IdeaPoll, PollResponse
-# Phase 9.5: Social
-from app.models.social import FounderProfile, FounderConnection, IdeaClub, ClubMember, ClubPost
-# Phase 9.6: Gamification
-from app.models.gamification import Achievement, UserAchievement, UserPoints, UserCredits, CreditTransaction
-# Phase 10: Integrations
-from app.models.integrations import ExternalIntegration, IntegrationWebhook, IntegrationSync, BrowserExtensionToken, BotSubscription
 
 __all__ = [
     # Phase 1-3
@@ -146,4 +172,6 @@ __all__ = [
     "SuccessStory",
     "Trend",
     "MarketInsight",
+    # Phase 17: Content Automation Pipeline
+    "PipelineRun",
 ]

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, Star, Eye, BookOpen, Search, X, Maximize2, Minimize2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Star, Eye, BookOpen, Search, X, Maximize2, Minimize2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -284,15 +284,71 @@ export default function AdminMarketInsightsPage() {
     fetchArticles();
   };
 
+  const handleExport = async (format: "csv" | "json") => {
+    if (!accessToken) return;
+
+    try {
+      const response = await fetch(
+        `${apiUrl}/api/admin/export/market-insights?format=${format}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Export failed");
+      }
+
+      if (format === "json") {
+        const data = await response.json();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `market-insights-export-${new Date().toISOString().split("T")[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        // CSV
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `market-insights-export-${new Date().toISOString().split("T")[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }
+
+      toast.success(`Exported ${articles.length} articles as ${format.toUpperCase()}`);
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast.error("Failed to export articles");
+    }
+  };
+
   return (
     <div className="container mx-auto py-8 px-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Market Insights Management</CardTitle>
-          <Button onClick={handleCreate}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Article
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => handleExport("csv")}>
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+            <Button variant="outline" onClick={() => handleExport("json")}>
+              <Download className="h-4 w-4 mr-2" />
+              Export JSON
+            </Button>
+            <Button onClick={handleCreate}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Article
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {selectedIds.size > 0 && (
@@ -375,7 +431,7 @@ export default function AdminMarketInsightsPage() {
                     <TableCell>
                       <div className="flex gap-2">
                         {article.is_featured && (
-                          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                          <Star className="h-4 w-4 text-yellow-500 dark:text-yellow-400 fill-yellow-500 dark:fill-yellow-400" />
                         )}
                         <Badge variant={article.is_published ? "default" : "secondary"}>
                           {article.is_published ? "Published" : "Draft"}
@@ -397,7 +453,7 @@ export default function AdminMarketInsightsPage() {
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => handleDelete(article)}>
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                          <Trash2 className="h-4 w-4 text-red-500 dark:text-red-400" />
                         </Button>
                       </div>
                     </TableCell>
@@ -473,7 +529,7 @@ export default function AdminMarketInsightsPage() {
               </div>
             </TabsContent>
             <TabsContent value="meta" className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="slug">URL Slug</Label>
                   <Input
@@ -502,7 +558,7 @@ export default function AdminMarketInsightsPage() {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="author_name">Author Name</Label>
                   <Input
@@ -528,7 +584,7 @@ export default function AdminMarketInsightsPage() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="author_avatar_url">Author Avatar URL</Label>
                   <Input

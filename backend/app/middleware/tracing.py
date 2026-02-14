@@ -14,11 +14,11 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.logging import (
+    clear_request_context,
     generate_correlation_id,
+    get_logger,
     set_correlation_id,
     set_request_context,
-    clear_request_context,
-    get_logger,
 )
 
 logger = get_logger(__name__)

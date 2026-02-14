@@ -1549,7 +1549,7 @@ async def seed_market_insights():
     async with AsyncSessionLocal() as session:
         try:
             # Check existing count
-            from sqlalchemy import select, func
+            from sqlalchemy import func, select
             count_query = select(func.count()).select_from(MarketInsight)
             result = await session.execute(count_query)
             existing_count = result.scalar()

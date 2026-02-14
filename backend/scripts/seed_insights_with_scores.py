@@ -9,17 +9,17 @@ Run with: uv run python scripts/seed_insights_with_scores.py
 
 import asyncio
 import logging
+import random
 from datetime import datetime, timedelta
 from uuid import uuid4
-import random
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select
 
 from app.core.config import settings
-from app.models.raw_signal import RawSignal
 from app.models.insight import Insight
+from app.models.raw_signal import RawSignal
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

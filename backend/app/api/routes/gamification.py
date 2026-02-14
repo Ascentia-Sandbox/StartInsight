@@ -17,13 +17,13 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user, require_admin, get_db
+from app.api.deps import get_current_user, get_db, require_admin
 from app.models.gamification import (
     Achievement,
-    UserAchievement,
-    UserPoints,
-    UserCredits,
     CreditTransaction,
+    UserAchievement,
+    UserCredits,
+    UserPoints,
 )
 from app.models.user import User
 

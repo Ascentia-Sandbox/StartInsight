@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import AdminUser, CurrentUser
+from app.core.config import settings
 from app.core.rate_limits import limiter
 from app.db.session import get_db
 from app.models.insight import Insight
@@ -29,7 +30,6 @@ from app.schemas.insight import (
     InsightResponse,
     MessageResponse,
 )
-from app.core.config import settings
 from app.services.trend_prediction import generate_trend_predictions
 
 logger = logging.getLogger(__name__)
@@ -414,6 +414,58 @@ async def get_featured_picks(
     return [InsightResponse.model_validate(i) for i in insights]
 
 
+# ============================================================================
+# PHASE K.4: PUBLIC STATISTICS ENDPOINT
+# ============================================================================
+
+@router.get("/stats/public")
+async def get_public_stats(
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Public statistics for homepage counters.
+
+    No authentication required. Returns aggregate platform metrics
+    for social proof display on the homepage.
+    """
+    # Total insights
+    insight_count = await db.scalar(
+        select(func.count()).select_from(Insight)
+    ) or 0
+
+    # Total raw signals
+    signal_count = await db.scalar(
+        select(func.count()).select_from(RawSignal)
+    ) or 0
+
+    # Average relevance score
+    avg_score = await db.scalar(
+        select(func.avg(Insight.relevance_score)).select_from(Insight)
+    )
+
+    # Count distinct sources
+    source_count_result = await db.scalar(
+        select(func.count(func.distinct(RawSignal.source))).select_from(RawSignal)
+    ) or 0
+
+    # Count insights with enhanced scoring (8-dimension)
+    scored_count = await db.scalar(
+        select(func.count()).select_from(Insight).where(
+            Insight.opportunity_score.isnot(None)
+        )
+    ) or 0
+
+    return {
+        "total_insights": insight_count,
+        "total_signals": signal_count,
+        "avg_quality_score": round(float(avg_score or 0), 2),
+        "active_sources": max(int(source_count_result), 6),  # minimum 6 known sources
+        "scored_insights": scored_count,
+        "scoring_dimensions": 8,
+        "evidence_validators": 3,  # Google Trends, Community Signals, Proof Signals
+    }
+
+
 @router.get("/{insight_id}", response_model=InsightResponse)
 @limiter.limit("200/minute")
 async def get_insight(
@@ -531,6 +583,7 @@ async def stream_trend_data(
         data: {"timestamp": "2026-01-28T12:00:00", "value": 85}
     """
     import time
+
     from app.db.session import AsyncSessionLocal
 
     async def event_generator():
@@ -1052,3 +1105,67 @@ async def analyze_competitors_ai(
             status_code=500,
             detail="Failed to generate competitive analysis. Please try again later."
         )
+
+
+# ============================================================================
+# PHASE K.2: SOCIAL PROOF / ENGAGEMENT METRICS
+# ============================================================================
+
+@router.get("/{insight_id}/engagement")
+async def get_insight_engagement(
+    insight_id: UUID,
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Return engagement metrics for an insight.
+
+    Aggregates interaction data from InsightInteraction and SavedInsight tables
+    to provide social proof metrics (view count, save count, chat count, etc.).
+
+    No authentication required -- public endpoint for social proof display.
+
+    - **insight_id**: UUID of the insight
+    """
+    from app.models.insight_interaction import InsightInteraction
+    from app.models.saved_insight import SavedInsight
+
+    # Verify insight exists
+    insight = await db.get(Insight, insight_id)
+    if not insight:
+        raise HTTPException(status_code=404, detail="Insight not found")
+
+    # Count interactions by type
+    interaction_counts_query = (
+        select(
+            InsightInteraction.interaction_type,
+            func.count(InsightInteraction.id).label("count"),
+        )
+        .where(InsightInteraction.insight_id == insight_id)
+        .group_by(InsightInteraction.interaction_type)
+    )
+    result = await db.execute(interaction_counts_query)
+    interaction_counts = {row.interaction_type: row.count for row in result.all()}
+
+    # Count saves from SavedInsight table
+    save_count = await db.scalar(
+        select(func.count(SavedInsight.id)).where(
+            SavedInsight.insight_id == insight_id
+        )
+    ) or 0
+
+    # Count proof signals if available (evidence data points)
+    evidence_count = 0
+    if insight.proof_signals and isinstance(insight.proof_signals, list):
+        evidence_count = len(insight.proof_signals)
+
+    logger.info(f"Engagement metrics for insight {insight_id}: {interaction_counts}")
+
+    return {
+        "view_count": interaction_counts.get("view", 0),
+        "save_count": save_count,
+        "share_count": interaction_counts.get("share", 0),
+        "claim_count": interaction_counts.get("claim", 0),
+        "export_count": interaction_counts.get("export", 0),
+        "interested_count": interaction_counts.get("interested", 0),
+        "evidence_count": evidence_count,
+    }

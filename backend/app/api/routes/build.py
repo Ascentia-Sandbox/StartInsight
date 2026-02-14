@@ -16,11 +16,11 @@ from app.core.cache import get_redis
 from app.db.session import get_db
 from app.models.insight import Insight
 from app.services.builder_integration import (
+    BuilderProject,
     LovableIntegration,
     ReplitIntegration,
     V0DevIntegration,
     create_builder_project,
-    BuilderProject,
 )
 
 logger = logging.getLogger(__name__)

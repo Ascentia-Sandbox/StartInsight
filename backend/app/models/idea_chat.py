@@ -31,6 +31,7 @@ class IdeaChat(Base):
 
     # Chat metadata
     title: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    mode: Mapped[str | None] = mapped_column(String(30), nullable=True)  # pressure_test, gtm_planning, pricing_strategy
     message_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     total_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 

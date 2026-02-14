@@ -103,6 +103,11 @@ export const InsightSchema = z.object({
   founder_fit_score: z.number().min(1).max(10).nullable().optional(),
   execution_difficulty_score: z.number().min(1).max(10).nullable().optional(),
   revenue_potential_score: z.union([z.string(), z.number()]).nullable().optional(),
+  // Trend data: real timeseries data from backend (dates + values)
+  trend_data: z.object({
+    dates: z.array(z.string()),
+    values: z.array(z.number()),
+  }).nullable().optional(),
 });
 
 export const InsightListResponseSchema = z.object({
@@ -366,6 +371,50 @@ export type AgentStatus = z.infer<typeof AgentStatusSchema>;
 export type DashboardMetrics = z.infer<typeof DashboardMetricsSchema>;
 export type InsightReview = z.infer<typeof InsightReviewSchema>;
 export type ReviewQueueResponse = z.infer<typeof ReviewQueueResponseSchema>;
+
+// ============================================
+// Phase 15.1: Full Insight Admin Types
+// ============================================
+
+export const InsightAdminSchema = z.object({
+  id: z.string(),
+  title: z.string().nullable().optional(),
+  problem_statement: z.string(),
+  proposed_solution: z.string(),
+  market_size_estimate: z.string(),
+  relevance_score: z.number(),
+  admin_status: z.string().nullable().optional(),
+  admin_notes: z.string().nullable().optional(),
+  admin_override_score: z.number().nullable().optional(),
+  source: z.string(),
+  created_at: z.string(),
+  edited_at: z.string().nullable().optional(),
+  opportunity_score: z.number().nullable().optional(),
+  problem_score: z.number().nullable().optional(),
+  feasibility_score: z.number().nullable().optional(),
+  why_now_score: z.number().nullable().optional(),
+  execution_difficulty: z.number().nullable().optional(),
+  go_to_market_score: z.number().nullable().optional(),
+  founder_fit_score: z.number().nullable().optional(),
+  revenue_potential: z.string().nullable().optional(),
+  market_gap_analysis: z.string().nullable().optional(),
+  why_now_analysis: z.string().nullable().optional(),
+  value_ladder: z.any().nullable().optional(),
+  proof_signals: z.any().nullable().optional(),
+  execution_plan: z.any().nullable().optional(),
+  competitor_analysis: z.any().nullable().optional(),
+});
+
+export const InsightAdminListSchema = z.object({
+  items: z.array(InsightAdminSchema),
+  total: z.number(),
+  pending_count: z.number(),
+  approved_count: z.number(),
+  rejected_count: z.number(),
+});
+
+export type InsightAdmin = z.infer<typeof InsightAdminSchema>;
+export type InsightAdminList = z.infer<typeof InsightAdminListSchema>;
 
 // ============================================
 // Research Request Types (Phase 5.2: Admin Queue)

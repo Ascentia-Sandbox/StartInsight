@@ -8,9 +8,9 @@ Critical indexes for production performance at scale (10K+ records).
 Addresses N+1 queries and full table scans on filtering/sorting columns.
 """
 
-from alembic import op
 from sqlalchemy import inspect, text
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = 'b010_add_production_indexes'

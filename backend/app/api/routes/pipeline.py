@@ -17,8 +17,13 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import require_admin, get_db
-from app.models.pipeline_monitoring import AdminAlert, AdminAlertIncident, APIQuotaUsage, PipelineHealthCheck
+from app.api.deps import get_db, require_admin
+from app.models.pipeline_monitoring import (
+    AdminAlert,
+    AdminAlertIncident,
+    APIQuotaUsage,
+    PipelineHealthCheck,
+)
 from app.models.user import User
 
 logger = logging.getLogger(__name__)

@@ -61,7 +61,13 @@ import {
   type Tenant,
   type TenantBranding,
   type DomainConfig,
+  InsightAdminSchema,
+  InsightAdminListSchema,
+  type InsightAdmin,
+  type InsightAdminList,
 } from './types';
+
+export type { InsightAdmin, InsightAdminList };
 
 import { config } from './env';
 
@@ -524,6 +530,61 @@ export async function updateInsightStatus(
   return InsightReviewSchema.parse(data);
 }
 
+/**
+ * Fetch full admin insights list with search/filter (Phase 15.1)
+ */
+export async function fetchAdminInsights(
+  accessToken: string,
+  params: {
+    search?: string;
+    status?: string;
+    min_score?: number;
+    max_score?: number;
+    limit?: number;
+    offset?: number;
+  } = {}
+): Promise<InsightAdminList> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/admin/insights/list', { params });
+  return InsightAdminListSchema.parse(data);
+}
+
+/**
+ * Update insight with full admin editing (Phase 15.1)
+ */
+export async function updateInsightAdmin(
+  accessToken: string,
+  insightId: string,
+  payload: Record<string, unknown>
+): Promise<InsightAdmin> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.patch(`/api/admin/insights/${insightId}`, payload);
+  return InsightAdminSchema.parse(data);
+}
+
+/**
+ * Delete (soft-delete) insight (Phase 15.1)
+ */
+export async function deleteInsightAdmin(
+  accessToken: string,
+  insightId: string
+): Promise<void> {
+  const client = createAuthenticatedClient(accessToken);
+  await client.delete(`/api/admin/insights/${insightId}`);
+}
+
+/**
+ * Create a new insight manually (Phase A1)
+ */
+export async function createInsightAdmin(
+  accessToken: string,
+  payload: Record<string, unknown>
+): Promise<InsightAdmin> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post('/api/admin/insights', payload);
+  return InsightAdminSchema.parse(data);
+}
+
 // ============================================
 // Admin User Management
 // ============================================
@@ -675,6 +736,11 @@ export interface AgentConfig {
   rate_limit_per_hour: number;
   cost_limit_daily_usd: number;
   custom_prompts: Record<string, unknown> | null;
+  schedule_type: string | null;
+  schedule_cron: string | null;
+  schedule_interval_hours: number | null;
+  next_run_at: string | null;
+  last_run_at: string | null;
   updated_at: string;
 }
 
@@ -776,6 +842,52 @@ export async function deleteAgentConfiguration(
 export async function fetchAgentExecutionStats(accessToken: string): Promise<AgentStats[]> {
   const client = createAuthenticatedClient(accessToken);
   const { data } = await client.get('/admin/agents/stats');
+  return data;
+}
+
+/**
+ * Update agent schedule (admin only, Phase A2)
+ */
+export async function updateAgentSchedule(
+  accessToken: string,
+  agentName: string,
+  payload: {
+    schedule_type: string;
+    schedule_cron?: string;
+    schedule_interval_hours?: number;
+  }
+): Promise<{ agent_name: string; schedule_type: string | null }> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.patch(`/admin/agents/configurations/${agentName}/schedule`, payload);
+  return data;
+}
+
+/**
+ * Fetch agent cost analytics (admin only, Phase A3)
+ */
+export interface CostDailyBreakdown {
+  date: string;
+  agent_type: string;
+  executions: number;
+  tokens_used: number;
+  cost_usd: number;
+}
+
+export interface CostAnalytics {
+  period: string;
+  total_cost_usd: number;
+  total_tokens: number;
+  total_executions: number;
+  daily_breakdown: CostDailyBreakdown[];
+  cost_by_agent: Record<string, number>;
+}
+
+export async function fetchAgentCostAnalytics(
+  accessToken: string,
+  period: '7d' | '30d' | '90d' = '7d'
+): Promise<CostAnalytics> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/agents/stats/costs', { params: { period } });
   return data;
 }
 

@@ -334,7 +334,7 @@ export default function AdminTrendsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <TrendingUp className="h-4 w-4 text-green-500" />
+                          <TrendingUp className="h-4 w-4 text-green-500 dark:text-green-400" />
                           <span className="font-medium">{trend.keyword}</span>
                         </div>
                       </TableCell>
@@ -350,7 +350,7 @@ export default function AdminTrendsPage() {
                       <TableCell>
                         <div className="flex gap-2">
                           {trend.is_featured && (
-                            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                            <Star className="h-4 w-4 text-yellow-500 dark:text-yellow-400 fill-yellow-500 dark:fill-yellow-400" />
                           )}
                           <Badge variant={trend.is_published ? "default" : "secondary"}>
                             {trend.is_published ? "Published" : "Draft"}
@@ -363,7 +363,7 @@ export default function AdminTrendsPage() {
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="icon" onClick={() => handleDelete(trend)}>
-                            <Trash2 className="h-4 w-4 text-red-500" />
+                            <Trash2 className="h-4 w-4 text-red-500 dark:text-red-400" />
                           </Button>
                         </div>
                       </TableCell>
@@ -393,7 +393,7 @@ export default function AdminTrendsPage() {
             </div>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="keyword">Keyword</Label>
                 <Input
@@ -422,7 +422,7 @@ export default function AdminTrendsPage() {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="search_volume">Search Volume</Label>
                 <Input

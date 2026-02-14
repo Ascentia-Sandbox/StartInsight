@@ -10,8 +10,9 @@ Phase 12.2: IdeaBrowser Feature Replication - 180+ trending keywords with volume
 from typing import Sequence, Union
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "b007_trends"

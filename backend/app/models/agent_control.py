@@ -35,6 +35,14 @@ class AgentConfiguration(Base):
     rate_limit_per_hour: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
     cost_limit_daily_usd: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=Decimal("50.00"), nullable=False)
     custom_prompts: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+
+    # Phase 16.2: Dynamic Schedule Management
+    schedule_type: Mapped[str | None] = mapped_column(String(20), nullable=True, doc="cron | interval | manual")
+    schedule_cron: Mapped[str | None] = mapped_column(String(100), nullable=True, doc="cron expression (e.g., '0 8 * * *')")
+    schedule_interval_hours: Mapped[int | None] = mapped_column(Integer, nullable=True, doc="interval in hours")
+    next_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, doc="next scheduled run time")
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, doc="last execution time")
+
     updated_by: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 

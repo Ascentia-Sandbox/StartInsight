@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useMemo, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Pencil, Trash2, Star, ExternalLink, Link2, Search, X, Maximize2, Minimize2 } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { config } from "@/lib/env";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 
 interface Tool {
   id: string;
@@ -65,11 +66,23 @@ const categories = [
 ];
 
 export default function AdminToolsPage() {
+  return (
+    <Suspense fallback={<p className="p-8 text-muted-foreground">Loading...</p>}>
+      <AdminToolsContent />
+    </Suspense>
+  );
+}
+
+function AdminToolsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [tools, setTools] = useState<Tool[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const currentPage = Number(searchParams.get("page")) || 1;
+  const perPage = Number(searchParams.get("per_page")) || 25;
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -257,6 +270,11 @@ export default function AdminToolsPage() {
     );
   });
 
+  const paginatedTools = useMemo(() => {
+    const start = (currentPage - 1) * perPage;
+    return filteredTools.slice(start, start + perPage);
+  }, [filteredTools, currentPage, perPage]);
+
   return (
     <div className="container mx-auto py-8 px-4">
       <Card>
@@ -295,6 +313,7 @@ export default function AdminToolsPage() {
           ) : filteredTools.length === 0 ? (
             <p className="text-muted-foreground">No tools found{searchQuery ? " matching your search" : ". Create your first tool!"}.</p>
           ) : (
+            <>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -313,7 +332,7 @@ export default function AdminToolsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTools.map((tool) => (
+                {paginatedTools.map((tool) => (
                   <TableRow key={tool.id}>
                     <TableCell>
                       <Checkbox
@@ -340,12 +359,12 @@ export default function AdminToolsPage() {
                           </span>
                         </div>
                       ) : (
-                        <span className="text-sm text-red-500">No link</span>
+                        <span className="text-sm text-red-500 dark:text-red-400">No link</span>
                       )}
                     </TableCell>
                     <TableCell>
                       {tool.is_featured && (
-                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                        <Star className="h-4 w-4 text-yellow-500 dark:text-yellow-400 fill-yellow-500 dark:fill-yellow-400" />
                       )}
                     </TableCell>
                     <TableCell className="text-right">
@@ -369,7 +388,7 @@ export default function AdminToolsPage() {
                           size="icon"
                           onClick={() => handleDelete(tool)}
                         >
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                          <Trash2 className="h-4 w-4 text-red-500 dark:text-red-400" />
                         </Button>
                       </div>
                     </TableCell>
@@ -377,6 +396,12 @@ export default function AdminToolsPage() {
                 ))}
               </TableBody>
             </Table>
+            <AdminPagination
+              totalItems={filteredTools.length}
+              currentPage={currentPage}
+              perPage={perPage}
+            />
+            </>
           )}
         </CardContent>
       </Card>
@@ -398,7 +423,7 @@ export default function AdminToolsPage() {
             </div>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
                 <Input
@@ -446,7 +471,7 @@ export default function AdminToolsPage() {
                 rows={3}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="pricing">Pricing</Label>
                 <Input

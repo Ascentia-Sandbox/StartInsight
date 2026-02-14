@@ -11,11 +11,292 @@ from app.db.session import AsyncSessionLocal
 from app.scrapers.base_scraper import BaseScraper
 from app.scrapers.sources import (
     GoogleTrendsScraper,
+    HackerNewsScraper,
     ProductHuntScraper,
     RedditScraper,
+    TwitterScraper,
 )
+from app.tasks.daily_digest import send_daily_digests_task
+from app.tasks.daily_insight_agent import fetch_daily_insight_task
+from app.tasks.success_stories_agent import update_success_stories_task
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================
+# TASK WRAPPERS FOR AGENTS (Phase 16.1)
+# These wrap agent entry points as Arq-compatible task functions.
+# ============================================
+
+
+async def market_insight_publisher_task(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Arq task wrapper for market insight publisher agent."""
+    from app.agents.market_insight_publisher import run_market_insight_publisher
+
+    logger.info("Starting market_insight_publisher_task")
+    try:
+        result = await run_market_insight_publisher()
+        logger.info(f"market_insight_publisher_task complete: {result.get('status')}")
+        return result
+    except Exception as e:
+        logger.error(f"market_insight_publisher_task failed: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+async def market_insight_quality_review_task(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Arq task wrapper for market insight quality review agent."""
+    from app.agents.quality_reviewer import run_market_insight_quality_review
+
+    logger.info("Starting market_insight_quality_review_task")
+    try:
+        result = await run_market_insight_quality_review()
+        logger.info(f"market_insight_quality_review_task complete: {result.get('status')}")
+        return result
+    except Exception as e:
+        logger.error(f"market_insight_quality_review_task failed: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+async def insight_quality_audit_task(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Arq task wrapper for insight quality audit agent."""
+    from app.agents.quality_reviewer import run_insight_quality_audit
+
+    logger.info("Starting insight_quality_audit_task")
+    try:
+        result = await run_insight_quality_audit()
+        logger.info(f"insight_quality_audit_task complete: {result.get('status')}")
+        return result
+    except Exception as e:
+        logger.error(f"insight_quality_audit_task failed: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+async def run_content_pipeline_task(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Arq task wrapper for content automation pipeline (Phase 17)."""
+    from app.services.pipeline_orchestrator import run_content_pipeline
+
+    logger.info("Starting run_content_pipeline_task")
+    try:
+        result = await run_content_pipeline()
+        logger.info(f"run_content_pipeline_task complete: {result.get('status')}")
+        return result
+    except Exception as e:
+        logger.error(f"run_content_pipeline_task failed: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+async def run_research_agent_auto_task(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Auto-run research agent on top unresearched insights (Phase 17.2)."""
+    from sqlalchemy import select
+
+    from app.db.session import AsyncSessionLocal
+    from app.models.custom_analysis import CustomAnalysis
+    from app.models.insight import Insight
+
+    logger.info("Starting run_research_agent_auto_task")
+    try:
+        async with AsyncSessionLocal() as session:
+            # Find insights without custom analyses
+            analyzed_ids_query = select(CustomAnalysis.insight_id).distinct()
+            result = await session.execute(
+                select(Insight)
+                .where(Insight.relevance_score >= 0.7)
+                .where(~Insight.id.in_(analyzed_ids_query))
+                .order_by(Insight.relevance_score.desc())
+                .limit(5)
+            )
+            insights = result.scalars().all()
+
+            if not insights:
+                return {"status": "completed", "items": 0, "reason": "no_unresearched_insights"}
+
+            # Import and run research agent on each
+            from app.agents.research_agent import analyze_idea_with_retry
+
+            processed = 0
+            for insight in insights:
+                try:
+                    await analyze_idea_with_retry(
+                        idea_description=insight.problem_statement,
+                        target_market=insight.market_size_estimate,
+                    )
+                    processed += 1
+                except Exception as e:
+                    logger.error(f"Research agent failed for insight {insight.id}: {e}")
+
+            await session.commit()
+
+        return {"status": "completed", "items": processed, "total": len(insights)}
+    except Exception as e:
+        logger.error(f"run_research_agent_auto_task failed: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+# ============================================
+# PHASE D: Content Volume & Quality Automation
+# ============================================
+
+
+async def run_content_generator_auto_task(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Auto-generate blog/social content for top insights without content (Phase D)."""
+    from sqlalchemy import select
+
+    from app.agents.content_generator_agent import generate_all_content
+    from app.models.insight import Insight
+
+    logger.info("Starting run_content_generator_auto_task")
+    try:
+        async with AsyncSessionLocal() as session:
+            # Find top insights by score that haven't had content generated
+            result = await session.execute(
+                select(Insight)
+                .where(Insight.relevance_score >= 0.7)
+                .order_by(Insight.relevance_score.desc())
+                .limit(5)
+            )
+            insights = result.scalars().all()
+
+            if not insights:
+                return {"status": "completed", "items": 0, "reason": "no_eligible_insights"}
+
+            processed = 0
+            for insight in insights:
+                try:
+                    await generate_all_content(insight.id, session)
+                    processed += 1
+                except Exception as e:
+                    logger.error(f"Content generation failed for insight {insight.id}: {e}")
+
+        return {"status": "completed", "items": processed, "total": len(insights)}
+    except Exception as e:
+        logger.error(f"run_content_generator_auto_task failed: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+async def run_competitive_intel_auto_task(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Auto-analyze competitors for insights with stale data (Phase D)."""
+    from datetime import UTC, datetime, timedelta
+
+    from sqlalchemy import or_, select
+
+    from app.agents.competitive_intel_agent import analyze_competitors_with_retry
+    from app.models.insight import Insight
+
+    logger.info("Starting run_competitive_intel_auto_task")
+    try:
+        async with AsyncSessionLocal() as session:
+            stale_cutoff = datetime.now(UTC) - timedelta(days=30)
+            # Find insights that need competitor refresh
+            result = await session.execute(
+                select(Insight)
+                .where(Insight.relevance_score >= 0.7)
+                .where(
+                    or_(
+                        Insight.updated_at < stale_cutoff,
+                        Insight.updated_at.is_(None),
+                    )
+                )
+                .order_by(Insight.relevance_score.desc())
+                .limit(5)
+            )
+            insights = result.scalars().all()
+
+            if not insights:
+                return {"status": "completed", "items": 0, "reason": "no_stale_insights"}
+
+            processed = 0
+            for insight in insights:
+                try:
+                    await analyze_competitors_with_retry(insight.id, session)
+                    processed += 1
+                except Exception as e:
+                    logger.error(f"Competitive intel failed for insight {insight.id}: {e}")
+
+            await session.commit()
+
+        return {"status": "completed", "items": processed, "total": len(insights)}
+    except Exception as e:
+        logger.error(f"run_competitive_intel_auto_task failed: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+async def run_market_intel_auto_task(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Auto-generate market reports for trending insights (Phase D)."""
+    from sqlalchemy import select
+
+    from app.agents.market_intel_agent import generate_market_report
+    from app.models.insight import Insight
+
+    logger.info("Starting run_market_intel_auto_task")
+    try:
+        async with AsyncSessionLocal() as session:
+            # Pick top 3 insights by score for market analysis
+            result = await session.execute(
+                select(Insight)
+                .where(Insight.relevance_score >= 0.8)
+                .order_by(Insight.relevance_score.desc())
+                .limit(3)
+            )
+            insights = result.scalars().all()
+
+            if not insights:
+                return {"status": "completed", "items": 0, "reason": "no_high_score_insights"}
+
+            processed = 0
+            for insight in insights:
+                try:
+                    await generate_market_report(insight.id, session)
+                    processed += 1
+                except Exception as e:
+                    logger.error(f"Market intel failed for insight {insight.id}: {e}")
+
+            await session.commit()
+
+        return {"status": "completed", "items": processed, "total": len(insights)}
+    except Exception as e:
+        logger.error(f"run_market_intel_auto_task failed: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+async def send_weekly_digest_task(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Send weekly digest of top insights to opted-in users."""
+    from datetime import UTC, datetime, timedelta
+
+    from sqlalchemy import desc, select
+
+    from app.models.insight import Insight
+
+    logger.info("Starting weekly digest task")
+    try:
+        async with AsyncSessionLocal() as session:
+            # Get top 10 insights from past week
+            one_week_ago = datetime.now(UTC) - timedelta(days=7)
+            result = await session.execute(
+                select(Insight)
+                .where(Insight.created_at >= one_week_ago)
+                .order_by(desc(Insight.relevance_score))
+                .limit(10)
+            )
+            insights = result.scalars().all()
+
+            if not insights:
+                return {"status": "completed", "items": 0, "reason": "no_insights_this_week"}
+
+            # Format digest (placeholder for email sending)
+            digest_items = [
+                {
+                    "title": i.title or i.proposed_solution[:80],
+                    "score": float(i.relevance_score) if i.relevance_score else 0,
+                }
+                for i in insights
+            ]
+            logger.info(f"Weekly digest: {len(insights)} top insights from past week")
+            # TODO: Send via SMTP/email service when configured
+
+        return {"status": "completed", "items": len(insights), "digest": digest_items}
+    except Exception as e:
+        logger.error(f"Weekly digest failed: {e}")
+        return {"status": "error", "error": str(e)}
 
 
 async def _run_scraper(source_name: str, scraper: BaseScraper) -> dict[str, Any]:
@@ -56,7 +337,7 @@ async def scrape_reddit_task(ctx: dict[str, Any]) -> dict[str, Any]:
     """Background task to scrape Reddit for startup discussions."""
     return await _run_scraper(
         "reddit",
-        RedditScraper(subreddits=["startups", "SaaS"], limit=25, time_filter="day"),
+        RedditScraper(subreddits=["startups", "SaaS"], limit=50, time_filter="day"),
     )
 
 
@@ -64,15 +345,53 @@ async def scrape_product_hunt_task(ctx: dict[str, Any]) -> dict[str, Any]:
     """Background task to scrape Product Hunt for daily launches."""
     return await _run_scraper(
         "product_hunt",
-        ProductHuntScraper(days_back=1, limit=10),
+        ProductHuntScraper(days_back=1, limit=30),
     )
 
 
 async def scrape_trends_task(ctx: dict[str, Any]) -> dict[str, Any]:
-    """Background task to scrape Google Trends for search volume data."""
+    """Background task to scrape Google Trends for multiple regions."""
+    regions = [
+        ("US", "United States"),
+        ("GB", "United Kingdom"),
+        ("DE", "Germany"),
+        ("JP", "Japan"),
+        ("SG", "Singapore"),
+        ("AU", "Australia"),
+    ]
+    all_results = []
+    for geo, name in regions:
+        result = await _run_scraper(
+            f"google_trends_{geo}",
+            GoogleTrendsScraper(keywords=None, timeframe="now 7-d", geo=geo),
+        )
+        all_results.append(result)
+
+    total_signals = sum(
+        r.get("signals_saved", 0) for r in all_results if r.get("status") == "success"
+    )
+    return {
+        "status": "success",
+        "source": "google_trends_multi_region",
+        "signals_saved": total_signals,
+        "regions": len(regions),
+        "details": all_results,
+    }
+
+
+async def scrape_twitter_task(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Background task to scrape Twitter/X for startup discussions."""
     return await _run_scraper(
-        "google_trends",
-        GoogleTrendsScraper(keywords=None, timeframe="now 7-d", geo="US"),
+        "twitter",
+        TwitterScraper(),
+    )
+
+
+async def scrape_hackernews_task(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Background task to scrape Hacker News for top stories and Show HN posts."""
+    return await _run_scraper(
+        "hacker_news",
+        HackerNewsScraper(min_score=50, max_results=30),
     )
 
 
@@ -93,7 +412,8 @@ async def hourly_trends_update_task(ctx: dict[str, Any]) -> dict[str, Any]:
         Task result with count of insights updated
     """
     from datetime import UTC, datetime, timedelta
-    from sqlalchemy import select, desc
+
+    from sqlalchemy import desc, select
 
     from app.models.insight import Insight
     from app.models.raw_signal import RawSignal
@@ -243,6 +563,8 @@ async def scrape_all_sources_task(ctx: dict[str, Any]) -> dict[str, Any]:
         "reddit": await scrape_reddit_task(ctx),
         "product_hunt": await scrape_product_hunt_task(ctx),
         "google_trends": await scrape_trends_task(ctx),
+        "twitter": await scrape_twitter_task(ctx),
+        "hacker_news": await scrape_hackernews_task(ctx),
     }
 
     total_signals = sum(
@@ -427,13 +749,36 @@ class WorkerSettings:
     )
 
     # Task functions to register
+    # CRITICAL: Every task enqueued by scheduler.py MUST be listed here,
+    # otherwise Arq silently drops the job.
     functions = [
+        # Scraping tasks
         scrape_reddit_task,
         scrape_product_hunt_task,
         scrape_trends_task,
+        scrape_twitter_task,
+        scrape_hackernews_task,
         scrape_all_sources_task,
+        # Analysis
         analyze_signals_task,
         hourly_trends_update_task,
+        # Agent tasks (Phase 16.1 - previously missing, scheduler enqueued but never ran)
+        market_insight_publisher_task,
+        market_insight_quality_review_task,
+        insight_quality_audit_task,
+        # Task modules (Phase 16.1 - previously missing)
+        fetch_daily_insight_task,
+        send_daily_digests_task,
+        update_success_stories_task,
+        # Phase 17: Content automation pipeline
+        run_content_pipeline_task,
+        run_research_agent_auto_task,
+        # Phase D: Content volume & quality automation
+        run_content_generator_auto_task,
+        run_competitive_intel_auto_task,
+        run_market_intel_auto_task,
+        # Phase L: Weekly digest
+        send_weekly_digest_task,
     ]
 
     # Cron jobs (scheduled tasks)
@@ -450,6 +795,14 @@ class WorkerSettings:
             hourly_trends_update_task,
             minute=0,  # Run at the top of every hour
             run_at_startup=False,  # Don't run immediately on worker start
+        ),
+        # Weekly digest every Monday at 09:00
+        cron(
+            send_weekly_digest_task,
+            weekday="mon",
+            hour=9,
+            minute=0,
+            run_at_startup=False,
         ),
     ]
 

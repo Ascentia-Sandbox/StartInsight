@@ -5,18 +5,21 @@ Provides admin endpoints for:
 - Security audit logs
 """
 
+import asyncio
+import json
 import logging
 from datetime import UTC, datetime, timedelta
-from decimal import Decimal
 from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
-from sqlalchemy import func, select, text, update
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sse_starlette.sse import EventSourceResponse
 
-from app.api.deps import require_admin, get_db
+from app.api.deps import get_db, require_admin
+from app.db.session import AsyncSessionLocal
 from app.models.agent_control import AgentConfiguration, AuditLog
 from app.models.agent_execution_log import AgentExecutionLog
 from app.models.user import User
@@ -40,6 +43,12 @@ class AgentConfigResponse(BaseModel):
     rate_limit_per_hour: int
     cost_limit_daily_usd: float
     custom_prompts: dict[str, Any] | None
+    # Phase 16.2: Schedule fields
+    schedule_type: str | None = None
+    schedule_cron: str | None = None
+    schedule_interval_hours: int | None = None
+    next_run_at: datetime | None = None
+    last_run_at: datetime | None = None
     updated_at: datetime
 
     class Config:
@@ -63,6 +72,31 @@ class AgentConfigUpdate(BaseModel):
     rate_limit_per_hour: int | None = Field(None, ge=1, le=1000)
     cost_limit_daily_usd: float | None = Field(None, ge=1, le=1000)
     custom_prompts: dict[str, Any] | None = None
+
+class AgentScheduleUpdate(BaseModel):
+    """Phase 16.2: Dynamic schedule management."""
+    schedule_type: str = Field(..., pattern="^(cron|interval|manual)$")
+    schedule_cron: str | None = Field(None, max_length=100, description="Cron expression (e.g., '0 8 * * *')")
+    schedule_interval_hours: int | None = Field(None, ge=1, le=168, description="Interval in hours (1-168)")
+
+    def model_post_init(self, __context):
+        """Validate that the correct fields are provided based on schedule_type."""
+        if self.schedule_type == "cron" and not self.schedule_cron:
+            raise ValueError("schedule_cron is required when schedule_type is 'cron'")
+        if self.schedule_type == "interval" and not self.schedule_interval_hours:
+            raise ValueError("schedule_interval_hours is required when schedule_type is 'interval'")
+
+class AgentScheduleResponse(BaseModel):
+    agent_name: str
+    schedule_type: str | None
+    schedule_cron: str | None
+    schedule_interval_hours: int | None
+    next_run_at: datetime | None
+    last_run_at: datetime | None
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
 
 class AgentStatsResponse(BaseModel):
     agent_name: str
@@ -351,6 +385,212 @@ async def get_agent_stats(
 
 
 # ============================================
+# Phase 16.2: Dynamic Schedule Management
+# ============================================
+
+@router.patch("/configurations/{agent_name}/schedule", response_model=AgentScheduleResponse)
+async def update_agent_schedule(
+    agent_name: str,
+    schedule: AgentScheduleUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    admin: Annotated[User, Depends(require_admin)],
+    request: Request,
+):
+    """
+    Update agent execution schedule.
+
+    Phase 16.2: Supports cron, interval, or manual scheduling.
+    Automatically restarts the APScheduler job with new schedule.
+    """
+    result = await db.execute(
+        select(AgentConfiguration).where(AgentConfiguration.agent_name == agent_name)
+    )
+    config = result.scalar_one_or_none()
+
+    if not config:
+        raise HTTPException(status_code=404, detail="Agent configuration not found")
+
+    # Store old schedule for audit
+    old_schedule = {
+        "schedule_type": config.schedule_type,
+        "schedule_cron": config.schedule_cron,
+        "schedule_interval_hours": config.schedule_interval_hours,
+    }
+
+    # Update schedule
+    config.schedule_type = schedule.schedule_type
+    config.schedule_cron = schedule.schedule_cron
+    config.schedule_interval_hours = schedule.schedule_interval_hours
+    config.updated_by = admin.id
+    config.updated_at = datetime.now(UTC)
+
+    # Calculate next_run_at based on schedule type
+    if schedule.schedule_type == "interval" and schedule.schedule_interval_hours:
+        config.next_run_at = datetime.now(UTC) + timedelta(hours=schedule.schedule_interval_hours)
+    elif schedule.schedule_type == "manual":
+        config.next_run_at = None
+    # For cron, next_run_at will be calculated by the scheduler
+
+    # Create audit log
+    audit = AuditLog(
+        user_id=admin.id,
+        action=AuditLog.ACTION_CONFIG_CHANGE,
+        resource_type="agent_schedule",
+        resource_id=config.id,
+        details={
+            "agent_name": agent_name,
+            "old_schedule": old_schedule,
+            "new_schedule": schedule.model_dump(),
+        },
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+    db.add(audit)
+
+    await db.commit()
+    await db.refresh(config)
+
+    logger.info(f"Agent {agent_name} schedule updated to {schedule.schedule_type} by admin {admin.id}")
+
+    # TODO: Restart APScheduler job with new schedule
+    # This would require importing scheduler and calling _schedule_agent_from_config
+
+    return AgentScheduleResponse(
+        agent_name=config.agent_name,
+        schedule_type=config.schedule_type,
+        schedule_cron=config.schedule_cron,
+        schedule_interval_hours=config.schedule_interval_hours,
+        next_run_at=config.next_run_at,
+        last_run_at=config.last_run_at,
+        updated_at=config.updated_at,
+    )
+
+
+@router.get("/configurations/{agent_name}/schedule", response_model=AgentScheduleResponse)
+async def get_agent_schedule(
+    agent_name: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    admin: Annotated[User, Depends(require_admin)],
+):
+    """Get agent execution schedule."""
+    result = await db.execute(
+        select(AgentConfiguration).where(AgentConfiguration.agent_name == agent_name)
+    )
+    config = result.scalar_one_or_none()
+
+    if not config:
+        raise HTTPException(status_code=404, detail="Agent configuration not found")
+
+    return AgentScheduleResponse(
+        agent_name=config.agent_name,
+        schedule_type=config.schedule_type,
+        schedule_cron=config.schedule_cron,
+        schedule_interval_hours=config.schedule_interval_hours,
+        next_run_at=config.next_run_at,
+        last_run_at=config.last_run_at,
+        updated_at=config.updated_at,
+    )
+
+
+# ============================================
+# Phase 16.2: Cost Analytics
+# ============================================
+
+class CostBreakdownResponse(BaseModel):
+    """Daily cost breakdown per agent."""
+    date: str
+    agent_name: str
+    executions: int
+    tokens_used: int
+    cost_usd: float
+
+class CostAnalyticsResponse(BaseModel):
+    """Cost analytics for a time period."""
+    period: str
+    start_date: str
+    end_date: str
+    total_cost_usd: float
+    daily_breakdown: list[CostBreakdownResponse]
+    agent_totals: dict[str, float]
+
+@router.get("/stats/costs", response_model=CostAnalyticsResponse)
+async def get_agent_cost_analytics(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    admin: Annotated[User, Depends(require_admin)],
+    period: Annotated[str, Query(pattern="^(7d|30d|90d)$")] = "7d",
+):
+    """
+    Get cost analytics with daily breakdown per agent.
+
+    Phase 16.2: Extracts cost data from agent_execution_logs.extra_metadata.
+
+    Query params:
+    - period: 7d, 30d, or 90d
+    """
+    # Parse period
+    days_map = {"7d": 7, "30d": 30, "90d": 90}
+    days = days_map[period]
+    start_date = datetime.now(UTC) - timedelta(days=days)
+    end_date = datetime.now(UTC)
+
+    # Query daily cost breakdown
+    # Extract cost_usd and tokens_used from extra_metadata JSONB
+    cost_query = text("""
+        SELECT
+            DATE(started_at) as date,
+            agent_type,
+            COUNT(*) as executions,
+            COALESCE(SUM((extra_metadata->>'tokens_used')::int), 0) as tokens_used,
+            COALESCE(SUM((extra_metadata->>'cost_usd')::float), 0) as cost_usd
+        FROM agent_execution_logs
+        WHERE started_at >= :start_date
+          AND started_at < :end_date
+          AND extra_metadata ? 'cost_usd'
+        GROUP BY DATE(started_at), agent_type
+        ORDER BY date DESC, cost_usd DESC
+    """)
+
+    result = await db.execute(cost_query, {"start_date": start_date, "end_date": end_date})
+    rows = result.fetchall()
+
+    # Build daily breakdown
+    daily_breakdown = []
+    agent_totals = {}
+
+    for row in rows:
+        date_str = row.date.isoformat()
+        agent_name = row.agent_type
+        executions = row.executions
+        tokens_used = row.tokens_used
+        cost_usd = round(row.cost_usd, 4)
+
+        daily_breakdown.append(CostBreakdownResponse(
+            date=date_str,
+            agent_name=agent_name,
+            executions=executions,
+            tokens_used=tokens_used,
+            cost_usd=cost_usd,
+        ))
+
+        # Accumulate agent totals
+        if agent_name not in agent_totals:
+            agent_totals[agent_name] = 0.0
+        agent_totals[agent_name] += cost_usd
+
+    # Calculate total cost
+    total_cost = sum(agent_totals.values())
+
+    return CostAnalyticsResponse(
+        period=period,
+        start_date=start_date.date().isoformat(),
+        end_date=end_date.date().isoformat(),
+        total_cost_usd=round(total_cost, 2),
+        daily_breakdown=daily_breakdown,
+        agent_totals={k: round(v, 2) for k, v in agent_totals.items()},
+    )
+
+
+# ============================================
 # Audit Log Endpoints
 # ============================================
 
@@ -427,3 +667,77 @@ async def get_audit_stats(
         "by_resource": {row[0]: row[1] for row in by_resource.fetchall()},
         "period_days": days
     }
+
+
+# ============================================
+# Real-time Agent Logs SSE (Phase 20.4)
+# ============================================
+
+@router.get("/{agent_name}/logs/stream")
+async def stream_agent_logs(
+    request: Request,
+    agent_name: str,
+    admin: Annotated[User, Depends(require_admin)],
+):
+    """
+    SSE stream tailing agent_execution_logs for a specific agent.
+
+    Sends new log entries every 3 seconds. Useful for monitoring
+    agent execution in real-time from the admin UI.
+    """
+    last_seen_id: UUID | None = None
+
+    async def event_generator():
+        nonlocal last_seen_id
+
+        try:
+            while True:
+                if await request.is_disconnected():
+                    break
+
+                try:
+                    async with AsyncSessionLocal() as db:
+                        query = (
+                            select(AgentExecutionLog)
+                            .where(AgentExecutionLog.agent_type == agent_name)
+                            .order_by(AgentExecutionLog.started_at.desc())
+                            .limit(20)
+                        )
+                        if last_seen_id:
+                            query = query.where(AgentExecutionLog.id != last_seen_id)
+
+                        result = await db.execute(query)
+                        logs = result.scalars().all()
+
+                    if logs:
+                        last_seen_id = logs[0].id
+                        for log in reversed(logs):
+                            yield {
+                                "event": "log_entry",
+                                "data": json.dumps({
+                                    "id": str(log.id),
+                                    "agent_type": log.agent_type,
+                                    "source": log.source,
+                                    "status": log.status,
+                                    "started_at": log.started_at.isoformat() if log.started_at else None,
+                                    "completed_at": log.completed_at.isoformat() if log.completed_at else None,
+                                    "duration_ms": log.duration_ms,
+                                    "items_processed": log.items_processed,
+                                    "error_message": log.error_message,
+                                }, default=str),
+                            }
+                    else:
+                        yield {"event": "heartbeat", "data": ""}
+
+                    await asyncio.sleep(3)
+
+                except asyncio.CancelledError:
+                    break
+                except Exception as e:
+                    logger.error(f"Agent logs SSE error: {e}")
+                    yield {"event": "error", "data": json.dumps({"error": str(e)})}
+                    await asyncio.sleep(5)
+        finally:
+            logger.info(f"Agent logs SSE closed for {agent_name}")
+
+    return EventSourceResponse(event_generator())

@@ -34,6 +34,7 @@ import {
   ScrollText,
   X,
   DollarSign,
+  Radio,
 } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import {
@@ -43,6 +44,8 @@ import {
   deleteAgentConfiguration,
   toggleAgentEnabled,
   fetchAgentExecutionStats,
+  fetchAgentCostAnalytics,
+  updateAgentSchedule,
   fetchAgentStatus,
   fetchAgentLogs,
   pauseAgent,
@@ -51,6 +54,7 @@ import {
   type AgentConfig,
   type AgentStats,
   type AgentExecutionLog,
+  type CostAnalytics,
 } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -174,7 +178,11 @@ export default function AgentCommandCenter() {
     system_prompt: '',
     description: '',
     schedule: '',
+    schedule_type: 'manual' as string,
+    schedule_cron: '',
+    schedule_interval_hours: 6,
   });
+  const [costPeriod, setCostPeriod] = useState<'7d' | '30d' | '90d'>('7d');
 
   // Agent create state
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -195,6 +203,11 @@ export default function AgentCommandCenter() {
 
   // Agent logs state
   const [logsAgent, setLogsAgent] = useState<string | null>(null);
+  const [liveStream, setLiveStream] = useState(false);
+  const [streamLogs, setStreamLogs] = useState<Array<{ id: string; status: string; started_at: string; duration_ms?: number; items_processed: number; error_message?: string; source?: string }>>([]);
+  const [streamPaused, setStreamPaused] = useState(false);
+  const streamRef = useRef<AbortController | null>(null);
+  const terminalRef = useRef<HTMLDivElement>(null);
 
   // Market Insights state
   const [miDialogOpen, setMiDialogOpen] = useState(false);
@@ -304,6 +317,12 @@ export default function AgentCommandCenter() {
     refetchInterval: 15000,
   });
 
+  const { data: costData } = useQuery({
+    queryKey: ['agent-costs', accessToken, costPeriod],
+    queryFn: () => fetchAgentCostAnalytics(accessToken!, costPeriod),
+    enabled: !!accessToken,
+  });
+
   // ========== AGENT LOGS QUERY ==========
   const { data: logsData, isLoading: logsLoading } = useQuery({
     queryKey: ['agent-logs', logsAgent, accessToken],
@@ -332,6 +351,68 @@ export default function AgentCommandCenter() {
     },
     enabled: !!accessToken,
   });
+
+  // ========== LIVE LOG STREAMING ==========
+  useEffect(() => {
+    if (!liveStream || !logsAgent || !accessToken) return;
+
+    const controller = new AbortController();
+    streamRef.current = controller;
+    setStreamLogs([]);
+
+    const connect = async () => {
+      try {
+        const res = await fetch(`${API_URL}/admin/agents/${logsAgent}/logs/stream`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          signal: controller.signal,
+        });
+        if (!res.body) return;
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data:') && !streamPaused) {
+              const raw = line.slice(5).trim();
+              if (!raw) continue;
+              try {
+                const entry = JSON.parse(raw);
+                if (entry.id) {
+                  setStreamLogs((prev) => {
+                    const exists = prev.some((l) => l.id === entry.id);
+                    if (exists) return prev;
+                    const next = [...prev, entry].slice(-100);
+                    return next;
+                  });
+                }
+              } catch { /* skip non-JSON */ }
+            }
+          }
+        }
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name !== 'AbortError') {
+          console.error('SSE stream error:', err);
+        }
+      }
+    };
+    connect();
+
+    return () => { controller.abort(); streamRef.current = null; };
+  }, [liveStream, logsAgent, accessToken, streamPaused]);
+
+  // Auto-scroll terminal
+  useEffect(() => {
+    if (terminalRef.current && !streamPaused) {
+      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
+    }
+  }, [streamLogs, streamPaused]);
 
   // ========== AGENT MUTATIONS ==========
   const toggleMutation = useMutation({
@@ -418,6 +499,16 @@ export default function AgentCommandCenter() {
     return stats?.find((s: AgentStats) => s.agent_name === agentName);
   };
 
+  const scheduleMutation = useMutation({
+    mutationFn: ({ name, payload }: { name: string; payload: { schedule_type: string; schedule_cron?: string; schedule_interval_hours?: number } }) =>
+      updateAgentSchedule(accessToken!, name, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agent-configs'] });
+      toast.success('Schedule updated');
+    },
+    onError: (err: Error) => toast.error(`Schedule update failed: ${err.message}`),
+  });
+
   const openAgentEditDialog = (agent: AgentConfig) => {
     setEditingAgent(agent);
     setAgentEditForm({
@@ -429,6 +520,9 @@ export default function AgentCommandCenter() {
       system_prompt: typeof agent.custom_prompts?.system_prompt === 'string' ? agent.custom_prompts.system_prompt : '',
       description: typeof agent.custom_prompts?.description === 'string' ? agent.custom_prompts.description : '',
       schedule: typeof agent.custom_prompts?.schedule === 'string' ? agent.custom_prompts.schedule : '',
+      schedule_type: agent.schedule_type || 'manual',
+      schedule_cron: agent.schedule_cron || '',
+      schedule_interval_hours: agent.schedule_interval_hours || 6,
     });
   };
 
@@ -601,13 +695,69 @@ export default function AgentCommandCenter() {
           />
         </div>
         <div className="space-y-2">
-          <Label>Schedule</Label>
-          <Input
-            value={agentEditForm.schedule}
-            onChange={(e) => setAgentEditForm({ ...agentEditForm, schedule: e.target.value })}
-            placeholder="e.g., Every 3 days at 06:00 UTC"
-          />
+          <Label>Schedule Type</Label>
+          <Select value={agentEditForm.schedule_type} onValueChange={(v) => setAgentEditForm({ ...agentEditForm, schedule_type: v })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="manual">Manual Only</SelectItem>
+              <SelectItem value="interval">Interval (every N hours)</SelectItem>
+              <SelectItem value="cron">Custom Cron</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+        {agentEditForm.schedule_type === 'interval' && (
+          <div className="space-y-2">
+            <Label>Run Every (hours)</Label>
+            <Select value={String(agentEditForm.schedule_interval_hours)} onValueChange={(v) => setAgentEditForm({ ...agentEditForm, schedule_interval_hours: parseInt(v) })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">Every 1 hour</SelectItem>
+                <SelectItem value="3">Every 3 hours</SelectItem>
+                <SelectItem value="6">Every 6 hours</SelectItem>
+                <SelectItem value="12">Every 12 hours</SelectItem>
+                <SelectItem value="24">Daily (24h)</SelectItem>
+                <SelectItem value="72">Every 3 days</SelectItem>
+                <SelectItem value="168">Weekly</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        {agentEditForm.schedule_type === 'cron' && (
+          <div className="space-y-2">
+            <Label>Cron Expression</Label>
+            <Input
+              value={agentEditForm.schedule_cron}
+              onChange={(e) => setAgentEditForm({ ...agentEditForm, schedule_cron: e.target.value })}
+              placeholder="0 8 * * * (daily at 8am UTC)"
+              className="font-mono"
+            />
+            <p className="text-xs text-muted-foreground">Format: minute hour day month weekday</p>
+          </div>
+        )}
+        {editingAgent && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => scheduleMutation.mutate({
+              name: editingAgent.agent_name,
+              payload: {
+                schedule_type: agentEditForm.schedule_type,
+                ...(agentEditForm.schedule_type === 'cron' ? { schedule_cron: agentEditForm.schedule_cron } : {}),
+                ...(agentEditForm.schedule_type === 'interval' ? { schedule_interval_hours: agentEditForm.schedule_interval_hours } : {}),
+              },
+            })}
+            disabled={scheduleMutation.isPending}
+          >
+            {scheduleMutation.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Clock className="h-3 w-3 mr-1" />}
+            Save Schedule
+          </Button>
+        )}
+        {editingAgent?.next_run_at && (
+          <p className="text-xs text-muted-foreground">Next run: {formatDateTimeMYT(editingAgent.next_run_at)}</p>
+        )}
+        {editingAgent?.last_run_at && (
+          <p className="text-xs text-muted-foreground">Last run: {formatDateTimeMYT(editingAgent.last_run_at)}</p>
+        )}
         <div className="space-y-2">
           <Label>AI Model (API)</Label>
           <Select value={agentEditForm.model_name} onValueChange={(v) => setAgentEditForm({ ...agentEditForm, model_name: v })}>
@@ -621,7 +771,7 @@ export default function AgentCommandCenter() {
             </SelectContent>
           </Select>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Temperature</Label>
             <Input type="number" step="0.1" min="0" max="2"
@@ -656,7 +806,7 @@ export default function AgentCommandCenter() {
       </TabsContent>
 
       <TabsContent value="limits" className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Rate Limit (per hour)</Label>
             <Input type="number" min="1" max="1000"
@@ -712,7 +862,7 @@ export default function AgentCommandCenter() {
       </TabsContent>
 
       <TabsContent value="meta" className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>URL Slug</Label>
             <Input value={miForm.slug}
@@ -729,7 +879,7 @@ export default function AgentCommandCenter() {
             </Select>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Author Name</Label>
             <Input value={miForm.author_name}
@@ -778,7 +928,7 @@ export default function AgentCommandCenter() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
-            <Shield className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <Shield className="h-12 w-12 text-red-500 dark:text-red-400 mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
             <p className="text-muted-foreground mb-4">
               Only superadmins can access the command center.
@@ -963,23 +1113,32 @@ export default function AgentCommandCenter() {
                                   {agent.is_enabled ? 'Active' : 'Disabled'}
                                 </Badge>
                                 {runtime?.state === 'running' && (
-                                  <Badge variant="outline" className="text-green-600 border-green-300">Running</Badge>
+                                  <Badge variant="outline" className="text-green-600 dark:text-green-400 border-green-300 dark:border-green-700">Running</Badge>
                                 )}
                                 {runtime?.state === 'paused' && (
-                                  <Badge variant="outline" className="text-yellow-600 border-yellow-300">Paused</Badge>
+                                  <Badge variant="outline" className="text-yellow-600 dark:text-yellow-400 border-yellow-300 dark:border-yellow-700">Paused</Badge>
                                 )}
                                 {runtime?.state === 'error' && (
-                                  <Badge variant="outline" className="text-red-600 border-red-300">Error</Badge>
+                                  <Badge variant="outline" className="text-red-600 dark:text-red-400 border-red-300 dark:border-red-700">Error</Badge>
                                 )}
                               </div>
 
                               {typeof agent.custom_prompts?.description === 'string' && (
                                 <p className="text-sm text-muted-foreground mt-1">{agent.custom_prompts.description}</p>
                               )}
-                              {typeof agent.custom_prompts?.schedule === 'string' && (
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                              {(agent.schedule_type || typeof agent.custom_prompts?.schedule === 'string') && (
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                                   <Clock className="h-3 w-3" />
-                                  {agent.custom_prompts.schedule}
+                                  {agent.schedule_type === 'cron' ? `Cron: ${agent.schedule_cron}`
+                                    : agent.schedule_type === 'interval' ? `Every ${agent.schedule_interval_hours}h`
+                                    : agent.schedule_type === 'manual' ? 'Manual only'
+                                    : typeof agent.custom_prompts?.schedule === 'string' ? agent.custom_prompts.schedule : ''}
+                                  {agent.next_run_at && (
+                                    <span className="text-primary">Next: {formatRelativeTime(agent.next_run_at)}</span>
+                                  )}
+                                  {agent.last_run_at && (
+                                    <span>Last: {formatRelativeTime(agent.last_run_at)}</span>
+                                  )}
                                 </div>
                               )}
 
@@ -995,7 +1154,7 @@ export default function AgentCommandCenter() {
                                 <div className="flex gap-4 mt-2 text-sm">
                                   <span className="flex items-center gap-1"><Zap className="h-3 w-3" />{runtime.items_processed_today} today</span>
                                   {runtime.errors_today > 0 && (
-                                    <span className="flex items-center gap-1 text-red-500"><XCircle className="h-3 w-3" />{runtime.errors_today} errors</span>
+                                    <span className="flex items-center gap-1 text-red-500 dark:text-red-400"><XCircle className="h-3 w-3" />{runtime.errors_today} errors</span>
                                   )}
                                   {runtime.last_run && (
                                     <span className="flex items-center gap-1 text-muted-foreground"><Clock className="h-3 w-3" />Last: {formatDateTimeMYT(runtime.last_run)}</span>
@@ -1009,9 +1168,9 @@ export default function AgentCommandCenter() {
                                   <span>Success: {(agentStats.success_rate * 100).toFixed(0)}%</span>
                                   <span>Avg: {agentStats.avg_duration_ms.toFixed(0)}ms</span>
                                   <Badge variant="outline" className={
-                                    agentStats.cost_24h_usd > 0.50 ? 'text-red-600 border-red-300 bg-red-50 dark:bg-red-950' :
-                                    agentStats.cost_24h_usd > 0.10 ? 'text-yellow-600 border-yellow-300 bg-yellow-50 dark:bg-yellow-950' :
-                                    'text-green-600 border-green-300 bg-green-50 dark:bg-green-950'
+                                    agentStats.cost_24h_usd > 0.50 ? 'text-red-600 dark:text-red-400 border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950' :
+                                    agentStats.cost_24h_usd > 0.10 ? 'text-yellow-600 dark:text-yellow-400 border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-950' :
+                                    'text-green-600 dark:text-green-400 border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950'
                                   }>
                                     <DollarSign className="h-3 w-3 mr-0.5" />{agentStats.cost_24h_usd.toFixed(2)}/day
                                   </Badge>
@@ -1065,7 +1224,7 @@ export default function AgentCommandCenter() {
                                 title="Edit configuration"><Settings2 className="h-4 w-4" /></Button>
                               <Button variant="outline" size="sm"
                                 onClick={() => { setDeletingAgent(agent); setDeleteDialogOpen(true); }}
-                                title="Delete agent"><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                                title="Delete agent"><Trash2 className="h-4 w-4 text-red-500 dark:text-red-400" /></Button>
                             </div>
                           </div>
                         </div>
@@ -1169,7 +1328,7 @@ export default function AgentCommandCenter() {
                           <TableCell className="text-center">{article.view_count}</TableCell>
                           <TableCell>
                             <div className="flex gap-1 items-center">
-                              {article.is_featured && <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />}
+                              {article.is_featured && <Star className="h-3.5 w-3.5 text-yellow-500 dark:text-yellow-400 fill-yellow-500 dark:fill-yellow-400" />}
                               <Badge variant={article.is_published ? 'default' : 'secondary'}>
                                 {article.is_published ? 'Published' : 'Draft'}
                               </Badge>
@@ -1185,7 +1344,7 @@ export default function AgentCommandCenter() {
                                 title="Edit"><Pencil className="h-4 w-4" /></Button>
                               <Button variant="ghost" size="icon"
                                 onClick={() => { setDeletingMi(article); setMiDeleteDialogOpen(true); }}
-                                title="Delete"><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                                title="Delete"><Trash2 className="h-4 w-4 text-red-500 dark:text-red-400" /></Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -1287,7 +1446,7 @@ export default function AgentCommandCenter() {
                                 title="View"><Eye className="h-4 w-4" /></Button>
                               <Button variant="ghost" size="icon"
                                 onClick={() => { setDeletingInsight(insight); setInsightDeleteDialogOpen(true); }}
-                                title="Delete"><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                                title="Delete"><Trash2 className="h-4 w-4 text-red-500 dark:text-red-400" /></Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -1312,7 +1471,7 @@ export default function AgentCommandCenter() {
                       <CardDescription>Last 24 hours</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid gap-4 sm:grid-cols-2">
                         <div>
                           <p className="text-2xl font-bold">{s.executions_24h}</p>
                           <p className="text-xs text-muted-foreground">Executions</p>
@@ -1320,9 +1479,9 @@ export default function AgentCommandCenter() {
                         <div>
                           <p className="text-2xl font-bold flex items-center gap-1">
                             {(s.success_rate * 100).toFixed(0)}%
-                            {s.success_rate >= 0.95 ? <CheckCircle2 className="h-4 w-4 text-green-500" />
-                              : s.success_rate >= 0.8 ? <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                              : <XCircle className="h-4 w-4 text-red-500" />}
+                            {s.success_rate >= 0.95 ? <CheckCircle2 className="h-4 w-4 text-green-500 dark:text-green-400" />
+                              : s.success_rate >= 0.8 ? <AlertTriangle className="h-4 w-4 text-yellow-500 dark:text-yellow-400" />
+                              : <XCircle className="h-4 w-4 text-red-500 dark:text-red-400" />}
                           </p>
                           <p className="text-xs text-muted-foreground">Success Rate</p>
                         </div>
@@ -1348,6 +1507,61 @@ export default function AgentCommandCenter() {
                 </Card>
               )}
             </div>
+
+            {/* Cost Analytics Chart */}
+            <Card className="mt-6">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <DollarSign className="h-4 w-4" />
+                    Cost Analytics
+                  </CardTitle>
+                  <div className="flex gap-1">
+                    {(['7d', '30d', '90d'] as const).map((p) => (
+                      <Button
+                        key={p}
+                        variant={costPeriod === p ? 'default' : 'outline'}
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={() => setCostPeriod(p)}
+                      >
+                        {p}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                {costData && (
+                  <div className="flex gap-6 mt-2 text-sm">
+                    <span>Total: <strong>${costData.total_cost_usd.toFixed(2)}</strong></span>
+                    <span>Tokens: <strong>{costData.total_tokens.toLocaleString()}</strong></span>
+                    <span>Executions: <strong>{costData.total_executions}</strong></span>
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent>
+                {costData && costData.cost_by_agent && Object.keys(costData.cost_by_agent).length > 0 ? (
+                  <div className="space-y-2">
+                    {Object.entries(costData.cost_by_agent)
+                      .sort(([, a], [, b]) => (b as number) - (a as number))
+                      .map(([agent, cost]) => {
+                        const maxCost = Math.max(...Object.values(costData.cost_by_agent).map(Number));
+                        const pct = maxCost > 0 ? ((cost as number) / maxCost) * 100 : 0;
+                        return (
+                          <div key={agent} className="flex items-center gap-3">
+                            <span className="text-sm w-40 truncate capitalize">{agent.replace(/_/g, ' ')}</span>
+                            <div className="flex-1 bg-muted rounded-full h-3 overflow-hidden">
+                              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className="text-sm font-mono w-16 text-right">${(cost as number).toFixed(2)}</span>
+                          </div>
+                        );
+                      })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-6">No cost data available for this period.</p>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
 
@@ -1382,9 +1596,9 @@ export default function AgentCommandCenter() {
                           </Badge>
                           {runtime?.state && (
                             <Badge variant="outline" className={
-                              runtime.state === 'running' ? 'text-green-600 border-green-300' :
-                              runtime.state === 'paused' ? 'text-yellow-600 border-yellow-300' :
-                              runtime.state === 'error' ? 'text-red-600 border-red-300' : ''
+                              runtime.state === 'running' ? 'text-green-600 dark:text-green-400 border-green-300 dark:border-green-700' :
+                              runtime.state === 'paused' ? 'text-yellow-600 dark:text-yellow-400 border-yellow-300 dark:border-yellow-700' :
+                              runtime.state === 'error' ? 'text-red-600 dark:text-red-400 border-red-300 dark:border-red-700' : ''
                             }>{runtime.state}</Badge>
                           )}
                         </div>
@@ -1414,7 +1628,7 @@ export default function AgentCommandCenter() {
                             </CardTitle>
                           </CardHeader>
                           <CardContent className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-4 sm:grid-cols-2">
                               <div className="space-y-2">
                                 <Label>Description</Label>
                                 <Input
@@ -1424,12 +1638,43 @@ export default function AgentCommandCenter() {
                                 />
                               </div>
                               <div className="space-y-2">
-                                <Label>Schedule</Label>
-                                <Input
-                                  value={agentEditForm.schedule}
-                                  onChange={(e) => setAgentEditForm({ ...agentEditForm, schedule: e.target.value })}
-                                  placeholder="e.g., Every 6 hours"
-                                />
+                                <Label>Schedule Type</Label>
+                                <Select value={agentEditForm.schedule_type} onValueChange={(v) => setAgentEditForm({ ...agentEditForm, schedule_type: v })}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="manual">Manual Only</SelectItem>
+                                    <SelectItem value="interval">Interval</SelectItem>
+                                    <SelectItem value="cron">Custom Cron</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              {agentEditForm.schedule_type === 'interval' && (
+                                <div className="space-y-2">
+                                  <Label>Every (hours)</Label>
+                                  <Select value={String(agentEditForm.schedule_interval_hours)} onValueChange={(v) => setAgentEditForm({ ...agentEditForm, schedule_interval_hours: parseInt(v) })}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="1">1h</SelectItem>
+                                      <SelectItem value="3">3h</SelectItem>
+                                      <SelectItem value="6">6h</SelectItem>
+                                      <SelectItem value="12">12h</SelectItem>
+                                      <SelectItem value="24">Daily</SelectItem>
+                                      <SelectItem value="72">3 days</SelectItem>
+                                      <SelectItem value="168">Weekly</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              )}
+                              {agentEditForm.schedule_type === 'cron' && (
+                                <div className="space-y-2">
+                                  <Label>Cron Expression</Label>
+                                  <Input value={agentEditForm.schedule_cron} onChange={(e) => setAgentEditForm({ ...agentEditForm, schedule_cron: e.target.value })} placeholder="0 8 * * *" className="font-mono" />
+                                </div>
+                              )}
+                              <div className="flex items-end">
+                                <Button variant="outline" size="sm" onClick={() => editingAgent && scheduleMutation.mutate({ name: editingAgent.agent_name, payload: { schedule_type: agentEditForm.schedule_type, ...(agentEditForm.schedule_type === 'cron' ? { schedule_cron: agentEditForm.schedule_cron } : {}), ...(agentEditForm.schedule_type === 'interval' ? { schedule_interval_hours: agentEditForm.schedule_interval_hours } : {}) } })} disabled={scheduleMutation.isPending}>
+                                  {scheduleMutation.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Clock className="h-3 w-3 mr-1" />} Save Schedule
+                                </Button>
                               </div>
                             </div>
                           </CardContent>
@@ -1510,7 +1755,7 @@ export default function AgentCommandCenter() {
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-4 sm:grid-cols-2">
                               <div className="space-y-2">
                                 <Label>Rate Limit (per hour)</Label>
                                 <Input type="number" min="1" max="1000"
@@ -1597,9 +1842,9 @@ export default function AgentCommandCenter() {
                                 <div className="flex justify-between text-sm">
                                   <span className="text-muted-foreground">State</span>
                                   <Badge variant="outline" className={
-                                    runtime.state === 'running' ? 'text-green-600 border-green-300' :
-                                    runtime.state === 'paused' ? 'text-yellow-600 border-yellow-300' :
-                                    runtime.state === 'error' ? 'text-red-600 border-red-300' : ''
+                                    runtime.state === 'running' ? 'text-green-600 dark:text-green-400 border-green-300 dark:border-green-700' :
+                                    runtime.state === 'paused' ? 'text-yellow-600 dark:text-yellow-400 border-yellow-300 dark:border-yellow-700' :
+                                    runtime.state === 'error' ? 'text-red-600 dark:text-red-400 border-red-300 dark:border-red-700' : ''
                                   }>{runtime.state}</Badge>
                                 </div>
                                 <div className="flex justify-between text-sm">
@@ -1609,7 +1854,7 @@ export default function AgentCommandCenter() {
                                 {runtime.errors_today > 0 && (
                                   <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground">Errors Today</span>
-                                    <span className="font-medium text-red-500">{runtime.errors_today}</span>
+                                    <span className="font-medium text-red-500 dark:text-red-400">{runtime.errors_today}</span>
                                   </div>
                                 )}
                                 {runtime.last_run && (
@@ -1644,9 +1889,9 @@ export default function AgentCommandCenter() {
                                   <span className="text-muted-foreground">Success Rate</span>
                                   <span className="font-medium flex items-center gap-1">
                                     {(agentSt.success_rate * 100).toFixed(0)}%
-                                    {agentSt.success_rate >= 0.95 ? <CheckCircle2 className="h-3 w-3 text-green-500" />
-                                      : agentSt.success_rate >= 0.8 ? <AlertTriangle className="h-3 w-3 text-yellow-500" />
-                                      : <XCircle className="h-3 w-3 text-red-500" />}
+                                    {agentSt.success_rate >= 0.95 ? <CheckCircle2 className="h-3 w-3 text-green-500 dark:text-green-400" />
+                                      : agentSt.success_rate >= 0.8 ? <AlertTriangle className="h-3 w-3 text-yellow-500 dark:text-yellow-400" />
+                                      : <XCircle className="h-3 w-3 text-red-500 dark:text-red-400" />}
                                   </span>
                                 </div>
                                 <div className="flex justify-between text-sm">
@@ -1760,7 +2005,7 @@ export default function AgentCommandCenter() {
                   placeholder="e.g., Every 6 hours"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>AI Model</Label>
                   <Select value={createForm.model_name} onValueChange={(v) => setCreateForm({ ...createForm, model_name: v })}>
@@ -1778,7 +2023,7 @@ export default function AgentCommandCenter() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Rate Limit (/hr)</Label>
                   <Input type="number" min="1" max="1000"
@@ -1837,8 +2082,17 @@ export default function AgentCommandCenter() {
                 <ScrollText className="h-5 w-5" />
                 Logs: {logsAgent?.replace(/_/g, ' ')}
               </SheetTitle>
-              <SheetDescription>
-                Recent execution logs for this agent. Showing last 50 entries.
+              <SheetDescription className="flex items-center justify-between">
+                <span>Recent execution logs for this agent.</span>
+                <Button
+                  variant={liveStream ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => { setLiveStream(!liveStream); if (liveStream) { streamRef.current?.abort(); } }}
+                  className="gap-1.5"
+                >
+                  <Radio className={`h-3.5 w-3.5 ${liveStream ? 'animate-pulse' : ''}`} />
+                  {liveStream ? 'Stop Stream' : 'Live Stream'}
+                </Button>
               </SheetDescription>
             </SheetHeader>
             <div className="py-4">
@@ -1916,7 +2170,7 @@ export default function AgentCommandCenter() {
                             <TableCell className="text-center">{log.items_processed}</TableCell>
                             <TableCell className="text-center">
                               {log.items_failed > 0 ? (
-                                <span className="text-red-500">{log.items_failed}</span>
+                                <span className="text-red-500 dark:text-red-400">{log.items_failed}</span>
                               ) : (
                                 <span className="text-muted-foreground">0</span>
                               )}
@@ -1926,7 +2180,7 @@ export default function AgentCommandCenter() {
                             </TableCell>
                             <TableCell className="text-xs max-w-[200px]">
                               {log.error_message ? (
-                                <span className="text-red-500 line-clamp-2" title={log.error_message}>{log.error_message}</span>
+                                <span className="text-red-500 dark:text-red-400 line-clamp-2" title={log.error_message}>{log.error_message}</span>
                               ) : log.source ? (
                                 <span className="text-muted-foreground">{log.source}</span>
                               ) : '-'}
@@ -1945,6 +2199,56 @@ export default function AgentCommandCenter() {
                   </div>
                 );
               })()}
+
+              {/* Live Stream Terminal */}
+              {liveStream && (
+                <div className="mt-6 border-t pt-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-medium flex items-center gap-2">
+                      <Radio className="h-3.5 w-3.5 text-green-500 dark:text-green-400 animate-pulse" />
+                      Live Stream
+                    </h4>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => setStreamPaused(!streamPaused)}>
+                        {streamPaused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
+                        {streamPaused ? 'Resume' : 'Pause'}
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => setStreamLogs([])}>
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
+                  <div
+                    ref={terminalRef}
+                    className="bg-zinc-950 dark:bg-black rounded-lg p-3 font-mono text-xs h-[300px] overflow-y-auto border border-zinc-800"
+                  >
+                    {streamLogs.length === 0 ? (
+                      <p className="text-zinc-500">Waiting for log entries...</p>
+                    ) : (
+                      streamLogs.map((entry) => (
+                        <div
+                          key={entry.id}
+                          className={`py-0.5 border-b border-zinc-900 last:border-0 ${
+                            entry.status === 'failed' ? 'text-red-400' :
+                            entry.status === 'completed' ? 'text-green-400' :
+                            entry.status === 'running' ? 'text-blue-400' : 'text-zinc-400'
+                          }`}
+                        >
+                          <span className="text-zinc-600">[{entry.started_at ? new Date(entry.started_at).toLocaleTimeString() : '--'}]</span>
+                          {' '}
+                          <span className="font-semibold">{entry.status.toUpperCase()}</span>
+                          {entry.items_processed > 0 && <span className="text-zinc-500"> items={entry.items_processed}</span>}
+                          {entry.duration_ms && <span className="text-zinc-500"> {(entry.duration_ms / 1000).toFixed(1)}s</span>}
+                          {entry.source && <span className="text-zinc-500"> src={entry.source}</span>}
+                          {entry.error_message && <span className="text-red-400 block pl-4">  {entry.error_message}</span>}
+                        </div>
+                      ))
+                    )}
+                    {streamPaused && <p className="text-yellow-500 mt-2">-- PAUSED --</p>}
+                  </div>
+                </div>
+              )}
             </div>
           </SheetContent>
         </Sheet>

@@ -17,12 +17,17 @@ import {
   ChevronRight,
   Menu,
   Shield,
+  Lightbulb,
+  Activity,
+  Plug,
+  FileCheck,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Providers } from '../providers';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
+import { CommandPalette } from '@/components/command-palette';
 
 const navItems = [
   {
@@ -34,6 +39,11 @@ const navItems = [
     label: 'Users',
     href: '/admin/users',
     icon: Users,
+  },
+  {
+    label: 'Insights',
+    href: '/admin/insights',
+    icon: Lightbulb,
   },
   {
     label: 'AI Agents',
@@ -66,6 +76,26 @@ const navItems = [
     icon: Trophy,
   },
   {
+    label: 'Pipeline',
+    href: '/admin/pipeline',
+    icon: Activity,
+  },
+  {
+    label: 'Content Review',
+    href: '/admin/content-review',
+    icon: FileCheck,
+  },
+  {
+    label: 'Integrations',
+    href: '/admin/integrations',
+    icon: Plug,
+  },
+  {
+    label: 'Analytics',
+    href: '/admin/analytics',
+    icon: BarChart3,
+  },
+  {
     label: 'Audit Logs',
     href: '/admin/audit-logs',
     icon: ClipboardList,
@@ -89,6 +119,7 @@ export default function AdminLayout({
   return (
     <ThemeProvider>
       <Providers>
+        <CommandPalette />
         <div className="min-h-screen bg-muted/30">
           {/* Mobile header */}
           <div className="lg:hidden flex items-center justify-between border-b bg-background px-4 h-14">

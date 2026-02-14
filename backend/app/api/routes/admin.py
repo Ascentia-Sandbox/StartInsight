@@ -11,16 +11,21 @@ See architecture.md "Admin Portal Architecture" for full specification.
 """
 
 import asyncio
+import csv
+import hashlib
+import io
 import json
 import logging
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse
+from starlette.responses import StreamingResponse
 
 from app.api.deps import AdminUser
 from app.core.constants import InsightStatus
@@ -28,18 +33,25 @@ from app.core.rate_limits import limiter
 from app.db.query_helpers import count_by_field
 from app.db.session import AsyncSessionLocal, get_db
 from app.models.admin_user import AdminUser as AdminUserModel
-from app.models.agent_control import AgentConfiguration
+from app.models.agent_control import AgentConfiguration, AuditLog
 from app.models.agent_execution_log import AgentExecutionLog
 from app.models.insight import Insight
+from app.models.market_insight import MarketInsight
+from app.models.raw_signal import RawSignal
+from app.models.success_story import SuccessStory
 from app.models.system_metric import SystemMetric
+from app.models.tool import Tool
+from app.models.trend import Trend
 from app.schemas.admin import (
     AgentControlResponse,
     AgentStatusResponse,
-    AgentType,
     DashboardMetricsResponse,
     ErrorSummaryResponse,
     ExecutionLogListResponse,
     ExecutionLogResponse,
+    InsightAdminCreate,
+    InsightAdminListResponse,
+    InsightAdminResponse,
     InsightAdminUpdate,
     InsightReviewResponse,
     MetricResponse,
@@ -448,6 +460,97 @@ async def trigger_agent(
 # ============================================
 
 
+@router.post("/insights", response_model=InsightAdminResponse, status_code=status.HTTP_201_CREATED)
+async def create_insight_admin(
+    create_data: InsightAdminCreate,
+    admin: AdminUser,
+    db: AsyncSession = Depends(get_db),
+) -> InsightAdminResponse:
+    """
+    Manually create a new insight (Phase A1).
+
+    Creates a synthetic RawSignal with source='admin_manual' to satisfy the FK constraint.
+    """
+    # Create synthetic raw signal
+    content = f"# {create_data.title}\n\n{create_data.problem_statement}"
+    raw_signal = RawSignal(
+        source="admin_manual",
+        url=f"admin://manual/{admin.email}",
+        content=content,
+        content_hash=hashlib.sha256(content.encode()).hexdigest(),
+        extra_metadata={"created_by": admin.email, "manual": True},
+        processed=True,
+    )
+    db.add(raw_signal)
+    await db.flush()
+
+    # Create insight
+    insight = Insight(
+        raw_signal_id=raw_signal.id,
+        title=create_data.title,
+        problem_statement=create_data.problem_statement,
+        proposed_solution=create_data.proposed_solution,
+        market_size_estimate=create_data.market_size_estimate,
+        relevance_score=create_data.relevance_score,
+        admin_status=create_data.admin_status,
+        opportunity_score=create_data.opportunity_score,
+        problem_score=create_data.problem_score,
+        feasibility_score=create_data.feasibility_score,
+        why_now_score=create_data.why_now_score,
+        execution_difficulty=create_data.execution_difficulty,
+        go_to_market_score=create_data.go_to_market_score,
+        founder_fit_score=create_data.founder_fit_score,
+        revenue_potential=create_data.revenue_potential,
+        market_gap_analysis=create_data.market_gap_analysis,
+        why_now_analysis=create_data.why_now_analysis,
+    )
+    db.add(insight)
+
+    # Audit log
+    audit = AuditLog(
+        user_id=admin.id,
+        action=AuditLog.ACTION_CREATE,
+        resource_type="insight",
+        resource_id=insight.id,
+        details={"title": create_data.title, "admin_email": admin.email},
+    )
+    db.add(audit)
+
+    await db.commit()
+    await db.refresh(insight)
+
+    logger.info(f"Admin {admin.email} created insight {insight.id}: {create_data.title}")
+
+    return InsightAdminResponse(
+        id=insight.id,
+        title=insight.title,
+        problem_statement=insight.problem_statement,
+        proposed_solution=insight.proposed_solution,
+        market_size_estimate=insight.market_size_estimate,
+        relevance_score=insight.relevance_score,
+        admin_status=insight.admin_status or "approved",
+        admin_notes=insight.admin_notes,
+        admin_override_score=insight.admin_override_score,
+        source="admin_manual",
+        created_at=insight.created_at,
+        edited_at=insight.edited_at,
+        opportunity_score=insight.opportunity_score,
+        problem_score=insight.problem_score,
+        feasibility_score=insight.feasibility_score,
+        why_now_score=insight.why_now_score,
+        execution_difficulty=insight.execution_difficulty,
+        go_to_market_score=insight.go_to_market_score,
+        founder_fit_score=insight.founder_fit_score,
+        revenue_potential=insight.revenue_potential,
+        market_gap_analysis=insight.market_gap_analysis,
+        why_now_analysis=insight.why_now_analysis,
+        value_ladder=insight.value_ladder,
+        proof_signals=insight.proof_signals,
+        execution_plan=insight.execution_plan,
+        competitor_analysis=insight.competitor_analysis,
+    )
+
+
 @router.get("/insights", response_model=ReviewQueueResponse)
 async def get_review_queue(
     admin: AdminUser,
@@ -504,17 +607,99 @@ async def get_review_queue(
     )
 
 
-@router.patch("/insights/{insight_id}", response_model=InsightReviewResponse)
-async def update_insight_status(
+@router.get("/insights/list", response_model=InsightAdminListResponse)
+async def list_insights_admin(
+    admin: AdminUser,
+    search: Annotated[str | None, Query()] = None,
+    status_filter: Annotated[str | None, Query(alias="status")] = None,
+    min_score: Annotated[float | None, Query(ge=0.0, le=1.0)] = None,
+    max_score: Annotated[float | None, Query(ge=0.0, le=1.0)] = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    db: AsyncSession = Depends(get_db),
+) -> InsightAdminListResponse:
+    """
+    Full paginated insights list for admin with search and filters (Phase 15.1).
+    """
+    query = select(Insight).order_by(Insight.created_at.desc())
+
+    if status_filter:
+        query = query.where(Insight.admin_status == status_filter)
+    if min_score is not None:
+        query = query.where(Insight.relevance_score >= min_score)
+    if max_score is not None:
+        query = query.where(Insight.relevance_score <= max_score)
+    if search:
+        search_term = f"%{search}%"
+        query = query.where(
+            Insight.problem_statement.ilike(search_term)
+            | Insight.proposed_solution.ilike(search_term)
+            | Insight.title.ilike(search_term)
+        )
+
+    # Count queries
+    count_query = select(func.count()).select_from(query.subquery())
+    total = (await db.execute(count_query)).scalar_one()
+
+    pending_count = await count_by_field(db, Insight, "admin_status", InsightStatus.PENDING)
+    approved_count = await count_by_field(db, Insight, "admin_status", InsightStatus.APPROVED)
+    rejected_count = await count_by_field(db, Insight, "admin_status", InsightStatus.REJECTED)
+
+    result = await db.execute(query.limit(limit).offset(offset))
+    insights = result.scalars().all()
+
+    return InsightAdminListResponse(
+        items=[
+            InsightAdminResponse(
+                id=i.id,
+                title=i.title,
+                problem_statement=i.problem_statement,
+                proposed_solution=i.proposed_solution,
+                market_size_estimate=i.market_size_estimate,
+                relevance_score=i.relevance_score,
+                admin_status=i.admin_status or InsightStatus.APPROVED,
+                admin_notes=i.admin_notes,
+                admin_override_score=i.admin_override_score,
+                source=i.raw_signal.source if i.raw_signal else "unknown",
+                created_at=i.created_at,
+                edited_at=i.edited_at,
+                opportunity_score=i.opportunity_score,
+                problem_score=i.problem_score,
+                feasibility_score=i.feasibility_score,
+                why_now_score=i.why_now_score,
+                execution_difficulty=i.execution_difficulty,
+                go_to_market_score=i.go_to_market_score,
+                founder_fit_score=i.founder_fit_score,
+                revenue_potential=i.revenue_potential,
+                market_gap_analysis=i.market_gap_analysis,
+                why_now_analysis=i.why_now_analysis,
+                value_ladder=i.value_ladder,
+                proof_signals=i.proof_signals,
+                execution_plan=i.execution_plan,
+                competitor_analysis=i.competitor_analysis,
+            )
+            for i in insights
+        ],
+        total=total,
+        pending_count=pending_count,
+        approved_count=approved_count,
+        rejected_count=rejected_count,
+    )
+
+
+@router.patch("/insights/{insight_id}", response_model=InsightAdminResponse)
+async def update_insight_admin(
     insight_id: UUID,
     update_data: InsightAdminUpdate,
     admin: AdminUser,
     db: AsyncSession = Depends(get_db),
-) -> InsightReviewResponse:
+) -> InsightAdminResponse:
     """
-    Update insight admin status (approve/reject).
+    Full insight editing for admin (Phase 15.1).
+
+    Supports all insight fields: content, scores, analysis, JSONB data.
+    All changes are audit-logged.
     """
-    # Get insight
     insight = await db.get(Insight, insight_id)
     if not insight:
         raise HTTPException(status_code=404, detail="Insight not found")
@@ -525,33 +710,63 @@ async def update_insight_status(
     )
     admin_record = admin_record_result.scalar_one_or_none()
 
-    # Update fields
-    if update_data.admin_status is not None:
-        insight.admin_status = update_data.admin_status
-    if update_data.admin_notes is not None:
-        insight.admin_notes = update_data.admin_notes
-    if update_data.admin_override_score is not None:
-        insight.admin_override_score = update_data.admin_override_score
+    # Track changes for audit log
+    changes = {}
+    update_dict = update_data.model_dump(exclude_unset=True)
+    for field, value in update_dict.items():
+        old_value = getattr(insight, field, None)
+        if old_value != value:
+            changes[field] = {"old": str(old_value)[:200], "new": str(value)[:200]}
+            setattr(insight, field, value)
 
     # Track who edited
     if admin_record:
         insight.edited_by = admin_record.id
     insight.edited_at = datetime.now(UTC)
 
+    # Create audit log entry
+    if changes:
+        audit = AuditLog(
+            user_id=admin.id,
+            action=AuditLog.ACTION_UPDATE,
+            resource_type="insight",
+            resource_id=insight_id,
+            details={"changes": changes, "admin_email": admin.email},
+        )
+        db.add(audit)
+
     await db.commit()
     await db.refresh(insight)
 
-    logger.info(f"Admin {admin.email} updated insight {insight_id}")
+    logger.info(f"Admin {admin.email} updated insight {insight_id}: {list(changes.keys())}")
 
-    return InsightReviewResponse(
+    return InsightAdminResponse(
         id=insight.id,
+        title=insight.title,
         problem_statement=insight.problem_statement,
         proposed_solution=insight.proposed_solution,
+        market_size_estimate=insight.market_size_estimate,
         relevance_score=insight.relevance_score,
         admin_status=insight.admin_status or InsightStatus.APPROVED,
         admin_notes=insight.admin_notes,
+        admin_override_score=insight.admin_override_score,
         source=insight.raw_signal.source if insight.raw_signal else "unknown",
         created_at=insight.created_at,
+        edited_at=insight.edited_at,
+        opportunity_score=insight.opportunity_score,
+        problem_score=insight.problem_score,
+        feasibility_score=insight.feasibility_score,
+        why_now_score=insight.why_now_score,
+        execution_difficulty=insight.execution_difficulty,
+        go_to_market_score=insight.go_to_market_score,
+        founder_fit_score=insight.founder_fit_score,
+        revenue_potential=insight.revenue_potential,
+        market_gap_analysis=insight.market_gap_analysis,
+        why_now_analysis=insight.why_now_analysis,
+        value_ladder=insight.value_ladder,
+        proof_signals=insight.proof_signals,
+        execution_plan=insight.execution_plan,
+        competitor_analysis=insight.competitor_analysis,
     )
 
 
@@ -562,16 +777,217 @@ async def delete_insight(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     """
-    Delete an insight (admin only).
+    Soft-delete an insight with audit logging (Phase 15.1).
     """
     insight = await db.get(Insight, insight_id)
     if not insight:
         raise HTTPException(status_code=404, detail="Insight not found")
 
-    await db.delete(insight)
+    # Audit log
+    audit = AuditLog(
+        user_id=admin.id,
+        action=AuditLog.ACTION_DELETE,
+        resource_type="insight",
+        resource_id=insight_id,
+        details={"title": insight.title, "admin_email": admin.email},
+    )
+    db.add(audit)
+
+    # Set status to rejected as soft delete
+    insight.admin_status = "rejected"
+    insight.admin_notes = f"Deleted by admin {admin.email}"
+    insight.edited_at = datetime.now(UTC)
+
     await db.commit()
 
-    logger.info(f"Admin {admin.email} deleted insight {insight_id}")
+    logger.info(f"Admin {admin.email} soft-deleted insight {insight_id}")
+
+
+# ============================================
+# INSIGHT EXPORT & BULK OPERATIONS (Phase I.3/I.5)
+# ============================================
+
+
+@router.get("/insights/export")
+async def export_insights(
+    admin: AdminUser,
+    format: Annotated[str, Query()] = "csv",
+    status_filter: Annotated[str | None, Query(alias="status")] = None,
+    search: Annotated[str | None, Query()] = None,
+    ids: Annotated[str | None, Query()] = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Export insights as CSV or JSON (Phase I.3).
+
+    Supports optional filters:
+    - status: Filter by admin_status (pending, approved, rejected)
+    - search: Search by title/problem/solution
+    - ids: Comma-separated list of insight IDs to export specific items
+    - format: csv or json (default: csv)
+    """
+    if format not in ["csv", "json"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid format. Must be 'csv' or 'json'",
+        )
+
+    query = select(Insight).order_by(Insight.created_at.desc())
+
+    if status_filter:
+        query = query.where(Insight.admin_status == status_filter)
+    if search:
+        search_term = f"%{search}%"
+        query = query.where(
+            Insight.problem_statement.ilike(search_term)
+            | Insight.proposed_solution.ilike(search_term)
+            | Insight.title.ilike(search_term)
+        )
+    if ids:
+        id_list = [id_str.strip() for id_str in ids.split(",") if id_str.strip()]
+        if id_list:
+            query = query.where(Insight.id.in_(id_list))
+
+    result = await db.execute(query)
+    insights = result.scalars().all()
+
+    logger.info(f"Admin {admin.email} exporting {len(insights)} insights as {format}")
+
+    # Define export columns
+    export_columns = [
+        "id", "title", "problem_statement", "proposed_solution",
+        "market_size_estimate", "relevance_score", "admin_status",
+        "opportunity_score", "problem_score", "feasibility_score",
+        "why_now_score", "execution_difficulty", "go_to_market_score",
+        "founder_fit_score", "revenue_potential", "language", "created_at",
+    ]
+
+    if format == "json":
+        data = []
+        for i in insights:
+            item = {}
+            for col in export_columns:
+                value = getattr(i, col, None)
+                if isinstance(value, datetime):
+                    item[col] = value.isoformat()
+                elif isinstance(value, UUID):
+                    item[col] = str(value)
+                else:
+                    item[col] = value
+            # Include text analysis fields
+            item["market_gap_analysis"] = i.market_gap_analysis
+            item["why_now_analysis"] = i.why_now_analysis
+            data.append(item)
+
+        return {
+            "content_type": "insights",
+            "count": len(data),
+            "data": data,
+        }
+
+    # CSV export
+    output = io.StringIO()
+
+    if len(insights) == 0:
+        writer = csv.writer(output)
+        writer.writerow(["No insights found"])
+        output.seek(0)
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename=insights-export-{datetime.now(UTC).strftime('%Y%m%d')}.csv"
+            },
+        )
+
+    all_columns = export_columns + ["market_gap_analysis", "why_now_analysis"]
+    writer = csv.DictWriter(output, fieldnames=all_columns)
+    writer.writeheader()
+
+    for i in insights:
+        row = {}
+        for col in all_columns:
+            value = getattr(i, col, None)
+            if isinstance(value, datetime):
+                row[col] = value.isoformat()
+            elif isinstance(value, UUID):
+                row[col] = str(value)
+            elif isinstance(value, (dict, list)):
+                row[col] = json.dumps(value)
+            else:
+                row[col] = value
+        writer.writerow(row)
+
+    output.seek(0)
+
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename=insights-export-{datetime.now(UTC).strftime('%Y%m%d')}.csv"
+        },
+    )
+
+
+@router.post("/insights/bulk-delete")
+async def bulk_delete_insights(
+    admin: AdminUser,
+    payload: dict,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Bulk soft-delete insights by setting status to rejected (Phase I.5).
+
+    Expects: {"ids": ["uuid1", "uuid2", ...]}
+    """
+    ids = payload.get("ids", [])
+    if not ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No insight IDs provided",
+        )
+
+    if len(ids) > 100:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Maximum 100 insights per bulk operation",
+        )
+
+    result = await db.execute(
+        select(Insight).where(Insight.id.in_(ids))
+    )
+    insights = result.scalars().all()
+
+    deleted_count = 0
+    for insight in insights:
+        insight.admin_status = "rejected"
+        insight.admin_notes = f"Bulk deleted by admin {admin.email}"
+        insight.edited_at = datetime.now(UTC)
+        deleted_count += 1
+
+    # Audit log for bulk operation
+    audit = AuditLog(
+        user_id=admin.id,
+        action=AuditLog.ACTION_DELETE,
+        resource_type="insight",
+        details={
+            "action": "bulk_delete",
+            "count": deleted_count,
+            "ids": [str(i) for i in ids[:10]],
+            "admin_email": admin.email,
+        },
+    )
+    db.add(audit)
+
+    await db.commit()
+
+    logger.info(f"Admin {admin.email} bulk-deleted {deleted_count} insights")
+
+    return {
+        "status": "success",
+        "deleted_count": deleted_count,
+        "total_requested": len(ids),
+    }
 
 
 # ============================================
@@ -692,3 +1108,331 @@ async def get_error_summary(
         errors_by_source=errors_by_source,
         recent_errors=[],  # TODO: Convert to ErrorEntry list
     )
+
+
+# ============================================
+# BULK EXPORT/IMPORT ENDPOINTS (Phase 15.4)
+# ============================================
+
+
+@router.get("/export/{content_type}")
+async def export_content(
+    content_type: str,
+    admin: AdminUser,
+    format: Annotated[str, Query()] = "csv",
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Bulk export content as CSV or JSON (Phase 15.4).
+
+    Content types: tools, trends, market-insights, success-stories
+    Formats: csv, json
+    """
+    # Map content type to model
+    model_map = {
+        "tools": Tool,
+        "trends": Trend,
+        "market-insights": MarketInsight,
+        "success-stories": SuccessStory,
+    }
+
+    if content_type not in model_map:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid content type. Must be one of: {', '.join(model_map.keys())}",
+        )
+
+    if format not in ["csv", "json"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid format. Must be 'csv' or 'json'",
+        )
+
+    model = model_map[content_type]
+
+    # Fetch all records
+    result = await db.execute(select(model).order_by(model.created_at.desc()))
+    records = result.scalars().all()
+
+    logger.info(f"Admin {admin.email} exporting {len(records)} {content_type} records as {format}")
+
+    if format == "json":
+        # JSON export: return list of records as dicts
+        data = []
+        for record in records:
+            item = {}
+            for column in record.__table__.columns:
+                value = getattr(record, column.name)
+                # Convert datetime to ISO string, UUID to string
+                if isinstance(value, datetime):
+                    item[column.name] = value.isoformat()
+                elif isinstance(value, UUID):
+                    item[column.name] = str(value)
+                else:
+                    item[column.name] = value
+            data.append(item)
+
+        return {"content_type": content_type, "count": len(data), "data": data}
+
+    # CSV export
+    output = io.StringIO()
+
+    if len(records) == 0:
+        # Empty export
+        writer = csv.writer(output)
+        writer.writerow(["No records found"])
+        output.seek(0)
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename={content_type}-export-{datetime.now(UTC).strftime('%Y%m%d')}.csv"
+            },
+        )
+
+    # Get column names from first record
+    first_record = records[0]
+    fieldnames = [col.name for col in first_record.__table__.columns]
+
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer.writeheader()
+
+    for record in records:
+        row = {}
+        for column in record.__table__.columns:
+            value = getattr(record, column.name)
+            # Convert datetime to ISO string, UUID to string, JSONB to JSON string
+            if isinstance(value, datetime):
+                row[column.name] = value.isoformat()
+            elif isinstance(value, UUID):
+                row[column.name] = str(value)
+            elif isinstance(value, (dict, list)):
+                row[column.name] = json.dumps(value)
+            else:
+                row[column.name] = value
+        writer.writerow(row)
+
+    output.seek(0)
+
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename={content_type}-export-{datetime.now(UTC).strftime('%Y%m%d')}.csv"
+        },
+    )
+
+
+@router.post("/import/{content_type}")
+async def import_content(
+    content_type: str,
+    admin: AdminUser,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Bulk import content from CSV or JSON file (Phase 15.4).
+
+    Content types: tools, trends, market-insights, success-stories
+    File formats: .csv, .json
+    """
+    # Map content type to model
+    model_map = {
+        "tools": Tool,
+        "trends": Trend,
+        "market-insights": MarketInsight,
+        "success-stories": SuccessStory,
+    }
+
+    if content_type not in model_map:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid content type. Must be one of: {', '.join(model_map.keys())}",
+        )
+
+    model = model_map[content_type]
+
+    # Read file content
+    content = await file.read()
+
+    imported_count = 0
+    failed_count = 0
+    errors = []
+
+    try:
+        # Detect format from filename or content
+        if file.filename and file.filename.endswith(".json"):
+            # JSON import
+            data = json.loads(content.decode("utf-8"))
+
+            # Handle both [{...}, {...}] and {data: [{...}]} formats
+            if isinstance(data, dict) and "data" in data:
+                records_data = data["data"]
+            elif isinstance(data, list):
+                records_data = data
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="JSON must be an array or object with 'data' key",
+                )
+
+            for idx, record_data in enumerate(records_data):
+                try:
+                    # Remove id and timestamps to allow fresh creation
+                    record_data.pop("id", None)
+                    record_data.pop("created_at", None)
+                    record_data.pop("updated_at", None)
+
+                    # Parse datetime fields if present
+                    for field in ["published_at"]:
+                        if field in record_data and record_data[field]:
+                            record_data[field] = datetime.fromisoformat(record_data[field].replace("Z", "+00:00"))
+
+                    # Parse JSONB fields if they're strings
+                    for field in ["translations", "metrics", "timeline", "trend_data"]:
+                        if field in record_data and isinstance(record_data[field], str):
+                            record_data[field] = json.loads(record_data[field])
+
+                    # Create new record
+                    new_record = model(**record_data)
+                    db.add(new_record)
+                    imported_count += 1
+
+                except Exception as e:
+                    failed_count += 1
+                    errors.append(f"Row {idx + 1}: {str(e)[:100]}")
+
+        else:
+            # CSV import
+            csv_content = io.StringIO(content.decode("utf-8"))
+            reader = csv.DictReader(csv_content)
+
+            for idx, row in enumerate(reader):
+                try:
+                    # Remove empty string values
+                    record_data = {k: v for k, v in row.items() if v}
+
+                    # Remove id and timestamps
+                    record_data.pop("id", None)
+                    record_data.pop("created_at", None)
+                    record_data.pop("updated_at", None)
+
+                    # Parse datetime fields
+                    for field in ["published_at"]:
+                        if field in record_data and record_data[field]:
+                            record_data[field] = datetime.fromisoformat(record_data[field].replace("Z", "+00:00"))
+
+                    # Parse JSONB fields from JSON strings
+                    for field in ["translations", "metrics", "timeline", "trend_data"]:
+                        if field in record_data and record_data[field]:
+                            record_data[field] = json.loads(record_data[field])
+
+                    # Parse boolean fields
+                    for field in ["is_featured", "is_published"]:
+                        if field in record_data:
+                            record_data[field] = record_data[field].lower() in ["true", "1", "yes"]
+
+                    # Parse numeric fields
+                    for field in ["reading_time_minutes", "view_count", "search_volume", "sort_order"]:
+                        if field in record_data and record_data[field]:
+                            record_data[field] = int(record_data[field])
+
+                    for field in ["growth_percentage"]:
+                        if field in record_data and record_data[field]:
+                            record_data[field] = float(record_data[field])
+
+                    # Create new record
+                    new_record = model(**record_data)
+                    db.add(new_record)
+                    imported_count += 1
+
+                except Exception as e:
+                    failed_count += 1
+                    errors.append(f"Row {idx + 2}: {str(e)[:100]}")  # +2 because of header row
+
+        # Commit all successful imports
+        if imported_count > 0:
+            await db.commit()
+
+        logger.info(
+            f"Admin {admin.email} imported {imported_count} {content_type} records "
+            f"({failed_count} failed)"
+        )
+
+        return {
+            "content_type": content_type,
+            "imported_count": imported_count,
+            "failed_count": failed_count,
+            "errors": errors[:10],  # Return first 10 errors
+        }
+
+    except json.JSONDecodeError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid JSON format: {str(e)}",
+        )
+    except Exception as e:
+        logger.error(f"Import error: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Import failed: {str(e)}",
+        )
+
+
+# ============================================
+# IMAGE UPLOAD (Phase 20.1)
+# ============================================
+
+UPLOAD_DIR = Path("uploads/images")
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+
+@router.post("/upload")
+async def upload_image(
+    request: Request,
+    admin: AdminUser,
+    file: UploadFile = File(...),
+):
+    """
+    Upload an image for use in admin content (market insights, tools, etc.).
+
+    Returns a public URL for the uploaded image.
+    Max size: 5MB. Formats: jpg, png, gif, webp, svg.
+    """
+    # Validate file extension
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File type {ext} not allowed. Use: {', '.join(ALLOWED_EXTENSIONS)}",
+        )
+
+    # Read and validate size
+    contents = await file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File too large. Max size: {MAX_FILE_SIZE // (1024*1024)}MB",
+        )
+
+    # Generate unique filename from content hash
+    content_hash = hashlib.sha256(contents).hexdigest()[:16]
+    filename = f"{content_hash}{ext}"
+
+    # Save file
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    filepath = UPLOAD_DIR / filename
+    filepath.write_bytes(contents)
+
+    # Return URL (assumes static file serving is configured)
+    public_url = f"/uploads/images/{filename}"
+
+    logger.info(f"Admin {admin.email} uploaded image: {filename} ({len(contents)} bytes)")
+
+    return {
+        "url": public_url,
+        "filename": filename,
+        "size": len(contents),
+        "content_type": file.content_type,
+    }

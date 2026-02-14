@@ -5,17 +5,17 @@ Run with: uv run python scripts/seed_public_content.py
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
 import random
+from datetime import datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.core.config import settings
-from app.models.tool import Tool
-from app.models.success_story import SuccessStory
-from app.models.trend import Trend
 from app.models.market_insight import MarketInsight
+from app.models.success_story import SuccessStory
+from app.models.tool import Tool
+from app.models.trend import Trend
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

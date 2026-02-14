@@ -9,9 +9,10 @@ Revises: b016
 Create Date: 2026-02-04
 """
 
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
+
+from alembic import op
 
 revision = "b017"
 down_revision = "b016"

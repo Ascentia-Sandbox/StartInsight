@@ -19,24 +19,24 @@ Requires:
 import asyncio
 import logging
 import random
+
+# Setup Python path for imports
+import sys
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import List
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# Setup Python path for imports
-import sys
-from pathlib import Path
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.core.config import settings
 from app.db.session import async_session_maker, init_db
-from app.models.raw_signal import RawSignal
 from app.models.insight import Insight
-from app.scrapers.sources.reddit_scraper import RedditScraper
+from app.models.raw_signal import RawSignal
 from app.scrapers.sources.product_hunt_scraper import ProductHuntScraper
+from app.scrapers.sources.reddit_scraper import RedditScraper
 from app.scrapers.sources.trends_scraper import TrendsScraper
 
 # Extended keywords for historical data generation

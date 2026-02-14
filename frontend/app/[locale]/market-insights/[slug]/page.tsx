@@ -8,7 +8,7 @@ import remarkGfm from "remark-gfm";
 import {
   ArrowLeft, Clock, Eye, Calendar, Share2, Twitter, Linkedin,
   Copy, CheckCircle2, BookOpen, TrendingUp, ChevronUp, BarChart3,
-  Megaphone, ArrowRight, Hash,
+  Megaphone, ArrowRight, Hash, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -295,7 +295,7 @@ export default function MarketInsightDetailPage() {
               </nav>
 
               {/* Badges */}
-              <div className="flex items-center gap-2 mb-5">
+              <div className="flex flex-wrap items-center gap-2 mb-5">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-white text-sm font-medium">
                   <CatIcon className="h-3.5 w-3.5" />
                   {article.category}
@@ -306,10 +306,18 @@ export default function MarketInsightDetailPage() {
                     Featured
                   </span>
                 )}
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm text-white/90 text-xs font-medium border border-white/20">
+                  <Sparkles className="h-3 w-3" />
+                  AI-generated, human-reviewed
+                </span>
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm text-white/80 text-xs">
+                  <Clock className="h-3 w-3" />
+                  {article.reading_time_minutes} min read
+                </span>
               </div>
 
-              {/* Title */}
-              <h1 className="text-3xl sm:text-4xl md:text-[2.75rem] md:leading-[1.12] font-bold text-white tracking-tight mb-4 max-w-3xl">
+              {/* Title - large serif */}
+              <h1 className="text-3xl sm:text-4xl md:text-5xl md:leading-[1.1] text-white tracking-tight mb-4 max-w-3xl">
                 {article.title}
               </h1>
 
@@ -430,7 +438,13 @@ export default function MarketInsightDetailPage() {
                     <div className="flex-1">
                       <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-1">Written by</p>
                       <p className="font-semibold text-lg">{article.author_name}</p>
-                      <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="outline" className="text-xs gap-1">
+                          <Sparkles className="h-3 w-3" />
+                          AI-generated, human-reviewed
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
                         Bringing you data-driven market analysis to help founders spot the next big opportunity.
                       </p>
                     </div>

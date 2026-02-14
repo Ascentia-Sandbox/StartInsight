@@ -8,6 +8,7 @@ Provides:
 """
 
 import asyncio
+import json
 from collections.abc import AsyncGenerator, Generator
 from datetime import datetime
 from uuid import uuid4
@@ -17,9 +18,17 @@ import pytest_asyncio
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import JSON
-from sqlalchemy.dialects.postgresql import JSONB
+
+# ============================================
+# SQLite Compatibility for PostgreSQL types
+# ============================================
+# Register PostgreSQL types to use SQLite-compatible types
+from sqlalchemy.dialects import sqlite
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.pool import StaticPool
+from sqlalchemy.types import TypeDecorator
 
 from app.db.base import Base
 from app.db.session import get_db
@@ -33,16 +42,6 @@ from app.models import (
     User,
 )
 
-# ============================================
-# SQLite Compatibility for PostgreSQL types
-# ============================================
-
-# Register PostgreSQL types to use SQLite-compatible types
-from sqlalchemy.dialects import sqlite
-from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.types import TypeDecorator
-import json
 
 # Override JSONB to use TEXT for SQLite (SQLAlchemy's JSON handles serialization)
 @compiles(JSONB, "sqlite")

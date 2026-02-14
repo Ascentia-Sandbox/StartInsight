@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/tooltip';
 import { Target, TrendingUp, Lightbulb, Clock, Megaphone, User, Wrench, DollarSign, Info } from 'lucide-react';
 
-// 8-dimension scoring system (2x more comprehensive than IdeaBrowser's 4)
+// 8-dimension scoring system — StartInsight's comprehensive analysis
 export const SCORING_DIMENSIONS = {
   opportunity: {
     name: 'Opportunity',
@@ -36,7 +36,7 @@ export const SCORING_DIMENSIONS = {
     icon: Clock,
     color: 'bg-purple-500',
   },
-  // StartInsight additions (not in IdeaBrowser)
+  // StartInsight exclusive dimensions
   go_to_market: {
     name: 'Go-to-Market',
     description: 'Clarity and viability of distribution strategy',
@@ -187,7 +187,7 @@ export function ScoreRadar({ scores, showLabels = true, size = 'md' }: ScoreRada
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* IdeaBrowser-equivalent dimensions (4) */}
+          {/* Core dimensions (4) */}
           <div className="space-y-3">
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Core Dimensions</p>
             {(['opportunity', 'problem', 'feasibility', 'why_now'] as ScoringDimensionId[]).map((dim) => (

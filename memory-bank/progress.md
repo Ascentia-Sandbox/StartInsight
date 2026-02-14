@@ -4,7 +4,7 @@
 **Read When:** After completing tasks (for logging), before starting work (to avoid duplication)
 **Dependencies:** Read active-context.md to know what phase you're in before logging
 **Purpose:** Completion log (Phase 1-10 complete + Production Readiness), recent changes, upcoming tasks
-**Last Updated:** 2026-02-09
+**Last Updated:** 2026-02-14
 ---
 
 # StartInsight - Progress Log
@@ -12,6 +12,103 @@
 This file tracks all significant changes made to the project. Each entry follows the format defined in CLAUDE.md Workflows section.
 
 ---
+
+## Recent Progress (2026-02-14)
+
+- [2026-02-14] [PHASE-G]: Design System Revolution — "Data Intelligence" Aesthetic
+  - Files: globals.css, layout.tsx, animations.ts, trend-chart.tsx, score-radar.tsx
+  - Tech: Instrument Serif + Satoshi + JetBrains Mono fonts, teal/amber palette replacing IdeaBrowser purple
+  - Status: [✓ Complete - Typography, colors, motion system, dot-grid/hero-gradient/card-texture CSS]
+
+- [2026-02-14] [PHASE-H]: Content Pipeline & Data Source Expansion
+  - Files: worker.py, scheduler.py, hackernews_scraper.py (NEW), sources/__init__.py
+  - Tech: HN Algolia scraper, Twitter scraper activated, Reddit 50/PH 30/Trends 6 regions throughput
+  - Status: [✓ Complete - 6 active scrapers (was 3), 150+ signals/day target, mock trend data removed]
+
+- [2026-02-14] [PHASE-I]: Admin Portal Excellence
+  - Files: admin/page.tsx, admin-pagination.tsx (NEW), command-palette.tsx (NEW), admin/insights/page.tsx
+  - Tech: 4 Recharts dashboard charts, reusable pagination (3 pages), Cmd+K palette, CSV/JSON export, bulk ops
+  - Status: [✓ Complete - Charts, pagination, export, command palette, bulk select/delete/export]
+
+- [2026-02-14] [PHASE-J]: Public Pages Editorial Redesign
+  - Files: page.tsx (home), InsightCard.tsx, insights/[id]/page.tsx, market-insights/[slug]/page.tsx
+  - Tech: Story-driven homepage, score-bar cards with source badges, magazine-style detail, sticky action bar
+  - Status: [✓ Complete - Homepage -60% LOC, editorial layouts, relative dates, market size circles]
+
+- [2026-02-14] [PHASE-K]: Data-Driven Evidence & Social Proof
+  - Files: insights.py, InsightCard.tsx, page.tsx (home), insights/[id]/page.tsx
+  - Tech: GET /stats/public + /engagement endpoints, confidence badges, real homepage counters, evidence scores
+  - Status: [✓ Complete - Public stats API, engagement metrics, Google Trends verification badge]
+
+- [2026-02-14] [PHASE-L]: Competitive Differentiators
+  - Files: validate/page.tsx, chat/page.tsx, competitive-map.tsx (NEW), chat_agent.py, worker.py, scheduler.py
+  - Tech: 5 chat modes (general/pressure/gtm/pricing/competitive), ScatterChart landscape, weekly digest task
+  - Status: [✓ Complete - Validator redesign, chat modes, competitive viz, weekly digest]
+
+- [2026-02-14] [PHASE-F]: UX Polish - dark mode, mobile, live logs
+  - Files: analytics, tools, trends, insights, users, agents, market-insights, success-stories, pipeline pages
+  - Tech: 50+ dark mode fixes, sm:grid-cols-2 mobile grids, SSE terminal log viewer with pause/clear
+  - Status: [✓ Complete - All admin pages dark-mode safe, mobile-responsive forms, live agent streaming]
+
+- [2026-02-14] [PHASE-E]: Analytics Dashboard Enhancements
+  - Files: analytics.py, analytics/page.tsx
+  - Tech: MRR growth/churn calc from Subscription model, time range picker (7d/30d/90d), period-scoped queries
+  - Status: [✓ Complete - All 4 analytics TODOs resolved, period selector added]
+
+- [2026-02-14] [PHASE-D]: Content Volume & Quality - auto-schedule remaining agents
+  - Files: worker.py, scheduler.py
+  - Tech: 3 new task wrappers (content_generator, competitive_intel, market_intel), 17 total tasks, 14 scheduled
+  - Status: [✓ Complete - All 9 agents now have Arq task wrappers and schedules]
+
+- [2026-02-14] [PHASE-C]: Idea Builder - brand + landing page generator
+  - Files: build_tools.py, insights/[id]/build/page.tsx, insights/[id]/page.tsx
+  - Tech: POST /api/build/from-insight/{id}, brand + landing page AI, visual preview with hero/features/pricing/FAQ
+  - Status: [✓ Complete - One-click generation from insight data, copy HTML/CSS]
+
+- [2026-02-14] [PHASE-B]: AI Chat Strategist - 3-mode conversational AI
+  - Files: schemas/chat.py, agents/chat_agent.py, api/routes/chat.py, chat/page.tsx, idea_chat.py
+  - Tech: PydanticAI agent with pressure_test/gtm_planning/pricing_strategy modes, SSE streaming
+  - Status: [✓ Complete - Backend (5 endpoints) + Frontend (chat page with SSE) + Alembic migration]
+
+- [2026-02-14] [PHASE-A1]: Admin Create Insight with synthetic RawSignal
+  - Files: schemas/admin.py, api/routes/admin.py, lib/api.ts, admin/insights/page.tsx
+  - Tech: InsightAdminCreate schema, synthetic RawSignal (source=admin_manual) for FK, Sheet dialog
+  - Status: [✓ Complete]
+
+- [2026-02-14] [PHASE-A2]: Agent schedule editor UI (cron/interval/manual)
+  - Files: lib/api.ts, admin/agents/page.tsx
+  - Tech: Schedule type Select, interval/cron inputs, updateAgentSchedule API, next/last run display
+  - Status: [✓ Complete]
+
+- [2026-02-14] [PHASE-A3]: Agent cost analytics chart
+  - Files: lib/api.ts, admin/agents/page.tsx
+  - Tech: fetchAgentCostAnalytics API, period selector (7d/30d/90d), horizontal bar chart by agent
+  - Status: [✓ Complete]
+
+- [2026-02-14] [PHASE-A4]: Pipeline Monitoring admin page
+  - Files: admin/pipeline/page.tsx (NEW), admin/layout.tsx
+  - Tech: Scraper status cards, quota bars, trigger/pause buttons, health check history table
+  - Status: [✓ Complete]
+
+- [2026-02-14] [PHASE-A5]: Content Review admin page
+  - Files: admin/content-review/page.tsx (NEW), admin/layout.tsx
+  - Tech: Review queue table, approve/reject workflow, stats cards, status filter
+  - Status: [✓ Complete]
+
+- [2026-02-14] [PHASE-A6]: Integrations admin page + sidebar update
+  - Files: admin/integrations/page.tsx (NEW), admin/layout.tsx
+  - Tech: Slack/Discord webhook management, create/delete integrations, 3 new sidebar nav items
+  - Status: [✓ Complete]
+
+- [2026-02-14] [PHASE-16.2]: Dynamic Schedule Management for AI Agents
+  - Files: agent_control.py, scheduler.py, agent_control.py (routes), c001_add_schedule_columns_to_agent_configurations.py
+  - Tech: Cron/interval/manual scheduling, APScheduler dynamic job management, cost analytics API
+  - Status: [✓ Complete - Supports schedule_type, schedule_cron, schedule_interval_hours, next_run_at, last_run_at]
+
+- [2026-02-14] [PHASE-15.4]: Content Editing Enhancements - Bulk export/import for admin
+  - Files: admin.py, market-insights/page.tsx
+  - Tech: CSV/JSON export via StreamingResponse, bulk import with validation, admin UI export buttons
+  - Status: [✓ Complete - Supports tools, trends, market-insights, success-stories]
 
 ## Recent Progress (2026-02-08)
 
