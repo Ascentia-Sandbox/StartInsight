@@ -1,7 +1,7 @@
 """Contact form API endpoint."""
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, EmailStr, Field
@@ -54,7 +54,7 @@ async def submit_contact_form(
                 "email": data.email,
                 "subject": data.subject,
                 "message": data.message,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
         )
     except Exception as e:

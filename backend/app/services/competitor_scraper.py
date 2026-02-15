@@ -1,6 +1,7 @@
 """Competitor Scraper Service - Extract competitor data from websites"""
 
 import logging
+import re
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
@@ -92,9 +93,6 @@ class CompetitorScraperService:
             company_name = scrape_result.title.split("|")[0].strip() if scrape_result.title else ""
             if not company_name:
                 company_name = url.split("//")[1].split("/")[0].replace("www.", "")
-
-            # Extract description from meta tags
-            description = metadata.get("description", "")
 
             # Parse competitor data from markdown content
             competitor_data = self._parse_competitor_data(
@@ -226,7 +224,6 @@ class CompetitorScraperService:
 
     def _extract_pricing(self, content: str) -> dict[str, str] | None:
         """Extract pricing information from content"""
-        import re
 
         pricing = {}
 
@@ -281,7 +278,6 @@ class CompetitorScraperService:
 
     def _extract_target_audience(self, content: str) -> str | None:
         """Extract target audience from content"""
-        import re
 
         # Look for "for [audience]" patterns
         patterns = [

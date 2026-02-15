@@ -29,6 +29,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin/pipeline", tags=["Pipeline Monitoring"])
 
+VALID_SCRAPERS = ["reddit", "product_hunt", "hacker_news", "twitter", "google_trends"]
+
 
 # ============================================
 # Schemas
@@ -211,8 +213,7 @@ async def trigger_scraper(
     admin: Annotated[User, Depends(require_admin)],
 ):
     """Manually trigger a scraper run."""
-    valid_scrapers = ["reddit", "product_hunt", "hacker_news", "twitter", "google_trends"]
-    if name not in valid_scrapers:
+    if name not in VALID_SCRAPERS:
         raise HTTPException(status_code=400, detail=f"Invalid scraper: {name}")
 
     # Enqueue scraper task via Arq
@@ -251,8 +252,7 @@ async def pause_scraper(
     admin: Annotated[User, Depends(require_admin)],
 ):
     """Pause a scraper by setting a Redis flag."""
-    valid_scrapers = ["reddit", "product_hunt", "hacker_news", "twitter", "google_trends"]
-    if name not in valid_scrapers:
+    if name not in VALID_SCRAPERS:
         raise HTTPException(status_code=400, detail=f"Invalid scraper: {name}")
 
     try:
@@ -277,8 +277,7 @@ async def resume_scraper(
     admin: Annotated[User, Depends(require_admin)],
 ):
     """Resume a paused scraper by removing the Redis flag."""
-    valid_scrapers = ["reddit", "product_hunt", "hacker_news", "twitter", "google_trends"]
-    if name not in valid_scrapers:
+    if name not in VALID_SCRAPERS:
         raise HTTPException(status_code=400, detail=f"Invalid scraper: {name}")
 
     try:

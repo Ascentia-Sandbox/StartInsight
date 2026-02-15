@@ -10,6 +10,7 @@ Handles transactional emails for:
 """
 
 import logging
+import re
 from datetime import datetime
 from typing import Any
 
@@ -352,8 +353,6 @@ async def send_daily_digest(
     PMF Optimization: Disabled by default to save email quota.
     Set ENABLE_DAILY_DIGEST=true to enable.
     """
-    from app.core.config import settings
-
     # PMF optimization: skip daily digest to stay in Resend Free tier (3K/mo)
     if not settings.enable_daily_digest:
         logger.info(f"Daily digest disabled for PMF mode (recipient: {email})")
@@ -471,7 +470,6 @@ async def send_password_reset(email: str, name: str, reset_url: str) -> dict:
 
 def _render_template(template: str, variables: dict[str, Any]) -> str:
     """Simple template rendering with {{variable}} and {{#list}}...{{/list}} syntax."""
-    import re
 
     result = template
 

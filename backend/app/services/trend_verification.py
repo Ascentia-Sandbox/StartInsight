@@ -9,6 +9,7 @@ Uses pytrends (unofficial Google Trends API wrapper).
 
 import asyncio
 import logging
+import time
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -97,7 +98,6 @@ class TrendVerifier:
             if elapsed < self._min_request_interval:
                 sleep_time = self._min_request_interval - elapsed
                 logger.debug(f"Rate limiting: sleeping {sleep_time:.2f}s")
-                import time
                 time.sleep(sleep_time)
         self._last_request_time = datetime.now()
 

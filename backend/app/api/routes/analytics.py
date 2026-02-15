@@ -326,7 +326,6 @@ async def get_revenue_metrics(
     """Get revenue metrics with MRR growth and churn calculations."""
     now = datetime.now(UTC)
     month_ago = now - timedelta(days=days)
-    two_months_ago = now - timedelta(days=days * 2)
 
     # Current MRR from active paid users
     tier_counts = await db.execute(

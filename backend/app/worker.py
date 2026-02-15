@@ -1,7 +1,6 @@
 """Arq worker configuration and background tasks."""
 
 import logging
-import os
 from pathlib import Path
 from typing import Any
 

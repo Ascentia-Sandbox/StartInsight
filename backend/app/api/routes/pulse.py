@@ -4,7 +4,7 @@ Public endpoint (no auth) designed to drive organic SEO traffic.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
@@ -12,7 +12,6 @@ from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rate_limits import limiter
-
 from app.db.session import get_db
 from app.models.insight import Insight
 from app.models.raw_signal import RawSignal
@@ -53,7 +52,7 @@ async def get_market_pulse(
     - Demonstrating pipeline activity to visitors
     """
     try:
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         day_ago = now - timedelta(hours=24)
 
         # Signals collected in last 24h
@@ -161,5 +160,5 @@ async def get_market_pulse(
             trending_keywords=[],
             hottest_markets=[],
             top_sources={},
-            last_updated=datetime.utcnow().isoformat(),
+            last_updated=datetime.now(UTC).isoformat(),
         )

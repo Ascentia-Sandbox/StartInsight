@@ -74,15 +74,9 @@ def _serialize(data: Any) -> str:
     """Serialize data to JSON string."""
     if isinstance(data, BaseModel):
         return data.model_dump_json()
-    elif isinstance(data, list):
-        # Handle list of Pydantic models
-        if data and isinstance(data[0], BaseModel):
-            return json.dumps([item.model_dump() for item in data])
-        return json.dumps(data)
-    elif isinstance(data, dict):
-        return json.dumps(data)
-    else:
-        return json.dumps(data)
+    if isinstance(data, list) and data and isinstance(data[0], BaseModel):
+        return json.dumps([item.model_dump() for item in data])
+    return json.dumps(data)
 
 
 def _deserialize(data: str) -> Any:

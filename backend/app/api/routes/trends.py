@@ -5,6 +5,8 @@ Sprint 3.1: Adds predictive trend analytics with Prophet forecasting.
 """
 
 import logging
+import random
+from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
@@ -13,10 +15,9 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.rate_limits import limiter
-
 from app.api.deps import AdminUser
 from app.api.utils import escape_like
+from app.core.rate_limits import limiter
 from app.db.session import get_db
 from app.models.trend import Trend
 from app.schemas.public_content import (
@@ -248,6 +249,41 @@ async def update_trend(
     return TrendResponse.model_validate(trend)
 
 
+def _get_historical_data(
+    trend: Trend, days: int = 30
+) -> tuple[list[str], list[int]]:
+    """Get historical dates and values from trend, generating synthetic data if needed."""
+    trend_data = trend.trend_data or {}
+    historical_dates = trend_data.get("dates", [])
+    historical_values = trend_data.get("values", [])
+
+    if len(historical_dates) >= 7:
+        return historical_dates, historical_values
+
+    base_volume = trend.search_volume or 50
+    historical_dates = [
+        (datetime.now(UTC) - timedelta(days=i)).strftime("%Y-%m-%d")
+        for i in range(days, 0, -1)
+    ]
+    growth_rate = (trend.growth_percentage or 10) / 100
+    historical_values = [
+        max(1, int(base_volume * (1 - growth_rate * (days - i) / days) + random.uniform(-5, 5)))
+        for i in range(days)
+    ]
+    return historical_dates, historical_values
+
+
+def _calculate_velocity(historical_values: list[int], fallback: float) -> tuple[float, bool]:
+    """Calculate 7-day velocity change and alert status."""
+    if len(historical_values) >= 7:
+        week_ago_value = historical_values[-7]
+        current_value = historical_values[-1]
+        velocity_change = ((current_value - week_ago_value) / max(week_ago_value, 1)) * 100
+    else:
+        velocity_change = fallback
+    return round(velocity_change, 2), abs(velocity_change) > 50
+
+
 # ============================================================================
 # PREDICTION ENDPOINTS (Sprint 3.1)
 # ============================================================================
@@ -282,57 +318,27 @@ async def get_trend_predictions(
     predictions = []
     for trend in trends:
         try:
-            # Get historical data from trend_data JSONB field
-            trend_data = trend.trend_data or {}
-            historical_dates = trend_data.get("dates", [])
-            historical_values = trend_data.get("values", [])
+            historical_dates, historical_values = _get_historical_data(trend, days=30)
 
-            # If no historical data, generate synthetic data based on current volume
-            if len(historical_dates) < 7:
-                # Generate 30 days of synthetic historical data
-                import random
-                from datetime import UTC, datetime, timedelta
-
-                base_volume = trend.search_volume or 50
-                historical_dates = [
-                    (datetime.now(UTC) - timedelta(days=i)).strftime("%Y-%m-%d")
-                    for i in range(30, 0, -1)
-                ]
-                # Simulate trending pattern with growth
-                growth_rate = (trend.growth_percentage or 10) / 100
-                historical_values = [
-                    max(1, int(base_volume * (1 - growth_rate * (30 - i) / 30) + random.uniform(-5, 5)))
-                    for i in range(30)
-                ]
-
-            # Generate predictions
             prediction_result = await generate_trend_predictions(
                 trend_data={"dates": historical_dates, "values": historical_values},
                 periods=7,
             )
 
-            # Calculate velocity (7-day change percentage)
-            if len(historical_values) >= 7:
-                week_ago_value = historical_values[-7]
-                current_value = historical_values[-1]
-                velocity_change = ((current_value - week_ago_value) / max(week_ago_value, 1)) * 100
-            else:
-                velocity_change = trend.growth_percentage or 0
-
-            # Velocity alert if >50% change in 7 days
-            velocity_alert = abs(velocity_change) > 50
+            velocity_change, velocity_alert = _calculate_velocity(
+                historical_values, trend.growth_percentage or 0
+            )
 
             predictions.append(TrendPredictionResponse(
                 keyword=trend.keyword,
                 current_volume=trend.search_volume or 0,
                 predictions=prediction_result,
                 velocity_alert=velocity_alert,
-                velocity_change=round(velocity_change, 2),
+                velocity_change=velocity_change,
             ))
 
         except Exception as e:
             logger.warning(f"Failed to generate prediction for {trend.keyword}: {e}")
-            # Return trend without prediction
             predictions.append(TrendPredictionResponse(
                 keyword=trend.keyword,
                 current_volume=trend.search_volume or 0,
@@ -376,26 +382,7 @@ async def get_trend_prediction_by_keyword(
     if not trend:
         raise HTTPException(status_code=404, detail=f"Trend '{keyword}' not found")
 
-    # Get historical data
-    trend_data = trend.trend_data or {}
-    historical_dates = trend_data.get("dates", [])
-    historical_values = trend_data.get("values", [])
-
-    # Generate synthetic data if needed
-    if len(historical_dates) < 7:
-        import random
-        from datetime import UTC, datetime, timedelta
-
-        base_volume = trend.search_volume or 50
-        historical_dates = [
-            (datetime.now(UTC) - timedelta(days=i)).strftime("%Y-%m-%d")
-            for i in range(90, 0, -1)  # 90 days for better model training
-        ]
-        growth_rate = (trend.growth_percentage or 10) / 100
-        historical_values = [
-            max(1, int(base_volume * (1 - growth_rate * (90 - i) / 90) + random.uniform(-5, 5)))
-            for i in range(90)
-        ]
+    historical_dates, historical_values = _get_historical_data(trend, days=90)
 
     try:
         prediction_result = await generate_trend_predictions(
@@ -406,15 +393,9 @@ async def get_trend_prediction_by_keyword(
         logger.error(f"Prediction failed for {keyword}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Prediction failed. Please try again.")
 
-    # Calculate velocity
-    if len(historical_values) >= 7:
-        week_ago_value = historical_values[-7]
-        current_value = historical_values[-1]
-        velocity_change = ((current_value - week_ago_value) / max(week_ago_value, 1)) * 100
-    else:
-        velocity_change = trend.growth_percentage or 0
-
-    velocity_alert = abs(velocity_change) > 50
+    velocity_change, velocity_alert = _calculate_velocity(
+        historical_values, trend.growth_percentage or 0
+    )
 
     logger.info(f"Generated {periods}-day prediction for '{trend.keyword}'")
 
@@ -465,25 +446,7 @@ async def compare_trends(
     winner = None
 
     for trend in trends:
-        # Get prediction
-        trend_data = trend.trend_data or {}
-        historical_dates = trend_data.get("dates", [])
-        historical_values = trend_data.get("values", [])
-
-        if len(historical_dates) < 7:
-            import random
-            from datetime import UTC, datetime, timedelta
-
-            base_volume = trend.search_volume or 50
-            historical_dates = [
-                (datetime.now(UTC) - timedelta(days=i)).strftime("%Y-%m-%d")
-                for i in range(30, 0, -1)
-            ]
-            growth_rate = (trend.growth_percentage or 10) / 100
-            historical_values = [
-                max(1, int(base_volume * (1 - growth_rate * (30 - i) / 30) + random.uniform(-5, 5)))
-                for i in range(30)
-            ]
+        historical_dates, historical_values = _get_historical_data(trend, days=30)
 
         try:
             prediction_result = await generate_trend_predictions(

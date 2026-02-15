@@ -10,6 +10,7 @@ Subscription tiers get different rate limits:
 """
 
 import logging
+import os
 
 from fastapi import Request
 from slowapi import Limiter
@@ -18,8 +19,6 @@ from slowapi.util import get_remote_address
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
-
-import os
 
 # Tier-based rate limit configuration (requests per minute)
 TIER_RATE_LIMITS: dict[str, str] = {
