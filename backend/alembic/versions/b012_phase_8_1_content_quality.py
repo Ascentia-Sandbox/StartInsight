@@ -10,7 +10,7 @@ Create Date: 2026-02-04
 """
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import UUID
 
 from alembic import op
 

@@ -8,7 +8,7 @@ Critical indexes for production performance at scale (10K+ records).
 Addresses N+1 queries and full table scans on filtering/sorting columns.
 """
 
-from sqlalchemy import inspect, text
+from sqlalchemy import text
 
 from alembic import op
 

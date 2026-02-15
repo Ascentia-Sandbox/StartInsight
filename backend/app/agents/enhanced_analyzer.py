@@ -32,7 +32,6 @@ from app.models.raw_signal import RawSignal
 from app.monitoring.metrics import get_metrics_tracker
 from app.schemas.insight_validation import (
     QualityValidationError,
-    ValidatedInsightSchema,
     validate_insight_data,
 )
 from app.services.community_validator import get_community_validator

@@ -7,7 +7,7 @@ Create Date: 2026-01-29 10:05:00.000000
 Phase 12.2: IdeaBrowser Feature Replication - Founder case studies with revenue timelines
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
@@ -16,9 +16,9 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "b006_success_stories"
-down_revision: Union[str, None] = "b005_tools"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "b005_tools"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:

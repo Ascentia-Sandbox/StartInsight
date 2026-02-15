@@ -8,7 +8,6 @@ Provides:
 """
 
 import asyncio
-import json
 from collections.abc import AsyncGenerator, Generator
 from datetime import datetime
 from uuid import uuid4
@@ -23,7 +22,6 @@ from sqlalchemy import JSON
 # SQLite Compatibility for PostgreSQL types
 # ============================================
 # Register PostgreSQL types to use SQLite-compatible types
-from sqlalchemy.dialects import sqlite
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.compiler import compiles

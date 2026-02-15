@@ -12,7 +12,7 @@ including common functionality for:
 import hashlib
 import logging
 from abc import ABC, abstractmethod
-from typing import Callable
+from collections.abc import Callable
 
 import httpx
 from sqlalchemy import select

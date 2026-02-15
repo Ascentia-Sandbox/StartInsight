@@ -9,7 +9,6 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
 from app.models.competitor_profile import CompetitorProfile, CompetitorSnapshot
 from app.scrapers import get_scraper_client
 

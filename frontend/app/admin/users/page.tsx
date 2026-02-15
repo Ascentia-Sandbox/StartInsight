@@ -333,6 +333,21 @@ function AdminUsersContent() {
     });
   };
 
+  const tierCounts = (users || []).reduce(
+    (acc, u) => {
+      acc[u.subscription_tier] = (acc[u.subscription_tier] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+
+  const totalUsers = users?.length || 0;
+  const paginatedUsers = useMemo(() => {
+    if (!users) return [];
+    const start = (currentPage - 1) * perPage;
+    return users.slice(start, start + perPage);
+  }, [users, currentPage, perPage]);
+
   if (isCheckingAuth) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -356,21 +371,6 @@ function AdminUsersContent() {
       </div>
     );
   }
-
-  const tierCounts = (users || []).reduce(
-    (acc, u) => {
-      acc[u.subscription_tier] = (acc[u.subscription_tier] || 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>
-  );
-
-  const totalUsers = users?.length || 0;
-  const paginatedUsers = useMemo(() => {
-    if (!users) return [];
-    const start = (currentPage - 1) * perPage;
-    return users.slice(start, start + perPage);
-  }, [users, currentPage, perPage]);
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl">

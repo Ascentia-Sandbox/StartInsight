@@ -126,6 +126,10 @@ class Settings(BaseSettings):
     # Scraper Defaults
     reddit_subreddits: str = "startups,SaaS"
     reddit_post_limit: int = 25
+    reddit_json_rate_limit: float = 1.0  # Seconds between Reddit JSON API requests
+    reddit_search_queries: str = "startup idea validation,SaaS problem,building in public"
+    reddit_scrape_comments: bool = True  # Deep-scrape top post comment threads
+    reddit_comment_scrape_limit: int = 5  # Max posts to deep-scrape comments for
     product_hunt_days_back: int = 1
     product_hunt_limit: int = 10
     trends_timeframe: str = "now 7-d"

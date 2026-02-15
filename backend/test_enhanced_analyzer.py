@@ -78,12 +78,12 @@ async def test_enhanced_analyzer():
         word_count = len(problem_statement.split())
 
         console.print(f"  Word count: {word_count}")
-        console.print(f"  Target: 450+ words")
+        console.print("  Target: 450+ words")
 
         if word_count >= 450:
             console.print(f"  [green]✓ PASS[/green] (Exceeds target by {word_count - 450} words)\n")
         elif word_count >= 400:
-            console.print(f"  [yellow]⚠ PARTIAL[/yellow] (Exceeds IdeaBrowser 400+ but below target)\n")
+            console.print("  [yellow]⚠ PARTIAL[/yellow] (Exceeds IdeaBrowser 400+ but below target)\n")
         else:
             console.print(f"  [red]✗ FAIL[/red] (Below target by {450 - word_count} words)\n")
 
@@ -181,7 +181,7 @@ async def test_enhanced_analyzer():
 
     except Exception as e:
         console.print(f"[red]✗ Error calling enhanced analyzer: {e}[/red]")
-        console.print(f"\n[yellow]Traceback:[/yellow]")
+        console.print("\n[yellow]Traceback:[/yellow]")
         import traceback
         traceback.print_exc()
         return False

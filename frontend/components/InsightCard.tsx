@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { ShieldCheck, ShieldAlert, ShieldQuestion, Database } from 'lucide-react';
 import type { Insight } from '@/lib/types';
+import { TrendSparkline } from '@/components/trend-sparkline';
 
 interface InsightCardProps {
   insight: Insight;
@@ -186,6 +187,18 @@ export function InsightCard({ insight }: InsightCardProps) {
             />
           </div>
         </div>
+
+        {/* Trend sparkline */}
+        {insight.trend_data && insight.trend_data.values.length >= 2 && (
+          <div className="mb-3">
+            <TrendSparkline
+              data={insight.trend_data.values}
+              growth={insight.trend_keywords?.[0]?.growth}
+              width={80}
+              height={24}
+            />
+          </div>
+        )}
 
         {/* Footer: Market size + date */}
         <div className="mt-auto flex items-center justify-between pt-2 border-t border-border/50">

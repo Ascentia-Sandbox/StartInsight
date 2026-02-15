@@ -13,6 +13,38 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-02-15)
+
+- [2026-02-15] [PHASE-Q1]: Pulse Page — real-time startup signal feed
+  - Files: pulse.py (NEW route), pulse/page.tsx (NEW)
+  - Tech: SSE `/api/pulse/live` endpoint, real-time signal cards with source badges
+  - Status: [✓ Complete]
+
+- [2026-02-15] [PHASE-Q2]: Founder Fits Redesign — teal/amber design system
+  - Files: founder-fits/page.tsx
+  - Tech: Score bars, teal/amber color palette, editorial layout matching design system
+  - Status: [✓ Complete]
+
+- [2026-02-15] [PHASE-Q3]: Idea of the Day — social sharing
+  - Files: idea-of-the-day/page.tsx
+  - Tech: Social meta tags, copy-to-clipboard, sharing UI
+  - Status: [✓ Complete]
+
+- [2026-02-15] [PHASE-Q4]: Trend Sparklines on InsightCards
+  - Files: trend-sparkline.tsx (NEW), InsightCard.tsx
+  - Tech: Inline SVG mini-charts, lightweight sparkline component
+  - Status: [✓ Complete]
+
+- [2026-02-15] [PHASE-Q5]: Insight Comparison Tool
+  - Files: insight-comparison.tsx (NEW), insights/page.tsx
+  - Tech: Side-by-side 2-insight radar chart + comparison table
+  - Status: [✓ Complete]
+
+- [2026-02-15] [DOC-ALIGNMENT]: Fix Supabase region references across 25+ files
+  - Files: memory-bank/*.md, README.md, SETUP.md, .env.example, docs/*.md, test files
+  - Tech: ap-southeast-1 → ap-southeast-2 (Sydney), port 6543 → 5432, remove 5433 refs
+  - Status: [✓ Complete]
+
 ## Recent Progress (2026-02-14)
 
 - [2026-02-14] [PHASE-G]: Design System Revolution — "Data Intelligence" Aesthetic
@@ -310,7 +342,7 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
-## Current State Summary (Updated 2026-02-07)
+## Current State Summary (Updated 2026-02-15)
 
 **Backend Status:** Phase 1-10 Complete
 
@@ -325,7 +357,7 @@ This file tracks all significant changes made to the project. Each entry follows
 - **Phase 9 (User Engagement): UserPreferences, EmailPreferences, EmailSend, IdeaChat, IdeaChatMessage, IdeaVote, IdeaComment, CommentUpvote, IdeaPoll, PollResponse, Comment, CommentVote, Achievement, UserAchievement, UserPoints, UserCredits, CreditTransaction, FounderProfile, FounderConnection, IdeaClub, ClubMember, ClubPost, Collection, CollectionItem, CollectionFollower, UserReputation (26 tables)**
 - **Phase 10 (Integrations): ExternalIntegration, IntegrationWebhook, WebhookDelivery, OAuthConnection, IntegrationLog, CompetitorProfile, CompetitorSnapshot (7 tables)**
 
-**API:** 230 endpoints verified
+**API:** 232+ endpoints verified
 - Phase 1-3: signals.py (5), insights.py (14), health.py (3) = 22 endpoints
 - Phase 4: users.py (18), admin.py (13) = 31 endpoints
 - Phase 5: research.py (10), build.py (8), build_tools.py (6), export.py (5), feed.py (4) = 33 endpoints
@@ -336,7 +368,7 @@ This file tracks all significant changes made to the project. Each entry follows
 
 **Services:** 20+ services implemented (user, payment, email, export, realtime_feed, brand_generator, landing_page, team, api_key, tenant, rate_limits, recommendation_engine, report_generator, trend_prediction, quality_metrics, quality_alerts, url_validator, community_validator, trend_verification, rate_limiter, content_generator, competitive_scraper, builder_integration)
 
-**AI Agents:** 6 agents (analyzer, enhanced_analyzer, research_agent, competitive_intel_agent, market_intel_agent, content_generator_agent)
+**AI Agents:** 8 agents (analyzer, enhanced_analyzer, research_agent, competitive_intel_agent, market_intel_agent, content_generator_agent, chat_agent, market_insight_publisher)
 
 **Sprint Roadmap:** 100% Complete (Sprint 1-5, Mobile Deferred)
 - Sprint 1: Frontend Visualization & Data Expansion [✓]
@@ -345,7 +377,7 @@ This file tracks all significant changes made to the project. Each entry follows
 - Sprint 4: AI Personalization & White-Label [✓]
 - Sprint 5: Community Features & API Marketplace [✓ - Mobile Deferred]
 
-**Frontend Status:** Phase 1-14 Complete (100% - 34 routes)
+**Frontend Status:** Phase 1-14 + A-L + Q1-Q5 Complete (100% - 35+ routes)
 - Phase 12-14: 10 public pages, 4 admin pages, marketing homepage, SEO optimization
 - Routes: pricing, tools, trends, success-stories, faq, about, contact, features, platform-tour, market-insights
 - Admin: admin/tools, admin/success-stories, admin/trends, admin/market-insights

@@ -112,7 +112,7 @@ async def create_admin_user(admin_email: str, admin_password: str):
         await session.commit()
 
         print(f"Admin privileges granted: {admin.id}")
-        print(f"\nSuper admin account ready!")
+        print("\nSuper admin account ready!")
         print(f"Email: {admin_email}")
         print(f"Password: {admin_password}")
         print("\nSign in at: http://localhost:3000/auth/login")

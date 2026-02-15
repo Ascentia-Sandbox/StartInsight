@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field, HttpUrl, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class CompetitorResponse(BaseModel):
@@ -171,9 +171,24 @@ class InsightResponse(BaseModel):
     @field_validator("value_ladder", mode="before")
     @classmethod
     def normalize_value_ladder(cls, v: Any) -> list[dict[str, Any]] | None:
-        """Unwrap {'tiers': [...]} dict format to plain list."""
-        if isinstance(v, dict) and "tiers" in v:
-            return v["tiers"]
+        """Normalize value_ladder from various AI output formats to a list of dicts.
+
+        Handles:
+        - {'tiers': [...]} → extract tiers list
+        - {'core': {...}, 'frontend': {...}, ...} → convert named tiers to list
+        - [...] → pass through
+        - None → pass through
+        """
+        if v is None:
+            return None
+        if isinstance(v, list):
+            return v
+        if isinstance(v, dict):
+            if "tiers" in v:
+                return v["tiers"]
+            # Named tier format: {'core': {...}, 'frontend': {...}, ...}
+            return [{"tier_name": k, **val} if isinstance(val, dict) else {"tier_name": k, "value": val}
+                    for k, val in v.items()]
         return v
 
     class Config:

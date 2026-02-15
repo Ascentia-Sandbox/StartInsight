@@ -296,6 +296,7 @@ from app.api.routes import (  # noqa: E402
     api_keys,
     build,
     build_tools,
+    chat,
     community,
     content_review,
     export,
@@ -308,7 +309,9 @@ from app.api.routes import (  # noqa: E402
     payments,
     pipeline,
     preferences,
+    pulse,
     research,
+    settings as settings_routes,
     signals,
     success_stories,
     teams,
@@ -317,7 +320,6 @@ from app.api.routes import (  # noqa: E402
     trends,
     users,
     validator,
-    chat,
 )
 
 app.include_router(health.router, tags=["Health"])  # Production monitoring
@@ -349,6 +351,8 @@ app.include_router(trends.router, tags=["Trends"])  # Phase 12.3
 app.include_router(market_insights.router, tags=["Market Insights"])  # Phase 12.3
 app.include_router(validator.router, tags=["Idea Validator"])  # Phase 19.1
 app.include_router(chat.router, tags=["Chat Strategist"])  # Phase B
+app.include_router(settings_routes.router, tags=["System Settings"])  # Phase G
+app.include_router(pulse.router, tags=["Market Pulse"])  # Phase Q5.1
 
 # Static file serving for uploaded images (Phase 20.1)
 os.makedirs("uploads/images", exist_ok=True)

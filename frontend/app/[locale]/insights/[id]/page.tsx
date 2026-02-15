@@ -244,6 +244,33 @@ export default function InsightDetailPage() {
             )}
           </div>
 
+          {/* Evidence Strength Badge */}
+          {(() => {
+            let evidenceCount = 0;
+            if (insight.community_signals_chart?.length) evidenceCount++;
+            if (insight.trend_keywords?.length) evidenceCount++;
+            if (scoreFields.length >= 4) evidenceCount++; // 8-dim scores
+            if (insight.competitor_analysis?.length) evidenceCount++;
+            if (insight.problem_statement?.length > 200) evidenceCount++; // narrative depth
+            if (insight.value_ladder?.length) evidenceCount++;
+            if (insight.market_sizing || insight.market_size_estimate) evidenceCount++;
+
+            const strengthColor = evidenceCount >= 5
+              ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300'
+              : evidenceCount >= 3
+                ? 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300'
+                : 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800/30 dark:text-gray-400';
+
+            return (
+              <div className="mt-4">
+                <Badge className={`text-sm px-3 py-1 ${strengthColor}`}>
+                  <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />
+                  Evidence Strength: {evidenceCount}/7 sources validated
+                </Badge>
+              </div>
+            );
+          })()}
+
           {/* Engagement metrics row (social proof) */}
           {engagement && (engagement.view_count > 0 || engagement.save_count > 0 || engagement.share_count > 0) && (
             <div className="flex items-center gap-5 mt-4 text-sm text-muted-foreground">
@@ -585,7 +612,7 @@ export default function InsightDetailPage() {
                         <p className="text-sm text-muted-foreground">{step.description}</p>
                         {step.resources_needed && step.resources_needed.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
-                            {step.resources_needed.map((r, ri) => (
+                            {step.resources_needed.map((r: string, ri: number) => (
                               <Badge key={ri} variant="secondary" className="text-xs">{r}</Badge>
                             ))}
                           </div>

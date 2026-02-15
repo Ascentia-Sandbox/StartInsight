@@ -215,17 +215,27 @@ export default function MarketInsightsPage() {
             </div>
           </div>
         ) : articles.length === 0 ? (
-          <div className="text-center py-16">
-            <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground mb-4">
-              {category !== "All"
-                ? `No articles found in "${category}".`
-                : "No articles available yet. Check back soon!"}
-            </p>
-            {category !== "All" && (
+          category !== "All" ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No articles found</h3>
+              <p className="text-muted-foreground max-w-md mb-4">
+                No articles found in &ldquo;{category}&rdquo;. Try viewing all categories.
+              </p>
               <Button variant="outline" onClick={() => setCategory("All")}>View All Articles</Button>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <BarChart3 className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Market insights are being generated</h3>
+              <p className="text-muted-foreground max-w-md mb-6">
+                Our AI publishes in-depth market analysis articles covering emerging sectors and opportunities.
+              </p>
+              <Button asChild variant="outline">
+                <Link href="/features">Explore Features</Link>
+              </Button>
+            </div>
+          )
         ) : (
           <div className="space-y-8">
             {/* Featured article (first page only) */}

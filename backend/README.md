@@ -6,7 +6,7 @@ FastAPI backend for StartInsight - an AI-powered business intelligence engine th
 
 - **Framework**: FastAPI (async)
 - **Language**: Python 3.11+
-- **Database**: Supabase PostgreSQL (ap-southeast-1, Singapore)
+- **Database**: Supabase PostgreSQL (ap-southeast-2, Sydney)
 - **ORM**: SQLAlchemy 2.0 (async mode)
 - **Auth**: Supabase Auth (OAuth + email/password)
 - **Task Queue**: Arq + Redis + APScheduler

@@ -15,9 +15,9 @@
 
 **System Scale:**
 - **Database:** 69 tables (26 Phase 1-7 + 43 Phase 8-10)
-- **API:** 230 endpoints (131 Phase 1-7 + 99 Phase 8-10)
-- **AI Agents:** 6 agents (analyzer, enhanced_analyzer, research, competitive_intel, market_intel, content_generator)
-- **Frontend:** 34+ routes (authenticated + public pages)
+- **API:** 232+ endpoints (131 Phase 1-7 + 99 Phase 8-10 + 2 Q1-Q5)
+- **AI Agents:** 8 agents (analyzer, enhanced_analyzer, research, competitive_intel, market_intel, content_generator, chat_agent, market_insight_publisher)
+- **Frontend:** 35+ routes (authenticated + public pages)
 - **Testing:** 291 backend tests (22 files), 47 E2E tests (8 suites), 85% coverage
 - **Migrations:** 25+ Alembic migrations, 69 tables with RLS enabled
 
@@ -29,7 +29,7 @@
 |-------|-------|---------|----------|-----------|--------|
 | **1-3** | MVP Foundation (Collection → Analysis → Presentation) | ✅ 100% | ✅ 100% | ✅ 100% | **COMPLETE** (2026-01-18) |
 | **4** | Authentication & Admin Portal | ✅ 100% | ✅ 100% | ✅ 100% | **COMPLETE** (2026-01-25) |
-| **4.5** | Supabase Cloud Migration (Singapore) | ✅ 100% | ✅ 100% | ✅ 100% | **COMPLETE** (2026-01-25) |
+| **4.5** | Supabase Cloud Migration (Sydney) | ✅ 100% | ✅ 100% | ✅ 100% | **COMPLETE** (2026-01-25) |
 | **5-7** | Advanced Features (Research, Payments, Teams, API) | ✅ 100% | ✅ 100% | ✅ 100% | **COMPLETE** (2026-01-25) |
 | **8** | Superadmin Control Center | ✅ 100% | ✅ 100% | ✅ 100% | **COMPLETE** (2026-02-04) |
 | **9** | User Engagement Features | ✅ 100% | ✅ 100% | ✅ 100% | **COMPLETE** (2026-02-04) |
@@ -49,8 +49,13 @@
 | **J** | Public Pages Editorial Redesign | N/A | ✅ 100% | N/A | **COMPLETE** (2026-02-14) |
 | **K** | Data-Driven Evidence & Social Proof | ✅ 100% | ✅ 100% | N/A | **COMPLETE** (2026-02-14) |
 | **L** | Competitive Differentiators | ✅ 100% | ✅ 100% | N/A | **COMPLETE** (2026-02-14) |
+| **Q1** | Pulse Page (Real-time Feed) | ✅ 100% | ✅ 100% | N/A | **COMPLETE** (2026-02-15) |
+| **Q2** | Founder Fits Redesign | N/A | ✅ 100% | N/A | **COMPLETE** (2026-02-15) |
+| **Q3** | Idea of the Day + Sharing | N/A | ✅ 100% | N/A | **COMPLETE** (2026-02-15) |
+| **Q4** | Trend Sparklines | N/A | ✅ 100% | N/A | **COMPLETE** (2026-02-15) |
+| **Q5** | Insight Comparison Tool | N/A | ✅ 100% | N/A | **COMPLETE** (2026-02-15) |
 
-**Overall:** Phase 1-10 Complete + Phases A-L Complete (Professional Overhaul — Beat IdeaBrowser)
+**Overall:** Phase 1-10 Complete + Phases A-L + Q1-Q5 Complete (Professional Overhaul + Quality Improvements)
 
 ### Phase A: Superadmin Content Completeness (2026-02-14)
 **Delivered:** Full CRUD for insights, agent schedule editor, cost analytics, 3 new admin pages, sidebar updated to 14 nav items
@@ -162,7 +167,7 @@
 - Real-time admin dashboard with agent control
 
 ### Phase 4.5: Cloud Infrastructure
-**Delivered:** Supabase Cloud migration (Singapore region), RLS policies, connection pooling
+**Delivered:** Supabase Cloud migration (Sydney ap-southeast-2), RLS policies, connection pooling
 - Migrated from self-hosted PostgreSQL to Supabase Pro
 - 64% cost reduction at 10K users
 - 50ms latency for APAC market (vs 180ms US-based)
@@ -237,7 +242,7 @@
 Backend (Railway):
 ```bash
 # Database (Supabase Production)
-DATABASE_URL=postgresql://postgres:[password]@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres
+DATABASE_URL=postgresql://postgres:[password]@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres
 SUPABASE_URL=https://[project-id].supabase.co
 SUPABASE_ANON_KEY=eyJhbGc...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...
@@ -438,7 +443,7 @@ npx playwright test --project=chromium  # Single browser
 
 ### DR-001: Supabase Cloud Adoption (2026-01-25)
 
-**Decision:** Use Supabase Pro (Singapore) for production database
+**Decision:** Use Supabase Pro (Sydney ap-southeast-2) for production database
 
 **Rationale:**
 - 64% cost reduction at 10K users ($25/mo vs $69/mo Neon)
@@ -553,7 +558,7 @@ npx playwright test --project=chromium  # Single browser
 
 ### Prerequisites
 
-1. **Supabase Account:** Create project in Singapore region
+1. **Supabase Account:** Create project in Sydney region (ap-southeast-2)
 2. **Upstash Account:** Create Redis database
 3. **API Keys:** Google Gemini, Firecrawl, Reddit, Twitter (optional)
 
@@ -616,13 +621,13 @@ psql $DATABASE_URL -c "SELECT COUNT(*) FROM information_schema.tables WHERE tabl
 
 **Backend (backend/app/):**
 - `models/` - 34 files, 69 SQLAlchemy tables
-- `api/routes/` - 27 files, 230 FastAPI endpoints
+- `api/routes/` - 28+ files, 232+ FastAPI endpoints (incl. pulse.py)
 - `services/` - 20+ business logic services
-- `agents/` - 6 PydanticAI agents
-- `scrapers/` - 4 scrapers (Reddit, Product Hunt, Trends, Twitter)
+- `agents/` - 8 PydanticAI agents
+- `scrapers/` - 6 scrapers (Reddit, Product Hunt, Trends, Twitter, Hacker News, Firecrawl)
 
 **Frontend (frontend/):**
-- `app/[locale]/` - 34+ routes (Next.js 16 App Router)
+- `app/[locale]/` - 35+ routes (Next.js 16 App Router)
 - `components/` - 50+ reusable React components
 - `lib/` - API client, types, utilities
 
@@ -666,7 +671,7 @@ psql $DATABASE_URL -c "SELECT COUNT(*) FROM information_schema.tables WHERE tabl
 
 ## Reference Files
 
-**Architecture:** `memory-bank/architecture.md` (69 tables, 230 endpoints, 6 AI agents)
+**Architecture:** `memory-bank/architecture.md` (69 tables, 232+ endpoints, 8 AI agents)
 **Tech Stack:** `memory-bank/tech-stack.md` (dependencies, cost analysis)
 **Progress Log:** `memory-bank/progress.md` (completed work, recent changes)
 **Active Context:** `memory-bank/active-context.md` (current phase, blockers)

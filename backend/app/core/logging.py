@@ -13,7 +13,6 @@ import time
 import uuid
 from contextvars import ContextVar
 from functools import wraps
-from typing import Any
 
 from app.core.config import settings
 

@@ -8,10 +8,9 @@ import { InsightCard } from '@/components/InsightCard';
 import { InsightFilters } from '@/components/InsightFilters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Loader2, RefreshCw, Search } from 'lucide-react';
+import { AlertTriangle, Lightbulb, Loader2, RefreshCw, Search } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
-import { EmptyState } from '@/components/ui/empty-state';
 import type { Insight } from '@/lib/types';
 
 // Valid sort options type
@@ -150,14 +149,29 @@ function AllInsightsContent() {
                 </div>
               )}
             </>
+          ) : searchParams.toString() ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Search className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No insights found</h3>
+              <p className="text-muted-foreground max-w-md mb-6">
+                No insights match your current filters. Try adjusting your criteria or browse all insights.
+              </p>
+              <Button asChild variant="outline">
+                <Link href="/insights">Clear Filters</Link>
+              </Button>
+            </div>
           ) : (
-            <EmptyState
-              icon={Search}
-              title="No insights found"
-              description="No insights match your current filters. Try adjusting your criteria or browse all insights."
-              actionLabel="Clear Filters"
-              actionHref="/insights"
-            />
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Lightbulb className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No startup insights yet</h3>
+              <p className="text-muted-foreground max-w-md mb-6">
+                Our AI agents analyze signals from Reddit, Product Hunt, Hacker News, and more.
+                New insights are generated daily.
+              </p>
+              <Button asChild variant="outline">
+                <Link href="/features">Explore Features</Link>
+              </Button>
+            </div>
           )}
         </div>
       </div>

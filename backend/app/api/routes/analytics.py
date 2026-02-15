@@ -8,13 +8,12 @@ Provides admin endpoints for:
 
 import logging
 from datetime import UTC, datetime, timedelta
-from decimal import Decimal
 from typing import Annotated, Any
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, EmailStr, Field
-from sqlalchemy import and_, func, or_, select, update
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db, require_admin
@@ -24,10 +23,8 @@ from app.models.agent_execution_log import AgentExecutionLog
 from app.models.insight import Insight
 from app.models.insight_interaction import InsightInteraction
 from app.models.market_insight import MarketInsight
-from app.models.pipeline_monitoring import PipelineHealthCheck
 from app.models.saved_insight import SavedInsight
 from app.models.subscription import Subscription
-from app.models.system_metric import SystemMetric
 from app.models.user import User
 from app.models.user_analytics import UserActivityEvent, UserSession
 

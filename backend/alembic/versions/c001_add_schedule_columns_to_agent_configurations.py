@@ -13,7 +13,6 @@ Create Date: 2026-02-14
 """
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import UUID
 
 from alembic import op
 

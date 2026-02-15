@@ -608,7 +608,7 @@ async def stream_trend_data(
                 # Check max duration
                 if time.time() - start_time > max_duration:
                     logger.info(f"SSE stream max duration reached: insight {insight_id}")
-                    yield f"event: close\ndata: {{\"message\": \"Maximum stream duration reached. Please reconnect.\"}}\n\n"
+                    yield "event: close\ndata: {\"message\": \"Maximum stream duration reached. Please reconnect.\"}\n\n"
                     break
 
                 # Create NEW session for each iteration (don't hold connection)
@@ -624,7 +624,7 @@ async def stream_trend_data(
                     insight = result.scalar_one_or_none()
 
                     if not insight or not insight.raw_signal:
-                        yield f"event: error\ndata: {{\"error\": \"Insight not found\"}}\n\n"
+                        yield "event: error\ndata: {\"error\": \"Insight not found\"}\n\n"
                         break
 
                     # Extract realtime trend data
@@ -635,7 +635,7 @@ async def stream_trend_data(
 
                     if not timestamps or not values:
                         # Send initial message that realtime data is not available yet
-                        yield f"event: info\ndata: {{\"message\": \"Waiting for real-time data...\"}}\n\n"
+                        yield "event: info\ndata: {\"message\": \"Waiting for real-time data...\"}\n\n"
                         await asyncio.sleep(60)
                         continue
 
@@ -668,10 +668,10 @@ async def stream_trend_data(
 
         except asyncio.CancelledError:
             logger.info(f"SSE stream cancelled for insight {insight_id}")
-            yield f"event: close\ndata: {{\"message\": \"Stream closed\"}}\n\n"
+            yield "event: close\ndata: {\"message\": \"Stream closed\"}\n\n"
         except Exception as e:
             logger.error(f"Error in SSE stream for insight {insight_id}: {e}", exc_info=True)
-            yield f"event: error\ndata: {{\"error\": \"Internal server error\"}}\n\n"
+            yield "event: error\ndata: {\"error\": \"Internal server error\"}\n\n"
         finally:
             logger.info(f"SSE stream ended for insight {insight_id}")
 

@@ -156,6 +156,38 @@ TEMPLATES: dict[str, EmailTemplate] = {
         </div>
         """,
     ),
+    "weekly_digest": EmailTemplate(
+        subject="Your Weekly Startup Briefing - Top 10 Insights",
+        html_template="""
+        <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #3B82F6;">Weekly Startup Briefing</h1>
+            <p>Hi {{name}}, here are the top 10 startup opportunities from this week:</p>
+
+            {{#insights}}
+            <div style="border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
+                <h3 style="margin: 0 0 6px 0; font-size: 15px;">{{title}}</h3>
+                <p style="color: #6B7280; margin: 0 0 8px 0; font-size: 13px;">{{problem_statement}}</p>
+                <div style="display: flex; gap: 8px;">
+                    <span style="background: #DBEAFE; color: #1E40AF; padding: 3px 8px; border-radius: 4px; font-size: 11px;">
+                        Score: {{relevance_score}}
+                    </span>
+                    <span style="background: #D1FAE5; color: #065F46; padding: 3px 8px; border-radius: 4px; font-size: 11px;">
+                        {{market_size}}
+                    </span>
+                </div>
+            </div>
+            {{/insights}}
+
+            <a href="{{dashboard_url}}" style="display: inline-block; background: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 8px;">
+                Explore All Insights
+            </a>
+
+            <p style="margin-top: 24px; color: #6B7280; font-size: 12px;">
+                <a href="{{unsubscribe_url}}">Unsubscribe from weekly digest</a>
+            </p>
+        </div>
+        """,
+    ),
     "password_reset": EmailTemplate(
         subject="Reset Your StartInsight Password",
         html_template="""
@@ -373,6 +405,26 @@ async def send_team_invitation(
             "team_name": team_name,
             "inviter_name": inviter_name,
             "invitation_url": invitation_url,
+        },
+    )
+
+
+async def send_weekly_digest(
+    email: str,
+    name: str,
+    insights: list[dict],
+    dashboard_url: str,
+    unsubscribe_url: str,
+) -> dict:
+    """Send weekly digest of top insights."""
+    return await send_email(
+        to=email,
+        template="weekly_digest",
+        variables={
+            "name": name or "there",
+            "insights": insights[:10],
+            "dashboard_url": dashboard_url,
+            "unsubscribe_url": unsubscribe_url,
         },
     )
 

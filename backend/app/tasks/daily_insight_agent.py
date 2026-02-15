@@ -10,10 +10,9 @@ This agent:
 import logging
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
 from app.db.session import AsyncSessionLocal
 from app.models.agent_control import AgentConfiguration
 from app.models.agent_execution_log import AgentExecutionLog

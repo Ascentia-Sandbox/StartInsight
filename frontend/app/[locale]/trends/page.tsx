@@ -201,14 +201,13 @@ export default function TrendsPage() {
             </div>
           </Card>
         ) : trends.length === 0 ? (
-          <div className="text-center py-16">
-            <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground mb-4">
-              {search || category !== "All"
-                ? "No trends found matching your criteria."
-                : "No trends available yet. Check back soon!"}
-            </p>
-            {(search || category !== "All") && (
+          search || category !== "All" ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Search className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No trends found</h3>
+              <p className="text-muted-foreground max-w-md mb-4">
+                No trends match your current search or category filter. Try different criteria.
+              </p>
               <Button
                 variant="outline"
                 onClick={() => {
@@ -218,8 +217,19 @@ export default function TrendsPage() {
               >
                 Clear Filters
               </Button>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <TrendingUp className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Trends are loading</h3>
+              <p className="text-muted-foreground max-w-md mb-6">
+                We track emerging trends across technology, SaaS, AI, and more. Trend data updates hourly.
+              </p>
+              <Button asChild variant="outline">
+                <Link href="/features">Explore Features</Link>
+              </Button>
+            </div>
+          )
         ) : (
           <>
             <div className="text-sm text-muted-foreground text-center mb-6">

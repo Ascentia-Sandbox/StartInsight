@@ -10,11 +10,8 @@ Uses pytrends (unofficial Google Trends API wrapper).
 import asyncio
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from functools import lru_cache
-from typing import Any
+from datetime import datetime
 
-import pandas as pd
 from pytrends.exceptions import ResponseError
 from pytrends.request import TrendReq
 

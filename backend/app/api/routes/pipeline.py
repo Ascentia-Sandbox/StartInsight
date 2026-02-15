@@ -8,13 +8,12 @@ Provides admin endpoints for:
 
 import logging
 from datetime import UTC, datetime, timedelta
-from decimal import Decimal
 from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db, require_admin
@@ -216,8 +215,31 @@ async def trigger_scraper(
     if name not in valid_scrapers:
         raise HTTPException(status_code=400, detail=f"Invalid scraper: {name}")
 
-    # TODO: Queue actual scraper task via Arq
-    logger.info(f"Scraper {name} triggered by admin {admin.id}")
+    # Enqueue scraper task via Arq
+    scraper_task_map = {
+        "reddit": "scrape_reddit_task",
+        "product_hunt": "scrape_product_hunt_task",
+        "hacker_news": "scrape_hackernews_task",
+        "twitter": "scrape_twitter_task",
+        "google_trends": "scrape_trends_task",
+    }
+    task_name = scraper_task_map.get(name)
+    if task_name:
+        try:
+            from arq.connections import ArqRedis, create_pool
+            from arq.connections import RedisSettings as ArqRedisSettings
+
+            from app.core.config import settings
+
+            pool: ArqRedis = await create_pool(ArqRedisSettings(
+                host=settings.redis_host,
+                port=settings.redis_port,
+            ))
+            job = await pool.enqueue_job(task_name)
+            await pool.aclose()
+            logger.info(f"Enqueued scraper task '{task_name}' (job_id={job.job_id}) by admin {admin.id}")
+        except Exception as e:
+            logger.warning(f"Failed to enqueue scraper task for {name}: {e}")
 
     return {"status": "queued", "scraper": name, "triggered_by": str(admin.id)}
 
@@ -228,10 +250,50 @@ async def pause_scraper(
     db: Annotated[AsyncSession, Depends(get_db)],
     admin: Annotated[User, Depends(require_admin)],
 ):
-    """Pause a scraper."""
-    # TODO: Implement actual pause logic
-    logger.info(f"Scraper {name} paused by admin {admin.id}")
+    """Pause a scraper by setting a Redis flag."""
+    valid_scrapers = ["reddit", "product_hunt", "hacker_news", "twitter", "google_trends"]
+    if name not in valid_scrapers:
+        raise HTTPException(status_code=400, detail=f"Invalid scraper: {name}")
+
+    try:
+        import redis.asyncio as aioredis
+
+        from app.core.config import settings
+
+        r = aioredis.from_url(settings.redis_url)
+        await r.set(f"scraper:paused:{name}", "1")
+        await r.aclose()
+        logger.info(f"Scraper {name} paused by admin {admin.id}")
+    except Exception as e:
+        logger.warning(f"Failed to set pause flag for {name}: {e}")
+
     return {"status": "paused", "scraper": name}
+
+
+@router.post("/scrapers/{name}/resume")
+async def resume_scraper(
+    name: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    admin: Annotated[User, Depends(require_admin)],
+):
+    """Resume a paused scraper by removing the Redis flag."""
+    valid_scrapers = ["reddit", "product_hunt", "hacker_news", "twitter", "google_trends"]
+    if name not in valid_scrapers:
+        raise HTTPException(status_code=400, detail=f"Invalid scraper: {name}")
+
+    try:
+        import redis.asyncio as aioredis
+
+        from app.core.config import settings
+
+        r = aioredis.from_url(settings.redis_url)
+        await r.delete(f"scraper:paused:{name}")
+        await r.aclose()
+        logger.info(f"Scraper {name} resumed by admin {admin.id}")
+    except Exception as e:
+        logger.warning(f"Failed to remove pause flag for {name}: {e}")
+
+    return {"status": "resumed", "scraper": name}
 
 
 @router.get("/quotas", response_model=list[QuotaUsageResponse])

@@ -24,14 +24,12 @@ import random
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.core.config import settings
 from app.db.session import async_session_maker, init_db
 from app.models.insight import Insight
 from app.models.raw_signal import RawSignal
@@ -120,7 +118,7 @@ async def get_insight_count(db: AsyncSession) -> int:
     return result.scalar() or 0
 
 
-async def run_scrapers_for_date(db: AsyncSession, target_date: datetime, keywords: List[str]) -> int:
+async def run_scrapers_for_date(db: AsyncSession, target_date: datetime, keywords: list[str]) -> int:
     """
     Run scrapers for a specific date and backdate timestamps.
 
@@ -244,7 +242,7 @@ async def generate_seed_insight(
         target_customer_segments="Early adopters, tech-savvy users",
         competitive_landscape=f"Growing {template['tags'][0]} market with several established players",
         revenue_model_suggestions="Freemium with Pro ($29/mo) and Enterprise ($99/mo) tiers",
-        market_gap_analysis=f"Current solutions are either too complex or too expensive for target users",
+        market_gap_analysis="Current solutions are either too complex or too expensive for target users",
         why_now_analysis=f"Recent trends in {', '.join(template['tags'])} create opportunity",
         key_risks_and_challenges="Market saturation, user acquisition costs, retention",
         implementation_roadmap="MVP in 2 months, beta in 4 months, launch in 6 months",

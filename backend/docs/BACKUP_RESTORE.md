@@ -8,7 +8,7 @@ StartInsight uses Supabase PostgreSQL with automatic backups. This document outl
 ### Supabase Automatic Backups
 - **Frequency:** Daily at 02:00 UTC
 - **Retention:** 7 days (Pro plan)
-- **Location:** Supabase Singapore region (ap-southeast-1)
+- **Location:** Supabase Sydney region (ap-southeast-2)
 - **Encryption:** AES-256 at rest
 - **Backup Method:** Physical (full database snapshot)
 

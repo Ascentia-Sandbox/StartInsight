@@ -1157,3 +1157,167 @@ export async function fetchAdminAnalyses(
   const { data } = await client.get('/api/research/admin/analyses', { params });
   return data;
 }
+
+// ============================================
+// Dashboard Analytics API (Phase 18)
+// ============================================
+
+export interface EngagementMetrics {
+  dau: number;
+  mau: number;
+  dau_mau_ratio: number;
+  avg_session_duration_sec: number;
+  feature_usage: Record<string, number>;
+  retention_day1: number;
+  retention_day7: number;
+  retention_day30: number;
+}
+
+export interface ContentPerformance {
+  top_insights: { id: string; title: string; score: number; interactions: number }[];
+  top_articles: { id: string; title: string; views: number }[];
+  total_insight_views: number;
+  total_insight_saves: number;
+  total_article_views: number;
+}
+
+export interface SystemHealthMetrics {
+  scraper_success_rates: Record<string, number>;
+  agent_success_rates: Record<string, number>;
+  redis_connected: boolean;
+  db_pool_size: number;
+  recent_errors: number;
+}
+
+export interface UserAnalytics {
+  overview: {
+    total_users: number;
+    active_users_7d: number;
+    active_users_30d: number;
+    new_users_7d: number;
+    churn_rate_30d: number;
+  };
+  by_tier: { tier: string; count: number; active_rate: number; mrr: number }[];
+  engagement: {
+    avg_session_duration: number;
+    avg_insights_viewed: number;
+    avg_insights_saved: number;
+    feature_usage: Record<string, number>;
+  };
+}
+
+export async function fetchAnalyticsEngagement(
+  accessToken: string,
+  days: number = 30
+): Promise<EngagementMetrics> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/analytics/engagement', { params: { days } });
+  return data;
+}
+
+export async function fetchAnalyticsContent(
+  accessToken: string,
+  days: number = 30
+): Promise<ContentPerformance> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/analytics/content', { params: { days } });
+  return data;
+}
+
+export async function fetchAnalyticsHealth(
+  accessToken: string,
+  days: number = 7
+): Promise<SystemHealthMetrics> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/analytics/health', { params: { days } });
+  return data;
+}
+
+export async function fetchAnalyticsUsers(
+  accessToken: string
+): Promise<UserAnalytics> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/analytics/users');
+  return data;
+}
+
+// ============================================
+// Admin User (Admin Access) Management API
+// ============================================
+
+export interface AdminAccessUser {
+  id: string;
+  user_id: string;
+  email: string;
+  display_name: string | null;
+  role: string;
+  created_at: string;
+}
+
+export async function fetchAdminAccessUsers(
+  accessToken: string
+): Promise<AdminAccessUser[]> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/admin/admin-users');
+  return data;
+}
+
+export async function addAdminAccessUser(
+  accessToken: string,
+  payload: { email: string; role: string }
+): Promise<AdminAccessUser> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post('/api/admin/admin-users', payload);
+  return data;
+}
+
+export async function updateAdminAccessUser(
+  accessToken: string,
+  adminUserId: string,
+  payload: { role: string }
+): Promise<AdminAccessUser> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.patch(`/api/admin/admin-users/${adminUserId}`, payload);
+  return data;
+}
+
+export async function removeAdminAccessUser(
+  accessToken: string,
+  adminUserId: string
+): Promise<void> {
+  const client = createAuthenticatedClient(accessToken);
+  await client.delete(`/api/admin/admin-users/${adminUserId}`);
+}
+
+// ============================================
+// System Settings API
+// ============================================
+
+export interface SystemSetting {
+  key: string;
+  value: unknown;
+  description: string;
+  updated_at: string;
+}
+
+export interface SystemSettingsGrouped {
+  settings: Record<string, SystemSetting[]>;
+}
+
+export async function fetchSystemSettings(
+  accessToken: string
+): Promise<SystemSettingsGrouped> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/admin/settings');
+  return data;
+}
+
+export async function updateSystemSetting(
+  accessToken: string,
+  key: string,
+  value: unknown
+): Promise<SystemSetting> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.put(`/api/admin/settings/${key}`, { value });
+  return data;
+}

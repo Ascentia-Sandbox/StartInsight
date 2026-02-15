@@ -9,7 +9,6 @@ Run with: uv run python scripts/seed_insights_with_scores.py
 
 import asyncio
 import logging
-import random
 from datetime import datetime, timedelta
 from uuid import uuid4
 

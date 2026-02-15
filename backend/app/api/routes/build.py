@@ -8,18 +8,15 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentUser
 from app.core.cache import get_redis
 from app.db.session import get_db
-from app.models.insight import Insight
 from app.services.builder_integration import (
     BuilderProject,
     LovableIntegration,
     ReplitIntegration,
-    V0DevIntegration,
     create_builder_project,
 )
 

@@ -84,7 +84,7 @@ class URLValidator:
         Returns:
             Normalized URL with scheme
         """
-        url = url.strip()
+        url = str(url).strip()
 
         # Add scheme if missing
         if not url.startswith(("http://", "https://")):

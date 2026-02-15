@@ -43,7 +43,7 @@ Unlike traditional brainstorming tools, StartInsight relies on **real-time marke
 **Content Pipeline (Phase H)**
 - **6 Active Scrapers**: Reddit (50/run), Product Hunt (30/run), Google Trends (6 regions), Twitter/X, Hacker News (50+ score filter), Firecrawl
 - **Real Trend Data**: No more synthetic charts — real Google Trends data with "Search Interest" badge fallback
-- **Multi-Region**: Google Trends scraped across US, UK, Germany, Japan, Singapore, Australia
+- **Multi-Region**: Google Trends scraped across US, UK, Germany, Japan, Sydney, Australia
 
 **Admin Portal Excellence (Phase I)**
 - **Dashboard Charts**: 4 Recharts visualizations (content volume, agent activity, user growth, quality trends)
@@ -104,8 +104,8 @@ graph LR
 ```
 
 **Cloud Infrastructure (Supabase Pro):**
-- **Database**: Supabase Pro PostgreSQL (Singapore, ap-southeast-1), 200 connection pool limit
-- **Cache/Queue**: Upstash Redis (Singapore)
+- **Database**: Supabase Pro PostgreSQL (Sydney, ap-southeast-2), 200 connection pool limit
+- **Cache/Queue**: Upstash Redis (Sydney)
 - **Backend**: Railway or local development
 - **Frontend**: Vercel or local development
 
@@ -131,7 +131,7 @@ graph LR
 ### Backend
 - **Framework**: FastAPI (async-first)
 - **Language**: Python 3.11+
-- **Database**: Supabase Pro PostgreSQL (ap-southeast-1, Singapore)
+- **Database**: Supabase Pro PostgreSQL (ap-southeast-2, Sydney)
 - **ORM**: SQLAlchemy 2.0 (async)
 - **Queue**: Redis + Arq (async task queue)
 - **AI**: PydanticAI + Gemini 2.0 Flash ($0.10/M tokens)
@@ -198,14 +198,14 @@ cd StartInsight
 ### 2. Create Supabase Project
 
 1. Go to [supabase.com](https://supabase.com) and create a new project
-2. Choose **Asia Pacific (Singapore)** region
+2. Choose **Asia Pacific (Sydney)** region
 3. Copy your connection string from **Project Settings > Database > Connection string** (Connection Pooling mode)
 4. Copy your API keys from **Project Settings > API**
 
 ### 3. Create Upstash Redis
 
 1. Go to [upstash.com](https://upstash.com) and create a new Redis database
-2. Choose **Asia Pacific Southeast (Singapore)** region
+2. Choose **Asia Pacific Southeast (Sydney)** region
 3. Copy the **REST API URL** (format: `redis://default:[password]@[endpoint].upstash.io:6379`)
 
 ### 4. Configure Backend
@@ -218,7 +218,7 @@ cp .env.example .env
 Edit `backend/.env` with your cloud credentials:
 ```bash
 # Database (Supabase Cloud)
-DATABASE_URL=postgresql+asyncpg://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true
+DATABASE_URL=postgresql+asyncpg://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres?pgbouncer=true
 
 # Supabase Auth
 SUPABASE_URL=https://[PROJECT_REF].supabase.co
@@ -296,17 +296,17 @@ For troubleshooting, production deployment, and advanced configuration, see:
 
 StartInsight uses **cloud services by default** to ensure consistency between development and production:
 
-### Supabase Pro PostgreSQL (Singapore)
+### Supabase Pro PostgreSQL (Sydney)
 
 - **Tier:** Supabase Pro ($25/mo) - sole database, no local PostgreSQL required
-- **Region:** ap-southeast-1 (Singapore) - Optimized for APAC market
+- **Region:** ap-southeast-2 (Sydney) - Optimized for APAC market
 - **Latency:** <50ms for Southeast Asia (vs 180ms US-based)
 - **Cost:** $25/mo (Supabase Pro) vs $69/mo (Neon) = 64% savings
 - **Features:** PostgreSQL 15+, Row-Level Security, connection pooling (200 limit), real-time subscriptions, SSL required
 
-### Upstash Redis (Singapore)
+### Upstash Redis (Sydney)
 
-- **Region:** Asia Pacific Southeast (Singapore) - Lowest latency
+- **Region:** Asia Pacific Southeast (Sydney) - Lowest latency
 - **Type:** Regional (not Global) for optimal performance
 - **Cost:** Free tier available, scales with usage
 - **Use Cases:** Task queue (Arq), rate limiting, session caching
@@ -526,7 +526,7 @@ The project enforces 4 core skills via Claude Code:
 
 | Service | Purpose | Get Key |
 |---------|---------|---------|
-| **Supabase** | Database + Auth (ap-southeast-1) | [supabase.com](https://supabase.com) |
+| **Supabase** | Database + Auth (ap-southeast-2) | [supabase.com](https://supabase.com) |
 | **Google AI** | Gemini 2.0 Flash (AI analysis) | [aistudio.google.com](https://aistudio.google.com) |
 | **Firecrawl** | Web scraping (web → markdown) | [firecrawl.dev](https://firecrawl.dev) |
 | **Reddit** | Reddit API (PRAW) | [reddit.com/prefs/apps](https://reddit.com/prefs/apps) |

@@ -602,7 +602,7 @@ dev = [
 # ============================================
 # PHASE 1-3 (Existing)
 # ============================================
-DATABASE_URL=postgresql+asyncpg://postgres.[REF]:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+DATABASE_URL=postgresql+asyncpg://postgres.[REF]:[PASSWORD]@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres
 REDIS_URL=redis://localhost:6379
 FIRECRAWL_API_KEY=fc-***
 REDDIT_CLIENT_ID=***
@@ -1078,7 +1078,7 @@ Why FastAPI over Django? StartInsight is an AI-heavy app. We need excellent asyn
 
 Database Evolution: PostgreSQL to Supabase
 Phase 1-4 (Development): PostgreSQL via Docker for vendor independence and control over data layer. Standard Postgres container ensures we can host anywhere (AWS, GCP, DigitalOcean) without BaaS lock-in.
-Phase 4.5 (Complete 2026-01-25): Migrated to Supabase Cloud Singapore for cost savings (64% at 10K users) and APAC latency optimization (50ms vs 180ms). 13 migrations executed, 20 tables deployed with RLS.
+Phase 4.5 (Complete 2026-01-25): Migrated to Supabase Cloud Sydney for cost savings (64% at 10K users) and APAC latency optimization (50ms vs 180ms). 13 migrations executed, 20 tables deployed with RLS.
 
 Why Firecrawl? Writing custom CSS selectors for scraping is brittle (websites change). Firecrawl uses AI/Heuristics to turn web pages into Markdown, which is the native language of our LLM agents.
 
@@ -1092,11 +1092,11 @@ Why Firecrawl? Writing custom CSS selectors for scraping is brittle (websites ch
 
 **Status:** Complete (executed 2026-01-25)
 
-**Decision:** Migrate from self-hosted PostgreSQL to Supabase Cloud (Singapore ap-southeast-1)
+**Decision:** Migrate from self-hosted PostgreSQL to Supabase Cloud (Sydney ap-southeast-2)
 
 **Why Supabase:**
 - **Cost Efficiency**: $25/mo (Pro) vs $69/mo (Neon Scale) at 10K users = 64% savings
-- **APAC Market**: Singapore region = 50ms latency for SEA users (vs 180ms US-based)
+- **APAC Market**: Sydney region = 50ms latency for APAC users (vs 180ms US-based)
 - **Built-in Features**: Real-time subscriptions, Storage, Edge Functions (Phase 5+)
 - **Developer Experience**: Auto-migrations, RLS policies, built-in auth option
 - **Scalability**: Auto-scaling, connection pooling (up to 500 concurrent connections)
@@ -1121,13 +1121,13 @@ Why Firecrawl? Writing custom CSS selectors for scraping is brittle (websites ch
 
 **New Variables:**
 ```bash
-# Supabase Cloud (Singapore ap-southeast-1)
+# Supabase Cloud (Sydney ap-southeast-2)
 SUPABASE_URL=https://[project-ref].supabase.co
 SUPABASE_ANON_KEY=eyJhbGc...  # Public key (client-side)
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...  # Private key (server-side only)
 
 # Keep during transition
-DATABASE_URL=postgresql+asyncpg://postgres.[REF]:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+DATABASE_URL=postgresql+asyncpg://postgres.[REF]:[PASSWORD]@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres
 ```
 
 ### 9.5 Migration Strategy (3 Options)
@@ -1165,13 +1165,13 @@ DATABASE_URL=postgresql+asyncpg://postgres.[REF]:[PASSWORD]@aws-0-ap-southeast-1
 
 For detailed cost comparison and revenue projections, see Cost Analysis section above.
 
-### 9.7 Singapore Region Configuration
+### 9.7 Sydney Region Configuration
 
-**Region:** `ap-southeast-1` (AWS Singapore)
+**Region:** `ap-southeast-2` (AWS Sydney)
 
 **Justification:**
 - **APAC Market Growth**: 30% YoY SaaS adoption in SEA
-- **Latency**: 50ms (Singapore) vs 180ms (US) for SEA users
+- **Latency**: 50ms (Sydney) vs 180ms (US) for APAC users
 - **Compliance**: Data residency for APAC customers
 - **Expansion**: Gateway to Australia (120ms), India (85ms), Japan (110ms)
 
@@ -1180,7 +1180,7 @@ For detailed cost comparison and revenue projections, see Cost Analysis section 
 // frontend/lib/supabase.ts
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!  // Singapore region
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!  // Sydney region
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {

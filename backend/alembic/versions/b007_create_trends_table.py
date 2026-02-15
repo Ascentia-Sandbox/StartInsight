@@ -7,7 +7,7 @@ Create Date: 2026-01-29 10:10:00.000000
 Phase 12.2: IdeaBrowser Feature Replication - 180+ trending keywords with volume/growth metrics
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
@@ -16,9 +16,9 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "b007_trends"
-down_revision: Union[str, None] = "b006_success_stories"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "b006_success_stories"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:

@@ -56,7 +56,7 @@ async def create_user(email: str, password: str, full_name: str | None = None):
         )
 
         print(f"User created successfully: {user_data['id']}")
-        print(f"\nUser account created!")
+        print("\nUser account created!")
         print(f"Email: {email}")
         print(f"Password: {password}")
         print("\nSign in at: http://localhost:3000/auth/login")

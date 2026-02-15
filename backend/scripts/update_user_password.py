@@ -53,7 +53,7 @@ async def update_password(email: str, new_password: str):
             response.raise_for_status()
 
         print(f"Password updated successfully for {email}")
-        print(f"\nNew credentials:")
+        print("\nNew credentials:")
         print(f"Email: {email}")
         print(f"Password: {new_password}")
         print("\nSign in at: http://localhost:3000/auth/login")

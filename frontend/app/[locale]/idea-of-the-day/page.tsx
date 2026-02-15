@@ -50,8 +50,19 @@ export default function IdeaOfTheDayPage() {
 
   if (error || !idea) {
     return (
-      <div className="container mx-auto px-4 py-12 text-center">
-        <p className="text-red-500">Failed to load idea of the day</p>
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-amber-950/20 dark:to-background">
+        <div className="container mx-auto px-4 py-12">
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Today&apos;s idea is being curated</h3>
+            <p className="text-muted-foreground max-w-md mb-6">
+              Every day, our AI selects the most promising startup idea. Check back after 8:00 AM UTC.
+            </p>
+            <Button asChild variant="outline">
+              <Link href="/insights">Browse All Insights</Link>
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }

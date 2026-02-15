@@ -129,6 +129,18 @@ export default function FounderFitsPage() {
         </div>
 
         {/* Ideas Grid */}
+        {(!ideas || ideas.length === 0) ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Users className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Founder matches coming soon</h3>
+            <p className="text-muted-foreground max-w-md mb-6">
+              We&apos;re analyzing startup ideas to find the best matches for your skills and interests.
+            </p>
+            <Button asChild variant="outline">
+              <Link href="/insights">Browse All Insights</Link>
+            </Button>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {ideas?.map((idea: any, index: number) => {
             const founderFit = idea.founder_fit_score || idea.enhanced_scores?.find((s: any) => s.dimension.includes('Founder'))?.value || 7;
@@ -198,6 +210,7 @@ export default function FounderFitsPage() {
             );
           })}
         </div>
+        )}
 
         {/* CTA Section */}
         <div className="text-center mt-12">

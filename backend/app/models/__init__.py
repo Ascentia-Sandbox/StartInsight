@@ -75,6 +75,7 @@ from app.models.social import ClubMember, ClubPost, FounderConnection, FounderPr
 from app.models.subscription import PaymentHistory, Subscription
 from app.models.success_story import SuccessStory
 from app.models.system_metric import SystemMetric
+from app.models.system_setting import SystemSetting
 from app.models.team import SharedInsight, Team, TeamInvitation, TeamMember
 from app.models.tenant import Tenant, TenantUser
 from app.models.tool import Tool
@@ -174,4 +175,6 @@ __all__ = [
     "MarketInsight",
     # Phase 17: Content Automation Pipeline
     "PipelineRun",
+    # Phase G: System Settings
+    "SystemSetting",
 ]

@@ -9,11 +9,10 @@ Sprint 4.1: Provides personalized insight recommendations based on:
 
 import logging
 from datetime import UTC, datetime, timedelta
-from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, desc, func, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.insight import Insight

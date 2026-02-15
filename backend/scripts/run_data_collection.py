@@ -17,7 +17,7 @@ Reddit and Firecrawl scrapers are skipped if API keys are not configured.
 import asyncio
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 # Setup path
 sys.path.insert(0, "/home/wysetime-pcc/Nero/StartInsight/backend")
@@ -101,7 +101,11 @@ async def run_google_trends_scraper() -> int:
 
 
 async def run_analysis() -> int:
-    """Run enhanced analyzer on unprocessed signals."""
+    """Run enhanced analyzer on unprocessed signals.
+
+    Uses per-signal sessions to avoid DB connection timeouts during
+    long-running Gemini API calls (~14s each).
+    """
     from sqlalchemy import select, update
 
     from app.agents.enhanced_analyzer import analyze_signal_enhanced_with_retry
@@ -114,63 +118,53 @@ async def run_analysis() -> int:
     analyzed_count = 0
     failed_count = 0
 
+    # Fetch signal IDs first (short-lived session)
     async with AsyncSessionLocal() as session:
-        # Get unprocessed signals
         result = await session.execute(
-            select(RawSignal)
+            select(RawSignal.id)
             .where(RawSignal.processed == False)
             .order_by(RawSignal.created_at.asc())
-            .limit(20)  # Process in batches
+            .limit(20)
         )
-        signals = result.scalars().all()
+        signal_ids = [row[0] for row in result.all()]
 
-        if not signals:
-            logger.info("No unprocessed signals to analyze")
-            return 0
+    if not signal_ids:
+        logger.info("No unprocessed signals to analyze")
+        return 0
 
-        logger.info(f"Found {len(signals)} unprocessed signals")
+    logger.info(f"Found {len(signal_ids)} unprocessed signals")
 
-        successfully_processed_ids = []
+    # Process each signal with a fresh session to avoid connection timeouts
+    for i, signal_id in enumerate(signal_ids, 1):
+        try:
+            async with AsyncSessionLocal() as session:
+                signal = await session.get(RawSignal, signal_id)
+                if not signal:
+                    continue
 
-        for i, signal in enumerate(signals, 1):
-            content_preview = (signal.content or "")[:50]
-            logger.info(f"Processing signal {i}/{len(signals)}: {signal.source} - {content_preview}...")
+                content_preview = (signal.content or "")[:50]
+                logger.info(f"Processing signal {i}/{len(signal_ids)}: {signal.source} - {content_preview}...")
 
-            try:
-                # Analyze signal
                 insight = await analyze_signal_enhanced_with_retry(signal)
                 session.add(insight)
-
-                successfully_processed_ids.append(signal.id)
-                analyzed_count += 1
-
-                problem_preview = (insight.problem_statement or "")[:50]
-                logger.info(f"  ✓ Generated insight: {problem_preview}...")
-
-            except Exception as e:
-                failed_count += 1
-                logger.error(f"  ✗ Failed: {type(e).__name__} - {e}")
-
-        # Commit insights
-        if analyzed_count > 0:
-            try:
                 await session.commit()
-                logger.info(f"Committed {analyzed_count} insights to database")
 
-                # Mark signals as processed
+                # Mark signal as processed
                 async with AsyncSessionLocal() as update_session:
                     await update_session.execute(
                         update(RawSignal)
-                        .where(RawSignal.id.in_(successfully_processed_ids))
+                        .where(RawSignal.id == signal_id)
                         .values(processed=True)
                     )
                     await update_session.commit()
-                    logger.info(f"Marked {len(successfully_processed_ids)} signals as processed")
 
-            except Exception as e:
-                await session.rollback()
-                logger.error(f"Commit failed: {e}")
-                return 0
+                analyzed_count += 1
+                problem_preview = (insight.problem_statement or "")[:50]
+                logger.info(f"  ✓ Generated insight: {problem_preview}...")
+
+        except Exception as e:
+            failed_count += 1
+            logger.error(f"  ✗ Failed: {type(e).__name__} - {e}")
 
     logger.info(f"Analysis complete: {analyzed_count} analyzed, {failed_count} failed")
     return analyzed_count
@@ -217,7 +211,7 @@ async def main():
     """Main entry point for data collection."""
     logger.info("=" * 70)
     logger.info("StartInsight Data Collection Pipeline")
-    logger.info(f"Started at: {datetime.now(timezone.utc).isoformat()}")
+    logger.info(f"Started at: {datetime.now(UTC).isoformat()}")
     logger.info("=" * 70)
 
     total_signals = 0
@@ -257,7 +251,7 @@ async def main():
     logger.info("=" * 70)
     logger.info(f"Total signals collected: {total_signals}")
     logger.info(f"Total insights generated: {total_insights}")
-    logger.info(f"Completed at: {datetime.now(timezone.utc).isoformat()}")
+    logger.info(f"Completed at: {datetime.now(UTC).isoformat()}")
     logger.info("=" * 70)
 
     return total_signals, total_insights

@@ -11,12 +11,11 @@ Phase 9.1: AI-Powered Trend Prediction
 """
 
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from typing import Any
 
 import pandas as pd
 from prophet import Prophet
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

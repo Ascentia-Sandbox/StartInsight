@@ -308,9 +308,9 @@ async def validate_content_quality() -> None:
     if word_count >= TARGET_WORD_COUNT:
         console.print(f"  [green]✓ PASS[/green] (+{word_count - IDEABROWSER_WORD_COUNT} words vs IdeaBrowser)")
     elif word_count >= IDEABROWSER_WORD_COUNT:
-        console.print(f"  [yellow]⚠ PARTIAL[/yellow] (Exceeds IdeaBrowser but below target)")
+        console.print("  [yellow]⚠ PARTIAL[/yellow] (Exceeds IdeaBrowser but below target)")
     else:
-        console.print(f"  [red]✗ FAIL[/red] (Below IdeaBrowser benchmark)")
+        console.print("  [red]✗ FAIL[/red] (Below IdeaBrowser benchmark)")
 
     # Step 3: Validate psychological triggers
     console.print("\n[yellow]Step 3:[/yellow] Checking psychological triggers...")
@@ -333,7 +333,7 @@ async def validate_content_quality() -> None:
     console.print(f"  Target: {TARGET_TRIGGERS}+ triggers")
 
     if trigger_count >= TARGET_TRIGGERS:
-        console.print(f"  [green]✓ PASS[/green]")
+        console.print("  [green]✓ PASS[/green]")
     else:
         console.print(f"  [red]✗ FAIL[/red] (Need {TARGET_TRIGGERS - trigger_count} more)")
 

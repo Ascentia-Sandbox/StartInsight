@@ -10,7 +10,6 @@ Uses PRAW for Reddit validation. Future: Add Facebook, YouTube validation.
 import asyncio
 import logging
 from dataclasses import dataclass
-from functools import lru_cache
 
 import praw
 from praw.exceptions import InvalidURL, PRAWException

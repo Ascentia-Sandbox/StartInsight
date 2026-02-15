@@ -225,7 +225,7 @@ async def generate_market_insight_article(session: AsyncSession) -> MarketInsigh
             market_insight_publisher_agent.run(prompt), timeout=settings.llm_call_timeout
         )
         article_data = result.output
-    except asyncio.TimeoutError:
+    except TimeoutError:
         logger.error("Market insight publisher agent timed out after 120s")
         raise
     except Exception as e:

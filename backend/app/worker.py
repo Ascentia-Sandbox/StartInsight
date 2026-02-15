@@ -1,7 +1,15 @@
 """Arq worker configuration and background tasks."""
 
 import logging
+import os
+from pathlib import Path
 from typing import Any
+
+# Load .env into os.environ so PydanticAI agents can read GOOGLE_API_KEY etc.
+# Pydantic Settings loads into the settings object but NOT into os.environ.
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from arq import cron
 from arq.connections import RedisSettings
@@ -259,12 +267,16 @@ async def run_market_intel_auto_task(ctx: dict[str, Any]) -> dict[str, Any]:
 
 
 async def send_weekly_digest_task(ctx: dict[str, Any]) -> dict[str, Any]:
-    """Send weekly digest of top insights to opted-in users."""
-    from datetime import UTC, datetime, timedelta
+    """Send weekly digest of top insights to opted-in users via Resend."""
+    import hashlib
+    from datetime import UTC, date, datetime, timedelta
 
     from sqlalchemy import desc, select
 
     from app.models.insight import Insight
+    from app.models.user import User
+    from app.models.user_preferences import EmailPreferences, EmailSend
+    from app.services.email_service import send_weekly_digest
 
     logger.info("Starting weekly digest task")
     try:
@@ -280,20 +292,78 @@ async def send_weekly_digest_task(ctx: dict[str, Any]) -> dict[str, Any]:
             insights = result.scalars().all()
 
             if not insights:
-                return {"status": "completed", "items": 0, "reason": "no_insights_this_week"}
+                return {"status": "completed", "sent": 0, "reason": "no_insights_this_week"}
 
-            # Format digest (placeholder for email sending)
-            digest_items = [
+            # Format insights for email template
+            insight_list = [
                 {
                     "title": i.title or i.proposed_solution[:80],
-                    "score": float(i.relevance_score) if i.relevance_score else 0,
+                    "problem_statement": i.problem_statement[:150],
+                    "relevance_score": f"{(i.relevance_score or 0) * 100:.0f}%",
+                    "market_size": i.market_size_estimate or "Unknown",
                 }
                 for i in insights
             ]
-            logger.info(f"Weekly digest: {len(insights)} top insights from past week")
-            # TODO: Send via SMTP/email service when configured
 
-        return {"status": "completed", "items": len(insights), "digest": digest_items}
+            # Get users opted in to weekly digest
+            subscribers_result = await session.execute(
+                select(EmailPreferences, User)
+                .join(User, EmailPreferences.user_id == User.id)
+                .where(EmailPreferences.weekly_digest.is_(True))
+                .where(EmailPreferences.unsubscribed_at.is_(None))
+                .where(User.deleted_at.is_(None))
+            )
+            subscribers = subscribers_result.all()
+
+            if not subscribers:
+                logger.info("No subscribers for weekly digest")
+                return {"status": "completed", "sent": 0, "reason": "no_subscribers"}
+
+            sent = 0
+            skipped = 0
+            for prefs, user in subscribers:
+                # Dedup: one weekly digest per user per week
+                content_hash = hashlib.sha256(
+                    f"weekly_{date.today().isocalendar()[1]}_{user.id}".encode()
+                ).hexdigest()
+
+                existing = await session.execute(
+                    select(EmailSend).where(
+                        EmailSend.user_id == user.id,
+                        EmailSend.content_hash == content_hash,
+                    )
+                )
+                if existing.scalar_one_or_none():
+                    skipped += 1
+                    continue
+
+                try:
+                    from itsdangerous import URLSafeTimedSerializer
+
+                    serializer = URLSafeTimedSerializer(settings.jwt_secret or "dev-secret")
+                    unsub_token = serializer.dumps(str(user.id), salt="email-unsubscribe")
+
+                    await send_weekly_digest(
+                        email=user.email,
+                        name=user.display_name or "there",
+                        insights=insight_list,
+                        dashboard_url=f"{settings.app_url}/insights",
+                        unsubscribe_url=f"{settings.app_url}/api/email/unsubscribe?token={unsub_token}",
+                    )
+
+                    session.add(EmailSend(
+                        user_id=user.id,
+                        email_type="weekly_digest",
+                        content_hash=content_hash,
+                    ))
+                    sent += 1
+                except Exception:
+                    logger.exception(f"Failed to send weekly digest to user {user.id}")
+
+            await session.commit()
+
+        logger.info(f"Weekly digest: sent={sent}, skipped={skipped}")
+        return {"status": "completed", "sent": sent, "skipped": skipped, "insights": len(insights)}
     except Exception as e:
         logger.error(f"Weekly digest failed: {e}")
         return {"status": "error", "error": str(e)}
@@ -311,6 +381,23 @@ async def _run_scraper(source_name: str, scraper: BaseScraper) -> dict[str, Any]
         Task result with status and count of signals saved
     """
     logger.info(f"Starting {source_name} scraping task")
+
+    # Check if scraper is paused via Redis flag
+    try:
+        import redis.asyncio as aioredis
+
+        r = aioredis.from_url(settings.redis_url)
+        paused = await r.get(f"scraper:paused:{source_name}")
+        await r.aclose()
+        if paused:
+            logger.info(f"{source_name} scraper is paused, skipping")
+            return {
+                "status": "skipped",
+                "source": source_name,
+                "reason": "paused",
+            }
+    except Exception as e:
+        logger.debug(f"Could not check pause flag for {source_name}: {e}")
 
     try:
         async with AsyncSessionLocal() as session:
@@ -796,11 +883,55 @@ class WorkerSettings:
             minute=0,  # Run at the top of every hour
             run_at_startup=False,  # Don't run immediately on worker start
         ),
+        # Analyze signals 30min after each scrape cycle
+        cron(
+            analyze_signals_task,
+            hour={0, 6, 12, 18},
+            minute=30,
+            run_at_startup=False,
+        ),
+        # Daily insight selection at 08:00 UTC
+        cron(
+            fetch_daily_insight_task,
+            hour=8,
+            minute=0,
+            run_at_startup=False,
+        ),
+        # Daily digest at 09:00 UTC
+        cron(
+            send_daily_digests_task,
+            hour=9,
+            minute=0,
+            run_at_startup=False,
+        ),
         # Weekly digest every Monday at 09:00
         cron(
             send_weekly_digest_task,
             weekday="mon",
             hour=9,
+            minute=0,
+            run_at_startup=False,
+        ),
+        # Weekly market report every Wednesday at 06:00 UTC
+        cron(
+            market_insight_publisher_task,
+            weekday="wed",
+            hour=6,
+            minute=0,
+            run_at_startup=False,
+        ),
+        # Weekly success stories every Sunday at 10:00 UTC
+        cron(
+            update_success_stories_task,
+            weekday="sun",
+            hour=10,
+            minute=0,
+            run_at_startup=False,
+        ),
+        # Quality audit after analysis (1h after scrape cycle)
+        cron(
+            insight_quality_audit_task,
+            hour={1, 7, 13, 19},
             minute=0,
             run_at_startup=False,
         ),

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -115,13 +115,13 @@ export default function ValidatePage() {
   const [targetMarket, setTargetMarket] = useState<string | null>(null);
   const [budget, setBudget] = useState<string | null>(null);
 
-  // Get auth token
-  useState(() => {
+  // Get auth token on mount
+  useEffect(() => {
     const supabase = getSupabaseClient();
     supabase.auth.getSession().then(({ data }: { data: { session: { access_token: string } | null } }) => {
       setAccessToken(data.session?.access_token ?? null);
     });
-  });
+  }, []);
 
   const mutation = useMutation({
     mutationFn: () =>

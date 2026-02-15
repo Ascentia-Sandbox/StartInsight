@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { ExternalLink, Search, Filter } from "lucide-react";
+import { ExternalLink, Search, Filter, Calculator, DollarSign, TrendingUp, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -61,6 +63,28 @@ export default function ToolsPage() {
   const [page, setPage] = useState(0);
   const limit = 12;
 
+  // Market calculator state
+  const [tamInput, setTamInput] = useState("1000000000");
+  const [samPercent, setSamPercent] = useState([30]);
+  const [somPercent, setSomPercent] = useState([10]);
+
+  const tamValue = Number(tamInput.replace(/[^0-9]/g, "")) || 0;
+  const samValue = tamValue * (samPercent[0] / 100);
+  const somValue = samValue * (somPercent[0] / 100);
+
+  const formatCurrency = useCallback((value: number) => {
+    if (value >= 1_000_000_000) return `$${(value / 1_000_000_000).toFixed(1)}B`;
+    if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
+    if (value >= 1_000) return `$${(value / 1_000).toFixed(0)}K`;
+    return `$${value.toLocaleString()}`;
+  }, []);
+
+  const formatTamInput = (raw: string) => {
+    const digits = raw.replace(/[^0-9]/g, "");
+    if (!digits) return "";
+    return Number(digits).toLocaleString();
+  };
+
   useEffect(() => {
     fetchTools();
   }, [search, category, pricing, page]);
@@ -105,7 +129,7 @@ export default function ToolsPage() {
       <section className="container mx-auto px-4 py-16 text-center">
         <Badge variant="secondary" className="mb-4">Tools Library</Badge>
         <h1 className="text-4xl md:text-5xl font-bold mb-4">
-          54 Tools to Build Your Startup
+          {total > 0 ? total : ''} Tools to Build Your Startup
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
           Curated collection of essential tools for payments, marketing, development, and more.
@@ -286,6 +310,125 @@ export default function ToolsPage() {
             )}
           </>
         )}
+      </section>
+
+      {/* Market Size Calculator */}
+      <section id="market-calculator" className="container mx-auto px-4 py-16">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <Badge variant="secondary" className="mb-4">
+              <Calculator className="h-3 w-3 mr-1" />
+              Calculator
+            </Badge>
+            <h2 className="text-3xl font-bold mb-2">Market Size Calculator</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Estimate your Total Addressable Market (TAM), Serviceable Addressable Market (SAM), and Serviceable Obtainable Market (SOM).
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Inputs */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Inputs</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    Total Addressable Market (TAM)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                    <Input
+                      value={formatTamInput(tamInput)}
+                      onChange={(e) => setTamInput(e.target.value.replace(/[^0-9]/g, ""))}
+                      placeholder="1,000,000,000"
+                      className="pl-7"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Total market revenue opportunity</p>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-3">
+                  <label className="text-sm font-medium flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <Target className="h-4 w-4 text-muted-foreground" />
+                      SAM % of TAM
+                    </span>
+                    <span className="text-primary font-bold">{samPercent[0]}%</span>
+                  </label>
+                  <Slider
+                    value={samPercent}
+                    onValueChange={setSamPercent}
+                    min={1}
+                    max={100}
+                    step={1}
+                  />
+                  <p className="text-xs text-muted-foreground">% of TAM your product can serve</p>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-3">
+                  <label className="text-sm font-medium flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                      SOM % of SAM
+                    </span>
+                    <span className="text-primary font-bold">{somPercent[0]}%</span>
+                  </label>
+                  <Slider
+                    value={somPercent}
+                    onValueChange={setSomPercent}
+                    min={1}
+                    max={100}
+                    step={1}
+                  />
+                  <p className="text-xs text-muted-foreground">% of SAM you can realistically capture</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Results */}
+            <div className="space-y-4">
+              <Card className="border-2">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-muted-foreground">TAM</span>
+                    <Badge variant="outline">Total Addressable Market</Badge>
+                  </div>
+                  <div className="text-3xl font-bold">{formatCurrency(tamValue)}</div>
+                  <p className="text-xs text-muted-foreground mt-1">Entire market demand</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-2 border-primary/30">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-muted-foreground">SAM</span>
+                    <Badge variant="secondary">Serviceable Addressable</Badge>
+                  </div>
+                  <div className="text-3xl font-bold text-primary">{formatCurrency(samValue)}</div>
+                  <p className="text-xs text-muted-foreground mt-1">{samPercent[0]}% of TAM you can serve</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-2 border-primary/60 bg-primary/5">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-muted-foreground">SOM</span>
+                    <Badge>Serviceable Obtainable</Badge>
+                  </div>
+                  <div className="text-3xl font-bold text-primary">{formatCurrency(somValue)}</div>
+                  <p className="text-xs text-muted-foreground mt-1">{somPercent[0]}% of SAM you can capture</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* CTA Section */}

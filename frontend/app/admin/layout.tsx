@@ -22,6 +22,8 @@ import {
   Plug,
   FileCheck,
   X,
+  Settings,
+  ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Providers } from '../providers';
@@ -99,6 +101,16 @@ const navItems = [
     label: 'Audit Logs',
     href: '/admin/audit-logs',
     icon: ClipboardList,
+  },
+  {
+    label: 'Admin Users',
+    href: '/admin/admin-users',
+    icon: ShieldCheck,
+  },
+  {
+    label: 'Settings',
+    href: '/admin/settings',
+    icon: Settings,
   },
 ];
 

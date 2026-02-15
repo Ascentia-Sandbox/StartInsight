@@ -797,11 +797,16 @@ export default function AgentCommandCenter() {
             onChange={(e) => setAgentEditForm({ ...agentEditForm, system_prompt: e.target.value })}
             placeholder="Enter the system prompt that guides this agent's behavior..."
             rows={isFullView ? 20 : 12}
-            className="font-mono text-sm"
+            className="font-mono text-sm leading-relaxed"
           />
-          <p className="text-xs text-muted-foreground">
-            Leave empty to use the default built-in prompt.
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">
+              Leave empty to use the default built-in prompt.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {agentEditForm.system_prompt.length} characters
+            </p>
+          </div>
         </div>
       </TabsContent>
 

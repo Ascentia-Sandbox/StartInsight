@@ -10,7 +10,7 @@ Usage:
 
 import asyncio
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
 
@@ -1556,7 +1556,7 @@ async def seed_market_insights():
             print(f"Existing market insights in database: {existing_count}\n")
 
             # Generate published_at dates staggered over last 30 days
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
 
             for idx, article_data in enumerate(ARTICLES, 1):
                 print(f"[{idx}/{len(ARTICLES)}] Creating: {article_data['title'][:60]}...")

@@ -4,7 +4,6 @@ Provides types that work with both PostgreSQL and SQLite for testing.
 """
 
 import json
-from typing import Any
 
 from sqlalchemy import JSON, Text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB

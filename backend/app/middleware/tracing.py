@@ -8,7 +8,7 @@ Sprint 2.3: Adds correlation IDs to all requests for distributed tracing.
 """
 
 import time
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware

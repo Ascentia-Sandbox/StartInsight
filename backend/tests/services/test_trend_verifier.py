@@ -4,13 +4,10 @@ Tests the TrendVerifier class which validates LLM-generated
 trend keywords against Google Trends data.
 """
 
-from unittest.mock import MagicMock, patch
 
 import pytest
 
 from app.services.trend_verification import (
-    TrendKeywordData,
-    TrendVerificationResult,
     TrendVerifier,
     compare_growth_claims,
     get_trend_verifier,

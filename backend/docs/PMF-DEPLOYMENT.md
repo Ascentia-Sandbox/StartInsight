@@ -68,7 +68,7 @@ ENVIRONMENT=production
 # ============================================
 # Database (Supabase Pro -- single source of truth)
 # ============================================
-DATABASE_URL=postgresql+asyncpg://postgres.[REF]:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+DATABASE_URL=postgresql+asyncpg://postgres.[REF]:[PASSWORD]@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres
 DB_POOL_SIZE=20  # Supabase Pro: 200 connections available
 DB_MAX_OVERFLOW=30
 DB_SSL=true

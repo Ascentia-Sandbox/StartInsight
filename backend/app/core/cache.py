@@ -12,9 +12,9 @@ Uses JSON serialization for simple data structures.
 
 import json
 import logging
-from datetime import timedelta
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 import redis.asyncio as redis
 from pydantic import BaseModel

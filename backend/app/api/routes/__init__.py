@@ -20,6 +20,8 @@ Phase 9.3: build (builder integrations), community (voting & comments)
 Phase 9.6: gamification (achievements, points, credits)
 Phase 10: integrations (external services, browser extension, bots)
 Phase 12.3: tools, success_stories, trends, market_insights (public content)
+Phase G: settings (admin system settings)
+Phase Q5.1: pulse (market pulse real-time dashboard)
 """
 
 from app.api.routes import (
@@ -40,7 +42,9 @@ from app.api.routes import (
     payments,
     pipeline,
     preferences,
+    pulse,
     research,
+    settings,
     signals,
     success_stories,
     teams,
@@ -76,4 +80,6 @@ __all__ = [
     "success_stories",
     "trends",
     "market_insights",
+    "settings",
+    "pulse",
 ]

@@ -3,7 +3,7 @@
 **Reading Priority:** CRITICAL
 **Read When:** Before implementing features, designing database models, creating APIs
 **Dependencies:** Read active-context.md for current phase, implementation-plan.md for tasks
-**Purpose:** System architecture, 69 database tables, 230 API endpoints, auth, RLS, deployment
+**Purpose:** System architecture, 69 database tables, 232+ API endpoints, auth, RLS, deployment
 **Last Updated:** 2026-02-09
 ---
 
@@ -20,11 +20,11 @@
 | Component | Technology | Port/URL | Purpose |
 |-----------|-----------|----------|---------|
 | **Frontend** | Next.js 16.1.3 (App Router) | 3000 | User dashboard, admin portal, public pages (34 routes) |
-| **Backend** | FastAPI + Uvicorn ASGI | 8000 | REST API (230 endpoints), SSE streaming |
+| **Backend** | FastAPI + Uvicorn ASGI | 8000 | REST API (232+ endpoints), SSE streaming |
 | **Database** | PostgreSQL 16 (Supabase Pro) | 5432 | 69 tables with RLS enabled, single source for dev + prod |
 | **Cache/Queue** | Redis 7 | 6379 | Arq task queue, rate limiting |
 | **Worker** | Arq + APScheduler | N/A | Background scraping (6-hour intervals) |
-| **AI** | Gemini 2.0 Flash (Google) | API | PydanticAI agents (6 agents: analysis, research, competitive intel, market intel, content generation, enhanced analysis) |
+| **AI** | Gemini 2.0 Flash (Google) | API | PydanticAI agents (8 agents: analysis, enhanced analysis, research, competitive intel, market intel, content generation, chat strategist, market insight publisher) |
 | **Scraper** | Crawl4AI, PRAW, pytrends | API | Reddit, Product Hunt, Trends (self-hosted, $0 cost) |
 | **Auth** | Supabase Auth | API | JWT-based, RLS integration |
 | **Payments** | Stripe | API | Checkout, subscriptions, webhooks |
@@ -921,7 +921,7 @@ User → Next.js → GET /api/insights → FastAPI → PostgreSQL → JSON respo
 | Health | Application health check | 1 |
 | **Phase 8-10 Subtotal** | | **79** |
 | **Unspecified/Cross-cutting** | | **19** |
-| **Grand Total** | | **230** |
+| **Grand Total** | | **232+** |
 
 ---
 
@@ -1291,8 +1291,8 @@ Sitemap: https://startinsight.app/sitemap.xml
 | Service | Platform | Region | Specs |
 |---------|----------|--------|-------|
 | **Frontend** | Vercel | Global CDN | Edge runtime, ISR |
-| **Backend** | Railway | US/Singapore | 2 vCPU, 4GB RAM |
-| **Database** | Supabase | Singapore (ap-southeast-1) | Pro tier, connection pooling |
+| **Backend** | Railway | US/Sydney | 2 vCPU, 4GB RAM |
+| **Database** | Supabase | Sydney (ap-southeast-2) | Pro tier, connection pooling |
 | **Redis** | Upstash | Global | 1GB memory, persistent |
 | **Worker** | Railway | Same as backend | Background process |
 

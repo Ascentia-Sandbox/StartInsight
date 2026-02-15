@@ -155,11 +155,15 @@ export default function SuccessStoriesPage() {
             ))}
           </div>
         ) : stories.length === 0 ? (
-          <div className="text-center py-16">
-            <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">
-              Success stories coming soon! Be one of our first success stories.
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Trophy className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Success stories coming soon</h3>
+            <p className="text-muted-foreground max-w-md mb-6">
+              We&apos;re curating inspiring founder journeys and startup success stories from around the world.
             </p>
+            <Button asChild variant="outline">
+              <Link href="/insights">Browse Startup Insights</Link>
+            </Button>
           </div>
         ) : (
           <>

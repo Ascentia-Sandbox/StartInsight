@@ -64,36 +64,14 @@ export const InsightSchema = z.object({
   community_signals_chart: z.array(CommunitySignalSchema).nullable().optional(),
   enhanced_scores: z.array(EnhancedScoreSchema).nullable().optional(),
   trend_keywords: z.array(TrendKeywordSchema).nullable().optional(),
-  // Market sizing (TAM/SAM/SOM)
-  market_sizing: z.object({
-    tam: z.string(),
-    sam: z.string(),
-    som: z.string(),
-    growth_rate: z.string(),
-  }).nullable().optional(),
-  // Advanced frameworks
-  value_ladder: z.array(z.object({
-    tier: z.string().nullable().optional(),
-    name: z.string(),
-    price: z.string(),
-    description: z.string().nullable().optional(),
-    features: z.array(z.string()).optional(),
-  })).nullable().optional(),
+  // Market sizing (TAM/SAM/SOM) - AI output varies
+  market_sizing: z.record(z.string(), z.any()).nullable().optional(),
+  // Advanced frameworks - AI output varies in structure
+  value_ladder: z.any().nullable().optional(),
   market_gap_analysis: z.string().nullable().optional(),
   why_now_analysis: z.string().nullable().optional(),
-  proof_signals: z.array(z.object({
-    signal_type: z.string(),
-    description: z.string(),
-    source: z.string(),
-    confidence: z.string(),
-  })).nullable().optional(),
-  execution_plan: z.array(z.object({
-    step_number: z.number(),
-    title: z.string(),
-    description: z.string(),
-    estimated_time: z.string(),
-    resources_needed: z.array(z.string()).optional(),
-  })).nullable().optional(),
+  proof_signals: z.array(z.record(z.string(), z.any())).nullable().optional(),
+  execution_plan: z.array(z.record(z.string(), z.any())).nullable().optional(),
   // Individual score fields for ScoreRadar component
   opportunity_score: z.number().min(1).max(10).nullable().optional(),
   problem_score: z.number().min(1).max(10).nullable().optional(),

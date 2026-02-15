@@ -43,6 +43,7 @@ class ExecutionStatus(str, Enum):
 class AdminRole(str, Enum):
     """Admin user roles."""
 
+    SUPERADMIN = "superadmin"
     ADMIN = "admin"
     MODERATOR = "moderator"
     VIEWER = "viewer"
@@ -256,7 +257,7 @@ class InsightAdminUpdate(BaseModel):
     value_ladder: dict | None = None
     proof_signals: dict | None = None
     execution_plan: dict | None = None
-    competitor_analysis: dict | None = None
+    competitor_analysis: list | dict | None = None
 
 
 class InsightAdminResponse(BaseModel):
@@ -293,7 +294,7 @@ class InsightAdminResponse(BaseModel):
     value_ladder: dict | None = None
     proof_signals: dict | None = None
     execution_plan: dict | None = None
-    competitor_analysis: dict | None = None
+    competitor_analysis: list | dict | None = None
 
     class Config:
         from_attributes = True
@@ -368,6 +369,19 @@ class AdminUserCreate(BaseModel):
     role: AdminRole
 
 
+class AdminUserPromoteRequest(BaseModel):
+    """Promote a user to admin by email."""
+
+    email: str = Field(..., description="Email of the user to promote")
+    role: AdminRole = Field(AdminRole.ADMIN, description="Admin role to assign")
+
+
+class AdminUserUpdateRequest(BaseModel):
+    """Update admin user role."""
+
+    role: AdminRole = Field(..., description="New admin role")
+
+
 class AdminUserResponse(BaseModel):
     """Admin user response."""
 
@@ -377,6 +391,7 @@ class AdminUserResponse(BaseModel):
     permissions: dict = Field(default_factory=dict)
     created_at: datetime
     user_email: str | None = None
+    user_display_name: str | None = None
 
     class Config:
         from_attributes = True

@@ -4,7 +4,7 @@
 **Read When:** Before every task to understand current phase status
 **Dependencies:** Read project-brief.md first for context
 **Purpose:** Current phase tracking, immediate tasks, blockers, what's working/next
-**Last Updated:** 2026-02-14
+**Last Updated:** 2026-02-15
 ---
 
 # Active Context: StartInsight Development
@@ -13,7 +13,7 @@
 **Phase 1-10 + A-L:** Fully Complete (100% - Professional Overhaul)
 **Testing Complete:** 233+ backend tests passing, 47 E2E tests (5 browsers)
 **Production Status:** All phases integrated, build verified, deployment ready
-**Database:** 69 tables, 230+ API endpoints, 8 AI agents, 6 active scrapers
+**Database:** 69 tables, 232+ API endpoints, 8 AI agents, 6 active scrapers
 **Infrastructure:** Supabase Pro ($25/mo) as sole database, Railway Free backend, Vercel frontend (~$30/mo PMF deployment)
 **Design System:** Instrument Serif + Satoshi + JetBrains Mono, teal/amber palette (no longer IdeaBrowser clone)
 **Content Pipeline:** 6 scrapers (Reddit, PH, Google Trends, Twitter/X, HN, Firecrawl), 150+ signals/day target
@@ -60,7 +60,7 @@
 **Beating IdeaBrowser - Superadmin + Competitive Features (2026-02-14)**
 
 **System Status:**
-- ✅ **Phase 1-10 Complete:** All 69 tables, 230 endpoints, 8 AI agents operational
+- ✅ **Phase 1-10 Complete:** All 69 tables, 232+ endpoints, 8 AI agents operational
 - ✅ **Phase A Complete:** Superadmin Content Completeness (6 tasks, 14 admin nav items)
 - ✅ **Quality Infrastructure:** Content review queue, pipeline monitoring, user analytics
 - ✅ **Engagement Features:** User preferences, idea chat, community voting, gamification
@@ -83,7 +83,13 @@
 12. ✅ Phase 16.2 - Dynamic Schedule Management (cron/interval/manual from DB)
 13. ✅ Phase 15.4 - Content Editing Enhancements (bulk export/import for 4 content types)
 
-**All Planned Phases Complete.** The "Beat IdeaBrowser" plan (Phases A-F) is fully implemented.
+14. ✅ Phase Q1 - Pulse Page (real-time SSE feed, `/api/pulse/live` endpoint)
+15. ✅ Phase Q2 - Founder Fits Redesign (teal/amber design system, score bars)
+16. ✅ Phase Q3 - Idea of the Day with Social Sharing (meta tags, copy-to-clipboard)
+17. ✅ Phase Q4 - Trend Sparklines (inline SVG mini-charts on InsightCards)
+18. ✅ Phase Q5 - Insight Comparison Tool (side-by-side radar + table)
+
+**All Planned Phases Complete.** The "Beat IdeaBrowser" plan (Phases A-L) + Q1-Q5 quality improvements are fully implemented.
 
 ## Testing Status (Verified 2026-02-08)
 
@@ -226,7 +232,7 @@ StartInsight achieves feature parity with IdeaBrowser ($499-$2,999/year) while d
 - Impact: Visual evidence for every claim, users can verify data sources, trace insights to original discussions
 
 **4. APAC Regional Optimization (Phase 4.5)**
-- StartInsight: Singapore region (50ms latency), local payment methods
+- StartInsight: Sydney region (50ms latency), APAC optimized
 - IdeaBrowser: US-based (180ms latency for APAC users)
 - Impact: 72% faster APAC experience, 50-70% cheaper pricing
 
@@ -470,7 +476,7 @@ system_metrics, tenants, tenant_users
 **Phase 1: Data Collection Loop (Complete)**
 - [x] **Phase 1.1-1.8 Complete**: Full backend infrastructure operational
 - [x] Git repository, Python environment with `uv` and 173 packages
-- [x] Supabase Pro PostgreSQL (ap-southeast-1) + Redis 7 (port 6379 local / Upstash production)
+- [x] Supabase Pro PostgreSQL (ap-southeast-2 Sydney) + Redis 7 (port 6379 local / Upstash production)
 - [x] SQLAlchemy 2.0 async configured, database connection verified
 - [x] RawSignal model, Alembic migrations, Firecrawl client with retry logic
 - [x] 3 scrapers implemented (Reddit, Product Hunt, Google Trends)
@@ -618,14 +624,14 @@ For Phase 3 development setup and key technology decisions, see `archived/phase-
 ## Current Blockers
 
 ### 1. Production Deployment - HIGH (Ready to Execute)
-- **Status:** All code complete, ready for deployment
-- **Environment:** Railway (backend), Vercel (frontend), Supabase (database)
+- **Status:** All code complete (Phases 1-10 + A-L + Q1-Q5), ready for deployment
+- **Environment:** Railway (backend), Vercel (frontend), Supabase Pro (database, ap-southeast-2)
 - **Prerequisites:** Configure production environment variables
 - **Next Action:** Deploy backend to Railway, frontend to Vercel
 
 ### 2. E2E Test Updates - LOW (47 tests complete, updates pending)
 - **Status:** Phase 1-3: 47 Playwright tests passing (cross-browser, responsive, dark mode)
-- **Pending:** Phase 4-7: Tests pending for authenticated flows (login, workspace, admin, payment)
+- **Pending:** Phase 4-7+: Tests pending for authenticated flows (login, workspace, admin, payment)
 - **Next Action:** Optional for initial production launch, recommended before scaling
 
 ---
@@ -752,6 +758,6 @@ When resuming work:
 
 ---
 
-**Last Updated**: 2026-02-08
+**Last Updated**: 2026-02-15
 **Updated By**: Lead Architect (Claude)
 **Status**: Phase 1-10 COMPLETE (backend + frontend + migration + testing). 338 total tests verify production readiness. All phases integrated. Ready for production deployment.

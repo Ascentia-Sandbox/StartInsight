@@ -14,7 +14,6 @@ from datetime import datetime, timedelta
 
 sys.path.insert(0, "/home/wysetime-pcc/Nero/StartInsight/backend")
 
-from sqlalchemy import text
 
 from app.db.session import AsyncSessionLocal
 from app.models.insight import Insight

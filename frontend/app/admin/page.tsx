@@ -1,22 +1,25 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Loader2, Zap, DollarSign, Clock, Play, Pause, RotateCcw,
   FileText, AlertTriangle, Users, Wrench, TrendingUp, BarChart3,
-  Trophy, BookOpen, ExternalLink,
+  Trophy, BookOpen, ExternalLink, Eye, Bookmark, Activity,
 } from 'lucide-react';
 import {
-  BarChart, Bar, AreaChart, Area, LineChart, Line,
+  BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import {
   fetchAdminDashboard, fetchAgentStatus, pauseAgent, resumeAgent,
   triggerAgent, fetchAdminUsers,
+  fetchAnalyticsContent, fetchAnalyticsEngagement,
+  fetchAnalyticsUsers, fetchAnalyticsHealth,
+  fetchAgentCostAnalytics,
 } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,57 +36,16 @@ const CHART_COLORS = {
   emerald: '#10B981',
   coral: '#E5604E',
   slateBlue: '#4A6FA5',
+  purple: '#8B5CF6',
+  pink: '#EC4899',
 } as const;
 
-// -------------------------------------------------
-// TODO: Replace mock chart data with real API calls
-// when backend analytics endpoints are available.
-// -------------------------------------------------
-function generateMockChartData() {
-  const days = 14;
-  const now = new Date();
-  const contentVolume = [];
-  const agentActivity = [];
-  const userGrowth = [];
-  const qualityScores = [];
-
-  let cumulativeUsers = 42;
-
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-    contentVolume.push({
-      date: label,
-      reddit: Math.floor(Math.random() * 30) + 10,
-      hackernews: Math.floor(Math.random() * 20) + 5,
-      twitter: Math.floor(Math.random() * 15) + 3,
-      producthunt: Math.floor(Math.random() * 10) + 2,
-    });
-
-    agentActivity.push({
-      date: label,
-      scraper: Math.floor(Math.random() * 8) + 2,
-      analyzer: Math.floor(Math.random() * 6) + 1,
-      reviewer: Math.floor(Math.random() * 4) + 1,
-    });
-
-    cumulativeUsers += Math.floor(Math.random() * 5);
-    userGrowth.push({
-      date: label,
-      users: cumulativeUsers,
-    });
-
-    qualityScores.push({
-      date: label,
-      avgScore: +(Math.random() * 2 + 6.5).toFixed(1),
-    });
-  }
-
-  return { contentVolume, agentActivity, userGrowth, qualityScores };
-}
-// -------------------------------------------------
+const TIER_COLORS: Record<string, string> = {
+  free: '#94A3B8',
+  starter: '#0D7377',
+  pro: '#8B5CF6',
+  enterprise: '#D4A017',
+};
 
 export default function AdminDashboard() {
   const [isMounted, setIsMounted] = useState(false);
@@ -108,17 +70,23 @@ function AdminContent() {
   const queryClient = useQueryClient();
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [analyticsDays, setAnalyticsDays] = useState(30);
 
   useEffect(() => {
     const checkAuth = async () => {
-      const supabase = getSupabaseClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push('/auth/login?redirectTo=/admin');
-        return;
+      try {
+        const supabase = getSupabaseClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          router.push('/auth/login?redirectTo=/admin');
+          return;
+        }
+        setAccessToken(session.access_token);
+      } catch (error) {
+        console.error('Admin auth check failed:', error);
+      } finally {
+        setIsCheckingAuth(false);
       }
-      setAccessToken(session.access_token);
-      setIsCheckingAuth(false);
     };
     checkAuth();
   }, [router]);
@@ -127,6 +95,7 @@ function AdminContent() {
     queryKey: ['admin-dashboard', accessToken],
     queryFn: () => fetchAdminDashboard(accessToken!),
     enabled: !!accessToken,
+    retry: 1,
     refetchInterval: 15000,
   });
 
@@ -134,6 +103,7 @@ function AdminContent() {
     queryKey: ['admin-agents', accessToken],
     queryFn: () => fetchAgentStatus(accessToken!),
     enabled: !!accessToken,
+    retry: 1,
     refetchInterval: 15000,
   });
 
@@ -200,6 +170,37 @@ function AdminContent() {
     enabled: !!accessToken,
   });
 
+  // Real analytics data
+  const { data: contentData } = useQuery({
+    queryKey: ['admin-analytics-content', accessToken, analyticsDays],
+    queryFn: () => fetchAnalyticsContent(accessToken!, analyticsDays),
+    enabled: !!accessToken,
+  });
+
+  const { data: engagementData } = useQuery({
+    queryKey: ['admin-analytics-engagement', accessToken, analyticsDays],
+    queryFn: () => fetchAnalyticsEngagement(accessToken!, analyticsDays),
+    enabled: !!accessToken,
+  });
+
+  const { data: userAnalytics } = useQuery({
+    queryKey: ['admin-analytics-users', accessToken],
+    queryFn: () => fetchAnalyticsUsers(accessToken!),
+    enabled: !!accessToken,
+  });
+
+  const { data: healthData } = useQuery({
+    queryKey: ['admin-analytics-health', accessToken],
+    queryFn: () => fetchAnalyticsHealth(accessToken!),
+    enabled: !!accessToken,
+  });
+
+  const { data: costData } = useQuery({
+    queryKey: ['admin-analytics-costs', accessToken],
+    queryFn: () => fetchAgentCostAnalytics(accessToken!, '7d'),
+    enabled: !!accessToken,
+  });
+
   const pauseMutation = useMutation({
     mutationFn: (agentType: string) => pauseAgent(accessToken!, agentType),
     onSuccess: (_data, agentType) => {
@@ -254,19 +255,54 @@ function AdminContent() {
     );
   }
 
-  if (metricsError) {
+  if (!accessToken) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
             <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
+            <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
             <p className="text-muted-foreground mb-4">
-              You do not have admin access.
+              Please sign in to access the admin dashboard.
             </p>
-            <Link href="/dashboard">
-              <Button>Return to Dashboard</Button>
+            <Link href="/auth/login?redirectTo=/admin">
+              <Button>Sign In</Button>
             </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (metricsError) {
+    const isNetworkError = metricsError instanceof TypeError || (metricsError as Error)?.message?.includes('fetch');
+    const is403 = (metricsError as { status?: number })?.status === 403;
+
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Card className="max-w-md">
+          <CardContent className="p-8 text-center">
+            <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">
+              {is403 ? 'Access Denied' : isNetworkError ? 'Backend Unavailable' : 'Something Went Wrong'}
+            </h2>
+            <p className="text-muted-foreground mb-4">
+              {is403
+                ? 'You do not have admin access.'
+                : isNetworkError
+                ? 'Cannot connect to the backend server. Please ensure it is running.'
+                : (metricsError as Error)?.message || 'An unexpected error occurred.'}
+            </p>
+            <div className="flex gap-2 justify-center">
+              {!is403 && (
+                <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-dashboard'] })}>
+                  Retry
+                </Button>
+              )}
+              <Link href={is403 ? '/dashboard' : '/admin'}>
+                <Button>{is403 ? 'Return to Dashboard' : 'Reload'}</Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -281,8 +317,42 @@ function AdminContent() {
 
   const isLoading = metricsLoading || agentsLoading;
 
-  // TODO: Replace with real data from analytics endpoints
-  const chartData = useMemo(() => generateMockChartData(), []);
+  // Transform real data for charts
+  const tierChartData = userAnalytics?.by_tier?.map((t) => ({
+    name: t.tier.charAt(0).toUpperCase() + t.tier.slice(1),
+    value: t.count,
+    mrr: t.mrr,
+    fill: TIER_COLORS[t.tier] || CHART_COLORS.slateBlue,
+  })) || [];
+
+  const costChartData = costData?.daily_breakdown
+    ? Object.entries(
+        costData.daily_breakdown.reduce((acc: Record<string, Record<string, number>>, item) => {
+          if (!acc[item.date]) acc[item.date] = {};
+          acc[item.date][item.agent_type] = (acc[item.date][item.agent_type] || 0) + item.cost_usd;
+          return acc;
+        }, {})
+      ).map(([date, agents]) => ({
+        date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        ...agents,
+      }))
+    : [];
+
+  const agentCostTypes = costData?.cost_by_agent ? Object.keys(costData.cost_by_agent) : [];
+  const agentColors = [CHART_COLORS.teal, CHART_COLORS.coral, CHART_COLORS.slateBlue, CHART_COLORS.amber, CHART_COLORS.purple];
+
+  const healthChartData = [
+    ...Object.entries(healthData?.agent_success_rates || {}).map(([name, rate]) => ({
+      name: name.replace(/_/g, ' '),
+      rate,
+      fill: rate >= 90 ? CHART_COLORS.emerald : rate >= 70 ? CHART_COLORS.amber : CHART_COLORS.coral,
+    })),
+    ...Object.entries(healthData?.scraper_success_rates || {}).map(([name, rate]) => ({
+      name: name.replace(/_/g, ' '),
+      rate,
+      fill: rate >= 90 ? CHART_COLORS.emerald : rate >= 70 ? CHART_COLORS.amber : CHART_COLORS.coral,
+    })),
+  ];
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl">
@@ -419,121 +489,241 @@ function AdminContent() {
             </Link>
           </div>
 
-          {/* Analytics Charts (2x2 grid) */}
-          <h2 className="text-lg font-semibold mb-3">Analytics Overview</h2>
+          {/* Analytics Charts (2x2 grid) — Real Data */}
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold">Analytics Overview</h2>
+            <div className="flex gap-1">
+              {[7, 30, 90].map((d) => (
+                <Button
+                  key={d}
+                  variant={analyticsDays === d ? 'default' : 'ghost'}
+                  size="sm"
+                  className="text-xs h-7 px-2"
+                  onClick={() => setAnalyticsDays(d)}
+                >
+                  {d}d
+                </Button>
+              ))}
+            </div>
+          </div>
           <div className="grid gap-4 md:grid-cols-2 mb-6">
-            {/* 1. Content Volume - Stacked BarChart */}
+            {/* 1. User Distribution by Tier */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Content Volume</CardTitle>
-                <CardDescription>Signals scraped per day by source</CardDescription>
+                <CardTitle className="text-sm font-medium">User Distribution</CardTitle>
+                <CardDescription>Users by subscription tier</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={240}>
-                  <BarChart data={chartData.contentVolume} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                    <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                    <Tooltip
-                      contentStyle={{ borderRadius: 8, fontSize: 12, border: '1px solid hsl(var(--border))' }}
-                    />
-                    <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="reddit" stackId="a" fill={CHART_COLORS.teal} name="Reddit" radius={[0, 0, 0, 0]} />
-                    <Bar dataKey="hackernews" stackId="a" fill={CHART_COLORS.amber} name="HackerNews" />
-                    <Bar dataKey="twitter" stackId="a" fill={CHART_COLORS.slateBlue} name="Twitter" />
-                    <Bar dataKey="producthunt" stackId="a" fill={CHART_COLORS.emerald} name="ProductHunt" radius={[2, 2, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {tierChartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={240}>
+                    <PieChart>
+                      <Pie
+                        data={tierChartData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={90}
+                        paddingAngle={3}
+                        dataKey="value"
+                        label={({ name, value }) => `${name}: ${value}`}
+                      >
+                        {tierChartData.map((entry, i) => (
+                          <Cell key={i} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{ borderRadius: 8, fontSize: 12, border: '1px solid hsl(var(--border))' }}
+                        formatter={(value, _name, props) => [
+                          `${value} users ($${((props.payload as Record<string, number>)?.mrr || 0).toFixed(0)} MRR)`,
+                        ]}
+                      />
+                      <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[240px] text-muted-foreground text-sm">
+                    No user data available
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* 2. Agent Activity - BarChart */}
+            {/* 2. Agent Cost Breakdown */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Agent Activity</CardTitle>
-                <CardDescription>Agent executions per day</CardDescription>
+                <CardTitle className="text-sm font-medium">Agent Costs (7d)</CardTitle>
+                <CardDescription>
+                  Daily LLM spend — ${costData?.total_cost_usd?.toFixed(2) || '0.00'} total
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={240}>
-                  <BarChart data={chartData.agentActivity} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                    <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                    <Tooltip
-                      contentStyle={{ borderRadius: 8, fontSize: 12, border: '1px solid hsl(var(--border))' }}
-                    />
-                    <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="scraper" fill={CHART_COLORS.teal} name="Scraper" radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="analyzer" fill={CHART_COLORS.coral} name="Analyzer" radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="reviewer" fill={CHART_COLORS.slateBlue} name="Reviewer" radius={[2, 2, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {costChartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={240}>
+                    <BarChart data={costChartData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                      <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" tickFormatter={(v) => `$${v}`} />
+                      <Tooltip
+                        contentStyle={{ borderRadius: 8, fontSize: 12, border: '1px solid hsl(var(--border))' }}
+                        formatter={(value) => [`$${Number(value).toFixed(4)}`]}
+                      />
+                      <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
+                      {agentCostTypes.map((type, i) => (
+                        <Bar
+                          key={type}
+                          dataKey={type}
+                          stackId="a"
+                          fill={agentColors[i % agentColors.length]}
+                          name={type.replace(/_/g, ' ')}
+                          radius={i === agentCostTypes.length - 1 ? [2, 2, 0, 0] : [0, 0, 0, 0]}
+                        />
+                      ))}
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[240px] text-muted-foreground text-sm">
+                    No cost data available yet
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* 3. User Growth - AreaChart */}
+            {/* 3. Content Performance */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">User Growth</CardTitle>
-                <CardDescription>Cumulative users over time</CardDescription>
+                <CardTitle className="text-sm font-medium">Content Performance</CardTitle>
+                <CardDescription>Views, saves & engagement ({analyticsDays}d)</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={240}>
-                  <AreaChart data={chartData.userGrowth} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="userGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={CHART_COLORS.emerald} stopOpacity={0.3} />
-                        <stop offset="95%" stopColor={CHART_COLORS.emerald} stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                    <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                    <Tooltip
-                      contentStyle={{ borderRadius: 8, fontSize: 12, border: '1px solid hsl(var(--border))' }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="users"
-                      stroke={CHART_COLORS.emerald}
-                      strokeWidth={2}
-                      fill="url(#userGradient)"
-                      name="Users"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                    </div>
+                    <div className="text-xl font-bold">{contentData?.total_insight_views || 0}</div>
+                    <p className="text-[10px] text-muted-foreground">Insight Views</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <Bookmark className="h-3.5 w-3.5 text-muted-foreground" />
+                    </div>
+                    <div className="text-xl font-bold">{contentData?.total_insight_saves || 0}</div>
+                    <p className="text-[10px] text-muted-foreground">Insight Saves</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
+                    </div>
+                    <div className="text-xl font-bold">{contentData?.total_article_views || 0}</div>
+                    <p className="text-[10px] text-muted-foreground">Article Views</p>
+                  </div>
+                </div>
+                {contentData?.top_insights && contentData.top_insights.length > 0 ? (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">Top Insights</p>
+                    {contentData.top_insights.slice(0, 5).map((insight) => (
+                      <div key={insight.id} className="flex items-center justify-between text-xs">
+                        <span className="truncate max-w-[200px]">{insight.title}</span>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            {insight.interactions} interactions
+                          </Badge>
+                          <span className="text-muted-foreground">{insight.score?.toFixed(1)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground text-sm">
+                    No content interaction data
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* 4. Content Quality - LineChart */}
+            {/* 4. System Health — Success Rates */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Content Quality</CardTitle>
-                <CardDescription>Average quality score trend</CardDescription>
+                <CardTitle className="text-sm font-medium">System Health</CardTitle>
+                <CardDescription>
+                  Agent & scraper success rates — {healthData?.recent_errors || 0} errors
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={240}>
-                  <LineChart data={chartData.qualityScores} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                    <YAxis domain={[5, 10]} tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                    <Tooltip
-                      contentStyle={{ borderRadius: 8, fontSize: 12, border: '1px solid hsl(var(--border))' }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="avgScore"
-                      stroke={CHART_COLORS.amber}
-                      strokeWidth={2}
-                      dot={{ fill: CHART_COLORS.amber, r: 3 }}
-                      activeDot={{ r: 5 }}
-                      name="Avg Score"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                {healthChartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={240}>
+                    <BarChart data={healthChartData} layout="vertical" margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}%`} />
+                      <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10 }} className="text-muted-foreground" />
+                      <Tooltip
+                        contentStyle={{ borderRadius: 8, fontSize: 12, border: '1px solid hsl(var(--border))' }}
+                        formatter={(value) => [`${value}%`, 'Success Rate']}
+                      />
+                      <Bar dataKey="rate" radius={[0, 4, 4, 0]}>
+                        {healthChartData.map((entry, i) => (
+                          <Cell key={i} fill={entry.fill} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[240px]">
+                    <div className="text-center text-muted-foreground">
+                      <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No health data available</p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
+
+          {/* Engagement Summary */}
+          {engagementData && (
+            <div className="grid gap-4 md:grid-cols-4 mb-6">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs font-medium text-muted-foreground">DAU</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{engagementData.dau}</div>
+                  <p className="text-xs text-muted-foreground">Daily active users</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs font-medium text-muted-foreground">MAU</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{engagementData.mau}</div>
+                  <p className="text-xs text-muted-foreground">Monthly active users</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs font-medium text-muted-foreground">Stickiness</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{(engagementData.dau_mau_ratio * 100).toFixed(1)}%</div>
+                  <p className="text-xs text-muted-foreground">DAU/MAU ratio</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs font-medium text-muted-foreground">Avg Session</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {engagementData.avg_session_duration_sec > 60
+                      ? `${(engagementData.avg_session_duration_sec / 60).toFixed(1)}m`
+                      : `${Math.round(engagementData.avg_session_duration_sec)}s`}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Session duration</p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Quick Actions */}
           <h2 className="text-lg font-semibold mb-3">Quick Actions</h2>

@@ -90,8 +90,8 @@ Every insight MUST include data-driven visualizations. No insight is complete wi
 
 **Data Structures (Backend - 100% Complete):**
 - **Database:** 69 tables (26 Phase 1-7 + 43 Phase 8-10)
-- **API:** 230 endpoints (131 Phase 1-7 + 99 Phase 8-10)
-- **AI Agents:** 6 agents (analyzer, enhanced_analyzer, research, competitive_intel, market_intel, content_generator)
+- **API:** 232+ endpoints (131 Phase 1-7 + 99 Phase 8-10 + 2 Q1-Q5)
+- **AI Agents:** 8 agents (analyzer, enhanced_analyzer, research, competitive_intel, market_intel, content_generator, chat_agent, market_insight_publisher)
 - community_signals_chart (JSONB): Platform, communities, members, score, top_community
 - enhanced_scores (JSONB): 8-dimension scoring (opportunity, problem, feasibility, why_now, revenue, execution, gtm, founder_fit)
 - trend_keywords (JSONB): Keyword, volume, growth percentage
@@ -179,7 +179,7 @@ User Value: Dashboard displays high-quality insights with multi-chart visualizat
 
 Enterprise Features: Content quality management, pipeline command center, user analytics, gamification, integration ecosystem all operational.
 
-Database Scale: **69 tables**, **230 API endpoints**, **6 AI agents** - Full feature parity with IdeaBrowser achieved.
+Database Scale: **69 tables**, **232+ API endpoints**, **8 AI agents** - Full feature parity with IdeaBrowser achieved.
 
 Testing Infrastructure: **291 backend tests (85% coverage), 47 E2E tests (5 browsers)** verify production readiness.
 

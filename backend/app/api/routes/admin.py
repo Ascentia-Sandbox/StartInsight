@@ -28,6 +28,7 @@ from sse_starlette.sse import EventSourceResponse
 from starlette.responses import StreamingResponse
 
 from app.api.deps import AdminUser
+from app.core.config import settings
 from app.core.constants import InsightStatus
 from app.core.rate_limits import limiter
 from app.db.query_helpers import count_by_field
@@ -42,7 +43,12 @@ from app.models.success_story import SuccessStory
 from app.models.system_metric import SystemMetric
 from app.models.tool import Tool
 from app.models.trend import Trend
+from app.models.user import User as UserModel
 from app.schemas.admin import (
+    AdminUserListResponse,
+    AdminUserPromoteRequest,
+    AdminUserResponse,
+    AdminUserUpdateRequest,
     AgentControlResponse,
     AgentStatusResponse,
     DashboardMetricsResponse,
@@ -440,9 +446,46 @@ async def trigger_agent(
     await db.commit()
     await db.refresh(log)
 
-    # TODO: Actually enqueue the task with Arq
-    # from app.worker import arq_redis
-    # job = await arq_redis.enqueue_job(task_map[agent_type])
+    # Enqueue the Arq job for this agent type
+    agent_task_map = {
+        "reddit_scraper": "scrape_reddit_task",
+        "product_hunt_scraper": "scrape_product_hunt_task",
+        "trends_scraper": "scrape_trends_task",
+        "twitter_scraper": "scrape_twitter_task",
+        "hackernews_scraper": "scrape_hackernews_task",
+        "analyzer": "analyze_signals_task",
+        "enhanced_analyzer": "analyze_signals_task",
+        "quality_reviewer": "insight_quality_audit_task",
+        "market_insight_publisher": "market_insight_publisher_task",
+        "market_insight_quality_review": "market_insight_quality_review_task",
+        "content_pipeline": "run_content_pipeline_task",
+        "research_agent": "run_research_agent_auto_task",
+        "content_generator": "run_content_generator_auto_task",
+        "competitive_intel": "run_competitive_intel_auto_task",
+        "market_intel": "run_market_intel_auto_task",
+        "daily_insight": "fetch_daily_insight_task",
+        "daily_digest": "send_daily_digests_task",
+        "success_stories": "update_success_stories_task",
+        "scrape_all": "scrape_all_sources_task",
+    }
+
+    task_name = agent_task_map.get(agent_type)
+    if task_name:
+        try:
+            from arq.connections import ArqRedis, create_pool
+            from arq.connections import RedisSettings as ArqRedisSettings
+
+            pool: ArqRedis = await create_pool(ArqRedisSettings(
+                host=settings.redis_host,
+                port=settings.redis_port,
+            ))
+            job = await pool.enqueue_job(task_name)
+            await pool.aclose()
+            logger.info(f"Enqueued Arq job '{task_name}' (job_id={job.job_id}) for agent {agent_type}")
+        except Exception as e:
+            logger.warning(f"Failed to enqueue Arq job for {agent_type}: {e}")
+    else:
+        logger.warning(f"No task mapping found for agent_type '{agent_type}', log created but job not enqueued")
 
     logger.info(f"Agent {agent_type} triggered by admin {admin.email}")
 
@@ -1377,6 +1420,247 @@ async def import_content(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Import failed: {str(e)}",
         )
+
+
+# ============================================
+# ADMIN USER MANAGEMENT ENDPOINTS
+# ============================================
+
+
+@router.get("/admin-users", response_model=AdminUserListResponse)
+async def list_admin_users(
+    admin: AdminUser,
+    db: AsyncSession = Depends(get_db),
+) -> AdminUserListResponse:
+    """
+    List all admin users with joined user info.
+
+    Returns admin records with email, display_name, role, and created_at.
+    """
+    result = await db.execute(
+        select(AdminUserModel).order_by(AdminUserModel.created_at.desc())
+    )
+    admin_users = result.scalars().all()
+
+    items = []
+    for au in admin_users:
+        items.append(
+            AdminUserResponse(
+                id=au.id,
+                user_id=au.user_id,
+                role=au.role,
+                permissions=au.permissions,
+                created_at=au.created_at,
+                user_email=au.user.email if au.user else None,
+                user_display_name=au.user.display_name if au.user else None,
+            )
+        )
+
+    logger.info(f"Admin {admin.email} listed {len(items)} admin users")
+
+    return AdminUserListResponse(items=items, total=len(items))
+
+
+@router.post("/admin-users", response_model=AdminUserResponse, status_code=status.HTTP_201_CREATED)
+async def promote_user_to_admin(
+    payload: AdminUserPromoteRequest,
+    admin: AdminUser,
+    db: AsyncSession = Depends(get_db),
+) -> AdminUserResponse:
+    """
+    Promote a user to admin by email.
+
+    Looks up the user by email, then creates an admin_users record
+    with the specified role (superadmin, admin, moderator, or viewer).
+    """
+    # Find user by email
+    user_result = await db.execute(
+        select(UserModel).where(UserModel.email == payload.email)
+    )
+    target_user = user_result.scalar_one_or_none()
+
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No user found with email: {payload.email}",
+        )
+
+    # Check if user is already an admin
+    existing_result = await db.execute(
+        select(AdminUserModel).where(AdminUserModel.user_id == target_user.id)
+    )
+    if existing_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"User {payload.email} is already an admin",
+        )
+
+    # Create admin user record
+    new_admin = AdminUserModel(
+        user_id=target_user.id,
+        role=payload.role.value,
+        permissions={},
+    )
+    db.add(new_admin)
+
+    # Audit log
+    audit = AuditLog(
+        user_id=admin.id,
+        action=AuditLog.ACTION_CREATE,
+        resource_type="admin_user",
+        resource_id=new_admin.id,
+        details={
+            "promoted_email": payload.email,
+            "promoted_user_id": str(target_user.id),
+            "role": payload.role.value,
+            "admin_email": admin.email,
+        },
+    )
+    db.add(audit)
+
+    await db.commit()
+    await db.refresh(new_admin)
+
+    logger.info(
+        f"Admin {admin.email} promoted {payload.email} to {payload.role.value}"
+    )
+
+    return AdminUserResponse(
+        id=new_admin.id,
+        user_id=new_admin.user_id,
+        role=new_admin.role,
+        permissions=new_admin.permissions,
+        created_at=new_admin.created_at,
+        user_email=target_user.email,
+        user_display_name=target_user.display_name,
+    )
+
+
+@router.patch("/admin-users/{admin_user_id}", response_model=AdminUserResponse)
+async def update_admin_role(
+    admin_user_id: UUID,
+    payload: AdminUserUpdateRequest,
+    admin: AdminUser,
+    db: AsyncSession = Depends(get_db),
+) -> AdminUserResponse:
+    """
+    Update an admin user's role.
+
+    Changes the role of an existing admin user record.
+    """
+    admin_record = await db.get(AdminUserModel, admin_user_id)
+    if not admin_record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Admin user record not found",
+        )
+
+    old_role = admin_record.role
+    admin_record.role = payload.role.value
+
+    # Audit log
+    audit = AuditLog(
+        user_id=admin.id,
+        action=AuditLog.ACTION_UPDATE,
+        resource_type="admin_user",
+        resource_id=admin_user_id,
+        details={
+            "old_role": old_role,
+            "new_role": payload.role.value,
+            "target_user_id": str(admin_record.user_id),
+            "admin_email": admin.email,
+        },
+    )
+    db.add(audit)
+
+    await db.commit()
+    await db.refresh(admin_record)
+
+    # Invalidate Redis cache for the affected user
+    cache_key = f"admin_role:{admin_record.user_id}"
+    try:
+        from app.api.deps import get_redis
+        redis = await get_redis()
+        await redis.delete(cache_key)
+    except Exception as e:
+        logger.warning(f"Failed to invalidate admin cache for {admin_record.user_id}: {e}")
+
+    logger.info(
+        f"Admin {admin.email} changed admin_user {admin_user_id} role: "
+        f"{old_role} -> {payload.role.value}"
+    )
+
+    return AdminUserResponse(
+        id=admin_record.id,
+        user_id=admin_record.user_id,
+        role=admin_record.role,
+        permissions=admin_record.permissions,
+        created_at=admin_record.created_at,
+        user_email=admin_record.user.email if admin_record.user else None,
+        user_display_name=admin_record.user.display_name if admin_record.user else None,
+    )
+
+
+@router.delete("/admin-users/{admin_user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_admin_access(
+    admin_user_id: UUID,
+    admin: AdminUser,
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """
+    Remove admin access from a user.
+
+    Deletes the admin_users record but keeps the user account intact.
+    An admin cannot remove their own admin access.
+    """
+    admin_record = await db.get(AdminUserModel, admin_user_id)
+    if not admin_record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Admin user record not found",
+        )
+
+    # Prevent self-removal
+    if admin_record.user_id == admin.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot remove your own admin access",
+        )
+
+    target_email = admin_record.user.email if admin_record.user else "unknown"
+    target_user_id = admin_record.user_id
+
+    # Audit log
+    audit = AuditLog(
+        user_id=admin.id,
+        action=AuditLog.ACTION_DELETE,
+        resource_type="admin_user",
+        resource_id=admin_user_id,
+        details={
+            "removed_email": target_email,
+            "removed_user_id": str(target_user_id),
+            "removed_role": admin_record.role,
+            "admin_email": admin.email,
+        },
+    )
+    db.add(audit)
+
+    await db.delete(admin_record)
+    await db.commit()
+
+    # Invalidate Redis cache for the removed user
+    cache_key = f"admin_role:{target_user_id}"
+    try:
+        from app.api.deps import get_redis
+        redis = await get_redis()
+        await redis.delete(cache_key)
+    except Exception as e:
+        logger.warning(f"Failed to invalidate admin cache for {target_user_id}: {e}")
+
+    logger.info(
+        f"Admin {admin.email} removed admin access for {target_email} "
+        f"(admin_user_id={admin_user_id})"
+    )
 
 
 # ============================================

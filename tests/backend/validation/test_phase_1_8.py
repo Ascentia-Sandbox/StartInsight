@@ -148,7 +148,7 @@ def test_docker_services_documented():
 
     assert "PostgreSQL 16" in content
     assert "Redis 7" in content
-    assert "5433" in content  # PostgreSQL port
+    assert "5432" in content  # PostgreSQL port (Supabase)
     assert "6379" in content  # Redis port
 
     logger.info("✓ Docker services documented")
