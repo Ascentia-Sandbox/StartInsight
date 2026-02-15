@@ -12,6 +12,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import AdminUser
+from app.api.utils import escape_like
 from app.db.session import get_db
 from app.models.success_story import SuccessStory
 from app.schemas.public_content import (
@@ -55,9 +56,10 @@ async def list_success_stories(
     if featured is not None:
         query = query.where(SuccessStory.is_featured == featured)
     if search:
+        safe_search = escape_like(search)
         query = query.where(
-            (SuccessStory.founder_name.ilike(f"%{search}%"))
-            | (SuccessStory.company_name.ilike(f"%{search}%"))
+            (SuccessStory.founder_name.ilike(f"%{safe_search}%"))
+            | (SuccessStory.company_name.ilike(f"%{safe_search}%"))
         )
 
     # Sort by created_at descending
@@ -77,9 +79,10 @@ async def list_success_stories(
     if featured is not None:
         count_query = count_query.where(SuccessStory.is_featured == featured)
     if search:
+        safe_search = escape_like(search)
         count_query = count_query.where(
-            (SuccessStory.founder_name.ilike(f"%{search}%"))
-            | (SuccessStory.company_name.ilike(f"%{search}%"))
+            (SuccessStory.founder_name.ilike(f"%{safe_search}%"))
+            | (SuccessStory.company_name.ilike(f"%{safe_search}%"))
         )
 
     total = await db.scalar(count_query)

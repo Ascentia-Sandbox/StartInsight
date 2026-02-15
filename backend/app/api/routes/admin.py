@@ -28,6 +28,7 @@ from sse_starlette.sse import EventSourceResponse
 from starlette.responses import StreamingResponse
 
 from app.api.deps import AdminUser
+from app.api.utils import escape_like
 from app.core.config import settings
 from app.core.constants import InsightStatus
 from app.core.rate_limits import limiter
@@ -673,7 +674,7 @@ async def list_insights_admin(
     if max_score is not None:
         query = query.where(Insight.relevance_score <= max_score)
     if search:
-        search_term = f"%{search}%"
+        search_term = f"%{escape_like(search)}%"
         query = query.where(
             Insight.problem_statement.ilike(search_term)
             | Insight.proposed_solution.ilike(search_term)
@@ -880,7 +881,7 @@ async def export_insights(
     if status_filter:
         query = query.where(Insight.admin_status == status_filter)
     if search:
-        search_term = f"%{search}%"
+        search_term = f"%{escape_like(search)}%"
         query = query.where(
             Insight.problem_statement.ilike(search_term)
             | Insight.proposed_solution.ilike(search_term)

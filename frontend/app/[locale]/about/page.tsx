@@ -48,9 +48,23 @@ const milestones = [
   { year: "2025", event: "10,000+ founders and $50M+ in ideas launched" },
 ];
 
+const orgJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "StartInsight",
+  url: "https://startinsight.app",
+  description: "AI-powered startup idea discovery platform helping entrepreneurs find, validate, and build their next venture.",
+  foundingDate: "2024",
+  sameAs: ["https://twitter.com/startinsight"],
+};
+
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+      />
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16 text-center">
         <Badge variant="secondary" className="mb-4">About Us</Badge>

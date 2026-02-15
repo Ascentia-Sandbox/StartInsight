@@ -7,11 +7,13 @@ import logging
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import AdminUser
+from app.api.utils import escape_like
+from app.core.rate_limits import limiter
 from app.db.session import get_db
 from app.models.tool import Tool
 from app.schemas.public_content import (
@@ -27,7 +29,9 @@ router = APIRouter(prefix="/api/tools", tags=["tools"])
 
 
 @router.get("", response_model=ToolListResponse)
+@limiter.limit("30/minute")
 async def list_tools(
+    request: Request,
     category: Annotated[
         str | None, Query(description="Filter by category")
     ] = None,
@@ -61,12 +65,13 @@ async def list_tools(
     if category:
         query = query.where(Tool.category == category)
     if pricing:
-        query = query.where(Tool.pricing.ilike(f"%{pricing}%"))
+        query = query.where(Tool.pricing.ilike(f"%{escape_like(pricing)}%"))
     if featured is not None:
         query = query.where(Tool.is_featured == featured)
     if search:
+        safe_search = escape_like(search)
         query = query.where(
-            (Tool.name.ilike(f"%{search}%")) | (Tool.tagline.ilike(f"%{search}%"))
+            (Tool.name.ilike(f"%{safe_search}%")) | (Tool.tagline.ilike(f"%{safe_search}%"))
         )
 
     # Sort by sort_order, then by name
@@ -84,12 +89,13 @@ async def list_tools(
     if category:
         count_query = count_query.where(Tool.category == category)
     if pricing:
-        count_query = count_query.where(Tool.pricing.ilike(f"%{pricing}%"))
+        count_query = count_query.where(Tool.pricing.ilike(f"%{escape_like(pricing)}%"))
     if featured is not None:
         count_query = count_query.where(Tool.is_featured == featured)
     if search:
+        safe_search = escape_like(search)
         count_query = count_query.where(
-            (Tool.name.ilike(f"%{search}%")) | (Tool.tagline.ilike(f"%{search}%"))
+            (Tool.name.ilike(f"%{safe_search}%")) | (Tool.tagline.ilike(f"%{safe_search}%"))
         )
 
     total = await db.scalar(count_query)
@@ -105,7 +111,9 @@ async def list_tools(
 
 
 @router.get("/featured", response_model=list[ToolResponse])
+@limiter.limit("30/minute")
 async def get_featured_tools(
+    request: Request,
     limit: Annotated[int, Query(ge=1, le=20, description="Number of featured tools")] = 6,
     db: AsyncSession = Depends(get_db),
 ) -> list[ToolResponse]:
@@ -127,6 +135,23 @@ async def get_featured_tools(
     logger.info(f"Retrieved {len(tools)} featured tools")
 
     return [ToolResponse.model_validate(t) for t in tools]
+
+
+@router.get("/categories", response_model=list[str])
+async def list_tool_categories(
+    db: AsyncSession = Depends(get_db),
+) -> list[str]:
+    """
+    Get all distinct tool categories.
+
+    Returns a sorted list of unique category strings.
+    """
+    result = await db.execute(
+        select(Tool.category).distinct().order_by(Tool.category)
+    )
+    categories = [row[0] for row in result.fetchall() if row[0]]
+    logger.info(f"Listed {len(categories)} tool categories")
+    return categories
 
 
 @router.get("/{tool_id}", response_model=ToolResponse)

@@ -17,6 +17,7 @@ from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db, require_admin
+from app.api.utils import escape_like
 from app.models.admin_user import AdminUser
 from app.models.agent_control import AuditLog
 from app.models.agent_execution_log import AgentExecutionLog
@@ -415,10 +416,11 @@ async def list_users(
     )
 
     if search:
+        safe_search = escape_like(search)
         query = query.where(
             or_(
-                User.email.ilike(f"%{search}%"),
-                User.display_name.ilike(f"%{search}%")
+                User.email.ilike(f"%{safe_search}%"),
+                User.display_name.ilike(f"%{safe_search}%")
             )
         )
 

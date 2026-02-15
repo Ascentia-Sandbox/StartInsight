@@ -73,11 +73,24 @@ export default function ContactPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
-    setSubmitted(true);
-    setLoading(false);
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.detail || "Failed to send message");
+      }
+
+      setSubmitted(true);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to send message. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (

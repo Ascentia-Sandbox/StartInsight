@@ -170,6 +170,32 @@ export default function MarketInsightsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      {articles.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "CollectionPage",
+              name: "Market Insights & Analysis",
+              url: "https://startinsight.app/market-insights",
+              mainEntity: {
+                "@type": "ItemList",
+                itemListElement: articles.slice(0, 10).map((a, i) => ({
+                  "@type": "ListItem",
+                  position: i + 1,
+                  item: {
+                    "@type": "Article",
+                    headline: a.title,
+                    description: a.summary,
+                    url: `https://startinsight.app/market-insights/${a.slug}`,
+                  },
+                })),
+              },
+            }),
+          }}
+        />
+      )}
       {/* Hero Section */}
       <section className="container mx-auto px-4 pt-16 pb-10 text-center">
         <Badge variant="secondary" className="mb-4">Market Intelligence</Badge>

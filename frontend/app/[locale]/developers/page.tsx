@@ -224,7 +224,7 @@ export default function DevelopersPage() {
               Build with the StartInsight API
             </h1>
             <p className="text-xl text-slate-300 mb-8">
-              Access 130+ endpoints to integrate startup insights, trend
+              Access 230+ endpoints to integrate startup insights, trend
               predictions, and AI-powered research into your applications.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
@@ -245,7 +245,7 @@ export default function DevelopersPage() {
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
               <div className="text-center">
-                <div className="text-3xl font-bold text-white">130+</div>
+                <div className="text-3xl font-bold text-white">230+</div>
                 <div className="text-slate-400">API Endpoints</div>
               </div>
               <div className="text-center">

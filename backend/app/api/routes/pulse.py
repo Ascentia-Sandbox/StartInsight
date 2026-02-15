@@ -4,12 +4,14 @@ Public endpoint (no auth) designed to drive organic SEO traffic.
 """
 
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.rate_limits import limiter
 
 from app.db.session import get_db
 from app.models.insight import Insight
@@ -37,7 +39,11 @@ class PulseResponse(BaseModel):
 
 
 @router.get("", response_model=PulseResponse)
-async def get_market_pulse(db: AsyncSession = Depends(get_db)) -> PulseResponse:
+@limiter.limit("30/minute")
+async def get_market_pulse(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> PulseResponse:
     """
     Get real-time market pulse data.
 
@@ -46,85 +52,114 @@ async def get_market_pulse(db: AsyncSession = Depends(get_db)) -> PulseResponse:
     - SEO traffic from "startup trends today" queries
     - Demonstrating pipeline activity to visitors
     """
-    now = datetime.now(UTC)
-    day_ago = now - timedelta(hours=24)
-
-    # Signals collected in last 24h
-    signals_result = await db.execute(
-        select(func.count()).where(RawSignal.created_at >= day_ago)
-    )
-    signals_24h = signals_result.scalar() or 0
-
-    # Insights generated in last 24h
-    insights_24h_result = await db.execute(
-        select(func.count()).where(Insight.created_at >= day_ago)
-    )
-    insights_24h = insights_24h_result.scalar() or 0
-
-    # Total insights
-    total_result = await db.execute(select(func.count()).select_from(Insight))
-    total_insights = total_result.scalar() or 0
-
-    # Top sources in last 24h
-    sources_result = await db.execute(
-        select(RawSignal.source, func.count().label("cnt"))
-        .where(RawSignal.created_at >= day_ago)
-        .group_by(RawSignal.source)
-        .order_by(text("cnt DESC"))
-        .limit(6)
-    )
-    top_sources = {row.source: row.cnt for row in sources_result.fetchall()}
-
-    # Trending keywords from recent insights (JSONB extraction)
-    trending_keywords: list[TrendingKeyword] = []
     try:
-        kw_result = await db.execute(
-            select(Insight.trend_keywords)
-            .where(Insight.trend_keywords.isnot(None))
-            .order_by(Insight.created_at.desc())
-            .limit(10)
-        )
-        seen = set()
-        for row in kw_result.fetchall():
-            if not row[0]:
-                continue
-            for kw in row[0]:
-                keyword = kw.get("keyword", "") if isinstance(kw, dict) else ""
-                if keyword and keyword not in seen:
-                    seen.add(keyword)
-                    trending_keywords.append(TrendingKeyword(
-                        keyword=keyword,
-                        volume=kw.get("volume"),
-                        growth=kw.get("growth"),
-                    ))
+        now = datetime.utcnow()
+        day_ago = now - timedelta(hours=24)
+
+        # Signals collected in last 24h
+        signals_24h = 0
+        try:
+            signals_result = await db.execute(
+                select(func.count()).where(RawSignal.created_at >= day_ago)
+            )
+            signals_24h = signals_result.scalar() or 0
+        except Exception as e:
+            logger.warning(f"Failed to query signals_24h: {e}")
+
+        # Insights generated in last 24h
+        insights_24h = 0
+        try:
+            insights_24h_result = await db.execute(
+                select(func.count()).where(Insight.created_at >= day_ago)
+            )
+            insights_24h = insights_24h_result.scalar() or 0
+        except Exception as e:
+            logger.warning(f"Failed to query insights_24h: {e}")
+
+        # Total insights
+        total_insights = 0
+        try:
+            total_result = await db.execute(select(func.count()).select_from(Insight))
+            total_insights = total_result.scalar() or 0
+        except Exception as e:
+            logger.warning(f"Failed to query total_insights: {e}")
+
+        # Top sources in last 24h
+        top_sources: dict[str, int] = {}
+        try:
+            sources_result = await db.execute(
+                select(RawSignal.source, func.count().label("cnt"))
+                .where(RawSignal.created_at >= day_ago)
+                .group_by(RawSignal.source)
+                .order_by(text("cnt DESC"))
+                .limit(6)
+            )
+            top_sources = {row.source: row.cnt for row in sources_result.fetchall()}
+        except Exception as e:
+            logger.warning(f"Failed to query top_sources: {e}")
+
+        # Trending keywords from recent insights (JSONB extraction)
+        trending_keywords: list[TrendingKeyword] = []
+        try:
+            kw_result = await db.execute(
+                select(Insight.trend_keywords)
+                .where(Insight.trend_keywords.isnot(None))
+                .order_by(Insight.created_at.desc())
+                .limit(10)
+            )
+            seen = set()
+            for row in kw_result.fetchall():
+                if not row[0]:
+                    continue
+                for kw in row[0]:
+                    keyword = kw.get("keyword", "") if isinstance(kw, dict) else ""
+                    if keyword and keyword not in seen:
+                        seen.add(keyword)
+                        trending_keywords.append(TrendingKeyword(
+                            keyword=keyword,
+                            volume=kw.get("volume"),
+                            growth=kw.get("growth"),
+                        ))
+                    if len(trending_keywords) >= 10:
+                        break
                 if len(trending_keywords) >= 10:
                     break
-            if len(trending_keywords) >= 10:
-                break
-    except Exception as e:
-        logger.debug(f"Could not extract trending keywords: {e}")
+        except Exception as e:
+            logger.debug(f"Could not extract trending keywords: {e}")
 
-    # Hottest markets from recent insight market_size_estimate
-    hottest_markets: list[str] = []
-    try:
-        markets_result = await db.execute(
-            select(Insight.market_size_estimate, func.count().label("cnt"))
-            .where(Insight.created_at >= now - timedelta(days=7))
-            .where(Insight.market_size_estimate.isnot(None))
-            .group_by(Insight.market_size_estimate)
-            .order_by(text("cnt DESC"))
-            .limit(5)
+        # Hottest markets from recent insight market_size_estimate
+        hottest_markets: list[str] = []
+        try:
+            markets_result = await db.execute(
+                select(Insight.market_size_estimate, func.count().label("cnt"))
+                .where(Insight.created_at >= now - timedelta(days=7))
+                .where(Insight.market_size_estimate.isnot(None))
+                .group_by(Insight.market_size_estimate)
+                .order_by(text("cnt DESC"))
+                .limit(5)
+            )
+            hottest_markets = [row.market_size_estimate for row in markets_result.fetchall()]
+        except Exception as e:
+            logger.debug(f"Could not extract hottest markets: {e}")
+
+        return PulseResponse(
+            signals_24h=signals_24h,
+            insights_24h=insights_24h,
+            total_insights=total_insights,
+            trending_keywords=trending_keywords,
+            hottest_markets=hottest_markets,
+            top_sources=top_sources,
+            last_updated=now.isoformat(),
         )
-        hottest_markets = [row.market_size_estimate for row in markets_result.fetchall()]
-    except Exception as e:
-        logger.debug(f"Could not extract hottest markets: {e}")
 
-    return PulseResponse(
-        signals_24h=signals_24h,
-        insights_24h=insights_24h,
-        total_insights=total_insights,
-        trending_keywords=trending_keywords,
-        hottest_markets=hottest_markets,
-        top_sources=top_sources,
-        last_updated=now.isoformat(),
-    )
+    except Exception as e:
+        logger.error(f"Catastrophic failure in get_market_pulse: {e}", exc_info=True)
+        return PulseResponse(
+            signals_24h=0,
+            insights_24h=0,
+            total_insights=0,
+            trending_keywords=[],
+            hottest_markets=[],
+            top_sources={},
+            last_updated=datetime.utcnow().isoformat(),
+        )

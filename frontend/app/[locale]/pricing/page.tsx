@@ -122,8 +122,27 @@ const faqs = [
 ];
 
 export default function PricingPage() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "StartInsight",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    url: "https://startinsight.app/pricing",
+    offers: [
+      { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD", description: "5 idea generations/month, basic scoring" },
+      { "@type": "Offer", name: "Starter", price: "19", priceCurrency: "USD", billingIncrement: "MON", description: "50 ideas/month, 8-dimension scoring, AI research" },
+      { "@type": "Offer", name: "Pro", price: "49", priceCurrency: "USD", billingIncrement: "MON", description: "Unlimited ideas, full research, builder integrations, team" },
+      { "@type": "Offer", name: "Enterprise", price: "299", priceCurrency: "USD", billingIncrement: "MON", description: "White-label, dedicated support, custom integrations" },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16 text-center">
         <Badge variant="secondary" className="mb-4">Simple Pricing</Badge>

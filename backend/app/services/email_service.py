@@ -188,6 +188,29 @@ TEMPLATES: dict[str, EmailTemplate] = {
         </div>
         """,
     ),
+    "contact_form": EmailTemplate(
+        subject="New Contact Form: {{subject}}",
+        html_template="""
+        <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #3B82F6;">New Contact Form Submission</h1>
+
+            <div style="background: #F3F4F6; border-radius: 8px; padding: 16px; margin: 16px 0;">
+                <p style="margin: 4px 0;"><strong>From:</strong> {{name}} ({{email}})</p>
+                <p style="margin: 4px 0;"><strong>Subject:</strong> {{subject}}</p>
+                <p style="margin: 4px 0;"><strong>Time:</strong> {{timestamp}}</p>
+            </div>
+
+            <div style="border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; margin: 16px 0;">
+                <h3 style="margin: 0 0 8px 0;">Message</h3>
+                <p style="color: #374151; white-space: pre-wrap;">{{message}}</p>
+            </div>
+
+            <p style="margin-top: 24px; color: #6B7280; font-size: 12px;">
+                Reply directly to <a href="mailto:{{email}}">{{email}}</a> to respond.
+            </p>
+        </div>
+        """,
+    ),
     "password_reset": EmailTemplate(
         subject="Reset Your StartInsight Password",
         html_template="""

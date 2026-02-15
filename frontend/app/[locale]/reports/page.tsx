@@ -206,7 +206,9 @@ export default function ReportsPage() {
 
   const handleGenerateReport = async () => {
     setIsGenerating(true);
-    // Simulate API call
+    // TODO: Replace with real API call when backend report generation endpoint exists.
+    // Currently uses sampleReport placeholder data with a simulated delay.
+    // Target endpoint: POST /api/reports/generate with { report_type: selectedReportType }
     await new Promise((resolve) => setTimeout(resolve, 2000));
     setReport(sampleReport);
     setIsGenerating(false);

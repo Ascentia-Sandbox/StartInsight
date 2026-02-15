@@ -88,6 +88,31 @@ export default function SuccessStoriesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      {stories.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "CollectionPage",
+              name: "Startup Success Stories",
+              url: "https://startinsight.app/success-stories",
+              mainEntity: {
+                "@type": "ItemList",
+                itemListElement: stories.map((s, i) => ({
+                  "@type": "ListItem",
+                  position: i + 1,
+                  item: {
+                    "@type": "Article",
+                    headline: s.title,
+                    url: `https://startinsight.app/success-stories/${s.id}`,
+                  },
+                })),
+              },
+            }),
+          }}
+        />
+      )}
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16 text-center">
         <Badge variant="secondary" className="mb-4">Success Stories</Badge>

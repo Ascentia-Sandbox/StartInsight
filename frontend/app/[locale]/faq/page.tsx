@@ -104,6 +104,18 @@ const faqCategories = [
 export default function FAQPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqCategories.flatMap((cat) =>
+      cat.faqs.map((faq) => ({
+        "@type": "Question",
+        name: faq.question,
+        acceptedAnswer: { "@type": "Answer", text: faq.answer },
+      }))
+    ),
+  };
+
   const filteredCategories = faqCategories
     .map((category) => ({
       ...category,
@@ -117,6 +129,10 @@ export default function FAQPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16 text-center">
         <Badge variant="secondary" className="mb-4">Help Center</Badge>

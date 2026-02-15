@@ -297,6 +297,7 @@ from app.api.routes import (  # noqa: E402
     build,
     build_tools,
     chat,
+    contact,
     community,
     content_review,
     export,
@@ -353,6 +354,7 @@ app.include_router(validator.router, tags=["Idea Validator"])  # Phase 19.1
 app.include_router(chat.router, tags=["Chat Strategist"])  # Phase B
 app.include_router(settings_routes.router, tags=["System Settings"])  # Phase G
 app.include_router(pulse.router, tags=["Market Pulse"])  # Phase Q5.1
+app.include_router(contact.router, tags=["Contact"])  # Phase Q6.3
 
 # Static file serving for uploaded images (Phase 20.1)
 os.makedirs("uploads/images", exist_ok=True)

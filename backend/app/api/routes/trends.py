@@ -8,12 +8,15 @@ import logging
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.rate_limits import limiter
+
 from app.api.deps import AdminUser
+from app.api.utils import escape_like
 from app.db.session import get_db
 from app.models.trend import Trend
 from app.schemas.public_content import (
@@ -53,7 +56,9 @@ router = APIRouter(prefix="/api/trends", tags=["trends"])
 
 
 @router.get("", response_model=TrendListResponse)
+@limiter.limit("30/minute")
 async def list_trends(
+    request: Request,
     category: Annotated[
         str | None, Query(description="Filter by category")
     ] = None,
@@ -92,7 +97,7 @@ async def list_trends(
     if featured is not None:
         query = query.where(Trend.is_featured == featured)
     if search:
-        query = query.where(Trend.keyword.ilike(f"%{search}%"))
+        query = query.where(Trend.keyword.ilike(f"%{escape_like(search)}%"))
 
     # Apply sorting
     if sort == "volume":
@@ -116,7 +121,7 @@ async def list_trends(
     if featured is not None:
         count_query = count_query.where(Trend.is_featured == featured)
     if search:
-        count_query = count_query.where(Trend.keyword.ilike(f"%{search}%"))
+        count_query = count_query.where(Trend.keyword.ilike(f"%{escape_like(search)}%"))
 
     total = await db.scalar(count_query)
 
@@ -131,7 +136,9 @@ async def list_trends(
 
 
 @router.get("/categories", response_model=list[str])
+@limiter.limit("30/minute")
 async def get_trend_categories(
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> list[str]:
     """
@@ -360,7 +367,7 @@ async def get_trend_prediction_by_keyword(
     """
     # Find trend by keyword
     query = select(Trend).where(
-        Trend.keyword.ilike(f"%{keyword}%"),
+        Trend.keyword.ilike(f"%{escape_like(keyword)}%"),
         Trend.is_published == True,
     )
     result = await db.execute(query)

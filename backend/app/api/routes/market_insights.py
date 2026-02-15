@@ -14,6 +14,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import AdminUser
+from app.api.utils import escape_like
 from app.db.session import get_db
 from app.models.market_insight import MarketInsight
 from app.schemas.public_content import (
@@ -72,9 +73,10 @@ async def list_market_insights(
     if featured is not None:
         query = query.where(MarketInsight.is_featured == featured)
     if search:
+        safe_search = escape_like(search)
         query = query.where(
-            (MarketInsight.title.ilike(f"%{search}%"))
-            | (MarketInsight.summary.ilike(f"%{search}%"))
+            (MarketInsight.title.ilike(f"%{safe_search}%"))
+            | (MarketInsight.summary.ilike(f"%{safe_search}%"))
         )
 
     # Sort by published_at descending
@@ -96,9 +98,10 @@ async def list_market_insights(
     if featured is not None:
         count_query = count_query.where(MarketInsight.is_featured == featured)
     if search:
+        safe_search = escape_like(search)
         count_query = count_query.where(
-            (MarketInsight.title.ilike(f"%{search}%"))
-            | (MarketInsight.summary.ilike(f"%{search}%"))
+            (MarketInsight.title.ilike(f"%{safe_search}%"))
+            | (MarketInsight.summary.ilike(f"%{safe_search}%"))
         )
 
     total = await db.scalar(count_query)
