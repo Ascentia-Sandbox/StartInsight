@@ -3,14 +3,10 @@
 import logging
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Request
 from pydantic import BaseModel, EmailStr, Field
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rate_limits import limiter
-from app.db.session import get_db
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +30,6 @@ class ContactResponse(BaseModel):
 async def submit_contact_form(
     request: Request,
     data: ContactRequest,
-    db: AsyncSession = Depends(get_db),
 ) -> ContactResponse:
     """
     Submit a contact form message.
