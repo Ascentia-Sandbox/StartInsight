@@ -141,8 +141,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (insightsRes.ok) {
       const insightsData = await insightsRes.json();
       const insightPages = (insightsData.insights || []).map(
-        (insight: { id: string; updated_at?: string }) => ({
-          url: `${BASE_URL}/insights/${insight.id}`,
+        (insight: { id: string; slug?: string; updated_at?: string }) => ({
+          url: `${BASE_URL}/insights/${insight.slug || insight.id}`,
           lastModified: insight.updated_at ? new Date(insight.updated_at) : new Date(),
           changeFrequency: "weekly" as const,
           priority: 0.6,

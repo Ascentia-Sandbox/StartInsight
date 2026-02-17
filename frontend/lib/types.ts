@@ -53,6 +53,8 @@ export const TrendKeywordSchema = z.object({
 export const InsightSchema = z.object({
   id: z.string().uuid(),
   raw_signal_id: z.string().uuid(),
+  slug: z.string().nullable().optional(),
+  title: z.string().nullable().optional(),
   problem_statement: z.string(),
   proposed_solution: z.string(),
   market_size_estimate: z.string(), // Any string (e.g., "$5B-$20B", "Small", "Large")

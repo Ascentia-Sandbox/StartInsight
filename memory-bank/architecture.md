@@ -101,6 +101,7 @@ User → Next.js → GET /api/insights → FastAPI → PostgreSQL → JSON respo
 - id (UUID PK), raw_signal_id (UUID FK), problem_statement (text), proposed_solution (text), market_size_estimate (enum: Small/Medium/Large), relevance_score (float 0-1), competitor_analysis (JSONB array), created_at
 - Enhanced scoring (Phase 4.3): opportunity_score, problem_score, feasibility_score, why_now_score, go_to_market_score, founder_fit_score, execution_difficulty_score (all 1-10)
 - Framework fields: value_ladder (JSONB), market_gap_analysis (text), why_now_analysis (text), revenue_potential (text)
+- **slug** (varchar 255, unique, nullable) — SEO-friendly URL slug added via migrations c006-c008; auto-generated from problem_statement; used by frontend route `/insights/[slug]/` (replaced `/insights/[id]/`)
 
 ### 4.2 User & Auth Tables (Phase 4.1)
 
@@ -238,7 +239,7 @@ User → Next.js → GET /api/insights → FastAPI → PostgreSQL → JSON respo
 
 **Critical indexes** (all tables):
 - `raw_signals`: idx_source, idx_processed, idx_created_at
-- `insights`: idx_relevance_score, idx_created_at, idx_raw_signal_id, idx_opportunity_score
+- `insights`: idx_relevance_score, idx_created_at, idx_raw_signal_id, idx_opportunity_score, **idx_slug** (unique, c006-c008)
 - `saved_insights`: idx_user_id, idx_status
 - `user_ratings`: idx_user_id, idx_insight_id
 - `api_keys`: idx_user_id, idx_key_prefix, idx_is_active
@@ -2109,6 +2110,94 @@ def mock_claude():
 
 ---
 
+---
+
+## 15. Phase A-L & Q1-Q9 Feature Enhancements
+**Last Updated**: 2026-02-17
+
+### 15.1 Admin Portal (Phase A-L)
+
+**System Settings** (`/admin/settings`)
+- `system_settings` table — JSONB store for admin-configurable runtime values
+- Grouped by category; GET `/api/admin/settings` returns `{ settings: { [group]: { [key]: value } } }`
+- PUT `/api/admin/settings/{key}` — upsert (creates if not exists)
+- Alembic revision `c003` adds the table (revision IDs must be ≤32 chars)
+
+**Content Review workflow** (`/admin/content`)
+- Approve/reject/edit AI-generated insights before publication
+- Bulk moderation actions with audit trail
+
+**Agent Management** (`/admin/agents`)
+- Live status panel showing all 8 registered agents
+- Enable/disable, trigger manual runs, view last-run timestamps
+
+**Shared Admin Components**:
+- `hooks/useAdminAuth.ts` — admin-only auth guard
+- `components/admin/admin-page-header.tsx` — consistent admin header
+- `components/admin/admin-states.tsx` — loading/error/empty states
+
+### 15.2 Quality Improvements (Q1-Q9)
+
+**Q1 — Live Pulse Page** (`/pulse`)
+- New route: `backend/app/api/routes/pulse.py`
+- SSE endpoint: `GET /api/pulse/live` — real-time market signal stream
+- Frontend: streaming EventSource component with auto-reconnect
+
+**Q2 — Founder Fits Redesign**
+- Teal/amber design system replacing default gray
+- Score bars (visual progress indicators) for each fit dimension
+- Data fetched from existing `/api/insights/{id}` scoring fields
+
+**Q3 — Idea of the Day Sharing**
+- Copy-to-clipboard share button with formatted text
+- Social meta tags (OpenGraph + Twitter Card) per idea
+- Route: `/idea-of-the-day`
+
+**Q4 — Trend Sparklines**
+- Inline SVG mini-charts on `InsightCard` component
+- Renders trend data from `insights.metadata.trend_data[]` (7-point array)
+- Zero dependency — pure SVG path generation
+
+**Q5 — Insight Comparison Tool**
+- Side-by-side comparison of 2 insights
+- Radar chart (Chart.js) overlaying both score profiles
+- Comparison table: 7 scoring dimensions × 2 insights
+
+**Q6 — Critical Bug Fixes**
+- Pulse SSE endpoint: fixed connection leak on client disconnect
+- Tools page: fixed broken filter state after navigation
+- Contact form: fixed rate limiting bypass via header spoofing
+
+**Q7 — SEO Overhaul**
+- JSON-LD structured data on insight detail pages
+- OpenGraph + Twitter Card meta on all public pages
+- `sitemap.ts` generating dynamic sitemap for all published insights
+- `hreflang` tags for en/ja locale variants
+
+**Q8 — Data Quality**
+- ILIKE query sanitization (escape `%` and `_` in user search input)
+- Stats API validation — null-safe aggregation queries
+- Insight slug backfill script (`scripts/backfill_trend_data.py`)
+
+**Q9 — Rate Limiting**
+- Per-endpoint limits via SlowAPI decorators
+- Per-user limits using JWT `sub` claim as key
+- Graceful degradation: 429 response with `Retry-After` header
+- Config in `app/core/rate_limits.py` (active implementation)
+
+### 15.3 API Endpoint Count Update
+
+| Phase | Endpoints Added | Running Total |
+|-------|----------------|---------------|
+| Phase 1-7 | 133 | 133 |
+| Phase 8-10 | 99 | 232 |
+| Q1 (Pulse SSE) | 1 | 233 |
+| Q6-Q9 (bugfixes/hardening) | ~2 | 235+ |
+
+**Current total: 235+ endpoints**, 35+ route files
+
+---
+
 ## Conclusion
 
 StartInsight architecture prioritizes:
@@ -2119,4 +2208,4 @@ StartInsight architecture prioritizes:
 5. **Performance**: Query optimization, eager loading, ISR
 6. **Extensibility**: Phase 8-10 adds 43 tables and 99 endpoints for admin control, user engagement, and integration ecosystem
 
-**Next action**: Production deployment (Railway + Vercel + Supabase)
+**Current status**: Production deployed (Railway + Vercel + Supabase Pro). Phase A-L + Q1-Q9 complete.

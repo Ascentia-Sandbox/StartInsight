@@ -199,7 +199,7 @@ export default function FounderFitsPage() {
                       {formatDistanceToNow(new Date(idea.created_at), { addSuffix: true })}
                     </span>
                     <Button asChild size="sm" className="bg-violet-600 hover:bg-violet-700">
-                      <Link href={`/insights/${idea.id}`}>
+                      <Link href={`/insights/${idea.slug || idea.id}`}>
                         Explore Idea
                         <ArrowRight className="ml-1 h-4 w-4" />
                       </Link>

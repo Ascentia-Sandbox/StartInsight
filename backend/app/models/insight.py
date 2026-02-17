@@ -101,6 +101,15 @@ class Insight(Base):
     # Phase 4.3: Enhanced 8-Dimension Scoring
     # ============================================
 
+    # URL-friendly slug for human-readable URLs
+    slug: Mapped[str | None] = mapped_column(
+        String(250),
+        unique=True,
+        index=True,
+        nullable=True,
+        doc="URL-friendly slug derived from title",
+    )
+
     # Optional title for display
     title: Mapped[str | None] = mapped_column(
         String(200),

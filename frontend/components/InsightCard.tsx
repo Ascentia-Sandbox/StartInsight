@@ -138,12 +138,12 @@ export function InsightCard({ insight }: InsightCardProps) {
   const ConfidenceIcon = confidence.icon;
 
   return (
-    <Link href={`/insights/${insight.id}`} className="block group">
+    <Link href={`/insights/${insight.slug || insight.id}`} className="block group">
       <div className="card-hover h-full flex flex-col rounded-xl border bg-card p-5 transition-all">
         {/* Header: Title + Source badge */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <h3 className="text-base font-semibold leading-snug line-clamp-2 group-hover:text-primary transition-colors">
-            {insight.proposed_solution}
+            {insight.title || insight.proposed_solution}
           </h3>
           {sourceDisplay && (
             <span className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${sourceDisplay.className}`}>

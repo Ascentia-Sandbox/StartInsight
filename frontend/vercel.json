@@ -6,11 +6,15 @@
   "outputDirectory": ".next",
   "regions": ["sfo1"],
   "env": {
-    "NEXT_PUBLIC_API_URL": "@startinsight-api-url"
+    "NEXT_PUBLIC_API_URL": "@startinsight-api-url",
+    "NEXT_PUBLIC_SUPABASE_URL": "@startinsight-supabase-url",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@startinsight-supabase-anon-key"
   },
   "build": {
     "env": {
-      "NEXT_PUBLIC_API_URL": "@startinsight-api-url"
+      "NEXT_PUBLIC_API_URL": "@startinsight-api-url",
+      "NEXT_PUBLIC_SUPABASE_URL": "@startinsight-supabase-url",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@startinsight-supabase-anon-key"
     }
   },
   "headers": [

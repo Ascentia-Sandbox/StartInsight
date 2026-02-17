@@ -4,7 +4,7 @@
 **Read When:** After completing tasks (for logging), before starting work (to avoid duplication)
 **Dependencies:** Read active-context.md to know what phase you're in before logging
 **Purpose:** Completion log (Phase 1-10 complete + Production Readiness), recent changes, upcoming tasks
-**Last Updated:** 2026-02-14
+**Last Updated:** 2026-02-17
 ---
 
 # StartInsight - Progress Log
@@ -12,6 +12,28 @@
 This file tracks all significant changes made to the project. Each entry follows the format defined in CLAUDE.md Workflows section.
 
 ---
+
+## Recent Progress (2026-02-17)
+
+- [2026-02-17] [PROD-PREP]: Pre-production blocking fixes
+  - Files: frontend/.dockerignore (NEW), config.py (contact_email), contact.py, ci-cd.yml (staging job), deleted DEPLOYMENT-GUIDE.md
+  - Tech: contact email now configurable via env; staging CI/CD deploys on develop branch; DEPLOYMENT-GUIDE replaced by production-plan.md
+  - Status: [✓ Complete]
+
+- [2026-02-17] [AUDIT]: Full codebase audit — cleanup, reorganization, memory-bank sync
+  - Files: deleted rate_limiter.py, score-radar.tsx, 3 frontend scripts, 5 archived scripts, render.yaml; moved 18 PNGs → docs/screenshots/; updated architecture.md, tech-stack.md
+  - Tech: Removed 6 dead files; added Q1-Q9 + slug + admin portal sections to memory bank
+  - Status: [✓ Complete]
+
+- [2026-02-17] [CLEANUP]: Dead code removal + production plan saved to memory-bank
+  - Files: memory-bank/production-plan.md (NEW), deleted backend/main.py, run_analysis.py, test_enhanced_analyzer.py, test_content_quality.py, app/utils/__init__.py; archived 5 seed scripts
+  - Tech: Kept rate_limits.py (9+ imports), api_version.py (registered in main.py); verified app imports clean
+  - Status: [✓ Complete]
+
+- [2026-02-17] [DEPLOY-PREP]: MVP Deployment Checklist — staging + production env templates
+  - Files: .env.staging.example (NEW x2), .env.production.example (NEW x2), railway.toml, vercel.json, README.md
+  - Tech: Env templates for Railway/Vercel/Supabase/Upstash, vercel.json Supabase build vars, deployment README section
+  - Status: [✓ Complete]
 
 ## Recent Progress (2026-02-15)
 

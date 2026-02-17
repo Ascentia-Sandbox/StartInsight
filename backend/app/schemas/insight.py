@@ -115,11 +115,20 @@ class RawSignalSummary(BaseModel):
         from_attributes = True
 
 
+class TrendData(BaseModel):
+    """Trend timeseries data for line chart visualization."""
+
+    dates: list[str] = Field(default_factory=list, description="Date labels")
+    values: list[float] = Field(default_factory=list, description="Search volume values")
+
+
 class InsightResponse(BaseModel):
     """Single insight response."""
 
     id: UUID
     raw_signal_id: UUID
+    slug: str | None = None
+    title: str | None = None
     problem_statement: str
     proposed_solution: str
     market_size_estimate: str
@@ -142,6 +151,12 @@ class InsightResponse(BaseModel):
     trend_keywords: list[TrendKeyword] | None = Field(
         default=None,
         description="Trending keywords with search volume and growth percentage"
+    )
+
+    # Trend data for line chart (extracted from raw_signal.extra_metadata)
+    trend_data: TrendData | None = Field(
+        default=None,
+        description="Timeseries trend data (dates + values) for chart visualization"
     )
 
     # Market sizing (TAM/SAM/SOM)

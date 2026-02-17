@@ -4,7 +4,7 @@
 **Read When:** Before every task to understand current phase status
 **Dependencies:** Read project-brief.md first for context
 **Purpose:** Current phase tracking, immediate tasks, blockers, what's working/next
-**Last Updated:** 2026-02-15
+**Last Updated:** 2026-02-17
 ---
 
 # Active Context: StartInsight Development
@@ -12,13 +12,28 @@
 ## Current Phase
 **Phase 1-10 + A-L:** Fully Complete (100% - Professional Overhaul)
 **Testing Complete:** 233+ backend tests passing, 47 E2E tests (5 browsers)
-**Production Status:** All phases integrated, build verified, deployment ready
+**Production Status:** Deployment templates ready, staging deployment next
 **Database:** 69 tables, 232+ API endpoints, 8 AI agents, 6 active scrapers
 **Infrastructure:** Supabase Pro ($25/mo) as sole database, Railway Free backend, Vercel frontend (~$30/mo PMF deployment)
 **Design System:** Instrument Serif + Satoshi + JetBrains Mono, teal/amber palette (no longer IdeaBrowser clone)
 **Content Pipeline:** 6 scrapers (Reddit, PH, Google Trends, Twitter/X, HN, Firecrawl), 150+ signals/day target
 **Admin Excellence:** Dashboard charts, Cmd+K palette, pagination, export, bulk ops
 **Public UX:** Editorial homepage, magazine-style detail pages, confidence badges, real stats API
+
+## Deployment Status (2026-02-17)
+
+**Current State:** Ready for staging deployment — env templates created, deployment configs updated
+**Production URLs:** `startinsight.app` (frontend), `api.startinsight.app` (backend)
+**Infrastructure:**
+- **Backend:** Railway (free tier, $5/mo credit) — `backend/Dockerfile` + `railway.toml`
+- **Frontend:** Vercel (hobby tier, $0) — `frontend/vercel.json`
+- **Database:** Supabase Pro ($25/mo, ap-southeast-2 Sydney)
+- **Cache/Queue:** Upstash Redis (free tier, TLS required)
+- **Error Tracking:** Sentry (free tier, 5K events/mo)
+- **Email:** Resend (free tier, 3K emails/mo)
+**Monthly Cost:** ~$30/mo (Supabase $25 + Gemini ~$5)
+**Env Templates:** `backend/.env.staging.example`, `backend/.env.production.example`, `frontend/.env.staging.example`, `frontend/.env.production.example`
+**Next Steps:** Create Railway project, deploy staging, verify health endpoints, then DNS + production flip
 
 ## Phase Completion Criteria
 

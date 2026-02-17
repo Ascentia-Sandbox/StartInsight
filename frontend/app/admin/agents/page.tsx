@@ -127,6 +127,7 @@ interface MarketInsight {
 
 interface InsightItem {
   id: string;
+  slug?: string;
   proposed_solution: string;
   problem_statement: string;
   relevance_score: number;
@@ -1447,7 +1448,7 @@ export default function AgentCommandCenter() {
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
                               <Button variant="ghost" size="icon"
-                                onClick={() => window.open(`/insights/${insight.id}`, '_blank')}
+                                onClick={() => window.open(`/insights/${insight.slug || insight.id}`, '_blank')}
                                 title="View"><Eye className="h-4 w-4" /></Button>
                               <Button variant="ghost" size="icon"
                                 onClick={() => { setDeletingInsight(insight); setInsightDeleteDialogOpen(true); }}

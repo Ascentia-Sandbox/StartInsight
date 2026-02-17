@@ -377,7 +377,7 @@ Once you've validated product-market fit (>30% retention, >40% activation):
 
 ## Support & Documentation
 
-- **Production Deployment:** See `DEPLOYMENT-GUIDE.md` for full production setup
+- **Production Deployment:** See `../../memory-bank/production-plan.md` for full production setup
 - **Architecture:** See `memory-bank/architecture.md` for system design
 - **Cost Analysis:** See `memory-bank/tech-stack.md` for detailed cost breakdown
 - **Implementation Plan:** See `memory-bank/implementation-plan.md` for feature roadmap

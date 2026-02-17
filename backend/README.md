@@ -434,7 +434,7 @@ See `.env.example` for all available environment variables.
 - 94% cost reduction vs production config (~$30/mo vs $483/mo)
 
 **For Production (>100 users, $300-500/month):**
-- See [`../DEPLOYMENT-GUIDE.md`](../DEPLOYMENT-GUIDE.md) for full production setup
+- See [`../memory-bank/production-plan.md`](../memory-bank/production-plan.md) for full production setup
 - Deploy backend to Railway Pro
 - Deploy frontend to Vercel Pro
 - Configure production environment variables

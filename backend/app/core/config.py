@@ -75,6 +75,7 @@ class Settings(BaseSettings):
     resend_api_key: str | None = None
     email_from_address: str = "noreply@startinsight.ai"
     email_from_name: str = "StartInsight"
+    contact_email: str = "hello@startinsight.ai"
 
     # Phase 6.3: Rate Limiting
     rate_limit_per_minute: int = 60

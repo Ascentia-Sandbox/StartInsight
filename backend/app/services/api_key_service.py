@@ -14,9 +14,6 @@ from pydantic import BaseModel, Field
 
 from app.core.config import settings
 
-# TODO: Rate limiting handled by SlowAPI globally, not custom service
-# from app.services.rate_limiter import check_rate_limit, increment_usage
-
 logger = logging.getLogger(__name__)
 
 

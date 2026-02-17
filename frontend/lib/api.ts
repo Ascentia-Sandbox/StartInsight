@@ -92,10 +92,14 @@ export async function fetchInsights(
 }
 
 /**
- * Fetch single insight by ID
+ * Fetch single insight by ID or slug.
+ * If the identifier looks like a UUID, uses /api/insights/{id}.
+ * Otherwise, uses /api/insights/by-slug/{slug}.
  */
-export async function fetchInsightById(id: string): Promise<Insight> {
-  const { data } = await apiClient.get(`/api/insights/${id}`);
+export async function fetchInsightById(idOrSlug: string): Promise<Insight> {
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+  const url = isUUID ? `/api/insights/${idOrSlug}` : `/api/insights/by-slug/${idOrSlug}`;
+  const { data } = await apiClient.get(url);
   return InsightSchema.parse(data);
 }
 

@@ -191,11 +191,108 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # Deploy (only on main branch, manual trigger)
+  # Migrate Staging Database (on develop push)
+  migrate-staging:
+    name: Migrate Staging DB
+    runs-on: ubuntu-latest
+    needs: [backend-test]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/0.5.14/install.sh | sh
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: uv pip install --system -r pyproject.toml
+
+      - name: Run Alembic migrations
+        working-directory: ./backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_STAGING }}
+        run: alembic upgrade head
+
+  # Deploy to Staging (on develop branch push)
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test, security-scan, migrate-staging]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm i -g @railway/cli
+
+      - name: Deploy Backend to Railway (Staging)
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
+        run: railway up --service backend
+
+      - name: Install Vercel CLI
+        run: npm i -g vercel
+
+      - name: Deploy Frontend to Vercel (Staging)
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
+        run: vercel --prod --token=$VERCEL_TOKEN
+
+      - name: Staging health check
+        env:
+          STAGING_BACKEND_URL: ${{ secrets.STAGING_BACKEND_URL }}
+        run: |
+          sleep 30
+          curl -f ${STAGING_BACKEND_URL}/health || exit 1
+
+  # Migrate Production Database (on main push)
+  migrate-production:
+    name: Migrate Production DB
+    runs-on: ubuntu-latest
+    needs: [backend-test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/0.5.14/install.sh | sh
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: uv pip install --system -r pyproject.toml
+
+      - name: Run Alembic migrations
+        working-directory: ./backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: alembic upgrade head
+
+  # Deploy to Production (on main push)
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [backend-test, frontend-test, docker-build]
+    needs: [backend-test, frontend-test, docker-build, migrate-production]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: production
 

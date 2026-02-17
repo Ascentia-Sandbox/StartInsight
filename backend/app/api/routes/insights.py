@@ -136,6 +136,20 @@ def apply_translation(insight_data: dict, language: str) -> dict:
     return insight_data
 
 
+def _serialize_insight(insight: Insight, target_language: str = "en") -> dict:
+    """Serialize an insight ORM object to a dict with trend_data injected."""
+    insight_dict = InsightResponse.model_validate(insight).model_dump()
+    # Inject trend_data from raw_signal.extra_metadata if available
+    if insight.raw_signal and insight.raw_signal.extra_metadata:
+        td = insight.raw_signal.extra_metadata.get("trend_data")
+        if td and td.get("dates"):
+            insight_dict["trend_data"] = {
+                "dates": td.get("dates", []),
+                "values": td.get("values", []),
+            }
+    return apply_translation(insight_dict, target_language)
+
+
 @router.get("", response_model=InsightListResponse)
 @limiter.limit("100/minute")
 async def list_insights(
@@ -233,12 +247,11 @@ async def list_insights(
         f"source={source}, language={target_language}, total={total})"
     )
 
-    # Apply translations to insights
+    # Apply translations and inject trend_data
     translated_insights = []
     for insight in insights:
-        insight_dict = InsightResponse.model_validate(insight).model_dump()
-        translated_dict = apply_translation(insight_dict, target_language)
-        translated_insights.append(InsightResponse.model_validate(translated_dict))
+        insight_dict = _serialize_insight(insight, target_language)
+        translated_insights.append(InsightResponse.model_validate(insight_dict))
 
     return InsightListResponse(
         insights=translated_insights,
@@ -281,7 +294,7 @@ async def get_daily_top(
 
     logger.info(f"Retrieved {len(insights)} top insights from last 24 hours")
 
-    return [InsightResponse.model_validate(i) for i in insights]
+    return [InsightResponse.model_validate(_serialize_insight(i)) for i in insights]
 
 
 @router.get("/idea-of-the-day", response_model=InsightResponse | None)
@@ -375,7 +388,7 @@ async def get_founder_fit_picks(
 
     logger.info(f"Retrieved {len(insights)} founder-fit picks (min_score={min_fit_score})")
 
-    return [InsightResponse.model_validate(i) for i in insights]
+    return [InsightResponse.model_validate(_serialize_insight(i)) for i in insights]
 
 
 @router.get("/featured-picks", response_model=list[InsightResponse])
@@ -411,7 +424,7 @@ async def get_featured_picks(
 
     logger.info(f"Retrieved {len(insights)} featured picks")
 
-    return [InsightResponse.model_validate(i) for i in insights]
+    return [InsightResponse.model_validate(_serialize_insight(i)) for i in insights]
 
 
 # ============================================================================
@@ -466,6 +479,48 @@ async def get_public_stats(
     }
 
 
+@router.get("/by-slug/{slug}", response_model=InsightResponse)
+@limiter.limit("200/minute")
+async def get_insight_by_slug(
+    request: Request,
+    slug: str,
+    accept_language: Annotated[str | None, Header()] = None,
+    language: Annotated[
+        str | None, Query(description="Explicit language override (en, zh-CN, id-ID, vi-VN, th-TH, tl-PH)")
+    ] = None,
+    db: AsyncSession = Depends(get_db),
+) -> InsightResponse:
+    """
+    Get single insight by slug.
+
+    Returns the insight matching the given URL-friendly slug.
+
+    - **slug**: URL-friendly slug of the insight
+    - **language**: Explicit language override
+    - **Accept-Language**: HTTP header for automatic language detection
+    """
+    target_language = language or parse_accept_language(accept_language)
+
+    query = (
+        select(Insight)
+        .options(selectinload(Insight.raw_signal))
+        .where(Insight.slug == slug)
+    )
+
+    result = await db.execute(query)
+    insight = result.scalar_one_or_none()
+
+    if not insight:
+        logger.warning(f"Insight not found by slug: {slug}")
+        raise HTTPException(status_code=404, detail="Insight not found")
+
+    logger.info(f"Retrieved insight by slug: {slug} (language={target_language})")
+
+    insight_dict = _serialize_insight(insight, target_language)
+
+    return InsightResponse.model_validate(insight_dict)
+
+
 @router.get("/{insight_id}", response_model=InsightResponse)
 @limiter.limit("200/minute")
 async def get_insight(
@@ -508,11 +563,9 @@ async def get_insight(
 
     logger.info(f"Retrieved insight: {insight_id} (language={target_language})")
 
-    # Apply translations
-    insight_dict = InsightResponse.model_validate(insight).model_dump()
-    translated_dict = apply_translation(insight_dict, target_language)
+    insight_dict = _serialize_insight(insight, target_language)
 
-    return InsightResponse.model_validate(translated_dict)
+    return InsightResponse.model_validate(insight_dict)
 
 
 @router.get("/{insight_id}/trend-data")

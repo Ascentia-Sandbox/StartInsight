@@ -4,7 +4,6 @@ Provides CRUD operations for blog articles with Markdown content.
 """
 
 import logging
-import re
 from datetime import UTC, datetime
 from typing import Annotated
 from uuid import UUID
@@ -23,19 +22,11 @@ from app.schemas.public_content import (
     MarketInsightResponse,
     MarketInsightUpdate,
 )
+from app.utils.slug import generate_slug
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/market-insights", tags=["market-insights"])
-
-
-def generate_slug(title: str) -> str:
-    """Generate URL-friendly slug from title."""
-    slug = title.lower()
-    slug = re.sub(r"[^\w\s-]", "", slug)
-    slug = re.sub(r"[\s_]+", "-", slug)
-    slug = re.sub(r"-+", "-", slug).strip("-")
-    return slug[:500]
 
 
 @router.get("", response_model=MarketInsightListResponse)

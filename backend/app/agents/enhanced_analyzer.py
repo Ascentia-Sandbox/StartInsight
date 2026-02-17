@@ -371,6 +371,20 @@ Identify 2-5 related search keywords with estimated volume and growth:
 - **core**: $99-$199/mo (full platform, main revenue)
 - **backend**: $299-$999/mo (enterprise, done-for-you)
 
+## CRITICAL: Data Grounding Rules (Anti-Hallucination)
+
+You MUST follow these rules to ensure data accuracy:
+
+1. **competitor_analysis**: ONLY name real companies that actually exist. Include their real website URL. Do NOT invent fictional companies. If you are not confident a company exists, omit it. It is better to list 1-2 verified competitors than 3 fabricated ones.
+
+2. **proof_signals**: Each signal MUST reference a specific, verifiable source (e.g., actual subreddit name like r/SaaS, specific Google Trends keyword, named industry report like "Gartner Magic Quadrant 2025"). Do NOT fabricate evidence or invent report names.
+
+3. **community_signals**: Use real platform names and realistic member counts based on actual communities relevant to this market. Reference real subreddits (e.g., r/startups has 1.2M members), real Facebook groups, or real YouTube channels. Do NOT invent community names or inflate member counts.
+
+4. **trend_keywords**: Use keywords that would return real results on Google Trends. Base volume and growth estimates on plausible real-world search data. Do NOT fabricate extreme growth numbers (e.g., "+5000%") without justification.
+
+5. **market_sizing**: Use realistic TAM/SAM/SOM figures grounded in known market data. Reference real industry reports or well-known market sizes when possible.
+
 ## Output Format
 Return a structured JSON matching EnhancedInsightSchema.
 Every field is REQUIRED. Write problem_statement as a compelling narrative story.

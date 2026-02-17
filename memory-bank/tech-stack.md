@@ -76,6 +76,8 @@ Infrastructure:
 - **Production**: Same Supabase Pro database (no separate local PostgreSQL)
 - **Connection Pool**: 20 size, 30 max overflow, SSL required
 - **Cost**: $25/mo (8GB storage, 200 connections)
+- **system_settings table**: JSONB key-value store for admin-configurable runtime settings. Grouped by category. Upsert via PUT `/api/admin/settings/{key}`. Alembic revision `c003`.
+- **insights.slug**: VARCHAR(255) unique index (Alembic c006-c008). SEO URL routing. Frontend route: `/insights/[slug]/`.
 
 ORM: SQLAlchemy (Async) or Prisma Client Python - Type-safe database interaction.
 
@@ -137,6 +139,7 @@ Caching/Queue: Redis - Task queue for scheduled scrapers and caching hot insight
 - **Alternative**: Celery + Redis
   - More mature, better for complex workflows.
   - Use if we need advanced features (task retries, priority queues).
+- **Redis TLS**: Upstash Redis requires `rediss://` (TLS) scheme. Local dev uses plain `redis://`. Never swap schemes between environments.
 
 **Core Python Dependencies (Backend)**
 ```txt
@@ -826,6 +829,13 @@ NEXT_PUBLIC_POSTHOG_KEY=phc_...  # PostHog analytics
 | Crawl4AI | Self-hosted | $0 | Runs in Railway container |
 | **TOTAL PMF** | | **~$30/mo** | 94% reduction from $483/mo |
 
+**Multi-Environment Cost Model (Phase A-L onwards):**
+| Environment | Config | Monthly Cost |
+|-------------|--------|-------------|
+| Dev | 1× Supabase Pro $25 + Gemini ~$5 | **~$30/mo** |
+| Staging | 2× Supabase Pro $50 + Gemini ~$5 | **~$55/mo** |
+| Production (3-tier) | 3× Supabase Pro $75 + Gemini ~$10 | **~$85/mo** |
+
 **Marketing Costs Breakdown (10K users):**
 - Email Marketing: $35/mo (Resend Pro - 50K emails/month for blog subscribers)
 - Analytics: $43/mo (Vercel Analytics Pro - 250K events/month)
@@ -1211,5 +1221,30 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 - Auto-generated REST API from schema
 - Reduce custom FastAPI routes
 - GraphQL option (pg_graphql extension)
+
+---
+
+## 10. Phase A-L & Q1-Q9 Stack Additions
+**Last Updated**: 2026-02-17
+
+### 10.1 Error Tracking — Sentry
+- **Sentry** Free tier (5K events/month)
+- Two projects: `startinsight-backend` (FastAPI SDK), `startinsight-frontend` (Next.js SDK)
+- Backend: `sentry-sdk[fastapi]` — captures unhandled exceptions + slow requests
+- Frontend: `@sentry/nextjs` — captures client-side + SSR errors
+- DSN configured via `SENTRY_DSN` env var (backend) and `NEXT_PUBLIC_SENTRY_DSN` (frontend)
+
+### 10.2 Admin Portal Stack
+- **System Settings**: JSONB store in `system_settings` table; grouped GET API; upsert PUT API
+- **Shared hooks**: `hooks/useAdminAuth.ts` (admin-only guard using JWT role claim)
+- **Shared components**: `components/admin/admin-page-header.tsx`, `components/admin/admin-states.tsx`
+
+### 10.3 Q1-Q9 Dependencies (No New Packages)
+All Q1-Q9 features implemented using existing stack:
+- Pulse SSE: standard FastAPI `StreamingResponse`
+- Trend Sparklines: pure inline SVG (no chart library)
+- Insight Comparison: Chart.js (already a frontend dependency)
+- Rate limiting: SlowAPI (already installed, `app/core/rate_limits.py`)
+- SEO: Next.js native `generateMetadata` + JSON-LD via inline `<script type="application/ld+json">`
 
 ---

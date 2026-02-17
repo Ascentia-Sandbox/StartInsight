@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, EmailStr, Field
 
+from app.core.config import settings
 from app.core.rate_limits import limiter
 
 logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ async def submit_contact_form(
         from app.services.email_service import send_email
 
         await send_email(
-            to="hello@startinsight.co",
+            to=settings.contact_email,
             template="contact_form",
             variables={
                 "name": data.name,

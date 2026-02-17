@@ -55,12 +55,6 @@ from app.services.realtime_feed import (
     unsubscribe_from_insights,
 )
 
-# Rate limiting is handled by SlowAPI (not a custom service)
-# from app.services.rate_limiter import (
-#     check_rate_limit,
-#     get_usage_stats,
-#     increment_usage,
-# )
 from app.services.team_service import (
     TeamCreate,
     TeamMemberAdd,
@@ -112,10 +106,6 @@ __all__ = [
     "send_payment_confirmation",
     "send_team_invitation",
     "send_password_reset",
-    # Phase 6.3: Rate Limiting (handled by SlowAPI, not custom service)
-    # "check_rate_limit",
-    # "get_usage_stats",
-    # "increment_usage",
     # Phase 6.4: Teams
     "TeamCreate",
     "TeamMemberAdd",

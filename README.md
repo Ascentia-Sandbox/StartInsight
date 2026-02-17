@@ -292,6 +292,63 @@ For troubleshooting, production deployment, and advanced configuration, see:
 
 ---
 
+## 🚀 Deployment
+
+### Infrastructure Overview
+
+| Service | Purpose | Tier | Cost |
+|---------|---------|------|------|
+| **Supabase** | PostgreSQL + Auth | Pro | $25/mo |
+| **Gemini 2.0 Flash** | AI analysis | Pay-as-you-go | ~$5/mo |
+| **Railway** | Backend hosting | Free ($5 credit) | $0 |
+| **Vercel** | Frontend hosting | Hobby | $0 |
+| **Upstash** | Redis cache/queue | Free | $0 |
+| **Sentry** | Error tracking | Free (5K events) | $0 |
+| **Resend** | Transactional email | Free (3K emails) | $0 |
+| | | **Total** | **~$30/mo** |
+
+### Environment Templates
+
+| Environment | Backend | Frontend |
+|-------------|---------|----------|
+| **Staging** | [`backend/.env.staging.example`](backend/.env.staging.example) | [`frontend/.env.staging.example`](frontend/.env.staging.example) |
+| **Production** | [`backend/.env.production.example`](backend/.env.production.example) | [`frontend/.env.production.example`](frontend/.env.production.example) |
+| **Development** | [`backend/.env.example`](backend/.env.example) | [`frontend/.env.example`](frontend/.env.example) |
+
+### Staging Deployment (6 steps)
+
+```bash
+# 1. Create accounts: Railway, Vercel, Upstash, Sentry, Resend, Google AI Studio
+# 2. Run database migrations against Supabase
+cd backend && DATABASE_URL="postgresql+asyncpg://..." alembic upgrade head
+
+# 3. Deploy backend to Railway (link GitHub repo, set root dir to repo root)
+#    Add all vars from backend/.env.staging.example in Railway dashboard
+
+# 4. Deploy frontend to Vercel (import repo, set root dir to frontend/)
+#    Add all vars from frontend/.env.staging.example in Vercel dashboard
+
+# 5. Update CORS: set Railway CORS_ORIGINS to match Vercel URL
+# 6. Verify: curl https://[railway-url]/health → {"status":"healthy"}
+```
+
+### Production Go-Live
+
+1. **DNS**: Add CNAMEs — `www.startinsight.app` → Vercel, `api.startinsight.app` → Railway
+2. **Env flip**: Update `ENVIRONMENT=production`, `APP_URL=https://api.startinsight.app`, `CORS_ORIGINS=https://startinsight.app,https://www.startinsight.app` in Railway; update `NEXT_PUBLIC_API_URL=https://api.startinsight.app` in Vercel
+3. **Redeploy both** (NEXT_PUBLIC_* vars require a rebuild)
+4. **Update Supabase Auth**: Set Site URL to `https://startinsight.app`
+
+### Gotchas
+
+- **Railway 512MB RAM** — Playwright+Chromium takes ~400MB. If OOM, set `USE_CRAWL4AI=false` or reduce workers
+- **NEXT_PUBLIC_* vars are build-time** — changing them in Vercel requires a redeploy
+- **Upstash TLS** — URL must be `rediss://` (double-s), set `REDIS_SSL=true`
+- **Production validator** — app crashes on startup if any required var is missing (intentional safety)
+- **CORS whitelist** — production origins must exactly match `CORS_ALLOWED_PRODUCTION_ORIGINS`
+
+---
+
 ## 🌏 Cloud-First Architecture
 
 StartInsight uses **cloud services by default** to ensure consistency between development and production:

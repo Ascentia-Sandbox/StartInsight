@@ -154,7 +154,7 @@ export default function IdeaOfTheDayPage() {
             {/* CTA */}
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Button asChild size="lg" className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
-                <Link href={`/insights/${idea.id}`}>
+                <Link href={`/insights/${idea.slug || idea.id}`}>
                   View Full Analysis
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
@@ -195,7 +195,7 @@ export default function IdeaOfTheDayPage() {
                       </Badge>
                     </div>
                     <Button asChild size="sm" variant="ghost">
-                      <Link href={`/insights/${item.id}`}>View →</Link>
+                      <Link href={`/insights/${item.slug || item.id}`}>View →</Link>
                     </Button>
                   </div>
                 </CardContent>

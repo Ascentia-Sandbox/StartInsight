@@ -15,7 +15,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import { config } from "@/lib/env";
 
 interface MarketInsight {
@@ -328,9 +327,9 @@ export default function MarketInsightDetailPage() {
             </div>
           </div>
 
-          {/* Floating Meta Card (overlapping the gradient) */}
-          <div className="container mx-auto px-4 max-w-4xl -mt-12 relative z-10 mb-10">
-            <div className="bg-background rounded-xl border shadow-lg p-5 md:p-6">
+          {/* Floating Meta Card (simplified) */}
+          <div className="container mx-auto px-4 max-w-4xl -mt-8 relative z-10 mb-10">
+            <div className="bg-background rounded-xl border-l-4 border shadow-sm p-5 md:p-6" style={{ borderLeftColor: 'hsl(var(--primary))' }}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 {/* Author + Meta */}
                 <div className="flex items-center gap-3">
@@ -358,45 +357,34 @@ export default function MarketInsightDetailPage() {
                     </div>
                   </div>
                 </div>
-
-                {/* Share Buttons */}
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-muted-foreground mr-1 hidden sm:inline">Share</span>
-                  <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={shareOnTwitter} title="Share on X">
-                    <Twitter className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={shareOnLinkedIn} title="Share on LinkedIn">
-                    <Linkedin className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={copyLink} title="Copy link">
-                    {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
-                  </Button>
-                </div>
               </div>
             </div>
           </div>
 
           {/* Content + Sidebar */}
-          <div className="container mx-auto px-4 pb-16 max-w-6xl">
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-12">
+          <div className="container mx-auto px-4 pb-16 max-w-5xl">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-12">
               {/* Main Content */}
               <div className="min-w-0" ref={contentRef}>
-                <div className="prose prose-lg dark:prose-invert max-w-none
-                  prose-headings:text-foreground prose-headings:scroll-mt-24 prose-headings:font-bold
-                  prose-h2:text-[1.625rem] prose-h2:mt-12 prose-h2:mb-5 prose-h2:pb-3 prose-h2:border-b prose-h2:border-border/60
-                  prose-h3:text-xl prose-h3:mt-9 prose-h3:mb-4
-                  prose-p:text-muted-foreground prose-p:leading-[1.85] prose-p:mb-5
-                  prose-li:text-muted-foreground prose-li:leading-relaxed prose-li:my-1
+                <div className="prose dark:prose-invert max-w-none
+                  prose-headings:scroll-mt-24
+                  prose-h2:text-2xl prose-h2:mt-12 prose-h2:mb-6 prose-h2:pb-4 prose-h2:border-b prose-h2:border-border/30 prose-h2:font-normal
+                  prose-h3:text-xl prose-h3:mt-10 prose-h3:mb-4 prose-h3:font-semibold
+                  prose-h4:text-lg prose-h4:mt-8 prose-h4:mb-3 prose-h4:font-semibold
+                  prose-p:text-[17px] prose-p:text-foreground/90 prose-p:leading-[1.8] prose-p:mb-6
+                  prose-li:text-[17px] prose-li:text-foreground/90 prose-li:leading-[1.75] prose-li:my-2
+                  prose-ul:my-6 prose-ol:my-6
                   prose-strong:text-foreground prose-strong:font-semibold
-                  prose-blockquote:border-l-4 prose-blockquote:border-l-primary/40 prose-blockquote:bg-primary/[0.03] prose-blockquote:py-3 prose-blockquote:px-5 prose-blockquote:rounded-r-xl prose-blockquote:not-italic prose-blockquote:my-8
-                  prose-table:border-collapse prose-table:rounded-xl prose-table:overflow-hidden prose-table:my-8
-                  prose-thead:bg-muted/70
-                  prose-th:p-3.5 prose-th:text-left prose-th:font-semibold prose-th:text-sm prose-th:border prose-th:border-border/60
-                  prose-td:p-3.5 prose-td:border prose-td:border-border/60 prose-td:text-sm
+                  prose-blockquote:border-l-4 prose-blockquote:border-l-primary/40 prose-blockquote:bg-primary/[0.02] prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:rounded-r-xl prose-blockquote:not-italic prose-blockquote:my-8 prose-blockquote:text-foreground/80
+                  prose-table:border-collapse prose-table:rounded-xl prose-table:overflow-hidden prose-table:my-8 prose-table:w-full
+                  prose-thead:bg-muted/80
+                  prose-th:p-3 prose-th:text-left prose-th:font-semibold prose-th:text-sm prose-th:border prose-th:border-border/50 prose-th:bg-muted/60
+                  prose-td:p-3 prose-td:border prose-td:border-border/40 prose-td:text-[15px]
+                  prose-tr:even:bg-muted/20
                   prose-a:text-primary prose-a:font-medium prose-a:no-underline hover:prose-a:underline prose-a:decoration-primary/30
-                  prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-sm prose-code:font-medium prose-code:before:content-none prose-code:after:content-none
+                  prose-code:bg-muted prose-code:px-2 prose-code:py-0.5 prose-code:rounded-md prose-code:text-sm prose-code:font-medium prose-code:before:content-none prose-code:after:content-none
                   prose-img:rounded-xl prose-img:shadow-lg prose-img:my-8
-                  prose-hr:border-border/50 prose-hr:my-10">
+                  prose-hr:border-border/20 prose-hr:my-12">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
@@ -410,6 +398,11 @@ export default function MarketInsightDetailPage() {
                         const id = text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
                         return <h3 id={id} {...props}>{children}</h3>;
                       },
+                      table: ({ children, ...props }) => (
+                        <div className="overflow-x-auto my-8 rounded-lg border border-border/50">
+                          <table className="w-full" {...props}>{children}</table>
+                        </div>
+                      ),
                     }}
                   >
                     {article.content}
@@ -417,7 +410,7 @@ export default function MarketInsightDetailPage() {
                 </div>
 
                 {/* Tags / Category Section */}
-                <div className="mt-12 pt-8 border-t">
+                <div className="mt-14 pt-8 border-t">
                   <div className="flex flex-wrap items-center gap-2">
                     <Hash className="h-4 w-4 text-muted-foreground" />
                     <Badge variant="secondary" className="font-normal">{article.category}</Badge>
@@ -484,12 +477,12 @@ export default function MarketInsightDetailPage() {
                           <a
                             key={item.id}
                             href={`#${item.id}`}
-                            className={`block text-[13px] py-1.5 transition-all border-l-2 ${
+                            className={`block text-[13px] py-1 transition-colors border-l-2 ${
                               item.level === 3 ? "pl-5" : "pl-3"
                             } ${
                               activeSection === item.id
-                                ? `border-l-primary ${catConfig.accent} font-medium`
-                                : "border-l-transparent text-muted-foreground hover:text-foreground hover:border-l-muted-foreground/30"
+                                ? `border-l-primary font-semibold text-foreground`
+                                : "border-l-transparent text-muted-foreground hover:text-foreground hover:border-l-muted-foreground/40"
                             }`}
                           >
                             {item.text}
@@ -499,46 +492,42 @@ export default function MarketInsightDetailPage() {
                     </div>
                   )}
 
-                  <Separator />
-
                   {/* Reading Progress */}
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                      Progress
-                    </p>
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className={`h-full bg-gradient-to-r ${catConfig.gradient} rounded-full transition-all duration-300`}
-                          style={{ width: `${readProgress}%` }}
-                        />
-                      </div>
+                  <div className="pt-4 border-t border-border/40">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Progress
+                      </p>
                       <span className="text-xs text-muted-foreground font-medium tabular-nums">
                         {Math.round(readProgress)}%
                       </span>
+                    </div>
+                    <div className="h-0.5 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={`h-full bg-gradient-to-r ${catConfig.gradient} rounded-full transition-all duration-300`}
+                        style={{ width: `${readProgress}%` }}
+                      />
                     </div>
                     <p className="text-xs text-muted-foreground mt-1.5">
                       {Math.max(0, Math.ceil(article.reading_time_minutes * (1 - readProgress / 100)))} min left
                     </p>
                   </div>
 
-                  <Separator />
-
                   {/* Quick Share */}
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
-                      <Share2 className="h-3.5 w-3.5" />
+                  <div className="pt-4 border-t border-border/40">
+                    <p className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-1.5">
+                      <Share2 className="h-3 w-3" />
                       Share
                     </p>
                     <div className="flex gap-1.5">
-                      <Button variant="outline" size="icon" className="h-9 w-9 rounded-lg" onClick={shareOnTwitter}>
-                        <Twitter className="h-4 w-4" />
+                      <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={shareOnTwitter}>
+                        <Twitter className="h-3.5 w-3.5" />
                       </Button>
-                      <Button variant="outline" size="icon" className="h-9 w-9 rounded-lg" onClick={shareOnLinkedIn}>
-                        <Linkedin className="h-4 w-4" />
+                      <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={shareOnLinkedIn}>
+                        <Linkedin className="h-3.5 w-3.5" />
                       </Button>
-                      <Button variant="outline" size="icon" className="h-9 w-9 rounded-lg" onClick={copyLink}>
-                        {copied ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                      <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={copyLink}>
+                        {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
                       </Button>
                     </div>
                   </div>

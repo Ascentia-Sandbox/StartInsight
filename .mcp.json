@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "vercel": {
+      "type": "http",
+      "url": "https://mcp.vercel.com"
+    },
+    "railway": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@railway/mcp-server"],
+      "env": {
+        "RAILWAY_API_TOKEN": "db4867fa-f8fb-4571-9d3b-46a74fe0fbc3"
+      }
+    }
+  }
+}
