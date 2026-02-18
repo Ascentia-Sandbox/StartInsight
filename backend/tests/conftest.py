@@ -9,7 +9,7 @@ Provides:
 
 import asyncio
 from collections.abc import AsyncGenerator, Generator
-from datetime import datetime
+from datetime import UTC, datetime, timezone
 from uuid import uuid4
 
 import pytest

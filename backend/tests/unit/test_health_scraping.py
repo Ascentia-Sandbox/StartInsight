@@ -1,6 +1,7 @@
 """Tests for scraper health check endpoint."""
 
 from datetime import datetime, timedelta
+from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
@@ -8,6 +9,22 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.raw_signal import RawSignal
+
+
+@pytest.fixture(autouse=True)
+def _naive_utc_in_health(monkeypatch):
+    """Patch health module to use naive UTC datetimes.
+
+    SQLite (used in tests) returns naive datetimes, but the health
+    endpoint uses datetime.now(UTC) which is timezone-aware.  This
+    mismatch causes "can't subtract offset-naive and offset-aware
+    datetimes".  We monkeypatch UTC to None so datetime.now(None)
+    returns a naive local-time datetime (equivalent to utcnow() in CI
+    where TZ=UTC).
+    """
+    import app.api.routes.health as health_mod
+
+    monkeypatch.setattr(health_mod, "UTC", None)
 
 
 @pytest.mark.asyncio

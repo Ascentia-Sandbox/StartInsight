@@ -1,6 +1,6 @@
 """Tests for Slack alerting integration in quality alerts."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 from app.services.quality_alerts import (
@@ -58,7 +58,7 @@ class TestAlertServiceWithSlack:
             metric_name="test_metric",
             threshold=0.8,
             actual_value=0.4,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
         )
 
         service._dispatch_alert(alert)
@@ -79,7 +79,7 @@ class TestAlertServiceWithSlack:
             metric_name="test_metric",
             threshold=0.5,
             actual_value=0.8,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
         )
 
         # Should not raise
@@ -111,6 +111,8 @@ class TestAlertCreation:
 
     def test_duplicate_alert_detected(self):
         """Same alert type/severity within 1 hour should be flagged as duplicate."""
+        # Use a fixed time at noon to avoid midnight edge-case in hour subtraction
+        fixed_now = datetime(2026, 2, 18, 12, 0, 0, tzinfo=UTC)
         service = QualityAlertService()
 
         alert1 = Alert(
@@ -121,7 +123,7 @@ class TestAlertCreation:
             metric_name="test_metric",
             threshold=0.8,
             actual_value=0.4,
-            timestamp=datetime.utcnow(),
+            timestamp=fixed_now,
         )
 
         service._recent_alerts.append(alert1)
@@ -134,10 +136,13 @@ class TestAlertCreation:
             metric_name="test_metric",
             threshold=0.8,
             actual_value=0.3,
-            timestamp=datetime.utcnow(),
+            timestamp=fixed_now,
         )
 
-        assert service._is_duplicate_alert(alert2) is True
+        with patch("app.services.quality_alerts.datetime") as mock_dt:
+            mock_dt.now.return_value = fixed_now
+            mock_dt.side_effect = lambda *a, **kw: datetime(*a, **kw)
+            assert service._is_duplicate_alert(alert2) is True
 
     def test_different_metric_not_duplicate(self):
         """Alert for different metric should not be flagged as duplicate."""
@@ -151,7 +156,7 @@ class TestAlertCreation:
             metric_name="metric_a",
             threshold=0.8,
             actual_value=0.4,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
         )
 
         service._recent_alerts.append(alert1)
@@ -164,7 +169,7 @@ class TestAlertCreation:
             metric_name="metric_b",
             threshold=0.8,
             actual_value=0.3,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
         )
 
         assert service._is_duplicate_alert(alert2) is False
