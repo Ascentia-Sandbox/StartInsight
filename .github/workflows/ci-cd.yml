@@ -241,7 +241,7 @@ jobs:
         continue-on-error: true
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
-        run: railway up --service backend
+        run: railway up --service backend --environment staging
 
       - name: Install Vercel CLI
         run: npm i -g vercel
@@ -251,21 +251,21 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
-        run: vercel pull --yes --environment=production --token=$VERCEL_TOKEN
+        run: vercel pull --yes --environment=preview --token=$VERCEL_TOKEN
 
       - name: Build Frontend with Vercel
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
-        run: vercel build --prod --token=$VERCEL_TOKEN
+        run: vercel build --token=$VERCEL_TOKEN
 
-      - name: Deploy Frontend to Vercel (Staging)
+      - name: Deploy Frontend to Vercel (Staging/Preview)
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
-        run: vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
+        run: vercel deploy --prebuilt --token=$VERCEL_TOKEN
 
       - name: Staging health check
         env:
@@ -319,19 +319,19 @@ jobs:
       - name: Install Railway CLI
         run: npm i -g @railway/cli
 
-      - name: Deploy Backend to Railway
+      - name: Deploy Backend to Railway (Production)
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway up --service backend
+        run: railway up --service backend --environment production
 
       - name: Install Vercel CLI
         run: npm i -g vercel
 
-      - name: Deploy Frontend to Vercel
+      - name: Deploy Frontend to Vercel (Production)
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
         run: vercel --prod --token=$VERCEL_TOKEN
 
       - name: Post-deploy health check
