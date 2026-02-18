@@ -245,7 +245,7 @@ jobs:
         continue-on-error: true
         env:
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
-        run: railway up --service backend --environment staging
+        run: railway up --service backend --environment staging --project a3ece066-4758-4780-84d6-0379f1312227
 
       - name: Install Vercel CLI
         run: npm i -g vercel
@@ -326,7 +326,7 @@ jobs:
       - name: Deploy Backend to Railway (Production)
         env:
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway up --service backend --environment production
+        run: railway up --service backend --environment production --project a3ece066-4758-4780-84d6-0379f1312227
 
       - name: Install Vercel CLI
         run: npm i -g vercel
