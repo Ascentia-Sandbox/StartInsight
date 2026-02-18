@@ -594,7 +594,10 @@ def _get_price_id(tier: str, billing_cycle: str) -> str | None:
     price_map = {
         ("starter", "monthly"): settings.stripe_price_starter,
         ("pro", "monthly"): settings.stripe_price_pro,
-        # Add yearly prices when configured
+        ("enterprise", "monthly"): settings.stripe_price_enterprise,
+        ("starter", "yearly"): settings.stripe_price_starter_yearly,
+        ("pro", "yearly"): settings.stripe_price_pro_yearly,
+        ("enterprise", "yearly"): settings.stripe_price_enterprise_yearly,
     }
     return price_map.get((tier, billing_cycle))
 
