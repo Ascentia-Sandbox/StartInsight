@@ -3,6 +3,7 @@
 import logging
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse as _urlparse
 
 # Load .env into os.environ so PydanticAI agents can read GOOGLE_API_KEY etc.
 # Pydantic Settings loads into the settings object but NOT into os.environ.
@@ -820,6 +821,20 @@ async def shutdown(ctx: dict[str, Any]) -> None:
     logger.info("Arq worker shutting down")
 
 
+def _make_worker_redis_settings() -> RedisSettings:
+    """Parse REDIS_URL into RedisSettings — handles Upstash TLS (rediss://)."""
+    parsed = _urlparse(settings.redis_url)
+    return RedisSettings(
+        host=parsed.hostname or "localhost",
+        port=parsed.port or 6379,
+        password=parsed.password,
+        database=int((parsed.path or "/0").lstrip("/") or "0"),
+        ssl=settings.redis_url.startswith("rediss://"),
+        conn_timeout=3,
+        conn_retries=0,
+    )
+
+
 class WorkerSettings:
     """
     Arq worker configuration.
@@ -827,12 +842,8 @@ class WorkerSettings:
     Defines Redis connection, tasks, and scheduling.
     """
 
-    # Redis connection settings
-    redis_settings = RedisSettings(
-        host=settings.redis_host,
-        port=settings.redis_port,
-        database=0,
-    )
+    # Redis connection settings — parsed from REDIS_URL to support Upstash TLS
+    redis_settings = _make_worker_redis_settings()
 
     # Task functions to register
     # CRITICAL: Every task enqueued by scheduler.py MUST be listed here,
