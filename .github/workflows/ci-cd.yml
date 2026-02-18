@@ -53,11 +53,12 @@ jobs:
         working-directory: ./backend
         run: |
           uv pip install --system -r pyproject.toml
+          uv pip install --system ruff pytest pytest-asyncio pytest-cov httpx
 
       - name: Run linter
         working-directory: ./backend
         run: |
-          uv run ruff check .
+          ruff check .
 
       - name: Run tests
         working-directory: ./backend
@@ -71,7 +72,7 @@ jobs:
           REDDIT_CLIENT_SECRET: test_secret
           REDDIT_USER_AGENT: test_agent
         run: |
-          uv run pytest tests/ -v --cov=app --cov-report=xml
+          pytest tests/ -v --cov=app --cov-report=xml
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4

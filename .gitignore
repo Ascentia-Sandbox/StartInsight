@@ -11,8 +11,9 @@ downloads/
 eggs/
 .eggs/
 lib/
+!frontend/lib/
+!frontend/lib/**
 lib64/
-!frontend/lib/  # Exception: frontend lib directory contains application code
 parts/
 sdist/
 var/
