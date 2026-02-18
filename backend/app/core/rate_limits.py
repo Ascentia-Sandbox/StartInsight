@@ -63,10 +63,17 @@ def get_tier_rate_limit(request: Request) -> str:
     return TIER_RATE_LIMITS["anonymous"]
 
 
-# Initialize SlowAPI limiter with Redis backend
+# Initialize SlowAPI limiter
+# Use Redis for distributed rate limiting when configured, otherwise in-memory
+_storage_uri = settings.redis_url
+if _storage_uri == "redis://localhost:6379":
+    # Localhost Redis default — likely not available in cloud deployments
+    _storage_uri = "memory://"
+    logger.info("Rate limiter using in-memory storage (no Redis configured)")
+
 limiter = Limiter(
     key_func=get_identifier,
-    storage_uri=settings.redis_url,
+    storage_uri=_storage_uri,
     default_limits=["100/minute", "1000/hour"],  # Global defaults
     enabled=True,
 )
