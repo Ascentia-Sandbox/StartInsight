@@ -12,7 +12,7 @@ Frontend (Next.js 14) → Backend (FastAPI) → Supabase PostgreSQL
                                     Upstash Redis
 ```
 
-- **Database**: Supabase Cloud PostgreSQL (Asia Pacific - Singapore)
+- **Database**: Supabase Cloud PostgreSQL (Asia Pacific - Sydney)
 - **Authentication**: Supabase Auth (JWT-based)
 - **Cache/Queue**: Upstash Redis (Asia Pacific)
 - **Backend**: FastAPI (Python 3.12)
@@ -26,7 +26,7 @@ Frontend (Next.js 14) → Backend (FastAPI) → Supabase PostgreSQL
 
 1. Sign up at https://supabase.com
 2. Create a new project:
-   - **Region**: Asia Pacific (Southeast) - ap-southeast-1 Singapore
+   - **Region**: Asia Pacific (Southeast) - ap-southeast-2 Sydney
    - **Database Password**: Save this securely (you'll need it for DATABASE_URL)
 3. After creation, navigate to **Project Settings > API**:
    - Copy **Project URL** (e.g., `https://abcdefgh.supabase.co`)
@@ -40,7 +40,7 @@ Frontend (Next.js 14) → Backend (FastAPI) → Supabase PostgreSQL
 
 1. Sign up at https://upstash.com
 2. Create a new Redis database:
-   - **Region**: Asia Pacific Southeast (Singapore) - for lowest latency
+   - **Region**: Asia Pacific Southeast (Sydney) - for lowest latency
    - **Type**: Regional (not Global)
 3. After creation:
    - Copy the **REST API > UPSTASH_REDIS_REST_URL** (format: `redis://default:[password]@[endpoint].upstash.io:6379`)
@@ -75,7 +75,7 @@ nano .env  # or use your preferred editor
 
 ```bash
 # Database (Supabase)
-DATABASE_URL=postgresql+asyncpg://postgres.[PROJECT_REF]:[DB_PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true
+DATABASE_URL=postgresql+asyncpg://postgres.[PROJECT_REF]:[DB_PASSWORD]@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres?pgbouncer=true
 
 # Supabase Authentication
 SUPABASE_URL=https://[PROJECT_REF].supabase.co
@@ -298,7 +298,7 @@ VALUES (gen_random_uuid(), '[YOUR_USER_ID]', 'admin', NOW());
 **Solution:**
 1. Verify DATABASE_URL format in `.env`:
    ```
-   postgresql+asyncpg://postgres.[REF]:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true
+   postgresql+asyncpg://postgres.[REF]:[PASSWORD]@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres?pgbouncer=true
    ```
 2. Check Supabase project is not paused:
    - Free tier projects pause after 7 days of inactivity

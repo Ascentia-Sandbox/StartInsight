@@ -1,0 +1,30 @@
+# Environment files - never include in Docker image
+.env*
+!.env.example
+
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build artifacts
+.next
+out
+build
+dist
+
+# Testing
+coverage
+.nyc_output
+playwright-report
+test-results
+
+# Development
+.vscode
+.idea
+*.log
+npm-debug.log*
+.DS_Store
+
+# Git
+.git
+.gitignore

@@ -6,7 +6,6 @@ Run with: DATABASE_URL=postgresql+asyncpg://... pytest tests/unit/test_models.py
 For CI/CD without PostgreSQL, these tests are marked to skip if no database.
 """
 
-from datetime import datetime
 from uuid import uuid4
 
 import pytest

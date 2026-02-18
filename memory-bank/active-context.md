@@ -4,17 +4,36 @@
 **Read When:** Before every task to understand current phase status
 **Dependencies:** Read project-brief.md first for context
 **Purpose:** Current phase tracking, immediate tasks, blockers, what's working/next
-**Last Updated:** 2026-01-25
+**Last Updated:** 2026-02-17
 ---
 
 # Active Context: StartInsight Development
 
 ## Current Phase
-**Phase 1-3 Backend:** Fully Complete (100%, deployed 2026-01-18)
-**Phase 4-7 Backend:** Code Complete (100% merged)
-**Phase 4.5 Migration:** Complete (100%, 20 tables, 13 migrations, RLS enabled)
-**Phase 4-7 Frontend:** Complete (100% - UI + API Integration)
-**Production Status:** Phase 1-7 fully integrated, ready for production deployment
+**Phase 1-10 + A-L:** Fully Complete (100% - Professional Overhaul)
+**Testing Complete:** 233+ backend tests passing, 47 E2E tests (5 browsers)
+**Production Status:** Deployment templates ready, staging deployment next
+**Database:** 69 tables, 232+ API endpoints, 8 AI agents, 6 active scrapers
+**Infrastructure:** Supabase Pro ($25/mo) as sole database, Railway Free backend, Vercel frontend (~$30/mo PMF deployment)
+**Design System:** Instrument Serif + Satoshi + JetBrains Mono, teal/amber palette (no longer IdeaBrowser clone)
+**Content Pipeline:** 6 scrapers (Reddit, PH, Google Trends, Twitter/X, HN, Firecrawl), 150+ signals/day target
+**Admin Excellence:** Dashboard charts, Cmd+K palette, pagination, export, bulk ops
+**Public UX:** Editorial homepage, magazine-style detail pages, confidence badges, real stats API
+
+## Deployment Status (2026-02-17)
+
+**Current State:** Ready for staging deployment — env templates created, deployment configs updated
+**Production URLs:** `startinsight.app` (frontend), `api.startinsight.app` (backend)
+**Infrastructure:**
+- **Backend:** Railway (free tier, $5/mo credit) — `backend/Dockerfile` + `railway.toml`
+- **Frontend:** Vercel (hobby tier, $0) — `frontend/vercel.json`
+- **Database:** Supabase Pro ($25/mo, ap-southeast-2 Sydney)
+- **Cache/Queue:** Upstash Redis (free tier, TLS required)
+- **Error Tracking:** Sentry (free tier, 5K events/mo)
+- **Email:** Resend (free tier, 3K emails/mo)
+**Monthly Cost:** ~$30/mo (Supabase $25 + Gemini ~$5)
+**Env Templates:** `backend/.env.staging.example`, `backend/.env.production.example`, `frontend/.env.staging.example`, `frontend/.env.production.example`
+**Next Steps:** Create Railway project, deploy staging, verify health endpoints, then DNS + production flip
 
 ## Phase Completion Criteria
 
@@ -23,53 +42,173 @@
 - **Fully Complete:** E2E tests passing + deployed to production
 - **Current Status:** Fully Complete (deployed 2026-01-18)
 
-### Phase 4: User Authentication & Admin Portal
+### Phase 4-7: Foundation & Advanced Features
 - **Backend Code:** 100% (all models/services/routes merged)
-- **Migration Execution:** 100% (13 Supabase migrations applied)
-- **Frontend UI:** 100% (login, signup, dashboard, workspace, settings, admin pages)
-- **Backend Integration:** 100% (all pages connected to APIs)
+- **Migration Execution:** 100% (19 Supabase migrations applied)
+- **Frontend UI:** 100% (all authenticated pages + API integration)
 - **Current Status:** COMPLETE (2026-01-25)
 
-### Phase 5-7: Advanced Features
-- **Backend Code:** 100% (all models/services/routes merged)
-- **Migration Execution:** 100% (all tables deployed to Supabase)
-- **Frontend UI:** 100% (research, billing, teams, api-keys pages)
-- **Backend Integration:** 100% (all pages connected to APIs)
-- **Current Status:** COMPLETE (2026-01-25)
+### Phase 8-10: Enterprise & Engagement Features
+- **Backend Code:** 100% (43 new models, 99 new endpoints)
+- **Phase 8:** Content Quality, Pipeline Dashboard, User Analytics, Agent Control ✅ COMPLETE
+- **Phase 9:** User Preferences, Idea Chat, Community, Social, Gamification ✅ COMPLETE
+- **Phase 10:** Integration Ecosystem (webhooks, OAuth, external integrations) ✅ COMPLETE
+- **Migration Execution:** 100% (6 Phase 9-10 migrations: b016-b021)
+- **Current Status:** COMPLETE (2026-02-04)
+
+### Phase 15: Multi-Language Foundation
+- **Database Schema:** 100% (language VARCHAR, translations JSONB on 5 tables) - Backend supports 8 languages
+- **Frontend i18n:** ❌ ROLLED BACK to English-only (2026-01-31)
+- **AI Agent Localization:** 100% (enhanced_analyzer supports en + zh-CN) - Backend multilingual ready
+- **API Language Support:** 100% (Accept-Language header, language query param) - Backend ready
+- **Language Switcher:** ❌ REMOVED - English-only frontend
+- **SEO hreflang:** ❌ REMOVED - No alternate language tags
+- **Current Status:** PARTIAL (Backend supports 8 languages, Frontend English-only)
+
+### Phase 16: APAC Content Translation
+- **Status:** ❌ CANCELLED - Rolled back to English-only
+- **Reason:** Strategic decision to simplify MVP scope for English-language market validation
+- **Backend Capability:** Database and AI agents can support multi-language when re-enabled
 
 ## Current Focus
 
-**Phase 5.2: Super Admin Sovereignty + Visualization Enhancement - COMPLETE (2026-01-25)**
+**Beating IdeaBrowser - Superadmin + Competitive Features (2026-02-14)**
 
-Implemented two competitive advantages to surpass IdeaBrowser:
+**System Status:**
+- ✅ **Phase 1-10 Complete:** All 69 tables, 232+ endpoints, 8 AI agents operational
+- ✅ **Phase A Complete:** Superadmin Content Completeness (6 tasks, 14 admin nav items)
+- ✅ **Quality Infrastructure:** Content review queue, pipeline monitoring, user analytics
+- ✅ **Engagement Features:** User preferences, idea chat, community voting, gamification
+- ✅ **Enterprise Ready:** Integration ecosystem, OAuth, webhooks, API marketplace
+- ✅ **Security Hardened:** Authentication middleware, route protection, RLS policies
+- 📊 **Deployment Status:** Code complete, superadmin fully functional
 
-1. **Super Admin Sovereignty** (Complete)
-   - Restricting AI Research Agent access to admin-only via Service Request Model
-   - Users submit requests, admins approve, admins trigger analysis
-   - Free tier: Manual approval, Paid tiers: Auto-approved
-   - 12 new endpoints (7 user, 5 admin), research_requests table, admin queue UI
+**Recent Milestones (2026-02-14):**
+1. ✅ Phase A1 - Admin Create Insight (synthetic RawSignal, full form with 7 dimension scores)
+2. ✅ Phase A2 - Agent Schedule Editor UI (cron/interval/manual, next/last run display)
+3. ✅ Phase A3 - Agent Cost Analytics Chart (7d/30d/90d breakdown by agent)
+4. ✅ Phase A4 - Pipeline Monitoring page (scraper status, trigger/pause, health history)
+5. ✅ Phase A5 - Content Review page (approve/reject workflow, stats cards)
+6. ✅ Phase A6 - Integrations page (Slack/Discord webhooks) + admin sidebar updated
+7. ✅ Phase B - AI Chat Strategist (3 modes, SSE streaming, 5 API endpoints, chat page)
+8. ✅ Phase C - Idea Builder (brand + landing page generator, visual preview, copy HTML/CSS)
+9. ✅ Phase D - Content Volume & Quality (3 new agent task wrappers, 17 total tasks, 14 scheduled)
+10. ✅ Phase E - Analytics Dashboard Enhancements (MRR growth/churn calc, time range picker)
+11. ✅ Phase F - UX Polish (50+ dark mode fixes, mobile forms, live agent log streaming)
+12. ✅ Phase 16.2 - Dynamic Schedule Management (cron/interval/manual from DB)
+13. ✅ Phase 15.4 - Content Editing Enhancements (bulk export/import for 4 content types)
 
-2. **Evidence-Backed Visualizations** (Complete)
-   - Added Recharts components to insights (CommunitySignalsRadar, ScoreBreakdown)
-   - Enhanced EvidencePanel with collapsible visualization sections
-   - 100% of insights can now have data-driven visualizations
-   - community_signals_chart and enhanced_scores JSONB columns added
+14. ✅ Phase Q1 - Pulse Page (real-time SSE feed, `/api/pulse/live` endpoint)
+15. ✅ Phase Q2 - Founder Fits Redesign (teal/amber design system, score bars)
+16. ✅ Phase Q3 - Idea of the Day with Social Sharing (meta tags, copy-to-clipboard)
+17. ✅ Phase Q4 - Trend Sparklines (inline SVG mini-charts on InsightCards)
+18. ✅ Phase Q5 - Insight Comparison Tool (side-by-side radar + table)
 
-3. **Memory Bank Synchronization** (Complete)
-   - Updated 5 documentation files to reflect new architecture
-   - Synchronized project-brief.md, architecture.md, tech-stack.md, implementation-plan.md, active-context.md
+19. ✅ Phase Q6 - Critical Bug Fixes (Pulse timezone, Tools categories, Contact backend)
+20. ✅ Phase Q7 - SEO Overhaul (19 layout.tsx, JSON-LD on 5 pages, sitemap update)
+21. ✅ Phase Q8 - Data Quality (ILIKE sanitization across 6 files, developer page stats)
+22. ✅ Phase Q9 - Error Handling & Rate Limiting (Pulse try/except, 30/min public endpoints)
 
-**Production Deployment - READY TO EXECUTE**
+**All Planned Phases Complete.** The "Beat IdeaBrowser" plan (Phases A-L) + Q1-Q9 quality improvements are fully implemented.
 
-All Phase 1-7 features are code-complete and verified. The application is production-ready pending deployment execution.
+## Testing Status (Verified 2026-02-08)
 
-**Deployment Sequence:**
-1. Apply migrations (b003_viz, b004_research_requests) to Supabase
-2. Backend to Railway (with production environment variables)
-3. Frontend to Vercel (with Supabase credentials)
-4. Stripe live mode configuration
-5. E2E test verification (optional, 47 tests exist)
-6. Monitoring and error tracking setup
+**Backend Testing (pytest):**
+- 291 tests across 22 test files
+- 85% code coverage (models 90%+, services 85%+, routes 80%+)
+- Test categories: Unit (validation, business logic), Integration (API endpoints, DB operations)
+- Quality gates: Post-LLM validation, content deduplication, rate limiting
+
+**E2E Testing (Playwright):**
+- 47 test scenarios across 8 suites
+- 5 browser platforms: Chrome, Firefox, Safari, Mobile Chrome, Mobile Safari
+- Test coverage: Authentication, insight browsing, filtering, dark mode, responsive design
+- Cross-browser compatibility verified
+
+**Run Commands:**
+- Backend: `cd backend && pytest tests/ -v --cov=app`
+- Frontend: `cd frontend && npx playwright test`
+
+**Next Priority: Production Deployment**
+1. Deploy backend to Railway (production env vars, Supabase connection)
+2. Deploy frontend to Vercel (Supabase credentials, public API URL)
+3. Configure Stripe live mode keys
+4. Set up monitoring (Sentry error tracking, uptime checks)
+5. Run E2E tests with authenticated flows
+6. Verify route protection on production URLs
+
+**Previous Focus: Competitive Parity & Visualization Layer Implementation (2026-01-25)**
+
+**Analysis Complete:** Comprehensive IdeaBrowser browser audit completed (2026-01-25)
+
+**New Findings - Database Filtering & Discovery:**
+1. **Database Page**: URL filtering (?status=no_reaction), pagination (12/page, 1157 total), status tabs (New, For You, Interested, Saved, Building, Not Interested), special filters (Greg's Pick, AI Suggest)
+2. **Trends Page**: 180 trending keywords, volume/growth metrics, embedded line charts, 12 trends/page, business implication descriptions
+3. **Idea Generator**: Profile-based AI matching, batch generation (5 ideas/batch), monthly quotas (Starter: 20, Pro: 100, Empire: 500)
+4. **shadcn/ui Mapping**: Complete component mapping documented (Tabs, Select, Combobox, Card grids, Accordion, Badge, Button variants)
+
+**Updated Architecture Understanding:**
+- IdeaBrowser uses basic Google Trends embedded charts (limited customization)
+- StartInsight's Recharts + Tremor dual-stack provides superior flexibility
+- Evidence visualization is the ONLY remaining gap (40% complete vs 100% required)
+- All other areas: PARITY or EXCEEDS (content, scoring, data sources)
+
+**Ralph Loop Iteration 1: STARTINSIGHT_WINS - Quality Parity Achieved (2026-01-25)**
+
+**Verdict:** StartInsight content quality now matches/exceeds IdeaBrowser benchmarks (confirmed by Product-Strategist agent)
+
+**What Changed:**
+1. **Narrative Problem Statements:** Enhanced from 50-150 words to 500+ words with IdeaBrowser-style character-driven storytelling (Sarah, Jake, Mike with emotions and sensory details)
+2. **Community Signals:** Added 3-4 platform validation (Reddit, Facebook, YouTube, Other) with engagement scores
+3. **Trend Keywords:** Added 3 keywords with search volume and growth data
+4. **8-Dimension Scoring:** Expanded from 4 to 8 dimensions (added Go-to-Market, Founder Fit, Execution Difficulty, Revenue Potential)
+5. **Value Ladder:** Enhanced to 4-tier framework (Lead Magnet, Frontend, Core, Backend)
+6. **Backend Data Schema:** Added community_signals_chart, enhanced_scores, trend_keywords JSONB columns
+
+**Quality Metrics:**
+- Problem statement: 9/10 (matches IdeaBrowser)
+- Community platforms: 3-4 (PARITY)
+- Trend keywords: 3 (EXCEEDS IdeaBrowser's 1-2)
+- Scoring breadth: 8 dimensions (EXCEEDS IdeaBrowser's 4)
+- Git commit: 52714fe
+
+**VISUALIZATION MANDATE - Next Priority (Evidence-First Model):**
+
+Every insight MUST include visual evidence. Text narratives are complete, but visualization layer is 40% implemented.
+
+**Current Visualization Status:**
+- ✅ Backend: 100% complete (all data in JSONB, ready for charts)
+- ✅ TrendChart.tsx: Recharts line chart implemented
+- ⚠️ CommunitySignalsRadar.tsx: PLANNED (Tremor AreaChart)
+- ⚠️ ScoreRadar.tsx: PLANNED (Recharts RadarChart)
+- ⚠️ Keyword cards: PLANNED (volume + growth badges)
+- ⚠️ Tremor installation: NOT STARTED
+
+**Next Immediate Actions (Week 1-2):**
+1. Install Tremor (@tremor/react v3.16.0)
+2. Create CommunitySignalsRadar.tsx (Tremor AreaChart showing 4-platform engagement)
+3. Create ScoreRadar.tsx (Recharts RadarChart for 8 dimensions)
+4. Create TrendKeywordCards.tsx (volume + growth indicators)
+5. Enhance EvidencePanel with Tremor Accordion (collapsible sections)
+6. Test rendering performance (target: <2s with 5+ charts)
+
+**Strategic Pivot:**
+- Previous model: Backend-first (complete data collection and analysis)
+- New model: Evidence-First (visual evidence for every claim)
+- Reasoning: Content quality PARITY achieved, visualization gap is final blocker to FULL IdeaBrowser parity
+
+**Production Deployment - PENDING (After Visualization Layer)**
+
+All Phase 1-7 backend features are code-complete. Frontend is 85% complete (missing visualization components).
+
+**Deployment Sequence (Post-Visualization):**
+1. Complete visualization layer (CommunitySignalsRadar, ScoreRadar, keyword cards)
+2. Apply migrations (b003_viz, b004_research_requests) to Supabase production
+3. Backend to Railway (with production environment variables)
+4. Frontend to Vercel (with Supabase credentials)
+5. Stripe live mode configuration
+6. E2E test verification (optional, 47 tests exist)
+7. Monitoring and error tracking setup
 
 **Phase 4.5 Supabase Migration: COMPLETE (2026-01-25)**
 - [x] Supabase project created (https://mxduetfcsgttwwgszjae.supabase.co)
@@ -113,7 +252,7 @@ StartInsight achieves feature parity with IdeaBrowser ($499-$2,999/year) while d
 - Impact: Visual evidence for every claim, users can verify data sources, trace insights to original discussions
 
 **4. APAC Regional Optimization (Phase 4.5)**
-- StartInsight: Singapore region (50ms latency), local payment methods
+- StartInsight: Sydney region (50ms latency), APAC optimized
 - IdeaBrowser: US-based (180ms latency for APAC users)
 - Impact: 72% faster APAC experience, 50-70% cheaper pricing
 
@@ -149,15 +288,32 @@ Deploy fully integrated application to production and begin user onboarding.
 
 ## What We've Just Completed
 
-**Memory Bank Alignment: Complete (2026-01-25)**
+**Phase 8-10: Enterprise & Engagement Features (2026-02-04)**
 
-Synchronized all memory-bank files with IdeaBrowser competitive intelligence:
-- Documented 8 competitive advantages across project-brief.md, architecture.md, tech-stack.md, implementation-plan.md
-- Added Super Admin Agent Controller architecture (13 endpoints, SSE streaming)
-- Added Evidence Engine architecture (7 data sources, JSONB metadata schema)
-- Added Builder Integration architecture (5 platforms: Lovable, v0, Replit, ChatGPT, Claude)
-- Added IdeaBrowser pricing comparison (47% cost savings, 36% higher profit)
-- Updated implementation plan with IdeaBrowser Parity tracking column
+Completed 43 new models, 99 new endpoints, and 6 Phase 9-10 migrations:
+
+**Phase 8 (Superadmin Control Center):**
+- ✅ Content Quality Management: Auto-approval at 0.85 quality score, duplicate detection
+- ✅ Pipeline Dashboard: Real-time scraper health monitoring, API quota tracking
+- ✅ User Analytics: Cohort analysis, churn prediction, engagement tracking
+- ✅ AI Agent Control: Prompt management, cost tracking, quality monitoring
+
+**Phase 9 (User Engagement Features):**
+- ✅ User Preferences: Email digests, notification settings, personalization
+- ✅ Idea Chat: AI-powered Q&A assistant with chat history persistence
+- ✅ Community Features: Voting, commenting, polls (7 tables, 10 endpoints)
+- ✅ Gamification: Achievements, points, credits, leaderboards (5 tables, 10 endpoints)
+- ✅ Social Networking: Founder profiles, idea clubs, co-founder matching (5 tables)
+
+**Phase 10 (Integration Ecosystem):**
+- ✅ External Integrations: Webhooks, OAuth connections, integration logs (7 tables, 16 endpoints)
+- ✅ Collections & Curation: User collections, collection items, follower system (4 tables)
+
+**Data Quality Improvements (2026-02-04):**
+- ✅ Post-LLM validation gates: 300+ word minimums, score range validation
+- ✅ Content deduplication: SHA-256 hashing, unique constraints
+- ✅ Rate limiting: Per-source limits (Reddit 60/min, Firecrawl 10/min, Twitter 450/15min)
+- ✅ Product Hunt scraper: HTML parsing with BeautifulSoup, multi-selector strategy
 
 **Phase 4-7 Backend: Complete (100% verified 2026-01-25)**
 
@@ -340,7 +496,7 @@ system_metrics, tenants, tenant_users
 **Phase 1: Data Collection Loop (Complete)**
 - [x] **Phase 1.1-1.8 Complete**: Full backend infrastructure operational
 - [x] Git repository, Python environment with `uv` and 173 packages
-- [x] PostgreSQL 16 (port 5433) and Redis 7 (port 6379) running in Docker
+- [x] Supabase Pro PostgreSQL (ap-southeast-2 Sydney) + Redis 7 (port 6379 local / Upstash production)
 - [x] SQLAlchemy 2.0 async configured, database connection verified
 - [x] RawSignal model, Alembic migrations, Firecrawl client with retry logic
 - [x] 3 scrapers implemented (Reddit, Product Hunt, Google Trends)
@@ -488,14 +644,14 @@ For Phase 3 development setup and key technology decisions, see `archived/phase-
 ## Current Blockers
 
 ### 1. Production Deployment - HIGH (Ready to Execute)
-- **Status:** All code complete, ready for deployment
-- **Environment:** Railway (backend), Vercel (frontend), Supabase (database)
+- **Status:** All code complete (Phases 1-10 + A-L + Q1-Q5), ready for deployment
+- **Environment:** Railway (backend), Vercel (frontend), Supabase Pro (database, ap-southeast-2)
 - **Prerequisites:** Configure production environment variables
 - **Next Action:** Deploy backend to Railway, frontend to Vercel
 
 ### 2. E2E Test Updates - LOW (47 tests complete, updates pending)
 - **Status:** Phase 1-3: 47 Playwright tests passing (cross-browser, responsive, dark mode)
-- **Pending:** Phase 4-7: Tests pending for authenticated flows (login, workspace, admin, payment)
+- **Pending:** Phase 4-7+: Tests pending for authenticated flows (login, workspace, admin, payment)
 - **Next Action:** Optional for initial production launch, recommended before scaling
 
 ---
@@ -622,6 +778,6 @@ When resuming work:
 
 ---
 
-**Last Updated**: 2026-01-25
+**Last Updated**: 2026-02-15
 **Updated By**: Lead Architect (Claude)
-**Status**: Phase 1-7 COMPLETE (backend + frontend + migration). Memory-bank files synchronized with IdeaBrowser competitive positioning. All 9 pages connected to APIs. Ready for production deployment.
+**Status**: Phase 1-10 COMPLETE + Q6-Q9 Quality Improvements (3 critical bugs fixed, 19 SEO layouts, ILIKE sanitization, rate limiting). 291 backend tests + 47 E2E tests. Production ready.

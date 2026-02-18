@@ -11,7 +11,7 @@ See architecture.md "API Architecture Phase 4+" for full specification.
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -24,10 +24,9 @@ from app.api.deps import CurrentUser
 from app.db.query_helpers import count_by_field
 from app.db.session import get_db
 from app.models.insight import Insight
-from app.models.saved_insight import SavedInsight
-from app.models.user import User
-from app.models.user_rating import UserRating
 from app.models.insight_interaction import InsightInteraction
+from app.models.saved_insight import SavedInsight
+from app.models.user_rating import UserRating
 from app.schemas.user import (
     ClaimResponse,
     InteractionCreate,
@@ -36,7 +35,6 @@ from app.schemas.user import (
     RatingCreate,
     RatingListResponse,
     RatingResponse,
-    RatingUpdate,
     SavedInsightCreate,
     SavedInsightListResponse,
     SavedInsightResponse,
@@ -97,7 +95,7 @@ async def update_user_profile(
             **update_data.preferences,
         }
 
-    current_user.updated_at = datetime.utcnow()
+    current_user.updated_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(current_user)
 
@@ -332,7 +330,7 @@ async def update_saved_insight(
     if update_data.status is not None:
         saved_insight.status = update_data.status
         if update_data.status == "building":
-            saved_insight.claimed_at = datetime.utcnow()
+            saved_insight.claimed_at = datetime.now(UTC)
 
     await db.commit()
     await db.refresh(saved_insight)
@@ -384,8 +382,8 @@ async def claim_insight(
         raise HTTPException(status_code=404, detail="Insight not found")
 
     # Use UserService to get or create SavedInsight with building status
-    claimed_at = datetime.utcnow()
-    saved_insight = await UserService.get_or_create_saved_insight(
+    claimed_at = datetime.now(UTC)
+    await UserService.get_or_create_saved_insight(
         db=db,
         user_id=current_user.id,
         insight_id=insight_id,
@@ -467,7 +465,7 @@ async def rate_insight(
         # Update existing rating
         existing_rating.rating = rating_data.rating
         existing_rating.feedback = rating_data.feedback
-        existing_rating.rated_at = datetime.utcnow()
+        existing_rating.rated_at = datetime.now(UTC)
         await db.commit()
         await db.refresh(existing_rating)
         rating = existing_rating

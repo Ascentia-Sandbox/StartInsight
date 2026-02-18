@@ -23,7 +23,9 @@ dependencies = [
     "anthropic>=0.25.0",
     "openai>=1.12.0",
     # Web Scraping
-    "firecrawl-py>=0.0.16",
+    "firecrawl-py>=0.0.16",  # Keep as fallback during transition
+    "crawl4ai>=0.2.0",  # PMF optimization: $0 cost replacement for Firecrawl
+    "playwright>=1.40.0",  # Required for Crawl4AI browser automation
     "praw>=7.7.1",
     "pytrends>=4.9.2",
     "tweepy>=4.14.0",  # Phase 7.1: Twitter/X integration
@@ -33,8 +35,6 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "httpx>=0.26.0",
     "apscheduler>=3.11.2",
-    # Supabase (Phase 4+)
-    "supabase>=2.0.0",
     # Authentication
     "python-jose[cryptography]>=3.3.0",
     # SSE (Server-Sent Events) for admin real-time updates
@@ -44,6 +44,12 @@ dependencies = [
     "resend>=0.7.0",  # Phase 6.2: Email notifications
     # Phase 7: Rate Limiting
     "slowapi>=0.1.9",  # Phase 6.3: Rate limiting
+    "prophet>=1.3.0",
+    "rich>=14.2.0",
+    "sentry-sdk[fastapi]>=2.0.0",
+    "beautifulsoup4>=4.14.3",
+    "bleach>=6.1.0",  # Input sanitization for XSS prevention
+    "itsdangerous>=2.1.0",  # Token signing for email unsubscribe
 ]
 
 [project.optional-dependencies]
@@ -70,7 +76,23 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
-ignore = ["E501"]
+ignore = [
+    "E501",   # line too long
+    "E712",   # == True/False comparisons — required for SQLAlchemy column filters
+    "UP042",  # str + Enum inheritance — required for FastAPI enum serialization
+]
+
+[tool.ruff.lint.per-file-ignores]
+"app/models/*.py" = ["F821"]   # SQLAlchemy relationship forward references
+"app/main.py" = ["E402"]       # conditional imports after app setup
+"app/api/deps.py" = ["E402"]   # conditional imports after settings
+"app/worker.py" = ["E402"]     # env setup before imports
+"scripts/*.py" = ["E402"]      # sys.path manipulation before imports
+"tests/**/*.py" = ["F841"]     # test assignments for side-effect verification
+"app/api/routes/community.py" = ["F811"]  # PollResponse redefinition (intentional override)
+"app/scrapers/**/*.py" = ["N806"]  # uppercase vars in functions (method priority maps)
+"app/services/report_generator.py" = ["N811"]  # HTML imported as WeasyHTML (clarity)
+"alembic/**/*.py" = ["W291", "I001", "UP035", "UP007"]  # auto-generated migration files
 
 [tool.mypy]
 python_version = "3.11"

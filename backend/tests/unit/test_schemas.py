@@ -1,15 +1,12 @@
 """Unit tests for Pydantic schemas."""
 
-from datetime import datetime
 from uuid import uuid4
 
 import pytest
 from pydantic import ValidationError
 
 from app.schemas import (
-    EnhancedInsightCreate,
     EnhancedScoreBase,
-    InsightResponse,
     RatingCreate,
     ResearchRequestCreate,
     SavedInsightCreate,
@@ -23,7 +20,6 @@ from app.schemas.research import (
     ExecutionPhase,
     MarketAnalysis,
     MarketMatrix,
-    ResearchAnalysisResponse,
     RiskAssessment,
     ValidationSignal,
     ValueEquation,

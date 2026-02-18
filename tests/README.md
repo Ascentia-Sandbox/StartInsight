@@ -238,11 +238,12 @@ test.describe('Feature Name', () => {
 
 **Database Connection Errors:**
 ```bash
-# Ensure PostgreSQL is running
-docker-compose up -d postgres
+# Database is hosted on Supabase Pro (no local PostgreSQL)
+# CI uses an ephemeral postgres:16 service for test isolation
+# For local dev, ensure DATABASE_URL in backend/.env points to Supabase
 
 # Check connection
-psql -h localhost -p 5433 -U startinsight_user -d startinsight_db
+uv run python backend/check_db_connection.py
 ```
 
 **Import Errors:**

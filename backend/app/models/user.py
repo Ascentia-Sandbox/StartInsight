@@ -8,7 +8,8 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import DateTime, String, Text, func
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -81,6 +82,15 @@ class User(Base):
         default=dict,
         nullable=False,
         doc="User preferences as JSON (theme, email_digest, etc.)",
+    )
+
+    # Phase 15: APAC Language Support
+    language: Mapped[str] = mapped_column(
+        String(10),
+        default="en",
+        nullable=False,
+        index=True,
+        doc="User's preferred language (ISO 639-1 + region): en, zh-CN, id-ID, vi-VN, th-TH, tl-PH",
     )
 
     # Timestamps

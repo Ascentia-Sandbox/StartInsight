@@ -12,9 +12,9 @@ const datetimeValidator = z.string().refine(
 // Zod schemas for runtime validation
 export const CompetitorSchema = z.object({
   name: z.string(),
-  url: z.string().url(),
+  url: z.string(),
   description: z.string(),
-  market_position: z.enum(['Small', 'Medium', 'Large']).nullable().optional(),
+  market_position: z.string().nullable().optional(),
 });
 
 export const RawSignalSummarySchema = z.object({
@@ -26,12 +26,14 @@ export const RawSignalSummarySchema = z.object({
 });
 
 // Community Signal Schema (Phase 5.2: Visualization)
+// Flexible: AI agents may produce varying field formats
 export const CommunitySignalSchema = z.object({
-  platform: z.enum(['Reddit', 'Facebook', 'YouTube', 'Other']),
-  score: z.number().min(1).max(10),
-  members: z.number().min(0),
-  engagement_rate: z.number().min(0).max(1),
-  top_url: z.string().url().nullable().optional(),
+  platform: z.string().nullable().optional(),
+  community: z.string().nullable().optional(),
+  score: z.number().min(0).max(10),
+  members: z.union([z.string(), z.number()]),
+  engagement_rate: z.number().min(0).max(1).nullable().optional(),
+  top_url: z.string().nullable().optional(),
 });
 
 // Enhanced Score Schema (Phase 5.2: 8-Dimension Visualization)
@@ -41,9 +43,18 @@ export const EnhancedScoreSchema = z.object({
   label: z.string(),
 });
 
+// Trend keyword schema
+export const TrendKeywordSchema = z.object({
+  keyword: z.string(),
+  volume: z.string(),
+  growth: z.string(),
+});
+
 export const InsightSchema = z.object({
   id: z.string().uuid(),
   raw_signal_id: z.string().uuid(),
+  slug: z.string().nullable().optional(),
+  title: z.string().nullable().optional(),
   problem_statement: z.string(),
   proposed_solution: z.string(),
   market_size_estimate: z.string(), // Any string (e.g., "$5B-$20B", "Small", "Large")
@@ -54,10 +65,29 @@ export const InsightSchema = z.object({
   // Phase 5.2: Enhanced visualizations
   community_signals_chart: z.array(CommunitySignalSchema).nullable().optional(),
   enhanced_scores: z.array(EnhancedScoreSchema).nullable().optional(),
-  // Additional framework fields
-  value_ladder: z.record(z.string(), z.any()).optional(),
-  market_gap_analysis: z.string().optional(),
-  why_now_analysis: z.string().optional(),
+  trend_keywords: z.array(TrendKeywordSchema).nullable().optional(),
+  // Market sizing (TAM/SAM/SOM) - AI output varies
+  market_sizing: z.record(z.string(), z.any()).nullable().optional(),
+  // Advanced frameworks - AI output varies in structure
+  value_ladder: z.any().nullable().optional(),
+  market_gap_analysis: z.string().nullable().optional(),
+  why_now_analysis: z.string().nullable().optional(),
+  proof_signals: z.array(z.record(z.string(), z.any())).nullable().optional(),
+  execution_plan: z.array(z.record(z.string(), z.any())).nullable().optional(),
+  // Individual score fields for ScoreRadar component
+  opportunity_score: z.number().min(1).max(10).nullable().optional(),
+  problem_score: z.number().min(1).max(10).nullable().optional(),
+  feasibility_score: z.number().min(1).max(10).nullable().optional(),
+  why_now_score: z.number().min(1).max(10).nullable().optional(),
+  go_to_market_score: z.number().min(1).max(10).nullable().optional(),
+  founder_fit_score: z.number().min(1).max(10).nullable().optional(),
+  execution_difficulty_score: z.number().min(1).max(10).nullable().optional(),
+  revenue_potential_score: z.union([z.string(), z.number()]).nullable().optional(),
+  // Trend data: real timeseries data from backend (dates + values)
+  trend_data: z.object({
+    dates: z.array(z.string()),
+    values: z.array(z.number()),
+  }).nullable().optional(),
 });
 
 export const InsightListResponseSchema = z.object({
@@ -72,6 +102,7 @@ export type Competitor = z.infer<typeof CompetitorSchema>;
 export type RawSignalSummary = z.infer<typeof RawSignalSummarySchema>;
 export type CommunitySignal = z.infer<typeof CommunitySignalSchema>;
 export type EnhancedScore = z.infer<typeof EnhancedScoreSchema>;
+export type TrendKeyword = z.infer<typeof TrendKeywordSchema>;
 export type Insight = z.infer<typeof InsightSchema>;
 export type InsightListResponse = z.infer<typeof InsightListResponseSchema>;
 
@@ -79,6 +110,8 @@ export type InsightListResponse = z.infer<typeof InsightListResponseSchema>;
 export interface FetchInsightsParams {
   min_score?: number;
   source?: string;
+  sort?: 'relevance' | 'founder_fit' | 'opportunity' | 'feasibility' | 'newest';
+  featured?: boolean;
   limit?: number;
   offset?: number;
 }
@@ -277,7 +310,7 @@ export const ExecutionLogSchema = z.object({
 
 export const AgentStatusSchema = z.object({
   agent_type: z.string(),
-  state: z.enum(['running', 'paused', 'triggered']),
+  state: z.enum(['running', 'paused', 'triggered', 'error']),
   last_run: z.string().nullable().optional(),
   last_status: z.string().nullable().optional(),
   items_processed_today: z.number(),
@@ -318,6 +351,50 @@ export type AgentStatus = z.infer<typeof AgentStatusSchema>;
 export type DashboardMetrics = z.infer<typeof DashboardMetricsSchema>;
 export type InsightReview = z.infer<typeof InsightReviewSchema>;
 export type ReviewQueueResponse = z.infer<typeof ReviewQueueResponseSchema>;
+
+// ============================================
+// Phase 15.1: Full Insight Admin Types
+// ============================================
+
+export const InsightAdminSchema = z.object({
+  id: z.string(),
+  title: z.string().nullable().optional(),
+  problem_statement: z.string(),
+  proposed_solution: z.string(),
+  market_size_estimate: z.string(),
+  relevance_score: z.number(),
+  admin_status: z.string().nullable().optional(),
+  admin_notes: z.string().nullable().optional(),
+  admin_override_score: z.number().nullable().optional(),
+  source: z.string(),
+  created_at: z.string(),
+  edited_at: z.string().nullable().optional(),
+  opportunity_score: z.number().nullable().optional(),
+  problem_score: z.number().nullable().optional(),
+  feasibility_score: z.number().nullable().optional(),
+  why_now_score: z.number().nullable().optional(),
+  execution_difficulty: z.number().nullable().optional(),
+  go_to_market_score: z.number().nullable().optional(),
+  founder_fit_score: z.number().nullable().optional(),
+  revenue_potential: z.string().nullable().optional(),
+  market_gap_analysis: z.string().nullable().optional(),
+  why_now_analysis: z.string().nullable().optional(),
+  value_ladder: z.any().nullable().optional(),
+  proof_signals: z.any().nullable().optional(),
+  execution_plan: z.any().nullable().optional(),
+  competitor_analysis: z.any().nullable().optional(),
+});
+
+export const InsightAdminListSchema = z.object({
+  items: z.array(InsightAdminSchema),
+  total: z.number(),
+  pending_count: z.number(),
+  approved_count: z.number(),
+  rejected_count: z.number(),
+});
+
+export type InsightAdmin = z.infer<typeof InsightAdminSchema>;
+export type InsightAdminList = z.infer<typeof InsightAdminListSchema>;
 
 // ============================================
 // Research Request Types (Phase 5.2: Admin Queue)

@@ -16,7 +16,6 @@ See architecture.md "Research Agent Architecture" for specification.
 import asyncio
 import logging
 import time
-from typing import Any
 
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
@@ -194,7 +193,7 @@ Return a structured JSON object matching the ResearchResult schema."""
 def get_research_agent() -> Agent:
     """Get PydanticAI agent for research analysis (API key from GOOGLE_API_KEY env)."""
     return Agent(
-        model="google-gla:gemini-2.0-flash",
+        model=settings.default_llm_model,
         system_prompt=RESEARCH_SYSTEM_PROMPT,
         output_type=ResearchResult,
     )
@@ -271,7 +270,7 @@ Please provide a comprehensive 40-step analysis following all frameworks:
                 agent.run(prompt),
                 timeout=MAX_ANALYSIS_TIMEOUT_SECONDS,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise Exception(
                 f"Analysis timed out after {MAX_ANALYSIS_TIMEOUT_SECONDS}s. "
                 "This may indicate an API issue or overly complex analysis."

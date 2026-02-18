@@ -20,8 +20,31 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import type { ResearchRequestSummary } from '@/lib/types';
+import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 
 export default function AdminResearchQueue() {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Show loading spinner until client-side mount
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="animate-spin h-8 w-8 text-primary mx-auto" />
+          <p className="mt-2 text-muted-foreground">Loading research queue...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <ResearchQueueContent />;
+}
+
+function ResearchQueueContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -113,6 +136,10 @@ export default function AdminResearchQueue() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
+        <Breadcrumbs items={[
+          { label: 'Admin', href: '/admin' },
+          { label: 'Research Queue' },
+        ]} />
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

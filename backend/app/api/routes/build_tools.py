@@ -4,13 +4,16 @@ Endpoints for brand package and landing page generation.
 """
 
 import logging
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, get_db
 from app.models import User
+from app.models.insight import Insight
 from app.services.brand_generator import (
     BrandPackage,
     generate_brand_package,
@@ -187,3 +190,69 @@ async def create_landing_from_analysis(
     # For now, return default landing page
     logger.info(f"Landing page from analysis {request.analysis_id} requested")
     return get_default_landing_page(request.company_name)
+
+
+# ============================================================
+# Generate from Insight (Phase C: Idea Builder)
+# ============================================================
+
+
+class BuildFromInsightRequest(BaseModel):
+    """Generate brand + landing page from an existing insight."""
+
+    company_name: str = Field(..., min_length=2, max_length=100)
+    include_pricing: bool = Field(default=True)
+
+
+class BuildFromInsightResponse(BaseModel):
+    """Combined brand + landing page result."""
+
+    brand: BrandPackage
+    landing_page: LandingPageTemplate
+
+
+@router.post("/from-insight/{insight_id}", response_model=BuildFromInsightResponse)
+async def build_from_insight(
+    insight_id: UUID,
+    request: BuildFromInsightRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> BuildFromInsightResponse:
+    """
+    Generate brand package + landing page from an existing insight.
+
+    Uses insight data (problem, solution, market) to auto-fill generation context.
+    """
+    insight = await db.get(Insight, insight_id)
+    if not insight:
+        raise HTTPException(status_code=404, detail="Insight not found")
+
+    idea_desc = f"{insight.problem_statement or ''}\n\nSolution: {insight.proposed_solution or ''}"
+    target_market = insight.market_size_estimate or "General technology market"
+    value_prop = insight.proposed_solution or "Innovative solution"
+
+    try:
+        brand = await generate_brand_package(
+            company_name=request.company_name,
+            idea_description=idea_desc[:2000],
+            target_market=target_market,
+            industry=target_market,
+        )
+    except Exception as e:
+        logger.error(f"Brand generation failed for insight {insight_id}: {e}")
+        brand = get_default_brand_package(request.company_name)
+
+    try:
+        landing_page = await generate_landing_page(
+            company_name=request.company_name,
+            idea_description=idea_desc[:2000],
+            target_market=target_market,
+            value_proposition=value_prop[:300],
+            brand_package=brand,
+            include_pricing=request.include_pricing,
+        )
+    except Exception as e:
+        logger.error(f"Landing page generation failed for insight {insight_id}: {e}")
+        landing_page = get_default_landing_page(request.company_name)
+
+    return BuildFromInsightResponse(brand=brand, landing_page=landing_page)

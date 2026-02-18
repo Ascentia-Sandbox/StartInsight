@@ -2,12 +2,16 @@
 
 Phase 4.1: Supabase Auth integration with JWT verification.
 See architecture.md "Authentication Architecture" for full specification.
+
+Supports both ES256 (JWKS-based, Supabase default) and HS256 (legacy) JWT verification.
 """
 
 import logging
+import time
 from enum import Enum
 from typing import Annotated
 
+import httpx
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
@@ -22,20 +26,39 @@ from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
-# Redis client for role caching
-_redis_client: aioredis.Redis | None = None
+# JWKS cache for ES256 verification
+_jwks_cache: dict | None = None
+_jwks_cache_time: float = 0
+_JWKS_CACHE_TTL: int = settings.jwks_cache_ttl
+
+
+async def _get_jwks_key(kid: str) -> dict:
+    """Fetch and cache JWKS keys from Supabase for ES256 verification."""
+    global _jwks_cache, _jwks_cache_time
+
+    now = time.time()
+    if _jwks_cache is None or (now - _jwks_cache_time) > _JWKS_CACHE_TTL:
+        jwks_url = f"{settings.supabase_url}/auth/v1/.well-known/jwks.json"
+        async with httpx.AsyncClient(timeout=settings.jwks_fetch_timeout) as client:
+            resp = await client.get(jwks_url)
+            resp.raise_for_status()
+            _jwks_cache = resp.json()
+            _jwks_cache_time = now
+            logger.info("Refreshed JWKS cache from Supabase")
+
+    for key in _jwks_cache.get("keys", []):
+        if key.get("kid") == kid:
+            return key
+
+    raise ValueError(f"No JWKS key found for kid: {kid}")
+
+# Redis client - use shared pool from cache.py
+from app.core.cache import get_redis as _get_cache_redis
 
 
 async def get_redis() -> aioredis.Redis:
-    """Get Redis client for caching (lazy initialization)."""
-    global _redis_client
-    if _redis_client is None:
-        _redis_client = await aioredis.from_url(
-            settings.redis_url,
-            encoding="utf-8",
-            decode_responses=True,
-        )
-    return _redis_client
+    """Get Redis client for caching (shared pool from cache.py)."""
+    return await _get_cache_redis()
 
 # HTTP Bearer token scheme
 security = HTTPBearer(auto_error=False)
@@ -165,6 +188,8 @@ async def _verify_and_get_user(token: str, db: AsyncSession) -> User:
     """
     Verify Supabase JWT token and get/create user.
 
+    Supports ES256 (JWKS-based, Supabase default) and HS256 (legacy) verification.
+
     Args:
         token: JWT access token from Supabase Auth
         db: Database session
@@ -181,30 +206,53 @@ async def _verify_and_get_user(token: str, db: AsyncSession) -> User:
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    # Verify JWT secret is configured
-    if not settings.jwt_secret:
-        logger.error("JWT_SECRET not configured")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Authentication not configured",
-        )
-
     try:
-        # Decode and verify JWT with full validation
-        payload = jwt.decode(
-            token,
-            settings.jwt_secret,
-            algorithms=[settings.jwt_algorithm],
-            audience="authenticated",  # Supabase default audience
-            issuer=settings.supabase_url,  # Validate token issuer
-            options={
-                'verify_exp': True,      # ✅ Check expiration
-                'verify_aud': True,      # ✅ Check audience
-                'verify_iss': True,      # ✅ Check issuer
-                'require_exp': True,     # ✅ Require exp claim
-                'require_sub': True,     # ✅ Require sub claim
-            }
-        )
+        # Peek at the JWT header to determine algorithm
+        header = jwt.get_unverified_header(token)
+        alg = header.get("alg", "HS256")
+        kid = header.get("kid")
+
+        issuer = f"{settings.supabase_url}/auth/v1"
+
+        if alg == "ES256" and kid and settings.supabase_url:
+            # ES256: Verify using JWKS public key from Supabase
+            jwk_key = await _get_jwks_key(kid)
+            payload = jwt.decode(
+                token,
+                jwk_key,
+                algorithms=["ES256"],
+                audience="authenticated",
+                issuer=issuer,
+                options={
+                    "verify_exp": True,
+                    "verify_aud": True,
+                    "verify_iss": True,
+                    "require_exp": True,
+                    "require_sub": True,
+                },
+            )
+        elif settings.jwt_secret:
+            # HS256: Verify using shared secret (legacy / testing)
+            payload = jwt.decode(
+                token,
+                settings.jwt_secret,
+                algorithms=["HS256"],
+                audience="authenticated",
+                issuer=issuer,
+                options={
+                    "verify_exp": True,
+                    "verify_aud": True,
+                    "verify_iss": True,
+                    "require_exp": True,
+                    "require_sub": True,
+                },
+            )
+        else:
+            logger.error("No JWT verification method available (no JWKS kid and no JWT_SECRET)")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Authentication not configured",
+            )
 
         # Extract user info from JWT payload
         supabase_user_id: str = payload.get("sub")
@@ -213,9 +261,13 @@ async def _verify_and_get_user(token: str, db: AsyncSession) -> User:
         if not supabase_user_id:
             raise credentials_exception
 
-        # ✅ Verify email is confirmed (security best practice)
+        # Verify email is confirmed (security best practice)
+        # ES256 tokens: check user_metadata.email_verified
+        # HS256 tokens: check email_confirmed_at
+        user_metadata = payload.get("user_metadata", {})
+        email_verified = user_metadata.get("email_verified", False)
         email_confirmed_at = payload.get("email_confirmed_at")
-        if not email_confirmed_at:
+        if not email_verified and not email_confirmed_at:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Email verification required. Please check your inbox and verify your email.",
@@ -224,6 +276,9 @@ async def _verify_and_get_user(token: str, db: AsyncSession) -> User:
 
     except JWTError as e:
         logger.warning(f"JWT verification failed: {e}")
+        raise credentials_exception
+    except (httpx.HTTPError, ValueError) as e:
+        logger.warning(f"JWKS fetch or key lookup failed: {e}")
         raise credentials_exception
 
     # Find or create user (JIT provisioning) - atomic UPSERT prevents race conditions

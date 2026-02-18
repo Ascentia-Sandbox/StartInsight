@@ -4,10 +4,11 @@ Handles subscription management, checkout sessions, and webhooks.
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
+from urllib.parse import urlparse
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -156,15 +157,16 @@ async def create_checkout_session(
         if not cancel_url.startswith("https://"):
             raise ValueError("cancel_url must use HTTPS in production")
 
-        # Validate URLs belong to allowed domains (prevent redirect attacks)
-        allowed_domains = settings.cors_origins_list
-        success_domain = success_url.split("/")[2] if len(success_url.split("/")) > 2 else ""
-        cancel_domain = cancel_url.split("/")[2] if len(cancel_url.split("/")) > 2 else ""
+        # Validate URLs belong to allowed domains (prevent open redirect attacks)
+        allowed_origins = settings.cors_origins_list
+        allowed_hosts = {urlparse(origin).hostname for origin in allowed_origins if urlparse(origin).hostname}
+        success_host = urlparse(success_url).hostname
+        cancel_host = urlparse(cancel_url).hostname
 
-        if not any(domain in success_url for domain in allowed_domains):
-            raise ValueError(f"success_url domain not in allowed CORS origins: {success_domain}")
-        if not any(domain in cancel_url for domain in allowed_domains):
-            raise ValueError(f"cancel_url domain not in allowed CORS origins: {cancel_domain}")
+        if success_host not in allowed_hosts:
+            raise ValueError(f"success_url domain not in allowed CORS origins: {success_host}")
+        if cancel_host not in allowed_hosts:
+            raise ValueError(f"cancel_url domain not in allowed CORS origins: {cancel_host}")
 
     stripe = get_stripe_client()
     if not stripe or not settings.stripe_secret_key:
@@ -263,7 +265,13 @@ async def handle_webhook_event(
     """
     stripe = get_stripe_client()
     if not stripe or not settings.stripe_webhook_secret:
-        logger.warning("Stripe webhooks not configured")
+        # CRITICAL: Fail hard in production to prevent webhook forgery
+        if settings.environment == "production":
+            logger.error("Stripe webhook secret not configured in production!")
+            raise ValueError("STRIPE_WEBHOOK_SECRET is required in production")
+
+        # Development only: allow skip with warning
+        logger.warning("Stripe webhooks not configured - development mode only")
         return {"status": "skipped", "reason": "not_configured"}
 
     try:
@@ -459,7 +467,7 @@ async def _handle_subscription_deleted(data: dict, db: AsyncSession) -> dict:
     from app.models.subscription import Subscription
 
     stripe_subscription_id = data.get("id")
-    canceled_at = datetime.fromtimestamp(data.get("canceled_at", 0)) if data.get("canceled_at") else datetime.utcnow()
+    canceled_at = datetime.fromtimestamp(data.get("canceled_at", 0)) if data.get("canceled_at") else datetime.now(UTC)
 
     logger.info(f"Subscription {stripe_subscription_id} cancelled")
 
@@ -498,8 +506,6 @@ async def _handle_invoice_paid(data: dict, db: AsyncSession) -> dict:
     customer_id = data.get("customer")
     amount_paid = data.get("amount_paid", 0)
     currency = data.get("currency", "usd")
-    subscription_id = data.get("subscription")
-
     logger.info(f"Invoice {invoice_id} paid: ${amount_paid/100:.2f} {currency.upper()}")
 
     # Find subscription by stripe_customer_id
@@ -594,10 +600,8 @@ def _get_price_id(tier: str, billing_cycle: str) -> str | None:
 
 
 def get_tier_limits(tier: str) -> dict[str, int]:
-    """Get limits for a subscription tier."""
-    if tier in PRICING_TIERS:
-        return PRICING_TIERS[tier].limits
-    return PRICING_TIERS["free"].limits
+    """Get limits for a subscription tier. Falls back to free tier if unknown."""
+    return PRICING_TIERS.get(tier, PRICING_TIERS["free"]).limits
 
 
 def check_tier_limit(tier: str, limit_name: str, current_usage: int) -> bool:

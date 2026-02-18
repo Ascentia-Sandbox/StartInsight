@@ -54,5 +54,4 @@ Thumbs.db
 
 # Misc
 .dockerignore
-Dockerfile
 docker-compose.yml

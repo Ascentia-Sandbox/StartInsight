@@ -14,6 +14,10 @@ interface RatingComponentProps {
   onRatingChange?: (rating: number) => void;
 }
 
+import { config } from '@/lib/env';
+
+const API_URL = config.apiUrl;
+
 export function RatingComponent({
   insightId,
   initialRating = 0,
@@ -38,28 +42,24 @@ export function RatingComponent({
     const supabase = getSupabaseClient();
 
     // Check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      // Redirect to login
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
       window.location.href = '/auth/login?redirectTo=' + encodeURIComponent(window.location.pathname);
       return;
     }
 
     setLoading(true);
     try {
-      // Upsert the rating
-      const { error } = await supabase
-        .from('insight_ratings')
-        .upsert(
-          {
-            user_id: user.id,
-            insight_id: insightId,
-            rating: newRating,
-          },
-          { onConflict: 'user_id,insight_id' }
-        );
+      const res = await fetch(`${API_URL}/api/users/insights/${insightId}/rate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ rating: newRating }),
+      });
 
-      if (error) throw error;
+      if (!res.ok) throw new Error('Failed to rate');
 
       setRating(newRating);
       onRatingChange?.(newRating);

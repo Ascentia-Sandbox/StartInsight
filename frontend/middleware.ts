@@ -1,12 +1,16 @@
 /**
- * Next.js Middleware for Supabase Auth
+ * Next.js Middleware - Composed Authentication + i18n
  *
- * - Refreshes auth session
- * - Protects routes that require authentication
+ * Handles:
+ * 1. Supabase authentication and session refresh
+ * 2. Route protection for authenticated pages
+ * 3. Locale routing (English-only)
  */
 
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import createIntlMiddleware from 'next-intl/middleware';
+import { locales } from './i18n';
 
 // Routes that require authentication
 const protectedRoutes = ['/dashboard', '/workspace', '/settings', '/research', '/build', '/teams', '/billing'];
@@ -14,8 +18,24 @@ const protectedRoutes = ['/dashboard', '/workspace', '/settings', '/research', '
 // Routes that require admin role
 const adminRoutes = ['/admin'];
 
+// Create i18n middleware instance
+const intlMiddleware = createIntlMiddleware({
+  locales,
+  defaultLocale: 'en',
+  localePrefix: 'as-needed'
+});
+
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
+  const pathname = request.nextUrl.pathname;
+
+  // Skip i18n middleware for admin routes (they live outside [locale])
+  const isAdminPath = pathname.startsWith('/admin');
+
+  // Step 1: Handle i18n routing (skip for admin pages)
+  const intlResponse = isAdminPath ? null : intlMiddleware(request);
+
+  // Step 2: Create Supabase client for auth
+  let response = NextResponse.next({
     request,
   });
 
@@ -29,11 +49,11 @@ export async function middleware(request: NextRequest) {
         },
         setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          supabaseResponse = NextResponse.next({
+          response = NextResponse.next({
             request,
           });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            response.cookies.set(name, value, options)
           );
         },
       },
@@ -45,37 +65,48 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const pathname = request.nextUrl.pathname;
+  // Extract pathname without locale prefix (if present)
+  const locale = pathname.split('/')[1];
+  const pathWithoutLocale = locales.includes(locale as any)
+    ? pathname.slice(locale.length + 1) || '/'
+    : pathname;
 
-  // Check if route requires authentication
-  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
-  const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
+  // Check if route requires authentication (check path without locale)
+  const isProtectedRoute = protectedRoutes.some((route) => pathWithoutLocale.startsWith(route));
+  const isAdminRoute = adminRoutes.some((route) => pathWithoutLocale.startsWith(route));
 
   // Redirect to login if accessing protected route without auth
-  if (isProtectedRoute && !user) {
+  if ((isProtectedRoute || isAdminRoute) && !user) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth/login';
     url.searchParams.set('redirectTo', pathname);
     return NextResponse.redirect(url);
   }
 
-  // Redirect to home if accessing admin route without admin role
-  // Note: This is a basic check - full admin verification happens server-side
-  if (isAdminRoute && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/auth/login';
-    url.searchParams.set('redirectTo', pathname);
-    return NextResponse.redirect(url);
-  }
-
-  // Redirect logged-in users away from auth pages
-  if (user && pathname.startsWith('/auth/')) {
+  // Redirect non-admin users away from admin routes
+  const adminRoles = ['admin', 'superadmin'];
+  if (isAdminRoute && user && !adminRoles.includes(user.app_metadata?.role)) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);
   }
 
-  return supabaseResponse;
+  // Redirect logged-in users away from auth pages
+  if (user && (pathWithoutLocale.startsWith('/auth/') || pathname.startsWith('/auth/'))) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/dashboard';
+    return NextResponse.redirect(url);
+  }
+
+  // Merge i18n response with auth response
+  // Copy headers from intl response to auth response
+  if (intlResponse) {
+    intlResponse.headers.forEach((value, key) => {
+      response.headers.set(key, value);
+    });
+  }
+
+  return response;
 }
 
 export const config = {

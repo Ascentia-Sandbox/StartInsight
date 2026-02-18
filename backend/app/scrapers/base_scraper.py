@@ -1,15 +1,84 @@
-"""Base scraper class with common logic for all scrapers."""
+"""Base scraper class with common logic for all scrapers.
 
+This module provides the abstract base class for all data scrapers,
+including common functionality for:
+- Saving raw data to database
+- Logging scraping activity
+- Error handling with retry logic
+- Rate limiting integration
+- Data deduplication
+"""
+
+import hashlib
 import logging
 from abc import ABC, abstractmethod
-from typing import Any
+from collections.abc import Callable
 
+import httpx
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from tenacity import (
+    before_sleep_log,
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from app.models.raw_signal import RawSignal
-from app.scrapers.firecrawl_client import ScrapeResult
+from app.scrapers.firecrawl_client import ScrapeResult  # Shared by both clients
 
 logger = logging.getLogger(__name__)
+
+# Exceptions that are safe to retry
+RETRYABLE_EXCEPTIONS = (
+    httpx.TimeoutException,
+    httpx.ConnectError,
+    httpx.ReadTimeout,
+    httpx.WriteTimeout,
+    httpx.PoolTimeout,
+    ConnectionError,
+    TimeoutError,
+    OSError,  # Includes network-related OS errors
+)
+
+
+def create_retry_decorator(
+    max_attempts: int = 3,
+    min_wait: float = 2.0,
+    max_wait: float = 30.0,
+    multiplier: float = 1.0,
+) -> Callable:
+    """
+    Create a retry decorator for scraper methods.
+
+    Uses exponential backoff with configurable parameters.
+
+    Args:
+        max_attempts: Maximum number of retry attempts
+        min_wait: Minimum wait time between retries (seconds)
+        max_wait: Maximum wait time between retries (seconds)
+        multiplier: Multiplier for exponential backoff
+
+    Returns:
+        Configured retry decorator
+
+    Example:
+        >>> @create_retry_decorator(max_attempts=3)
+        ... async def fetch_data():
+        ...     ...
+    """
+    return retry(
+        stop=stop_after_attempt(max_attempts),
+        wait=wait_exponential(multiplier=multiplier, min=min_wait, max=max_wait),
+        retry=retry_if_exception_type(RETRYABLE_EXCEPTIONS),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        reraise=True,
+    )
+
+
+# Default retry decorator for scraper methods
+scraper_retry = create_retry_decorator(max_attempts=3, min_wait=2, max_wait=30)
 
 
 class BaseScraper(ABC):
@@ -54,7 +123,9 @@ class BaseScraper(ABC):
         self, session: AsyncSession, results: list[ScrapeResult]
     ) -> list[RawSignal]:
         """
-        Save scrape results to database.
+        Save scrape results to database with deduplication.
+
+        Uses content hash to prevent storing duplicate content.
 
         Args:
             session: Async database session
@@ -75,14 +146,49 @@ class BaseScraper(ABC):
             return []
 
         signals: list[RawSignal] = []
+        duplicates_skipped = 0
 
         for result in results:
             try:
+                # Compute content hash for deduplication
+                content_hash = self.compute_content_hash(result.content)
+
+                # Check if content already exists
+                existing_query = select(RawSignal).where(
+                    RawSignal.content_hash == content_hash
+                )
+                existing_result = await session.execute(existing_query)
+                existing = existing_result.scalar_one_or_none()
+
+                if existing:
+                    logger.debug(
+                        f"Duplicate content skipped: {result.url} "
+                        f"(matches signal {existing.id})"
+                    )
+                    duplicates_skipped += 1
+                    continue
+
+                # Also check URL deduplication (less strict)
+                url_query = select(RawSignal).where(
+                    RawSignal.url == str(result.url),
+                    RawSignal.source == self.source_name,
+                )
+                url_result = await session.execute(url_query)
+                url_existing = url_result.scalar_one_or_none()
+
+                if url_existing:
+                    logger.debug(
+                        f"Duplicate URL skipped: {result.url}"
+                    )
+                    duplicates_skipped += 1
+                    continue
+
                 # Create RawSignal model instance
                 signal = RawSignal(
                     source=self.source_name,
                     url=str(result.url),
                     content=result.content,
+                    content_hash=content_hash,
                     extra_metadata={
                         "title": result.title,
                         **result.metadata,
@@ -110,9 +216,23 @@ class BaseScraper(ABC):
         await session.flush()
 
         logger.info(
-            f"Saved {len(signals)} signals from {self.source_name} to database"
+            f"Saved {len(signals)} signals from {self.source_name} to database "
+            f"({duplicates_skipped} duplicates skipped)"
         )
         return signals
+
+    @staticmethod
+    def compute_content_hash(content: str) -> str:
+        """
+        Compute SHA-256 hash of content for deduplication.
+
+        Args:
+            content: Content string to hash
+
+        Returns:
+            64-character hex digest
+        """
+        return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
     async def run(self, session: AsyncSession) -> list[RawSignal]:
         """

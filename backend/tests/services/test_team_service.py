@@ -1,15 +1,12 @@
 """Tests for team service - Phase 6.4."""
 
-from datetime import datetime
-from unittest.mock import AsyncMock, patch
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 
 from app.services.team_service import (
     ROLE_PERMISSIONS,
     TeamCreate,
-    TeamMemberAdd,
     accept_invitation,
     check_permission,
     create_team,

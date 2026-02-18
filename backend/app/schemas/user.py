@@ -6,8 +6,7 @@ See architecture.md Section "API Architecture Phase 4+" for full specification.
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field, EmailStr
-
+from pydantic import BaseModel, EmailStr, Field
 
 # ============================================
 # User Profile Schemas

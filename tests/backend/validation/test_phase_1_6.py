@@ -113,8 +113,8 @@ def test_database_url_format():
     # Should be postgresql
     assert db_url.startswith("postgresql"), "Database URL should be PostgreSQL"
 
-    # Should have correct port (5433 for our Docker setup)
-    assert ":5433/" in db_url or ":5432/" in db_url, "Database URL should include port"
+    # Should have correct port (5432 for Supabase)
+    assert ":5432/" in db_url, "Database URL should include port 5432"
 
     logger.info("✓ Database URL format is correct for async usage")
 

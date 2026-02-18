@@ -8,7 +8,6 @@ Generates AI-powered brand packages including:
 """
 
 import logging
-from typing import Any
 
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
@@ -135,7 +134,7 @@ Be specific, actionable, and creative. Avoid generic suggestions."""
 def get_brand_agent() -> Agent:
     """Get PydanticAI agent for brand generation (API key from GOOGLE_API_KEY env)."""
     return Agent(
-        model="google-gla:gemini-2.0-flash",
+        model=settings.default_llm_model,
         system_prompt=BRAND_SYSTEM_PROMPT,
         output_type=BrandPackage,
     )

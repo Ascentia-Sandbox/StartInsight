@@ -61,9 +61,17 @@ import {
   type Tenant,
   type TenantBranding,
   type DomainConfig,
+  InsightAdminSchema,
+  InsightAdminListSchema,
+  type InsightAdmin,
+  type InsightAdminList,
 } from './types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+export type { InsightAdmin, InsightAdminList };
+
+import { config } from './env';
+
+const API_BASE_URL = config.apiUrl;
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -84,10 +92,14 @@ export async function fetchInsights(
 }
 
 /**
- * Fetch single insight by ID
+ * Fetch single insight by ID or slug.
+ * If the identifier looks like a UUID, uses /api/insights/{id}.
+ * Otherwise, uses /api/insights/by-slug/{slug}.
  */
-export async function fetchInsightById(id: string): Promise<Insight> {
-  const { data } = await apiClient.get(`/api/insights/${id}`);
+export async function fetchInsightById(idOrSlug: string): Promise<Insight> {
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+  const url = isUUID ? `/api/insights/${idOrSlug}` : `/api/insights/by-slug/${idOrSlug}`;
+  const { data } = await apiClient.get(url);
   return InsightSchema.parse(data);
 }
 
@@ -98,7 +110,16 @@ export async function fetchDailyTop(limit: number = 5): Promise<Insight[]> {
   const { data } = await apiClient.get('/api/insights/daily-top', {
     params: { limit },
   });
-  return z.array(InsightSchema).parse(data);
+
+  // Use safeParse to get detailed validation errors
+  const result = z.array(InsightSchema).safeParse(data);
+
+  if (!result.success) {
+    console.error('Validation errors:', JSON.stringify(result.error.format(), null, 2));
+    throw new Error(result.error.message);
+  }
+
+  return result.data;
 }
 
 /**
@@ -513,6 +534,398 @@ export async function updateInsightStatus(
   return InsightReviewSchema.parse(data);
 }
 
+/**
+ * Fetch full admin insights list with search/filter (Phase 15.1)
+ */
+export async function fetchAdminInsights(
+  accessToken: string,
+  params: {
+    search?: string;
+    status?: string;
+    min_score?: number;
+    max_score?: number;
+    limit?: number;
+    offset?: number;
+  } = {}
+): Promise<InsightAdminList> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/admin/insights/list', { params });
+  return InsightAdminListSchema.parse(data);
+}
+
+/**
+ * Update insight with full admin editing (Phase 15.1)
+ */
+export async function updateInsightAdmin(
+  accessToken: string,
+  insightId: string,
+  payload: Record<string, unknown>
+): Promise<InsightAdmin> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.patch(`/api/admin/insights/${insightId}`, payload);
+  return InsightAdminSchema.parse(data);
+}
+
+/**
+ * Delete (soft-delete) insight (Phase 15.1)
+ */
+export async function deleteInsightAdmin(
+  accessToken: string,
+  insightId: string
+): Promise<void> {
+  const client = createAuthenticatedClient(accessToken);
+  await client.delete(`/api/admin/insights/${insightId}`);
+}
+
+/**
+ * Create a new insight manually (Phase A1)
+ */
+export async function createInsightAdmin(
+  accessToken: string,
+  payload: Record<string, unknown>
+): Promise<InsightAdmin> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post('/api/admin/insights', payload);
+  return InsightAdminSchema.parse(data);
+}
+
+// ============================================
+// Admin User Management
+// ============================================
+
+export interface AdminUserListItem {
+  id: string;
+  email: string;
+  display_name: string | null;
+  subscription_tier: string;
+  created_at: string;
+  last_active: string | null;
+  admin_role: string | null;
+  is_suspended: boolean;
+  language: string;
+  last_login_at: string | null;
+}
+
+export interface AdminUserDetail {
+  id: string;
+  email: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  subscription_tier: string;
+  created_at: string;
+  insights_saved: number;
+  research_count: number;
+  total_sessions: number;
+  admin_role: string | null;
+  is_suspended: boolean;
+  language: string;
+  last_login_at: string | null;
+}
+
+export async function fetchAdminUsers(
+  accessToken: string,
+  params: { search?: string; tier?: string; limit?: number; offset?: number } = {}
+): Promise<AdminUserListItem[]> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/analytics/users/list', { params });
+  return data;
+}
+
+export async function fetchAdminUserDetail(
+  accessToken: string,
+  userId: string
+): Promise<AdminUserDetail> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get(`/admin/analytics/users/${userId}`);
+  return data;
+}
+
+export async function createAdminUser(
+  accessToken: string,
+  payload: { email: string; display_name?: string; subscription_tier?: string; language?: string }
+): Promise<{ status: string; user_id: string }> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post('/admin/analytics/users', payload);
+  return data;
+}
+
+export async function updateAdminUser(
+  accessToken: string,
+  userId: string,
+  updates: { subscription_tier?: string; is_suspended?: boolean; display_name?: string; language?: string }
+): Promise<{ status: string; user_id: string }> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.patch(`/admin/analytics/users/${userId}`, updates);
+  return data;
+}
+
+export async function deleteAdminUser(
+  accessToken: string,
+  userId: string,
+  reason: string = ''
+): Promise<{ status: string; user_id: string }> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.delete(`/admin/analytics/users/${userId}`, { params: { reason } });
+  return data;
+}
+
+export async function bulkAdminUserAction(
+  accessToken: string,
+  payload: { user_ids: string[]; action: string; tier?: string; reason?: string }
+): Promise<{ status: string; affected: number }> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post('/admin/analytics/users/bulk', payload);
+  return data;
+}
+
+// ============================================
+// Audit Logs API
+// ============================================
+
+export interface AuditLogEntry {
+  id: string;
+  user_id: string | null;
+  action: string;
+  resource_type: string;
+  resource_id: string | null;
+  details: Record<string, unknown> | null;
+  ip_address: string | null;
+  created_at: string;
+}
+
+export interface AuditLogStats {
+  total_events: number;
+  by_action: Record<string, number>;
+  by_resource: Record<string, number>;
+  period_days: number;
+}
+
+export async function fetchAuditLogs(
+  accessToken: string,
+  params: { action?: string; resource_type?: string; days?: number; limit?: number } = {}
+): Promise<AuditLogEntry[]> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/agents/audit-logs', { params });
+  return data;
+}
+
+export async function fetchAuditLogStats(
+  accessToken: string,
+  days: number = 7
+): Promise<AuditLogStats> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/agents/audit-logs/stats', { params: { days } });
+  return data;
+}
+
+export async function fetchAuditLogActions(
+  accessToken: string
+): Promise<{ action: string; count: number }[]> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/agents/audit-logs/actions');
+  return data;
+}
+
+// ============================================
+// Agent Configuration API (Phase 8.4-8.5 - Admin Only)
+// ============================================
+
+export interface AgentConfig {
+  id: string;
+  agent_name: string;
+  is_enabled: boolean;
+  model_name: string;
+  temperature: number;
+  max_tokens: number;
+  rate_limit_per_hour: number;
+  cost_limit_daily_usd: number;
+  custom_prompts: Record<string, unknown> | null;
+  schedule_type: string | null;
+  schedule_cron: string | null;
+  schedule_interval_hours: number | null;
+  next_run_at: string | null;
+  last_run_at: string | null;
+  updated_at: string;
+}
+
+export interface AgentStats {
+  agent_name: string;
+  executions_24h: number;
+  success_rate: number;
+  avg_duration_ms: number;
+  tokens_used_24h: number;
+  cost_24h_usd: number;
+}
+
+/**
+ * List all agent configurations (admin only)
+ */
+export async function fetchAgentConfigurations(accessToken: string): Promise<AgentConfig[]> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/agents/configurations');
+  return data;
+}
+
+/**
+ * Get a specific agent configuration (admin only)
+ */
+export async function fetchAgentConfiguration(accessToken: string, agentName: string): Promise<AgentConfig> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get(`/admin/agents/configurations/${agentName}`);
+  return data;
+}
+
+/**
+ * Update agent configuration (admin only)
+ */
+export async function updateAgentConfiguration(
+  accessToken: string,
+  agentName: string,
+  payload: {
+    is_enabled?: boolean;
+    model_name?: string;
+    temperature?: number;
+    max_tokens?: number;
+    rate_limit_per_hour?: number;
+    cost_limit_daily_usd?: number;
+    custom_prompts?: Record<string, unknown>;
+  }
+): Promise<AgentConfig> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.patch(`/admin/agents/configurations/${agentName}`, payload);
+  return data;
+}
+
+/**
+ * Toggle agent on/off (admin only)
+ */
+export async function toggleAgentEnabled(
+  accessToken: string,
+  agentName: string
+): Promise<{ agent_name: string; is_enabled: boolean }> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post(`/admin/agents/configurations/${agentName}/toggle`);
+  return data;
+}
+
+/**
+ * Create a new agent configuration (admin only)
+ */
+export async function createAgentConfiguration(
+  accessToken: string,
+  payload: {
+    agent_name: string;
+    is_enabled?: boolean;
+    model_name?: string;
+    temperature?: number;
+    max_tokens?: number;
+    rate_limit_per_hour?: number;
+    cost_limit_daily_usd?: number;
+    custom_prompts?: Record<string, unknown>;
+  }
+): Promise<AgentConfig> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post('/admin/agents/configurations', payload);
+  return data;
+}
+
+/**
+ * Delete an agent configuration (admin only)
+ */
+export async function deleteAgentConfiguration(
+  accessToken: string,
+  agentName: string
+): Promise<void> {
+  const client = createAuthenticatedClient(accessToken);
+  await client.delete(`/admin/agents/configurations/${agentName}`);
+}
+
+/**
+ * Get agent execution statistics (admin only)
+ */
+export async function fetchAgentExecutionStats(accessToken: string): Promise<AgentStats[]> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/agents/stats');
+  return data;
+}
+
+/**
+ * Update agent schedule (admin only, Phase A2)
+ */
+export async function updateAgentSchedule(
+  accessToken: string,
+  agentName: string,
+  payload: {
+    schedule_type: string;
+    schedule_cron?: string;
+    schedule_interval_hours?: number;
+  }
+): Promise<{ agent_name: string; schedule_type: string | null }> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.patch(`/admin/agents/configurations/${agentName}/schedule`, payload);
+  return data;
+}
+
+/**
+ * Fetch agent cost analytics (admin only, Phase A3)
+ */
+export interface CostDailyBreakdown {
+  date: string;
+  agent_type: string;
+  executions: number;
+  tokens_used: number;
+  cost_usd: number;
+}
+
+export interface CostAnalytics {
+  period: string;
+  total_cost_usd: number;
+  total_tokens: number;
+  total_executions: number;
+  daily_breakdown: CostDailyBreakdown[];
+  cost_by_agent: Record<string, number>;
+}
+
+export async function fetchAgentCostAnalytics(
+  accessToken: string,
+  period: '7d' | '30d' | '90d' = '7d'
+): Promise<CostAnalytics> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/agents/stats/costs', { params: { period } });
+  return data;
+}
+
+/**
+ * Get execution logs for a specific agent (admin only)
+ */
+export interface AgentExecutionLog {
+  id: string;
+  agent_type: string;
+  source: string | null;
+  status: string;
+  started_at: string;
+  completed_at: string | null;
+  duration_ms: number | null;
+  items_processed: number;
+  items_failed: number;
+  error_message: string | null;
+  extra_metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export async function fetchAgentLogs(
+  accessToken: string,
+  agentType: string,
+  limit = 20,
+  offset = 0
+): Promise<{ items: AgentExecutionLog[]; total: number }> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get(`/api/admin/agents/${agentType}/logs`, {
+    params: { limit, offset },
+  });
+  return data;
+}
+
 // ============================================
 // User Profile API (Phase 4.1)
 // ============================================
@@ -640,6 +1053,31 @@ export async function removeTenantDomain(accessToken: string, tenantId: string):
 }
 
 // ============================================
+// Email Preferences API (Phase 9.1)
+// ============================================
+
+/**
+ * Fetch user's email preferences
+ */
+export async function fetchEmailPreferences(accessToken: string) {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/preferences/email');
+  return data as { daily_digest: boolean; weekly_digest: boolean; instant_alerts: boolean };
+}
+
+/**
+ * Update user's email preferences
+ */
+export async function updateEmailPreferences(
+  accessToken: string,
+  payload: { daily_digest?: boolean; weekly_digest?: boolean; instant_alerts?: boolean }
+) {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.patch('/api/preferences/email', payload);
+  return data;
+}
+
+// ============================================
 // Research Request API (Phase 5.2: Admin Queue)
 // ============================================
 
@@ -721,5 +1159,169 @@ export async function fetchAdminAnalyses(
 ): Promise<any> {
   const client = createAuthenticatedClient(accessToken);
   const { data } = await client.get('/api/research/admin/analyses', { params });
+  return data;
+}
+
+// ============================================
+// Dashboard Analytics API (Phase 18)
+// ============================================
+
+export interface EngagementMetrics {
+  dau: number;
+  mau: number;
+  dau_mau_ratio: number;
+  avg_session_duration_sec: number;
+  feature_usage: Record<string, number>;
+  retention_day1: number;
+  retention_day7: number;
+  retention_day30: number;
+}
+
+export interface ContentPerformance {
+  top_insights: { id: string; title: string; score: number; interactions: number }[];
+  top_articles: { id: string; title: string; views: number }[];
+  total_insight_views: number;
+  total_insight_saves: number;
+  total_article_views: number;
+}
+
+export interface SystemHealthMetrics {
+  scraper_success_rates: Record<string, number>;
+  agent_success_rates: Record<string, number>;
+  redis_connected: boolean;
+  db_pool_size: number;
+  recent_errors: number;
+}
+
+export interface UserAnalytics {
+  overview: {
+    total_users: number;
+    active_users_7d: number;
+    active_users_30d: number;
+    new_users_7d: number;
+    churn_rate_30d: number;
+  };
+  by_tier: { tier: string; count: number; active_rate: number; mrr: number }[];
+  engagement: {
+    avg_session_duration: number;
+    avg_insights_viewed: number;
+    avg_insights_saved: number;
+    feature_usage: Record<string, number>;
+  };
+}
+
+export async function fetchAnalyticsEngagement(
+  accessToken: string,
+  days: number = 30
+): Promise<EngagementMetrics> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/analytics/engagement', { params: { days } });
+  return data;
+}
+
+export async function fetchAnalyticsContent(
+  accessToken: string,
+  days: number = 30
+): Promise<ContentPerformance> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/analytics/content', { params: { days } });
+  return data;
+}
+
+export async function fetchAnalyticsHealth(
+  accessToken: string,
+  days: number = 7
+): Promise<SystemHealthMetrics> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/analytics/health', { params: { days } });
+  return data;
+}
+
+export async function fetchAnalyticsUsers(
+  accessToken: string
+): Promise<UserAnalytics> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/admin/analytics/users');
+  return data;
+}
+
+// ============================================
+// Admin User (Admin Access) Management API
+// ============================================
+
+export interface AdminAccessUser {
+  id: string;
+  user_id: string;
+  email: string;
+  display_name: string | null;
+  role: string;
+  created_at: string;
+}
+
+export async function fetchAdminAccessUsers(
+  accessToken: string
+): Promise<AdminAccessUser[]> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/admin/admin-users');
+  return data;
+}
+
+export async function addAdminAccessUser(
+  accessToken: string,
+  payload: { email: string; role: string }
+): Promise<AdminAccessUser> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.post('/api/admin/admin-users', payload);
+  return data;
+}
+
+export async function updateAdminAccessUser(
+  accessToken: string,
+  adminUserId: string,
+  payload: { role: string }
+): Promise<AdminAccessUser> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.patch(`/api/admin/admin-users/${adminUserId}`, payload);
+  return data;
+}
+
+export async function removeAdminAccessUser(
+  accessToken: string,
+  adminUserId: string
+): Promise<void> {
+  const client = createAuthenticatedClient(accessToken);
+  await client.delete(`/api/admin/admin-users/${adminUserId}`);
+}
+
+// ============================================
+// System Settings API
+// ============================================
+
+export interface SystemSetting {
+  key: string;
+  value: unknown;
+  description: string;
+  updated_at: string;
+}
+
+export interface SystemSettingsGrouped {
+  settings: Record<string, SystemSetting[]>;
+}
+
+export async function fetchSystemSettings(
+  accessToken: string
+): Promise<SystemSettingsGrouped> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/admin/settings');
+  return data;
+}
+
+export async function updateSystemSetting(
+  accessToken: string,
+  key: string,
+  value: unknown
+): Promise<SystemSetting> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.put(`/api/admin/settings/${key}`, { value });
   return data;
 }

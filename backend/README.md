@@ -6,7 +6,7 @@ FastAPI backend for StartInsight - an AI-powered business intelligence engine th
 
 - **Framework**: FastAPI (async)
 - **Language**: Python 3.11+
-- **Database**: Supabase PostgreSQL (ap-southeast-1, Singapore)
+- **Database**: Supabase PostgreSQL (ap-southeast-2, Sydney)
 - **ORM**: SQLAlchemy 2.0 (async mode)
 - **Auth**: Supabase Auth (OAuth + email/password)
 - **Task Queue**: Arq + Redis + APScheduler
@@ -19,8 +19,9 @@ FastAPI backend for StartInsight - an AI-powered business intelligence engine th
 ## Prerequisites
 
 - Python 3.11+
-- Docker Desktop (for PostgreSQL and Redis)
+- Docker Desktop (for Redis)
 - uv package manager: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- Supabase Pro account (database hosted on Supabase Cloud)
 
 ## Quick Start
 
@@ -31,16 +32,17 @@ FastAPI backend for StartInsight - an AI-powered business intelligence engine th
 uv sync
 ```
 
-### 2. Start Infrastructure (Docker)
+### 2. Start Infrastructure
 
 ```bash
-# Start PostgreSQL and Redis from project root
+# Database: Supabase Pro (no local PostgreSQL needed)
+# Start Redis from project root
 cd ..
-docker-compose up -d
+docker compose up -d
 
-# Verify containers are running
+# Verify Redis is running
 docker ps
-# Should show: startinsight-postgres (port 5433), startinsight-redis (port 6379)
+# Should show: startinsight-redis (port 6379)
 ```
 
 ### 3. Environment Variables
@@ -51,7 +53,7 @@ cp .env.example .env
 
 # Edit .env and add your API keys:
 # Required:
-# - DATABASE_URL=postgresql+asyncpg://startinsight:startinsight_dev_password@localhost:5433/startinsight
+# - DATABASE_URL (Supabase Pro connection string from Dashboard > Project Settings > Database)
 # - REDIS_URL=redis://localhost:6379
 # - FIRECRAWL_API_KEY (get from https://firecrawl.dev)
 # - REDDIT_CLIENT_ID (create app at https://reddit.com/prefs/apps)
@@ -291,27 +293,16 @@ uv run python check_db_connection.py
 
 ## Docker Services
 
-The `docker-compose.yml` (in project root) provides:
-
-- **PostgreSQL 16**: Port **5433** (⚠️ non-standard to avoid conflicts)
-  - Database: `startinsight`
-  - User: `startinsight`
-  - Password: `startinsight_dev_password`
+The `docker-compose.yml` (in project root) provides Redis only. Database is hosted on **Supabase Pro**.
 
 - **Redis 7**: Port **6379**
-
-- **pgAdmin** (optional): Port **5050** - Database GUI
 - **Redis Commander** (optional): Port **8081** - Redis GUI
 
 ### Using Optional Tools
 
 ```bash
 # Start with optional GUI tools (from project root)
-docker-compose --profile tools up -d
-
-# Access pgAdmin: http://localhost:5050
-#   Email: admin@startinsight.local
-#   Password: admin
+docker compose --profile tools up -d
 
 # Access Redis Commander: http://localhost:8081
 ```
@@ -321,17 +312,14 @@ docker-compose --profile tools up -d
 ### Database Connection Issues
 
 ```bash
-# Check if PostgreSQL is running
-docker ps | grep postgres
-
-# View PostgreSQL logs
-docker logs startinsight-postgres
-
-# Connect to database manually
-docker exec -it startinsight-postgres psql -U startinsight -d startinsight
+# Database is hosted on Supabase Pro (no local PostgreSQL)
+# Check your DATABASE_URL in .env points to Supabase
 
 # Test connection from Python
 uv run python check_db_connection.py
+
+# Check Supabase connection pool
+# Go to: Supabase Dashboard > Project Settings > Database > Connection Pooling
 ```
 
 ### Redis Connection Issues
@@ -383,7 +371,7 @@ curl http://localhost:8000/health
 See `.env.example` for all available environment variables.
 
 ### Required (Phase 1)
-- `DATABASE_URL` - PostgreSQL connection string
+- `DATABASE_URL` - Supabase Pro PostgreSQL connection string
 - `REDIS_URL` - Redis connection string
 - `FIRECRAWL_API_KEY` - Firecrawl API key
 - `REDDIT_CLIENT_ID` - Reddit OAuth app ID
@@ -438,12 +426,23 @@ See `.env.example` for all available environment variables.
 - ✅ 8-dimension scoring KPI cards with color-coded badges
 - ✅ Enhanced evidence panel with collapsible visualizations
 
-### 🚀 Next: Production Deployment
+### 🚀 Deployment Options
 
-- Deploy backend to Railway
-- Deploy frontend to Vercel
+**For PMF Validation (<100 users, ~$30/month):**
+- See [`docs/PMF-DEPLOYMENT.md`](docs/PMF-DEPLOYMENT.md) for minimal-cost deployment
+- Uses: Railway Free ($5), Supabase Pro ($25), Resend Free, Crawl4AI (self-hosted)
+- 94% cost reduction vs production config (~$30/mo vs $483/mo)
+
+**For Production (>100 users, $300-500/month):**
+- See [`../memory-bank/production-plan.md`](../memory-bank/production-plan.md) for full production setup
+- Deploy backend to Railway Pro
+- Deploy frontend to Vercel Pro
 - Configure production environment variables
 - Set up monitoring (Sentry, uptime checks)
+
+### 🔧 Current Branch: SI-Claude-vllm
+
+This branch is used for Claude vLLM integration testing.
 
 See `../memory-bank/active-context.md` for deployment checklist and `../memory-bank/implementation-plan.md` for complete roadmap.
 

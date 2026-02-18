@@ -6,15 +6,28 @@ import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import dynamic from 'next/dynamic';
+import { MegaMenu } from '@/components/navigation/mega-menu';
+import { MobileMenu } from '@/components/navigation/mobile-menu';
+import { Shield } from 'lucide-react';
 
 const ThemeToggle = dynamic(() => import('./theme-toggle').then(mod => ({ default: mod.ThemeToggle })), {
   ssr: false,
   loading: () => <div className="w-10 h-10" />
 });
 
+function isAdmin(user: User): boolean {
+  return (
+    user.app_metadata?.role === 'superadmin' ||
+    user.app_metadata?.role === 'admin' ||
+    user.user_metadata?.role === 'superadmin' ||
+    user.user_metadata?.role === 'admin'
+  );
+}
+
 function UserMenu({ user }: { user: User }) {
   const [open, setOpen] = useState(false);
   const supabase = getSupabaseClient();
+  const showAdmin = isAdmin(user);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -45,8 +58,24 @@ function UserMenu({ user }: { user: User }) {
             <div className="p-3 border-b">
               <p className="text-sm font-medium">{userName}</p>
               <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              {showAdmin && (
+                <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded">
+                  <Shield className="h-2.5 w-2.5" />
+                  Super Admin
+                </span>
+              )}
             </div>
             <div className="p-1">
+              {showAdmin && (
+                <Link
+                  href="/admin/agents"
+                  className="flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-muted font-medium text-primary"
+                  onClick={() => setOpen(false)}
+                >
+                  <Shield className="h-4 w-4" />
+                  Admin Portal
+                </Link>
+              )}
               <Link
                 href="/dashboard"
                 className="block px-3 py-2 text-sm rounded-md hover:bg-muted"
@@ -108,28 +137,45 @@ export function Header() {
   }, []);
 
   return (
-    <header className="border-b">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <Link href="/" className="text-2xl font-bold">
-          StartInsight
-        </Link>
-        <nav className="flex gap-4 items-center">
-          <Button variant="ghost" asChild>
-            <Link href="/">Home</Link>
-          </Button>
-          <Button variant="ghost" asChild>
-            <Link href="/insights">All Insights</Link>
-          </Button>
-          <ThemeToggle />
+    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+        {/* Logo */}
+        <div className="flex items-center gap-6">
+          <Link href="/" className="text-xl font-bold text-primary" data-tour="logo">
+            StartInsight
+          </Link>
+
+          {/* Desktop Navigation */}
+          <MegaMenu />
+        </div>
+
+        {/* Right Section */}
+        <nav className="flex gap-2 items-center">
+          <div data-tour="theme-toggle">
+            <ThemeToggle />
+          </div>
 
           {!loading && (
-            user ? (
-              <UserMenu user={user} />
-            ) : (
-              <Button asChild>
-                <Link href="/auth/login">Sign in</Link>
-              </Button>
-            )
+            <>
+              {/* Mobile Menu */}
+              <MobileMenu isAuthenticated={!!user} />
+
+              {/* Desktop Auth */}
+              <div className="hidden md:flex items-center gap-2">
+                {user ? (
+                  <UserMenu user={user} />
+                ) : (
+                  <>
+                    <Button variant="ghost" asChild>
+                      <Link href="/auth/login">Sign in</Link>
+                    </Button>
+                    <Button asChild data-tour="get-started">
+                      <Link href="/auth/signup">Get Started</Link>
+                    </Button>
+                  </>
+                )}
+              </div>
+            </>
           )}
         </nav>
       </div>

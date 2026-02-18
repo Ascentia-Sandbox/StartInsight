@@ -8,7 +8,8 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, func
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -100,6 +101,15 @@ class Insight(Base):
     # Phase 4.3: Enhanced 8-Dimension Scoring
     # ============================================
 
+    # URL-friendly slug for human-readable URLs
+    slug: Mapped[str | None] = mapped_column(
+        String(250),
+        unique=True,
+        index=True,
+        nullable=True,
+        doc="URL-friendly slug derived from title",
+    )
+
     # Optional title for display
     title: Mapped[str | None] = mapped_column(
         String(200),
@@ -176,6 +186,13 @@ class Insight(Base):
         doc="4-tier value ladder: lead_magnet, frontend, core, backend",
     )
 
+    # Market Sizing: TAM/SAM/SOM breakdown
+    market_sizing: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        doc="TAM/SAM/SOM market sizing data",
+    )
+
     # Market Gap Analysis: 200-500 word competitor gap analysis
     market_gap_analysis: Mapped[str | None] = mapped_column(
         Text,
@@ -224,12 +241,78 @@ class Insight(Base):
         doc="8-dimension scoring breakdown (dimension, value, label)",
     )
 
+    # Trend Predictions: AI-generated forecast for next 7 days (Phase 9.1)
+    trend_predictions: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        doc="Time-series forecast predictions (dates, values, confidence_intervals)",
+    )
+
     # Trend Keywords: Search volume and growth data
     trend_keywords: Mapped[dict | None] = mapped_column(
         JSONB,
         nullable=True,
         default=list,
         doc="Trending keywords with search volume and growth percentage",
+    )
+
+    # ============================================
+    # Phase 15: APAC Language Support
+    # ============================================
+
+    # Language of the insight content
+    language: Mapped[str] = mapped_column(
+        String(10),
+        default="en",
+        nullable=False,
+        index=True,
+        doc="Language of the insight content (en, zh-CN, id-ID, vi-VN, th-TH, tl-PH)",
+    )
+
+    # Translations in other languages
+    translations: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        default=dict,
+        doc="Translations: {zh-CN: {problem_statement: ..., proposed_solution: ...}}",
+    )
+
+    # ============================================
+    # Admin Moderation Fields (Phase 4.2 / Phase 15)
+    # ============================================
+
+    admin_status: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True,
+        index=True,
+        server_default="approved",
+        doc="Admin moderation status: pending, approved, rejected",
+    )
+
+    admin_notes: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+        doc="Admin notes for moderation decisions",
+    )
+
+    admin_override_score: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
+        doc="Admin-overridden relevance score (0.0-1.0)",
+    )
+
+    edited_by: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("admin_users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+        doc="Admin user who last edited this insight",
+    )
+
+    edited_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        doc="When this insight was last edited by admin",
     )
 
     # Timestamps
@@ -264,6 +347,14 @@ class Insight(Base):
         lazy="selectin",
         cascade="all, delete-orphan",
         doc="Teams this insight is shared with (Phase 6.4)",
+    )
+
+    # Phase 9.2: Competitor profiles relationship
+    competitors: Mapped[list["CompetitorProfile"]] = relationship(
+        "CompetitorProfile",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        doc="Competitor companies for this startup idea (Phase 9.2)",
     )
 
     def __repr__(self) -> str:

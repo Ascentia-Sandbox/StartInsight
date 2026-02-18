@@ -11,8 +11,9 @@ downloads/
 eggs/
 .eggs/
 lib/
+!frontend/lib/
+!frontend/lib/**
 lib64/
-!frontend/lib/  # Exception: frontend lib directory contains application code
 parts/
 sdist/
 var/
@@ -60,8 +61,14 @@ logs/
 .pytest_cache/
 .coverage
 htmlcov/
+coverage/
 .tox/
 .hypothesis/
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -119,3 +126,11 @@ memory-bank/*.bak
 
 # Playwright MCP artifacts
 .playwright-mcp/
+
+# Screenshots and test artifacts (keep committed docs)
+*.png
+!docs/**/*.png
+!frontend/public/**/*.png
+
+# Sentry
+.sentryclirc

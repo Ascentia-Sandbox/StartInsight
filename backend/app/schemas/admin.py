@@ -4,12 +4,10 @@ See architecture.md Section "Admin Portal Architecture" for full specification.
 """
 
 from datetime import datetime
-from decimal import Decimal
 from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, Field
-
 
 # ============================================
 # Enums
@@ -45,6 +43,7 @@ class ExecutionStatus(str, Enum):
 class AdminRole(str, Enum):
     """Admin user roles."""
 
+    SUPERADMIN = "superadmin"
     ADMIN = "admin"
     MODERATOR = "moderator"
     VIEWER = "viewer"
@@ -194,14 +193,111 @@ class SSEMessage(BaseModel):
 # ============================================
 
 
-class InsightAdminUpdate(BaseModel):
-    """Admin update for insight moderation."""
+class InsightAdminCreate(BaseModel):
+    """Admin create schema for manually adding insights (Phase A1)."""
 
+    title: str = Field(..., max_length=200)
+    problem_statement: str
+    proposed_solution: str
+    market_size_estimate: str = Field(..., max_length=20)
+    relevance_score: float = Field(0.8, ge=0.0, le=1.0)
+    admin_status: str = Field("approved", pattern="^(approved|rejected|pending)$")
+
+    # 8-dimension scores (1-10)
+    opportunity_score: int | None = Field(None, ge=1, le=10)
+    problem_score: int | None = Field(None, ge=1, le=10)
+    feasibility_score: int | None = Field(None, ge=1, le=10)
+    why_now_score: int | None = Field(None, ge=1, le=10)
+    execution_difficulty: int | None = Field(None, ge=1, le=10)
+    go_to_market_score: int | None = Field(None, ge=1, le=10)
+    founder_fit_score: int | None = Field(None, ge=1, le=10)
+
+    revenue_potential: str | None = Field(
+        None, pattern=r"^\${1,4}$", description="$, $$, $$$, or $$$$"
+    )
+    market_gap_analysis: str | None = None
+    why_now_analysis: str | None = None
+
+
+class InsightAdminUpdate(BaseModel):
+    """Admin update for insight moderation and full editing (Phase 15.1)."""
+
+    # Moderation fields
     admin_status: str | None = Field(
         None, pattern="^(approved|rejected|pending)$", description="Admin approval status"
     )
     admin_notes: str | None = Field(None, max_length=1000)
     admin_override_score: float | None = Field(None, ge=0.0, le=1.0)
+
+    # Core content fields
+    title: str | None = Field(None, max_length=200)
+    problem_statement: str | None = None
+    proposed_solution: str | None = None
+    market_size_estimate: str | None = Field(None, max_length=20)
+
+    # 8-dimension scores (1-10)
+    opportunity_score: int | None = Field(None, ge=1, le=10)
+    problem_score: int | None = Field(None, ge=1, le=10)
+    feasibility_score: int | None = Field(None, ge=1, le=10)
+    why_now_score: int | None = Field(None, ge=1, le=10)
+    execution_difficulty: int | None = Field(None, ge=1, le=10)
+    go_to_market_score: int | None = Field(None, ge=1, le=10)
+    founder_fit_score: int | None = Field(None, ge=1, le=10)
+
+    # Business metrics
+    revenue_potential: str | None = Field(
+        None, pattern=r"^\${1,4}$", description="$, $$, $$$, or $$$$"
+    )
+
+    # Analysis text
+    market_gap_analysis: str | None = None
+    why_now_analysis: str | None = None
+
+    # JSONB fields
+    value_ladder: dict | None = None
+    proof_signals: dict | None = None
+    execution_plan: dict | None = None
+    competitor_analysis: list | dict | None = None
+
+
+class InsightAdminResponse(BaseModel):
+    """Full insight response for admin view (Phase 15.1)."""
+
+    id: UUID
+    title: str | None = None
+    problem_statement: str
+    proposed_solution: str
+    market_size_estimate: str
+    relevance_score: float
+    admin_status: str | None = "approved"
+    admin_notes: str | None = None
+    admin_override_score: float | None = None
+    source: str
+    created_at: datetime
+    edited_at: datetime | None = None
+
+    # 8-dimension scores
+    opportunity_score: int | None = None
+    problem_score: int | None = None
+    feasibility_score: int | None = None
+    why_now_score: int | None = None
+    execution_difficulty: int | None = None
+    go_to_market_score: int | None = None
+    founder_fit_score: int | None = None
+    revenue_potential: str | None = None
+
+    # Analysis
+    market_gap_analysis: str | None = None
+    why_now_analysis: str | None = None
+
+    # JSONB
+    value_ladder: dict | None = None
+    proof_signals: dict | None = None
+    execution_plan: dict | None = None
+    competitor_analysis: list | dict | None = None
+
+    class Config:
+        from_attributes = True
 
 
 class InsightReviewResponse(BaseModel):
@@ -215,6 +311,16 @@ class InsightReviewResponse(BaseModel):
     admin_notes: str | None = None
     source: str
     created_at: datetime
+
+
+class InsightAdminListResponse(BaseModel):
+    """Paginated admin insights list (Phase 15.1)."""
+
+    items: list[InsightAdminResponse]
+    total: int
+    pending_count: int
+    approved_count: int
+    rejected_count: int
 
 
 class ReviewQueueResponse(BaseModel):
@@ -263,6 +369,19 @@ class AdminUserCreate(BaseModel):
     role: AdminRole
 
 
+class AdminUserPromoteRequest(BaseModel):
+    """Promote a user to admin by email."""
+
+    email: str = Field(..., description="Email of the user to promote")
+    role: AdminRole = Field(AdminRole.ADMIN, description="Admin role to assign")
+
+
+class AdminUserUpdateRequest(BaseModel):
+    """Update admin user role."""
+
+    role: AdminRole = Field(..., description="New admin role")
+
+
 class AdminUserResponse(BaseModel):
     """Admin user response."""
 
@@ -272,6 +391,7 @@ class AdminUserResponse(BaseModel):
     permissions: dict = Field(default_factory=dict)
     created_at: datetime
     user_email: str | None = None
+    user_display_name: str | None = None
 
     class Config:
         from_attributes = True

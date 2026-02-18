@@ -1,69 +1,79 @@
 #!/usr/bin/env python3
 """
-Create regular user in Supabase
+Create regular user in Supabase (via REST API).
+
+Uses httpx for Supabase Auth Admin API.
+NO Supabase SDK per CLAUDE.md rules.
 """
 import asyncio
 import os
 import sys
+
+import httpx
 from dotenv import load_dotenv
-from supabase import create_client, Client
 
 load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
-async def create_user(email: str, password: str, full_name: str = None):
-    """Create regular user with service role key"""
-    # Use service role client (bypasses RLS)
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
+async def supabase_admin_request(
+    method: str, path: str, json: dict | None = None
+) -> dict:
+    """Make an authenticated request to Supabase Auth Admin API."""
+    async with httpx.AsyncClient() as client:
+        response = await client.request(
+            method,
+            f"{SUPABASE_URL}/auth/v1/admin/{path}",
+            headers={
+                "apikey": SUPABASE_SERVICE_ROLE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                "Content-Type": "application/json",
+            },
+            json=json,
+        )
+        response.raise_for_status()
+        return response.json()
+
+
+async def create_user(email: str, password: str, full_name: str | None = None):
+    """Create regular user with service role key."""
     print(f"Creating user: {email}")
 
     try:
-        # Create user using Admin API
-        response = supabase.auth.admin.create_user({
-            "email": email,
-            "password": password,
-            "email_confirm": True,  # Auto-confirm email
-            "user_metadata": {
-                "full_name": full_name or email.split('@')[0]
-            }
-        })
+        user_data = await supabase_admin_request(
+            "POST",
+            "users",
+            json={
+                "email": email,
+                "password": password,
+                "email_confirm": True,
+                "user_metadata": {
+                    "full_name": full_name or email.split("@")[0]
+                },
+            },
+        )
 
-        user = response.user
-        print(f"✅ User created successfully: {user.id}")
-
-        # The trigger should have created the user profile automatically
-        # Verify it was created
-        user_query = supabase.table("users").select("*").eq("supabase_user_id", user.id).execute()
-
-        if not user_query.data:
-            print("❌ User profile not found in users table (trigger may have failed)")
-            return
-
-        print(f"✅ User profile created in database")
-        print(f"\n🎉 User account created successfully!")
+        print(f"User created successfully: {user_data['id']}")
+        print("\nUser account created!")
         print(f"Email: {email}")
         print(f"Password: {password}")
-        print(f"Subscription: free")
-        print(f"\nYou can now sign in at: http://localhost:3000/auth/login")
+        print("\nSign in at: http://localhost:3000/auth/login")
 
-    except Exception as e:
-        print(f"❌ Error creating user: {e}")
-        # If user already exists
-        if "already registered" in str(e).lower() or "duplicate" in str(e).lower():
-            print("\n⚠️ User already exists with this email")
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 422:
+            print("User already exists with this email")
+        else:
+            print(f"Error creating user: {e}")
+
 
 if __name__ == "__main__":
-    # Get email and password from command line or use defaults
-    if len(sys.argv) >= 3:
-        email = sys.argv[1]
-        password = sys.argv[2]
-        full_name = sys.argv[3] if len(sys.argv) > 3 else None
-    else:
-        email = "user1@testing.com"
-        password = "Abcd1234"
-        full_name = "Test User 1"
+    if len(sys.argv) < 3:
+        print("Usage: python create_user.py <email> <password> [full_name]")
+        sys.exit(1)
+    email = sys.argv[1]
+    password = sys.argv[2]
+    full_name = sys.argv[3] if len(sys.argv) > 3 else None
 
     asyncio.run(create_user(email, password, full_name))

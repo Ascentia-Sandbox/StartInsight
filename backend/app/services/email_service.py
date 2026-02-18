@@ -10,10 +10,11 @@ Handles transactional emails for:
 """
 
 import logging
+import re
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel
 
 from app.core.config import settings
 
@@ -156,6 +157,61 @@ TEMPLATES: dict[str, EmailTemplate] = {
         </div>
         """,
     ),
+    "weekly_digest": EmailTemplate(
+        subject="Your Weekly Startup Briefing - Top 10 Insights",
+        html_template="""
+        <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #3B82F6;">Weekly Startup Briefing</h1>
+            <p>Hi {{name}}, here are the top 10 startup opportunities from this week:</p>
+
+            {{#insights}}
+            <div style="border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
+                <h3 style="margin: 0 0 6px 0; font-size: 15px;">{{title}}</h3>
+                <p style="color: #6B7280; margin: 0 0 8px 0; font-size: 13px;">{{problem_statement}}</p>
+                <div style="display: flex; gap: 8px;">
+                    <span style="background: #DBEAFE; color: #1E40AF; padding: 3px 8px; border-radius: 4px; font-size: 11px;">
+                        Score: {{relevance_score}}
+                    </span>
+                    <span style="background: #D1FAE5; color: #065F46; padding: 3px 8px; border-radius: 4px; font-size: 11px;">
+                        {{market_size}}
+                    </span>
+                </div>
+            </div>
+            {{/insights}}
+
+            <a href="{{dashboard_url}}" style="display: inline-block; background: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 8px;">
+                Explore All Insights
+            </a>
+
+            <p style="margin-top: 24px; color: #6B7280; font-size: 12px;">
+                <a href="{{unsubscribe_url}}">Unsubscribe from weekly digest</a>
+            </p>
+        </div>
+        """,
+    ),
+    "contact_form": EmailTemplate(
+        subject="New Contact Form: {{subject}}",
+        html_template="""
+        <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #3B82F6;">New Contact Form Submission</h1>
+
+            <div style="background: #F3F4F6; border-radius: 8px; padding: 16px; margin: 16px 0;">
+                <p style="margin: 4px 0;"><strong>From:</strong> {{name}} ({{email}})</p>
+                <p style="margin: 4px 0;"><strong>Subject:</strong> {{subject}}</p>
+                <p style="margin: 4px 0;"><strong>Time:</strong> {{timestamp}}</p>
+            </div>
+
+            <div style="border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; margin: 16px 0;">
+                <h3 style="margin: 0 0 8px 0;">Message</h3>
+                <p style="color: #374151; white-space: pre-wrap;">{{message}}</p>
+            </div>
+
+            <p style="margin-top: 24px; color: #6B7280; font-size: 12px;">
+                Reply directly to <a href="mailto:{{email}}">{{email}}</a> to respond.
+            </p>
+        </div>
+        """,
+    ),
     "password_reset": EmailTemplate(
         subject="Reset Your StartInsight Password",
         html_template="""
@@ -250,7 +306,8 @@ async def send_email(
         if bcc:
             params["bcc"] = bcc
 
-        response = resend_client.Emails.send(params)
+        import asyncio
+        response = await asyncio.to_thread(resend_client.Emails.send, params)
 
         logger.info(f"Email sent: {template} to {to}, id={response.get('id')}")
         return {
@@ -290,7 +347,17 @@ async def send_daily_digest(
     dashboard_url: str,
     unsubscribe_url: str,
 ) -> dict:
-    """Send daily insight digest."""
+    """
+    Send daily insight digest.
+
+    PMF Optimization: Disabled by default to save email quota.
+    Set ENABLE_DAILY_DIGEST=true to enable.
+    """
+    # PMF optimization: skip daily digest to stay in Resend Free tier (3K/mo)
+    if not settings.enable_daily_digest:
+        logger.info(f"Daily digest disabled for PMF mode (recipient: {email})")
+        return {"status": "skipped", "reason": "feature_disabled_pmf"}
+
     return await send_email(
         to=email,
         template="daily_digest",
@@ -364,6 +431,26 @@ async def send_team_invitation(
     )
 
 
+async def send_weekly_digest(
+    email: str,
+    name: str,
+    insights: list[dict],
+    dashboard_url: str,
+    unsubscribe_url: str,
+) -> dict:
+    """Send weekly digest of top insights."""
+    return await send_email(
+        to=email,
+        template="weekly_digest",
+        variables={
+            "name": name or "there",
+            "insights": insights[:10],
+            "dashboard_url": dashboard_url,
+            "unsubscribe_url": unsubscribe_url,
+        },
+    )
+
+
 async def send_password_reset(email: str, name: str, reset_url: str) -> dict:
     """Send password reset email."""
     return await send_email(
@@ -382,14 +469,36 @@ async def send_password_reset(email: str, name: str, reset_url: str) -> dict:
 
 
 def _render_template(template: str, variables: dict[str, Any]) -> str:
-    """Simple template rendering with {{variable}} syntax."""
+    """Simple template rendering with {{variable}} and {{#list}}...{{/list}} syntax."""
+
     result = template
 
+    # Handle list sections first: {{#key}}...{{/key}}
+    for key, value in variables.items():
+        if not isinstance(value, list):
+            continue
+        pattern = re.compile(
+            r"\{\{#" + re.escape(key) + r"\}\}(.*?)\{\{/" + re.escape(key) + r"\}\}",
+            re.DOTALL,
+        )
+        match = pattern.search(result)
+        if match:
+            inner_template = match.group(1)
+            rendered_items = []
+            for item in value:
+                rendered_item = inner_template
+                if isinstance(item, dict):
+                    for k, v in item.items():
+                        rendered_item = rendered_item.replace(
+                            "{{" + k + "}}", str(v) if v else ""
+                        )
+                rendered_items.append(rendered_item)
+            result = result[: match.start()] + "".join(rendered_items) + result[match.end() :]
+
+    # Handle scalar variables: {{key}}
     for key, value in variables.items():
         if isinstance(value, list):
-            # Handle list variables (like insights) - simple approach
             continue
-        placeholder = "{{" + key + "}}"
-        result = result.replace(placeholder, str(value) if value else "")
+        result = result.replace("{{" + key + "}}", str(value) if value else "")
 
     return result

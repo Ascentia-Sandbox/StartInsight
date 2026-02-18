@@ -9,12 +9,13 @@ import { Separator } from '@/components/ui/separator';
 import { BuilderPlatformGrid, BUILDER_PLATFORMS, type BuilderPlatformId } from './builder-platform-card';
 import { PromptTypeSelector, PROMPT_TYPES, generatePrompt, type PromptTypeId } from './prompt-type-selector';
 import { PromptPreviewModal } from './prompt-preview-modal';
+import { cn } from '@/lib/utils';
 
 interface InsightData {
   id: string;
   problem_statement: string;
   proposed_solution: string;
-  market_size_estimate: 'Small' | 'Medium' | 'Large';
+  market_size_estimate: string; // Any string (e.g., "$5B-$20B", "Small", "Large")
   relevance_score: number;
   competitor_analysis?: Array<{
     name: string;
@@ -26,9 +27,10 @@ interface InsightData {
 interface BuilderIntegrationProps {
   insight: InsightData;
   defaultExpanded?: boolean;
+  compact?: boolean;
 }
 
-export function BuilderIntegration({ insight, defaultExpanded = true }: BuilderIntegrationProps) {
+export function BuilderIntegration({ insight, defaultExpanded = true, compact = false }: BuilderIntegrationProps) {
   const [selectedPlatform, setSelectedPlatform] = useState<BuilderPlatformId | null>(null);
   const [selectedPromptType, setSelectedPromptType] = useState<PromptTypeId>('landing_page');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -44,14 +46,113 @@ export function BuilderIntegration({ insight, defaultExpanded = true }: BuilderI
   };
 
   const handleBuild = () => {
-    // Track analytics (placeholder for actual implementation)
-    console.log('Build started:', {
-      insightId: insight.id,
-      platform: selectedPlatform,
-      promptType: selectedPromptType,
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Build started:', {
+        insightId: insight.id,
+        platform: selectedPlatform,
+        promptType: selectedPromptType,
+      });
+    }
   };
 
+  // Compact sidebar layout
+  if (compact) {
+    return (
+      <>
+        <div className="space-y-4">
+          {/* Step 1: Platform icons row */}
+          <div className="space-y-2">
+            <div className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+              <span className="flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px]">1</span>
+              Choose Platform
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {(Object.keys(BUILDER_PLATFORMS) as BuilderPlatformId[]).map((id) => {
+                const p = BUILDER_PLATFORMS[id];
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setSelectedPlatform(id)}
+                    className={cn(
+                      'w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold text-white transition-all',
+                      p.color,
+                      selectedPlatform === id
+                        ? 'ring-2 ring-primary ring-offset-2 scale-110'
+                        : 'opacity-70 hover:opacity-100'
+                    )}
+                    title={p.name}
+                  >
+                    {p.icon}
+                  </button>
+                );
+              })}
+            </div>
+            {selectedPlatform && (
+              <div className="text-xs text-muted-foreground">
+                {BUILDER_PLATFORMS[selectedPlatform].name} selected
+              </div>
+            )}
+          </div>
+
+          {/* Step 2: Select type */}
+          <div className="space-y-2">
+            <div className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+              <span className="flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px]">2</span>
+              What to Build
+            </div>
+            <PromptTypeSelector
+              value={selectedPromptType}
+              onChange={setSelectedPromptType}
+              className="w-full"
+            />
+          </div>
+
+          {/* Step 3: Generate */}
+          <Button
+            onClick={handleGeneratePrompt}
+            disabled={!selectedPlatform}
+            className="w-full gap-2"
+            size="sm"
+          >
+            <Sparkles className="h-4 w-4" />
+            {selectedPlatform
+              ? `Generate ${PROMPT_TYPES[selectedPromptType].name} Prompt`
+              : 'Select a platform first'}
+          </Button>
+
+          {/* Compact stats */}
+          <div className="grid grid-cols-3 gap-2 text-center pt-2 border-t">
+            <div>
+              <div className="text-sm font-bold text-primary">5</div>
+              <div className="text-[10px] text-muted-foreground">Platforms</div>
+            </div>
+            <div>
+              <div className="text-sm font-bold text-primary">4</div>
+              <div className="text-[10px] text-muted-foreground">Output Types</div>
+            </div>
+            <div>
+              <div className="text-sm font-bold text-primary">1-Click</div>
+              <div className="text-[10px] text-muted-foreground">To Build</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Prompt Preview Modal */}
+        {selectedPlatform && (
+          <PromptPreviewModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            prompt={generatedPrompt}
+            platformId={selectedPlatform}
+            promptType={selectedPromptType}
+            onBuild={handleBuild}
+          />
+        )}
+      </>
+    );
+  }
+
+  // Full-width layout (original)
   return (
     <>
       <Card>
@@ -112,7 +213,7 @@ export function BuilderIntegration({ insight, defaultExpanded = true }: BuilderI
               </span>
               Generate Prompt & Build
             </h4>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Button
                 onClick={handleGeneratePrompt}
                 disabled={!selectedPlatform}

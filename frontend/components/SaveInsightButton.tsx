@@ -13,6 +13,10 @@ interface SaveInsightButtonProps {
   className?: string;
 }
 
+import { config } from '@/lib/env';
+
+const API_URL = config.apiUrl;
+
 export function SaveInsightButton({
   insightId,
   initialSaved = false,
@@ -26,9 +30,8 @@ export function SaveInsightButton({
     const supabase = getSupabaseClient();
 
     // Check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      // Redirect to login
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
       window.location.href = '/auth/login?redirectTo=' + encodeURIComponent(window.location.pathname);
       return;
     }
@@ -36,22 +39,18 @@ export function SaveInsightButton({
     setLoading(true);
     try {
       if (saved) {
-        // Remove from saved
-        const { error } = await supabase
-          .from('saved_insights')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('insight_id', insightId);
-
-        if (error) throw error;
+        const res = await fetch(`${API_URL}/api/users/insights/${insightId}/save`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!res.ok) throw new Error('Failed to unsave');
         setSaved(false);
       } else {
-        // Add to saved
-        const { error } = await supabase
-          .from('saved_insights')
-          .insert({ user_id: user.id, insight_id: insightId });
-
-        if (error) throw error;
+        const res = await fetch(`${API_URL}/api/users/insights/${insightId}/save`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!res.ok) throw new Error('Failed to save');
         setSaved(true);
       }
     } catch (error) {

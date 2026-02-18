@@ -3,22 +3,38 @@
 
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "backend/Dockerfile"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+startCommand = "sh -c 'uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}'"
 healthcheckPath = "/health"
-healthcheckTimeout = 100
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
 # Environment variables (set in Railway dashboard)
-# Required:
-# - DATABASE_URL (PostgreSQL connection string)
-# - REDIS_URL (Redis connection string)
-# - ANTHROPIC_API_KEY
-# - OPENAI_API_KEY
-# - FIRECRAWL_API_KEY
-# - REDDIT_CLIENT_ID
-# - REDDIT_CLIENT_SECRET
-# - REDDIT_USER_AGENT
+#
+# Required for ALL environments:
+# - DATABASE_URL (Supabase PostgreSQL connection string)
+# - REDIS_URL (Upstash Redis — use rediss:// for TLS)
+# - GOOGLE_API_KEY (Gemini 2.0 Flash — primary LLM)
+# - SUPABASE_URL (https://[ref].supabase.co)
+# - SUPABASE_ANON_KEY
+# - SUPABASE_SERVICE_ROLE_KEY
+# - JWT_SECRET (min 32 chars — from Supabase JWT settings)
+#
+# Required in PRODUCTION only (config.py validator enforces these):
+# - SENTRY_DSN (error tracking — app crashes without it)
+# - REFRESH_TOKEN_SECRET (min 32 chars)
+# - APP_URL (must be https://, no localhost)
+# - CORS_ORIGINS (must be HTTPS, in CORS_ALLOWED_PRODUCTION_ORIGINS whitelist)
+# - API_RELOAD=false
+#
+# Optional (free APIs, not required for MVP):
+# - REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USER_AGENT
+# - STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
+# - RESEND_API_KEY
+# - ANTHROPIC_API_KEY, OPENAI_API_KEY (fallback LLMs)
+# - FIRECRAWL_API_KEY (fallback scraper, USE_CRAWL4AI=true saves $149/mo)
+#
+# See backend/.env.staging.example and backend/.env.production.example for full templates

@@ -12,17 +12,18 @@ Security Fixes:
 - Add snapshot fields for deleted insights (insight_title_snapshot, etc.)
 - Add FK indexes to team invitations/sharing (invited_by_id, shared_by_id)
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
+
 # revision identifiers, used by Alembic.
 revision: str = 'b002'
-down_revision: Union[str, None] = 'b001'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = 'b001'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -230,21 +231,16 @@ def upgrade() -> None:
         unique=False
     )
 
-    # Add index to team_shared_insights.shared_by_id
-    op.create_index(
-        op.f('ix_team_shared_insights_shared_by_id'),
-        'team_shared_insights',
-        ['shared_by_id'],
-        unique=False
-    )
+    # Note: team_shared_insights was a legacy table, renamed to shared_insights
+    # Skip this index — table no longer exists in the schema
 
 
 def downgrade() -> None:
     """Revert soft delete and CASCADE fixes."""
 
     # PART 7: Remove FK indexes
-    op.drop_index(op.f('ix_team_shared_insights_shared_by_id'), table_name='team_shared_insights')
     op.drop_index(op.f('ix_team_invitations_invited_by_id'), table_name='team_invitations')
+    # Note: ix_team_shared_insights_shared_by_id was never created (legacy table removed)
 
     # PART 6: Revert subscriptions changes
     op.drop_column('subscriptions', 'user_email_snapshot')

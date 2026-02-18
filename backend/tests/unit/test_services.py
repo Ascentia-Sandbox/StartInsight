@@ -4,7 +4,6 @@ Tests for build tools, export services, and real-time feed.
 These tests don't require database access.
 """
 
-import asyncio
 import json
 from datetime import datetime
 from uuid import uuid4
@@ -13,36 +12,28 @@ import pytest
 
 from app.services.brand_generator import (
     BrandPackage,
-    ColorPalette,
-    FontStack,
-    LogoConcept,
-    BrandVoice,
     get_default_brand_package,
-)
-from app.services.landing_page import (
-    LandingPageTemplate,
-    HeroSection,
-    FeatureItem,
-    get_default_landing_page,
 )
 from app.services.export_service import (
     ExportFormat,
-    export_insight_csv,
-    export_insight_pdf,
     export_analysis_csv,
     export_analysis_json,
     export_analysis_pdf,
+    export_insight_csv,
+    export_insight_pdf,
     generate_pdf_content,
 )
+from app.services.landing_page import (
+    LandingPageTemplate,
+    get_default_landing_page,
+)
 from app.services.realtime_feed import (
-    InsightFeedMessage,
     EventStore,
-    get_event_store,
+    InsightFeedMessage,
     get_feed_stats,
     get_recent_insights,
     publish_new_insight,
 )
-
 
 # ============================================
 # Brand Generator Tests (Phase 5.2)
@@ -471,7 +462,6 @@ class TestServiceImports:
     def test_import_brand_generator(self):
         """Test brand generator imports."""
         from app.services.brand_generator import (
-            BrandPackage,
             generate_brand_package,
             get_default_brand_package,
         )
@@ -483,7 +473,6 @@ class TestServiceImports:
     def test_import_landing_page(self):
         """Test landing page imports."""
         from app.services.landing_page import (
-            LandingPageTemplate,
             generate_landing_page,
             get_default_landing_page,
         )
@@ -496,11 +485,8 @@ class TestServiceImports:
         """Test export service imports."""
         from app.services.export_service import (
             ExportFormat,
-            export_insight_pdf,
             export_insight_csv,
-            export_analysis_pdf,
-            export_analysis_csv,
-            export_analysis_json,
+            export_insight_pdf,
         )
 
         assert ExportFormat is not None
@@ -513,7 +499,6 @@ class TestServiceImports:
             InsightFeedMessage,
             subscribe_to_insights,
             unsubscribe_from_insights,
-            publish_new_insight,
         )
 
         assert InsightFeedMessage is not None

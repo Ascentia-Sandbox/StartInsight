@@ -9,7 +9,6 @@ from typing import Any
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Query, Request
-from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse
 

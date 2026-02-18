@@ -1,35 +1,12 @@
 version: '3.8'
 
-# Production: Uses Supabase Cloud (Singapore ap-southeast-1) for database
-# Local Dev: Optional PostgreSQL for offline development
+# Supabase Pro is the ONLY database -- no local PostgreSQL needed.
+# Redis is used locally for task queue and cache.
 #
-# Quick Start (Production Mode):
-#   docker-compose up -d redis
-#
-# Quick Start (Local Dev Mode):
-#   docker-compose up -d  # PostgreSQL + Redis
+# Quick Start:
+#   docker compose up -d  # Redis only
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:16-alpine
-    container_name: startinsight-postgres
-    environment:
-      POSTGRES_USER: startinsight
-      POSTGRES_PASSWORD: startinsight_dev_password
-      POSTGRES_DB: startinsight
-    ports:
-      - "5433:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U startinsight"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - startinsight-network
-
   # Redis (Task Queue & Cache)
   redis:
     image: redis:7-alpine
@@ -61,26 +38,7 @@ services:
     profiles:
       - tools
 
-  # Optional: pgAdmin (PostgreSQL GUI)
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: startinsight-pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@startinsight.local
-      PGADMIN_DEFAULT_PASSWORD: admin
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-    ports:
-      - "5050:80"
-    depends_on:
-      - postgres
-    networks:
-      - startinsight-network
-    profiles:
-      - tools
-
 volumes:
-  postgres_data:
-    driver: local
   redis_data:
     driver: local
 

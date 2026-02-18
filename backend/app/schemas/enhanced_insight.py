@@ -18,7 +18,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-
 # ============================================
 # Score Enums and Types
 # ============================================

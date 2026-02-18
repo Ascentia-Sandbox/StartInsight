@@ -3,8 +3,8 @@
 **Reading Priority:** CRITICAL
 **Read When:** When choosing libraries, verifying dependencies, resolving conflicts, cost planning
 **Dependencies:** Read project-brief.md for "Glue Coding" philosophy
-**Purpose:** Phase 1-7 dependencies, cost analysis ($639/mo at 10K users), revenue projections ($59K MRR)
-**Last Updated:** 2026-01-25
+**Purpose:** Phase 1-10 dependencies, cost analysis, revenue projections ($59K MRR at 10K users)
+**Last Updated:** 2026-02-09
 ---
 
 Tech Stack: StartInsight
@@ -26,13 +26,38 @@ UI Components: shadcn/ui - Copy-paste accessible components (based on Radix UI).
 
 State Management: React Query (TanStack Query) - Server state management.
 
-Charting: Recharts v3.6.0 (React 19 compatible) - Data visualization for trend graphs.
-  - **Implemented Components** (Phase 5+):
-    - TrendChart.tsx: Line/bar charts for Google Trends data (Phase 3)
-    - CommunitySignalsRadar.tsx: RadarChart for 4-platform engagement (Phase 5.2)
-    - ScoreBreakdown.tsx: 8-dimension KPI cards with color-coded badges (Phase 5.2)
-  - **Strategy**: Recharts + shadcn/ui for all visualizations (Tremor incompatible with React 19)
-  - **Competitive Advantage**: Dual-visualization stack (radar charts + KPI grids) vs IdeaBrowser's basic charts
+Charting: Recharts v3.6.0 (React 19 compatible) - Data visualization for trend graphs and evidence presentation.
+
+**VISUALIZATION MANDATE (Post-Ralph-Loop 2026-01-25):**
+Every insight MUST include data-driven visualizations. Evidence MUST be visual, not just textual.
+
+**Visualization Stack Strategy (Updated 2026-01-25):**
+  - **Primary**: Recharts v3.6.0 (React 19.2.3 compatible) - ✅ Installed
+  - **Complementary**: Tremor v3.16.0 for admin dashboards and KPI cards - ⚠️ Pending installation
+  - **Current Choice**: Dual-stack approach (Recharts + Tremor + shadcn/ui)
+  - **Reasoning**:
+    - Recharts: Complex custom visualizations (trend charts, radar charts) - full control
+    - Tremor: Financial charts, KPI cards, admin dashboards - cleaner API, less boilerplate
+    - shadcn/ui: Layout primitives, buttons, badges, forms
+  - **Competitive Analysis Finding**: IdeaBrowser uses Google Trends embedded charts (limited customization). StartInsight's dual-stack provides superior flexibility and visual quality.
+
+**Implemented Components (Phase 5.2 - 40% Complete):**
+  - ✅ TrendChart.tsx: Line charts for Google Trends search volume (Phase 3)
+  - ⚠️ CommunitySignalsRadar.tsx: RadarChart or AreaChart for 4-platform engagement (PLANNED)
+  - ⚠️ ScoreRadar.tsx: RadarChart for 8-dimension scoring visualization (PLANNED)
+  - ⚠️ TrendKeywordCards.tsx: Keyword cards with volume + growth badges (PLANNED)
+  - ⚠️ EvidencePanel Accordion: Collapsible sections for data sources (PLANNED)
+
+**Evidence-First Requirements:**
+Each insight requires minimum 3 visualizations:
+  1. Trend line chart (search volume over time) - ✅ IMPLEMENTED
+  2. Community signals chart (4-platform engagement) - ⚠️ PLANNED
+  3. Scoring visualization (8-dimension radar or bar chart) - ⚠️ PLANNED
+
+**Competitive Positioning:**
+  - **IdeaBrowser**: Google Trends embedded charts, basic badges
+  - **StartInsight**: Multi-chart evidence presentation (trend + community + scoring)
+  - **Advantage**: Visual evidence for every claim (charts > badges)
 
 3. Backend (The Intelligence Engine)
 Framework: FastAPI - High-performance, async Python framework. Perfect for AI/IO-bound tasks.
@@ -44,11 +69,15 @@ Process Manager: Uvicorn (ASGI server)
 Validation: Pydantic V2 - Data validation and settings management.
 
 4. Database & Storage (The Vault)
-Primary Database: PostgreSQL - Robust relational database.
+Primary Database: PostgreSQL (Supabase Pro) - Single source for development and production.
 
-Local Dev: Docker container.
-
-Production: Neon or Railway (Managed Postgres).
+Infrastructure:
+- **Development**: Supabase Pro connection pooler (session mode, port 5432)
+- **Production**: Same Supabase Pro database (no separate local PostgreSQL)
+- **Connection Pool**: 20 size, 30 max overflow, SSL required
+- **Cost**: $25/mo (8GB storage, 200 connections)
+- **system_settings table**: JSONB key-value store for admin-configurable runtime settings. Grouped by category. Upsert via PUT `/api/admin/settings/{key}`. Alembic revision `c003`.
+- **insights.slug**: VARCHAR(255) unique index (Alembic c006-c008). SEO URL routing. Frontend route: `/insights/[slug]/`.
 
 ORM: SQLAlchemy (Async) or Prisma Client Python - Type-safe database interaction.
 
@@ -110,6 +139,7 @@ Caching/Queue: Redis - Task queue for scheduled scrapers and caching hot insight
 - **Alternative**: Celery + Redis
   - More mature, better for complex workflows.
   - Use if we need advanced features (task retries, priority queues).
+- **Redis TLS**: Upstash Redis requires `rediss://` (TLS) scheme. Local dev uses plain `redis://`. Never swap schemes between environments.
 
 **Core Python Dependencies (Backend)**
 ```txt
@@ -197,6 +227,132 @@ httpx>=0.26.0  # Async HTTP client
 
 ---
 
+## Phase 12-14 Dependencies: Public Content Infrastructure
+
+### Phase 12-14 Overview
+
+**Status:** Complete (executed 2026-01-25 to 2026-01-29)
+
+**Purpose:** Build pre-authentication marketing layer (public pages, SEO, blog, tools directory, success stories)
+
+**Business Impact:**
+- Signup conversion: 2% → 4% (+100%)
+- Organic traffic: 500 → 2,500/mo (+400%)
+- User journey: 5-step visitor lifecycle (awareness → signup)
+
+### New shadcn/ui Components (9 components)
+
+| Component | Purpose | Key Features | Use Cases |
+|-----------|---------|--------------|-----------|
+| **navigation-menu** | Mega-menu dropdowns | Keyboard navigation, nested items, responsive | Main nav (Browse Ideas, Tools, Resources, Company) |
+| **accordion** | Collapsible sections | Auto-collapse, icons, animations | FAQ page, mobile navigation |
+| **tabs** | Tabbed interfaces | Keyboard support, controlled/uncontrolled | Platform Tour, Tools filtering |
+| **sheet** | Mobile drawer | Slide-in overlay, auto-focus trap | Mobile navigation |
+| **form** | Form handling | React Hook Form integration, validation | Admin CRUD operations |
+| **progress** | Progress indicators | Linear progress bar, percentage display | Success story timelines |
+| **pagination** | Page navigation | Previous/next buttons, page numbers | Trends (180+ items), Tools (54 items) |
+| **sonner** | Toast notifications | Auto-dismiss, action buttons, promise handling | Form submissions, errors |
+| **avatar** | User avatars | Image fallback, initials display | Founders (success stories), authors (blog) |
+| **checkbox** | Checkboxes | Controlled state, indeterminate support | Admin filters, multi-select |
+
+**Installation:**
+```bash
+cd frontend
+npx shadcn@latest add navigation-menu accordion tabs sheet form progress pagination sonner avatar checkbox
+```
+
+**Current Total:** 25 shadcn components (16 from Phase 1-7 + 9 from Phase 12-14)
+
+### SEO & Marketing Dependencies (3 packages)
+
+| Package | Version | Purpose | Installation |
+|---------|---------|---------|--------------|
+| **react-markdown** | ^9.0.0 | Render Markdown content in React | `pnpm add react-markdown` |
+| **remark-gfm** | ^4.0.0 | GitHub Flavored Markdown support (tables, strikethrough) | `pnpm add remark-gfm` |
+| **rehype-sanitize** | ^6.0.0 | XSS protection for user-generated Markdown | `pnpm add rehype-sanitize` |
+
+**Use Cases:**
+- Blog article rendering (market_insights table)
+- Admin-authored content with rich formatting
+- Security: Prevent script injection in Markdown content
+
+### Updated Version Numbers
+
+| Package | Phase 1-7 | Phase 12-14 | Change Reason |
+|---------|-----------|-------------|---------------|
+| **React** | 18.2.0 | 19.2.3 | Next.js 16 compatibility, React Compiler |
+| **React DOM** | 18.2.0 | 19.2.3 | Matches React version |
+| **Next.js** | 14.1.0 | 16.1.3 | Improved App Router, Server Actions, Turbopack |
+| **Node.js** | 20.x LTS | 22.x LTS | Latest LTS with performance improvements |
+| **Tailwind CSS** | 3.4.0 | 4.0.0 | New CSS architecture, better performance |
+
+**Migration Notes:**
+- React 19: New APIs (useActionState, useOptimistic), improved Suspense
+- Next.js 16: Turbopack stable, improved caching, parallel routes
+- Tailwind 4: New @layer syntax, vite-plugin-tailwindcss, fewer deps
+
+### Environment Variables (Phase 12-14)
+
+```bash
+# frontend/.env.local
+
+# ============================================
+# PHASE 12-14: SEO & PUBLIC PAGES
+# ============================================
+NEXT_PUBLIC_SITE_URL=https://startinsight.app  # Canonical URL for sitemap
+NEXT_PUBLIC_SITE_NAME=StartInsight             # OG tags, meta titles
+GOOGLE_SITE_VERIFICATION=your_verification_code  # Google Search Console
+
+# ============================================
+# PHASE 14: CONTACT FORM (OPTIONAL)
+# ============================================
+SMTP_HOST=smtp.resend.com                      # Email service for contact form
+SMTP_PORT=587
+SMTP_USER=resend
+SMTP_PASSWORD=re_...                           # Resend API key
+CONTACT_EMAIL=hello@startinsight.app           # Recipient for contact form
+```
+
+### Cost Impact (Phase 12-14)
+
+| Service | Cost/Month | Purpose | Tier |
+|---------|------------|---------|------|
+| **Email Marketing (Optional)** | $0-29 | Newsletter for blog subscribers | Resend Free/Pro |
+| **Analytics (Optional)** | $0-49 | Public page performance tracking | Vercel Analytics |
+| **SEO Tools (Optional)** | $0 | Google Search Console, Bing Webmaster | Free |
+
+**Updated Monthly Cost (10K users):**
+- **Phase 1-7**: $639/mo
+- **Phase 12-14**: $703-752/mo (+10-18%)
+- **Breakdown**: $639 base + $35 (email) + $29-49 (analytics) + $0 (SEO)
+
+**Revenue Impact:**
+- Signup conversion: +100% (2% → 4%)
+- 10K users → 400 paid users (vs 200 before)
+- Additional MRR: +$9,500/mo (doubles paid conversion)
+- **ROI**: $9,500 revenue / $64 cost = 148x return
+
+### Content Stack Architecture
+
+**Backend (4 New Models):**
+- `tools`: 54-tool directory (category, pricing, features)
+- `success_stories`: Founder case studies (timeline, metrics)
+- `trends`: 180+ trending keywords (volume, growth)
+- `market_insights`: Blog articles (Markdown content)
+
+**Frontend (14 New Pages):**
+- **Public**: /tools, /success-stories, /trends, /market-insights, /about, /contact, /faq, /pricing, /platform-tour, /features
+- **Admin**: /admin/tools, /admin/success-stories, /admin/trends, /admin/market-insights
+- **SEO**: /sitemap.xml, /robots.txt
+
+**Component Strategy:**
+- Navigation: Mega-menu (navigation-menu) + mobile drawer (sheet)
+- Content: Markdown rendering (react-markdown + remark-gfm)
+- Pagination: 12 items/page (pagination component)
+- Filtering: Tabs (category) + Search (input)
+
+---
+
 ## Environment Variable Conventions
 
 **Backend (Python with Pydantic Settings):**
@@ -205,12 +361,15 @@ httpx>=0.26.0  # Async HTTP client
 - **Example**:
   ```bash
   # .env file
-  DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5433/startinsight
+  DATABASE_URL=postgresql+asyncpg://postgres.[REF]:[PASSWORD]@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres
   REDIS_URL=redis://localhost:6379
   GOOGLE_API_KEY=AIza...  # Primary: Gemini
   ANTHROPIC_API_KEY=sk-ant-...  # Fallback: Claude
   API_HOST=0.0.0.0
   API_PORT=8000
+  DB_POOL_SIZE=20
+  DB_MAX_OVERFLOW=30
+  DB_SSL=true
   ```
   ```python
   # backend/app/core/config.py (auto-mapped)
@@ -446,7 +605,7 @@ dev = [
 # ============================================
 # PHASE 1-3 (Existing)
 # ============================================
-DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5433/startinsight
+DATABASE_URL=postgresql+asyncpg://postgres.[REF]:[PASSWORD]@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres
 REDIS_URL=redis://localhost:6379
 FIRECRAWL_API_KEY=fc-***
 REDDIT_CLIENT_ID=***
@@ -638,7 +797,7 @@ NEXT_PUBLIC_POSTHOG_KEY=phc_...  # PostHog analytics
 | 1,000 users| $19 (Pro)  | $10   | $20     | $20      | $25      | $0         | $94      |
 | 10,000 users| $69 (Scale)| $40   | $100    | $20      | $75      | $145       | $449     |
 
-### Phase 4.5+ Costs (Supabase Cloud Singapore)
+### Phase 4.5+ Costs (Supabase Pro - Sole Database)
 
 | User Scale | Supabase | Redis | Backend | Frontend | AI (LLM) | Auth/Email | Total/mo | Savings |
 |------------|----------|-------|---------|----------|----------|------------|----------|---------|
@@ -646,8 +805,45 @@ NEXT_PUBLIC_POSTHOG_KEY=phc_...  # PostHog analytics
 | 1,000 users| $25 (Pro)| $10   | $20     | $20      | $25      | $0         | $100     | -$6/mo  |
 | 10,000 users| $25 (Pro)| $40   | $100    | $20      | $75      | $145       | $405     | $44/mo  |
 
-**Migration Status:** Phase 4.5 complete (executed 2026-01-25)
+**Migration Status:** Phase 4.5 complete (2026-01-25), Local PostgreSQL removed (2026-02-09)
+**Infrastructure:** Supabase Pro as single database for development and production
 **Break-even Point:** 340 users (Supabase becomes cost-effective)
+
+### Phase 12-14+ Costs (Public Content Infrastructure)
+
+| User Scale | Supabase | Redis | Backend | Frontend | AI (LLM) | Auth/Email | Marketing | Total/mo | vs Phase 4.5 |
+|------------|----------|-------|---------|----------|----------|------------|-----------|----------|--------------|
+| 100 users  | $25 (Pro)| $0    | $5      | $0       | $10      | $0         | $29       | $69      | +$29/mo      |
+| 1,000 users| $25 (Pro)| $10   | $20     | $20      | $25      | $0         | $49       | $149     | +$49/mo      |
+| 10,000 users| $25 (Pro)| $40   | $100    | $20      | $75      | $145       | $78       | $483     | +$78/mo      |
+
+**PMF Deployment Cost (2026-02-08):**
+| Service | Tier | Monthly Cost | Notes |
+|---------|------|-------------|-------|
+| Supabase | Pro | $25 | Single database (dev + prod) |
+| Railway | Free | $5 | $5 starter credit |
+| Vercel | Hobby | $0 | Frontend hosting |
+| Redis | Railway | $0 | Included in Railway |
+| Gemini AI | Free | $0 | 1,500 requests/day |
+| Resend | Free | $0 | 3K emails/month |
+| Crawl4AI | Self-hosted | $0 | Runs in Railway container |
+| **TOTAL PMF** | | **~$30/mo** | 94% reduction from $483/mo |
+
+**Multi-Environment Cost Model (Phase A-L onwards):**
+| Environment | Config | Monthly Cost |
+|-------------|--------|-------------|
+| Dev | 1× Supabase Pro $25 + Gemini ~$5 | **~$30/mo** |
+| Staging | 2× Supabase Pro $50 + Gemini ~$5 | **~$55/mo** |
+| Production (3-tier) | 3× Supabase Pro $75 + Gemini ~$10 | **~$85/mo** |
+
+**Marketing Costs Breakdown (10K users):**
+- Email Marketing: $35/mo (Resend Pro - 50K emails/month for blog subscribers)
+- Analytics: $43/mo (Vercel Analytics Pro - 250K events/month)
+- SEO Tools: $0 (Google Search Console, Bing Webmaster)
+- **Total Marketing**: $78/mo
+
+**Migration Status:** Phase 12-14 complete (executed 2026-01-29)
+**ROI Impact:** $78/mo marketing cost → +$9,500/mo revenue (148x return)
 
 **Revenue Projections (at 10,000 users):**
 - Free: 9,000 users × $0 = $0
@@ -892,7 +1088,7 @@ Why FastAPI over Django? StartInsight is an AI-heavy app. We need excellent asyn
 
 Database Evolution: PostgreSQL to Supabase
 Phase 1-4 (Development): PostgreSQL via Docker for vendor independence and control over data layer. Standard Postgres container ensures we can host anywhere (AWS, GCP, DigitalOcean) without BaaS lock-in.
-Phase 4.5 (Complete 2026-01-25): Migrated to Supabase Cloud Singapore for cost savings (64% at 10K users) and APAC latency optimization (50ms vs 180ms). 13 migrations executed, 20 tables deployed with RLS.
+Phase 4.5 (Complete 2026-01-25): Migrated to Supabase Cloud Sydney for cost savings (64% at 10K users) and APAC latency optimization (50ms vs 180ms). 13 migrations executed, 20 tables deployed with RLS.
 
 Why Firecrawl? Writing custom CSS selectors for scraping is brittle (websites change). Firecrawl uses AI/Heuristics to turn web pages into Markdown, which is the native language of our LLM agents.
 
@@ -906,11 +1102,11 @@ Why Firecrawl? Writing custom CSS selectors for scraping is brittle (websites ch
 
 **Status:** Complete (executed 2026-01-25)
 
-**Decision:** Migrate from self-hosted PostgreSQL to Supabase Cloud (Singapore ap-southeast-1)
+**Decision:** Migrate from self-hosted PostgreSQL to Supabase Cloud (Sydney ap-southeast-2)
 
 **Why Supabase:**
 - **Cost Efficiency**: $25/mo (Pro) vs $69/mo (Neon Scale) at 10K users = 64% savings
-- **APAC Market**: Singapore region = 50ms latency for SEA users (vs 180ms US-based)
+- **APAC Market**: Sydney region = 50ms latency for APAC users (vs 180ms US-based)
 - **Built-in Features**: Real-time subscriptions, Storage, Edge Functions (Phase 5+)
 - **Developer Experience**: Auto-migrations, RLS policies, built-in auth option
 - **Scalability**: Auto-scaling, connection pooling (up to 500 concurrent connections)
@@ -935,13 +1131,13 @@ Why Firecrawl? Writing custom CSS selectors for scraping is brittle (websites ch
 
 **New Variables:**
 ```bash
-# Supabase Cloud (Singapore ap-southeast-1)
+# Supabase Cloud (Sydney ap-southeast-2)
 SUPABASE_URL=https://[project-ref].supabase.co
 SUPABASE_ANON_KEY=eyJhbGc...  # Public key (client-side)
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...  # Private key (server-side only)
 
 # Keep during transition
-DATABASE_URL=postgresql+asyncpg://startinsight:password@localhost:5433/startinsight
+DATABASE_URL=postgresql+asyncpg://postgres.[REF]:[PASSWORD]@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres
 ```
 
 ### 9.5 Migration Strategy (3 Options)
@@ -979,13 +1175,13 @@ DATABASE_URL=postgresql+asyncpg://startinsight:password@localhost:5433/startinsi
 
 For detailed cost comparison and revenue projections, see Cost Analysis section above.
 
-### 9.7 Singapore Region Configuration
+### 9.7 Sydney Region Configuration
 
-**Region:** `ap-southeast-1` (AWS Singapore)
+**Region:** `ap-southeast-2` (AWS Sydney)
 
 **Justification:**
 - **APAC Market Growth**: 30% YoY SaaS adoption in SEA
-- **Latency**: 50ms (Singapore) vs 180ms (US) for SEA users
+- **Latency**: 50ms (Sydney) vs 180ms (US) for APAC users
 - **Compliance**: Data residency for APAC customers
 - **Expansion**: Gateway to Australia (120ms), India (85ms), Japan (110ms)
 
@@ -994,7 +1190,7 @@ For detailed cost comparison and revenue projections, see Cost Analysis section 
 // frontend/lib/supabase.ts
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!  // Singapore region
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!  // Sydney region
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -1025,5 +1221,30 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 - Auto-generated REST API from schema
 - Reduce custom FastAPI routes
 - GraphQL option (pg_graphql extension)
+
+---
+
+## 10. Phase A-L & Q1-Q9 Stack Additions
+**Last Updated**: 2026-02-17
+
+### 10.1 Error Tracking — Sentry
+- **Sentry** Free tier (5K events/month)
+- Two projects: `startinsight-backend` (FastAPI SDK), `startinsight-frontend` (Next.js SDK)
+- Backend: `sentry-sdk[fastapi]` — captures unhandled exceptions + slow requests
+- Frontend: `@sentry/nextjs` — captures client-side + SSR errors
+- DSN configured via `SENTRY_DSN` env var (backend) and `NEXT_PUBLIC_SENTRY_DSN` (frontend)
+
+### 10.2 Admin Portal Stack
+- **System Settings**: JSONB store in `system_settings` table; grouped GET API; upsert PUT API
+- **Shared hooks**: `hooks/useAdminAuth.ts` (admin-only guard using JWT role claim)
+- **Shared components**: `components/admin/admin-page-header.tsx`, `components/admin/admin-states.tsx`
+
+### 10.3 Q1-Q9 Dependencies (No New Packages)
+All Q1-Q9 features implemented using existing stack:
+- Pulse SSE: standard FastAPI `StreamingResponse`
+- Trend Sparklines: pure inline SVG (no chart library)
+- Insight Comparison: Chart.js (already a frontend dependency)
+- Rate limiting: SlowAPI (already installed, `app/core/rate_limits.py`)
+- SEO: Next.js native `generateMetadata` + JSON-LD via inline `<script type="application/ld+json">`
 
 ---

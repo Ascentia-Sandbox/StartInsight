@@ -1,15 +1,11 @@
 """Tests for API key service - Phase 7.2."""
 
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
 
 from app.services.api_key_service import (
     AVAILABLE_SCOPES,
-    APIKeyCreate,
-    APIKeyResponse,
     check_api_key_rate_limit,
     check_scope,
     create_api_key,

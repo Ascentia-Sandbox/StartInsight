@@ -5,28 +5,28 @@
 ### CRITICAL: Always Read These Files First
 Before answering ANY complex question or starting ANY implementation task, you MUST read the relevant memory-bank files in this order:
 
-1. **`memory-bank/project-brief.md`** (188 lines)
+1. **`memory-bank/project-brief.md`** (582 lines)
    - Purpose: Executive summary, business objectives, 3 core loops, competitive positioning vs IdeaBrowser
    - When to read: At the start of any new session, before proposing architectural changes
 
-2. **`memory-bank/active-context.md`** (527 lines)
-   - Purpose: Current phase (Phase 4.5 complete, Phase 4-7 frontend next), immediate tasks, blockers, what's working/what's next
+2. **`memory-bank/active-context.md`** (742 lines)
+   - Purpose: Current phase (Phase 1-10 complete, production ready), immediate tasks, testing status, what's working/next
    - When to read: Before every task to understand current state
 
-3. **`memory-bank/implementation-plan.md`** (732 lines)
-   - Purpose: Phases 1-7 completion status, testing requirements, decision records
+3. **`memory-bank/implementation-plan.md`** (572 lines)
+   - Purpose: Phases 1-10 completion status, testing requirements (291 backend + 47 E2E), decision records (DR-001 to DR-005)
    - When to read: When planning implementation steps, checking phase requirements
 
-4. **`memory-bank/architecture.md`** (3,063 lines)
-   - Purpose: System architecture, 21 tables, 97 API endpoints, SSE architecture, authentication, admin portal, enhanced scoring
+4. **`memory-bank/architecture.md`** (2,118 lines)
+   - Purpose: System architecture, 69 tables, 230 API endpoints, SSE architecture, authentication, admin portal, Phase 8-10 features
    - When to read: Before implementing features, designing database models, creating APIs
 
-5. **`memory-bank/tech-stack.md`** (962 lines)
-   - Purpose: Phase 1-7 dependencies, cost analysis ($80-$674/mo), revenue projections ($59K MRR at 10K users)
+5. **`memory-bank/tech-stack.md`** (1,197 lines)
+   - Purpose: Phase 1-10 dependencies, cost analysis ($294/mo at 10K users), revenue projections ($59K MRR at 10K users)
    - When to read: When choosing libraries, verifying dependencies, resolving conflicts, cost planning
 
-6. **`memory-bank/progress.md`** (updated 2026-01-25)
-   - Purpose: Completion log (Phase 1-4.5 complete, Phase 4-7 frontend next), recent changes
+6. **`memory-bank/progress.md`** (707 lines, updated 2026-02-08)
+   - Purpose: Completion log (Phase 1-10 complete, production ready), recent changes, historical milestones
    - When to read: After completing tasks (for logging), before starting work (to avoid duplication)
 
 ### Context-Based Reading Guide
@@ -38,7 +38,7 @@ Before answering ANY complex question or starting ANY implementation task, you M
 | **Database/model changes** | architecture.md (Database Schema section), tech-stack.md | CRITICAL |
 | **API endpoint creation** | architecture.md (API Endpoints section), implementation-plan.md | CRITICAL |
 | **Library selection** | tech-stack.md, project-brief.md (Glue Coding philosophy) | CRITICAL |
-| **Implementing Phase 4+ features** | active-context.md, implementation-plan.md (Phase 4-7), architecture.md (Phase 4+ sections) | CRITICAL |
+| **Implementing Phase 8-10 features** | active-context.md, implementation-plan.md (Phase 8-10), architecture.md (Phase 8-10 sections) | CRITICAL |
 | **Authentication/Admin setup** | architecture.md (Authentication Architecture, Admin Portal), implementation-plan.md (Phase 4.1-4.2) | CRITICAL |
 | **Cost/pricing planning** | tech-stack.md (Cost Analysis), project-brief.md (Competitive Positioning) | HIGH |
 | **Debugging/questions** | All files (in reading order above) | MEDIUM |
@@ -55,17 +55,18 @@ Before answering ANY complex question or starting ANY implementation task, you M
 - **Simplicity**: Prefer "Glue Code" (connecting APIs) over complex custom logic.
 
 ## ??? Tech Stack Rules (Strict)
-- **Backend**: FastAPI (Async), SQLAlchemy 2.0 (Async), Pydantic V2, `uv` or `poetry`. **NO Django.**
+- **Backend**: FastAPI (Async), SQLAlchemy 2.0 (Async), Pydantic V2, `uv` package manager. **NO Django.**
 - **Frontend**: Next.js 14+ (App Router), TypeScript, Tailwind CSS, shadcn/ui.
 - **Database**: PostgreSQL (AsyncPG). **NO Supabase SDK** (use standard SQL/Alchemy).
-- **AI**: PydanticAI or LangChain. **LLM**: Claude 3.5 Sonnet.
+- **AI**: PydanticAI v1.x (standard). **LLM**: Gemini 2.0 Flash (primary), Claude 3.5 Sonnet (fallback).
 - **Scraper**: Firecrawl (Official SDK).
 
 ## ? Common Commands
 - **Backend Dev**: `cd backend && uvicorn app.main:app --reload`
-- **Frontend Dev**: `cd frontend && pnpm dev`
-- **DB Migrations**: `alembic upgrade head`
-- **Test**: `pytest`
+- **Frontend Dev**: `cd frontend && npm run dev`
+- **DB Migrations**: `cd backend && alembic upgrade head`
+- **Backend Tests**: `cd backend && pytest tests/ -v --cov=app`
+- **Frontend E2E Tests**: `cd frontend && npx playwright test`
 - **Lint**: `cd backend && uv run ruff check . --fix`
 
 ## ?? Coding Style
