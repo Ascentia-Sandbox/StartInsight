@@ -67,6 +67,10 @@ class Settings(BaseSettings):
     stripe_webhook_secret: str | None = None
     stripe_price_starter: str | None = None  # Price ID for Starter tier
     stripe_price_pro: str | None = None  # Price ID for Pro tier
+    stripe_price_enterprise: str | None = None  # Price ID for Enterprise tier
+    stripe_price_starter_yearly: str | None = None
+    stripe_price_pro_yearly: str | None = None
+    stripe_price_enterprise_yearly: str | None = None
 
     # Application URL (for email links)
     app_url: str = "http://localhost:3001"
