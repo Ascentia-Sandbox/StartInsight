@@ -104,7 +104,7 @@ export default function SuccessStoriesPage() {
                   position: i + 1,
                   item: {
                     "@type": "Article",
-                    headline: s.title,
+                    headline: s.tagline,
                     url: `https://startinsight.app/success-stories/${s.id}`,
                   },
                 })),
