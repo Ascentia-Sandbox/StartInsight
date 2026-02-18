@@ -251,7 +251,6 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
-        working-directory: ./frontend
         run: vercel pull --yes --environment=production --token=$VERCEL_TOKEN
 
       - name: Build Frontend with Vercel
@@ -259,7 +258,6 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
-        working-directory: ./frontend
         run: vercel build --prod --token=$VERCEL_TOKEN
 
       - name: Deploy Frontend to Vercel (Staging)
@@ -267,7 +265,6 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
-        working-directory: ./frontend
         run: vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
 
       - name: Staging health check
