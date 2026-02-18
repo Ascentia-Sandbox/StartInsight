@@ -26,6 +26,8 @@ def _get_redis_settings() -> RedisSettings:
         port=parsed.port or 6379,
         password=parsed.password,
         database=int(parsed.path.lstrip("/") or "0"),
+        conn_timeout=3,
+        conn_retries=0,
     )
 
 # Global scheduler instance
