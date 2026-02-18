@@ -38,3 +38,4 @@ restartPolicyMaxRetries = 10
 # - FIRECRAWL_API_KEY (fallback scraper, USE_CRAWL4AI=true saves $149/mo)
 #
 # See backend/.env.staging.example and backend/.env.production.example for full templates
+# Last updated: 2026-02-18 (production DB + env vars configured)
