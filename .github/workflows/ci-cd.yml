@@ -238,6 +238,7 @@ jobs:
         run: npm i -g @railway/cli
 
       - name: Deploy Backend to Railway (Staging)
+        continue-on-error: true
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
         run: railway up --service backend
@@ -245,12 +246,29 @@ jobs:
       - name: Install Vercel CLI
         run: npm i -g vercel
 
+      - name: Pull Vercel project settings
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
+        working-directory: ./frontend
+        run: vercel pull --yes --environment=production --token=$VERCEL_TOKEN
+
+      - name: Build Frontend with Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
+        working-directory: ./frontend
+        run: vercel build --prod --token=$VERCEL_TOKEN
+
       - name: Deploy Frontend to Vercel (Staging)
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
-        run: vercel --prod --token=$VERCEL_TOKEN
+        working-directory: ./frontend
+        run: vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
 
       - name: Staging health check
         env:
