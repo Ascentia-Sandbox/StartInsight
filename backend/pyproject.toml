@@ -76,7 +76,23 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
-ignore = ["E501"]
+ignore = [
+    "E501",   # line too long
+    "E712",   # == True/False comparisons — required for SQLAlchemy column filters
+    "UP042",  # str + Enum inheritance — required for FastAPI enum serialization
+]
+
+[tool.ruff.lint.per-file-ignores]
+"app/models/*.py" = ["F821"]   # SQLAlchemy relationship forward references
+"app/main.py" = ["E402"]       # conditional imports after app setup
+"app/api/deps.py" = ["E402"]   # conditional imports after settings
+"app/worker.py" = ["E402"]     # env setup before imports
+"scripts/*.py" = ["E402"]      # sys.path manipulation before imports
+"tests/**/*.py" = ["F841"]     # test assignments for side-effect verification
+"app/api/routes/community.py" = ["F811"]  # PollResponse redefinition (intentional override)
+"app/scrapers/**/*.py" = ["N806"]  # uppercase vars in functions (method priority maps)
+"app/services/report_generator.py" = ["N811"]  # HTML imported as WeasyHTML (clarity)
+"alembic/**/*.py" = ["W291", "I001", "UP035", "UP007"]  # auto-generated migration files
 
 [tool.mypy]
 python_version = "3.11"

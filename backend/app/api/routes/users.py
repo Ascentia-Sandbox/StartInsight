@@ -383,7 +383,7 @@ async def claim_insight(
 
     # Use UserService to get or create SavedInsight with building status
     claimed_at = datetime.now(UTC)
-    saved_insight = await UserService.get_or_create_saved_insight(
+    await UserService.get_or_create_saved_insight(
         db=db,
         user_id=current_user.id,
         insight_id=insight_id,

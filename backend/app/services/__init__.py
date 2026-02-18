@@ -54,7 +54,6 @@ from app.services.realtime_feed import (
     subscribe_to_insights,
     unsubscribe_from_insights,
 )
-
 from app.services.team_service import (
     TeamCreate,
     TeamMemberAdd,

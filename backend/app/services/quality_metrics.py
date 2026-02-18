@@ -296,7 +296,7 @@ class QualityMetricsCollector:
             ("execution_difficulty", Insight.execution_difficulty),
         ]
 
-        for name, field in dimension_fields:
+        for name, field in dimension_fields:  # noqa: F402
             avg_query = (
                 select(func.avg(field))
                 .where(Insight.created_at >= start)
@@ -348,8 +348,6 @@ class QualityMetricsCollector:
 
     def _calculate_error_rates(self, metrics: QualityMetrics) -> None:
         """Calculate error rates from error counts."""
-        total_signals = metrics.total_signals_collected
-
         # Calculate scraper error rates
         for key, count in self._error_counts.items():
             if "scraper" in key.lower():

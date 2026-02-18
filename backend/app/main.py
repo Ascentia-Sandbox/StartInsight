@@ -297,8 +297,8 @@ from app.api.routes import (  # noqa: E402
     build,
     build_tools,
     chat,
-    contact,
     community,
+    contact,
     content_review,
     export,
     feed,
@@ -312,7 +312,6 @@ from app.api.routes import (  # noqa: E402
     preferences,
     pulse,
     research,
-    settings as settings_routes,
     signals,
     success_stories,
     teams,
@@ -321,6 +320,9 @@ from app.api.routes import (  # noqa: E402
     trends,
     users,
     validator,
+)
+from app.api.routes import (
+    settings as settings_routes,
 )
 
 app.include_router(health.router, tags=["Health"])  # Production monitoring

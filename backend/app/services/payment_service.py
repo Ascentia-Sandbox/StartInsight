@@ -506,8 +506,6 @@ async def _handle_invoice_paid(data: dict, db: AsyncSession) -> dict:
     customer_id = data.get("customer")
     amount_paid = data.get("amount_paid", 0)
     currency = data.get("currency", "usd")
-    subscription_id = data.get("subscription")
-
     logger.info(f"Invoice {invoice_id} paid: ${amount_paid/100:.2f} {currency.upper()}")
 
     # Find subscription by stripe_customer_id

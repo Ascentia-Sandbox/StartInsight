@@ -33,10 +33,6 @@ export default function HomePage() {
   const [stats, setStats] = useState<PublicStats | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchHomeData();
-  }, []);
-
   const fetchHomeData = async () => {
     const apiUrl = config.apiUrl;
 
@@ -65,6 +61,10 @@ export default function HomePage() {
 
     setLoading(false);
   };
+
+  useEffect(() => {
+    fetchHomeData();
+  }, []);
 
   // Fallback values when stats not loaded
   const insightCount = stats

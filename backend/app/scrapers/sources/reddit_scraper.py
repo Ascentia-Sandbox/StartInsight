@@ -294,7 +294,6 @@ class RedditScraper(BaseScraper):
 
     def _praw_sync_fetch(self) -> list[ScrapeResult]:
         """Synchronous PRAW fetch (runs in thread pool)."""
-        import praw.models
 
         results: list[ScrapeResult] = []
 

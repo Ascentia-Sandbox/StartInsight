@@ -45,7 +45,7 @@ export function GuidedTour({ steps, onComplete, onSkip, isOpen, onClose }: Guide
         }, 500);
       }
     }
-  }, [step?.target]);
+  }, [step]);
 
   useEffect(() => {
     if (isOpen) {
