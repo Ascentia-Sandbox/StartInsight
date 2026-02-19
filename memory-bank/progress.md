@@ -13,6 +13,20 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-02-19)
+
+- [2026-02-19] [PHASE-6.1]: Wire Stripe payment integration end-to-end
+  - Files: config.py, payment_service.py, tests/services/test_payment_service.py
+  - Tech: 3 live-mode Stripe products + 6 prices created; _get_price_id() covers all 6 combos; 15 tests pass
+  - Status: [→ In Progress — awaiting live Stripe keys + webhook secret for full checkout flow]
+
+## Recent Progress (2026-02-18)
+
+- [2026-02-18] [WORKER-FIX]: Fix arq worker + process 327-signal backlog
+  - Files: backend/app/worker.py, backend/start.sh (NEW), backend/railway.toml, backend/Dockerfile
+  - Tech: urlparse-based Redis URL parsing for Upstash TLS; arq runs as background process alongside uvicorn
+  - Status: [✓ Complete]
+
 ## Recent Progress (2026-02-17)
 
 - [2026-02-17] [PROD-PREP]: Pre-production blocking fixes

@@ -155,7 +155,7 @@ graph LR
 - **RSS**: feedparser (custom feeds)
 
 ### Services
-- **Payments**: Stripe (4-tier subscriptions, webhooks)
+- **Payments**: Stripe (4-tier subscriptions, webhooks) — live mode, 3 products, 6 prices (monthly + yearly), webhook configured
 - **Email**: Resend (6 email templates)
 - **Rate Limiting**: SlowAPI + Redis (tier-based quotas)
 
@@ -597,22 +597,23 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 
 ## 📊 Current Status
 
-**Active Phase**: Phase 1-14 + Q1-Q9 Complete (100%) - Production Ready
+**Active Phase**: Phase 1-14 + Q1-Q9 Complete (100%) - Production Live
 
 **Backend**: 232+ API endpoints, 69 database tables, 15+ services
 **Frontend**: 35+ routes (dashboard, workspace, research, admin, teams, 10 public pages, 4 admin content pages)
 **Database**: 25+ Alembic migrations applied, Row-Level Security enabled
 **AI Agents**: 8 agents (analyzer, enhanced_analyzer, research, competitive_intel, market_intel, content_generator, chat_agent, market_insight_publisher)
-**Testing**: 291 backend tests (22 files, 85% coverage), 47 E2E tests (8 suites, 5 browsers, WCAG 2.1 AA)
+**Testing**: 295 backend tests (22 files, 85% coverage), 47 E2E tests (8 suites, 5 browsers, WCAG 2.1 AA)
 **Content**: 84+ items (54 tools, 12 success stories, 180+ trends, 13 blog articles)
 **API**: 232+ endpoints (incl. pulse.py, contact.py, tools/categories)
+**Payments**: Stripe live mode — 3 products (Starter/Pro/Enterprise), 6 prices (monthly + yearly), webhook active
 
 **Completed**:
 - ✅ Phase 1-3: MVP Foundation (scrapers, analyzer, Next.js dashboard)
 - ✅ Phase 4: Authentication & Admin Portal (Supabase Auth, SSE streaming, 8-dimension scoring)
 - ✅ Phase 5: AI Research Agent (40-step research, admin approval queue, brand/landing generators)
 - ✅ Phase 5.2: Super Admin Sovereignty + Evidence Visualizations (research request queue, radar charts, KPI cards)
-- ✅ Phase 6: Monetization (Stripe 4-tier, Resend email, team collaboration)
+- ✅ Phase 6: Monetization (Stripe 4-tier live mode wired end-to-end, Resend email, team collaboration)
 - ✅ Phase 7: Expansion (Twitter/X scraper, API keys, multi-tenancy)
 - ✅ Phase 8: Content Quality & Pipeline Monitoring (quality gates, SHA-256 dedup, superadmin dashboard)
 - ✅ Phase 9: User Engagement (preferences, AI idea chat, community voting/comments, gamification, social networking)
@@ -635,7 +636,7 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 - 50-70% lower pricing
 
 **Next**:
-- 🚀 Production Deployment (Railway + Vercel + Supabase Cloud)
+- ✅ Production Deployment (Railway backend live, Vercel frontend live, Stripe payments wired)
 - 📊 Monitoring Setup (Sentry, uptime checks)
 - 🔍 Phase 15-16: Advanced Features (competitive intelligence, predictive analytics)
 

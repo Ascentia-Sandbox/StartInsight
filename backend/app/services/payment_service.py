@@ -152,16 +152,31 @@ async def create_checkout_session(
     """
     # ✅ URL VALIDATION - Prevent phishing attacks
     if settings.environment == "production":
-        if not success_url.startswith("https://"):
+        # Check scheme (HTTPS only)
+        success_url_parsed = urlparse(success_url)
+        cancel_url_parsed = urlparse(cancel_url)
+
+        if success_url_parsed.scheme != "https":
             raise ValueError("success_url must use HTTPS in production")
-        if not cancel_url.startswith("https://"):
+        if cancel_url_parsed.scheme != "https":
             raise ValueError("cancel_url must use HTTPS in production")
+
+        # Check for path traversal attempts
+        if ".." in success_url or ".." in cancel_url:
+            raise ValueError("URL contains path traversal attempts")
+
+        # Check path depth to prevent deep directory traversal
+        success_path_depth = len(success_url_parsed.path.split('/')) if success_url_parsed.path else 0
+        cancel_path_depth = len(cancel_url_parsed.path.split('/')) if cancel_url_parsed.path else 0
+
+        if success_path_depth > 10 or cancel_path_depth > 10:
+            raise ValueError("URL path depth exceeds maximum allowed")
 
         # Validate URLs belong to allowed domains (prevent open redirect attacks)
         allowed_origins = settings.cors_origins_list
         allowed_hosts = {urlparse(origin).hostname for origin in allowed_origins if urlparse(origin).hostname}
-        success_host = urlparse(success_url).hostname
-        cancel_host = urlparse(cancel_url).hostname
+        success_host = success_url_parsed.hostname
+        cancel_host = cancel_url_parsed.hostname
 
         if success_host not in allowed_hosts:
             raise ValueError(f"success_url domain not in allowed CORS origins: {success_host}")
@@ -282,6 +297,48 @@ async def handle_webhook_event(
             settings.stripe_webhook_secret,
         )
 
+        # ✅ WEBHOOK PAYLOAD VALIDATION - Prevent malicious payloads
+        # Validate event type
+        allowed_event_types = [
+            "checkout.session.completed",
+            "customer.subscription.updated",
+            "customer.subscription.deleted",
+            "invoice.paid",
+            "invoice.payment_failed"
+        ]
+
+        if event["type"] not in allowed_event_types:
+            logger.warning(f"Webhook event type not allowed: {event['type']}")
+            raise ValueError(f"Webhook event type not allowed: {event['type']}")
+
+        # Validate payload size (max 1MB)
+        if len(payload) > 1048576:  # 1MB
+            logger.warning("Webhook payload exceeds maximum size (1MB)")
+            raise ValueError("Webhook payload exceeds maximum size (1MB)")
+
+        # Validate content type
+        content_type = request.headers.get("content-type", "")
+        if "application/json" not in content_type:
+            logger.warning(f"Webhook content-type not application/json: {content_type}")
+            raise ValueError("Webhook content-type must be application/json")
+
+        # Validate event ID format (Stripe event IDs start with "evt_")
+        if not event["id"].startswith("evt_"):
+            logger.warning(f"Webhook event ID format invalid: {event['id']}")
+            raise ValueError("Webhook event ID format is invalid")
+
+        # Validate that the event has required fields
+        required_fields = ["id", "type", "data"]
+        for field in required_fields:
+            if field not in event:
+                logger.warning(f"Webhook event missing required field: {field}")
+                raise ValueError(f"Webhook event missing required field: {field}")
+
+        # Validate that the data object has required fields
+        if "data" not in event or "object" not in event["data"]:
+            logger.warning("Webhook event data object is missing")
+            raise ValueError("Webhook event data object is missing")
+
         event_id = event["id"]
         event_type = event["type"]
         event_data = event["data"]["object"]
@@ -323,13 +380,36 @@ async def handle_webhook_event(
                 logger.info(f"Unhandled webhook event: {event_type}")
                 processing_result = {"status": "ignored", "event_type": event_type}
 
-            # ✅ RECORD EVENT - Mark as processed
+            # ✅ RECORD EVENT - Mark as processed with sanitized payload
+            # Sanitize sensitive fields from webhook payload for storage
+            sanitized_payload = event.copy()
+
+            # Remove sensitive fields that might contain PII or financial data
+            if "data" in sanitized_payload and "object" in sanitized_payload["data"]:
+                obj = sanitized_payload["data"]["object"]
+                # Remove sensitive fields from the object
+                sensitive_fields = ["customer", "email", "name", "address", "phone"]
+                for field in sensitive_fields:
+                    if field in obj:
+                        obj[field] = "[REDACTED]"
+
+                # Remove metadata if present
+                if "metadata" in obj:
+                    obj["metadata"] = "[REDACTED]"
+
             webhook_event = WebhookEvent(
                 stripe_event_id=event_id,
                 event_type=event_type,
                 status="processed",
-                payload=event,
+                payload=sanitized_payload,
                 result=processing_result,
+            )
+
+            # ✅ AUDIT LOGGING - Log webhook processing for audit purposes
+            # In a production environment, this would be stored in a dedicated audit log table
+            from app.services.compliance_service import AuditLoggingService
+            await AuditLoggingService.log_webhook_processing(
+                db, event_id, event_type, "processed"
             )
             db.add(webhook_event)
             await db.commit()
@@ -354,6 +434,8 @@ async def handle_webhook_event(
 
     except stripe.error.SignatureVerificationError as e:
         logger.error(f"Invalid webhook signature: {e}")
+        # Log the event ID for better debugging
+        logger.error(f"Failed webhook event ID: {event_id if 'event_id' in locals() else 'unknown'}")
         return {"status": "error", "error": "invalid_signature"}
     except Exception as e:
         logger.error(f"Webhook processing failed: {e}", exc_info=True)

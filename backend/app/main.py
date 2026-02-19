@@ -128,9 +128,15 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
 
 
 from app.middleware.tracing import TracingMiddleware
+from app.middleware.zero_trust_security import ZeroTrustSecurityMiddleware
+from app.middleware.dlp_monitoring import DLPMonitoringMiddleware
+from app.middleware.session_security import SessionSecurityMiddleware
 
 app.add_middleware(TracingMiddleware)
 app.add_middleware(RequestIDMiddleware)
+app.add_middleware(ZeroTrustSecurityMiddleware)
+app.add_middleware(DLPMonitoringMiddleware)
+app.add_middleware(SessionSecurityMiddleware)
 
 # Security headers and API version (BEFORE CORS)
 app.add_middleware(SecurityHeadersMiddleware)
@@ -148,6 +154,10 @@ app.add_middleware(
 
 # Register SlowAPI limiter (Phase 2: Code Simplification)
 app.state.limiter = limiter
+
+# Add rate limiting middleware for sensitive endpoints
+from app.middleware.rate_limiter import RateLimiterMiddleware
+app.add_middleware(RateLimiterMiddleware, max_requests=100, window_seconds=3600)
 
 
 # ============================================================================
