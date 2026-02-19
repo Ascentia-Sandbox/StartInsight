@@ -508,9 +508,6 @@ cd frontend && npm run lint --fix
 ### Database Utilities
 
 ```bash
-# Check database connection
-uv run python backend/check_db_connection.py
-
 # Create new migration
 cd backend && uv run alembic revision --autogenerate -m "description"
 
@@ -525,8 +522,6 @@ cd backend && uv run alembic downgrade -1
 
 ```bash
 # Check Supabase connection
-cd backend && uv run python -c "from app.db.session import check_db_connection; import asyncio; asyncio.run(check_db_connection())"
-
 # View Supabase logs
 # Go to: https://supabase.com/dashboard/project/[PROJECT_REF]/logs/postgres-logs
 

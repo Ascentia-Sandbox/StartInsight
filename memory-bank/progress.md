@@ -13,6 +13,13 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-02-20)
+
+- [2026-02-20] [CLEANUP]: Remove ~28 redundant files, reorganize memory-bank
+  - Files: README.md, backend/README.md, memory-bank/archived/, research/
+  - Tech: Deleted stale .bak + Jan-2026 snapshots + root PNGs (~1MB) + backend dev artifacts; moved version2/ → archived/version2-proposed/, ideabrowser-analysis.md → research/
+  - Status: [✓ Complete]
+
 ## Recent Progress (2026-02-19)
 
 - [2026-02-19] [REDIS-FIX]: Provision Railway Redis + fix scheduler SSL + task_map
