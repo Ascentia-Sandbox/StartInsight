@@ -467,7 +467,13 @@ StartInsight/
 │   ├── implementation-plan.md # 3-phase roadmap
 │   ├── architecture.md        # System design
 │   ├── tech-stack.md          # Technology decisions
-│   └── progress.md            # Development log
+│   ├── progress.md            # Development log
+│   └── archived/              # Historical snapshots (gitignored)
+│
+├── research/                  # Competitive intelligence
+│   ├── ideabrowser-analysis.md          # Full IdeaBrowser teardown
+│   ├── ideabrowser-executive-summary.md # Key findings
+│   └── ideabrowser-competitive-analysis.json
 │
 ├── .claude/                   # Claude Code configuration
 │   ├── agents/                # Custom Claude agents
@@ -521,7 +527,9 @@ cd backend && uv run alembic downgrade -1
 ### Cloud Service Management
 
 ```bash
-# Check Supabase connection
+# Verify backend health
+curl https://backend-production-e845.up.railway.app/health
+
 # View Supabase logs
 # Go to: https://supabase.com/dashboard/project/[PROJECT_REF]/logs/postgres-logs
 
@@ -714,4 +722,4 @@ For questions or issues:
 
 ---
 
-*v1.0 — Production live. All phases complete. Scheduler running. ~$30/mo.*
+*v1.0 — Production live. All phases complete. Scheduler running. ~$30/mo. (2026-02-20)*
