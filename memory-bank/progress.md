@@ -15,6 +15,11 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ## Recent Progress (2026-02-19)
 
+- [2026-02-19] [REDIS-FIX]: Provision Railway Redis + fix scheduler SSL + task_map
+  - Files: backend/app/tasks/scheduler.py
+  - Tech: Railway native Redis (`redis.railway.internal:6379`); `ssl=` added to `_get_redis_settings()`; 5 missing agent→task mappings added
+  - Status: [✓ Complete — Sentry confirmed: scheduler running, localhost:6379 error cleared]
+
 - [2026-02-19] [SENTRY-FULL]: Full Sentry coverage for staging + production
   - Files: backend/app/main.py, backend/app/api/deps.py, backend/app/agents/sentry_tracing.py (NEW), enhanced_analyzer.py, research_agent.py, market_intel_agent.py, frontend/sentry.client.config.ts, frontend/sentry.server.config.ts, frontend/instrumentation.ts (NEW), frontend/sentry.edge.config.ts (NEW), 3x error.tsx, .github/workflows/set-vercel-sentry-env.yml (NEW)
   - Tech: LoggingIntegration + enable_logs + user context (backend); browserTracingIntegration + consoleLoggingIntegration + Session Replay (frontend); manual gen_ai.request spans for 3 AI agents; Vercel env vars set via GitHub Actions workflow; Railway vars set via MCP

@@ -123,14 +123,14 @@ graph LR
     D -->|8-Dim Insights| C
     C -->|API| E[FastAPI]
     E -->|JSON/SSE| F[Next.js Dashboard]
-    G[Upstash Redis] -.->|Queue| B
+    G[Railway Redis] -.->|Queue| B
 ```
 
-**Cloud Infrastructure (Supabase Pro):**
+**Cloud Infrastructure:**
 - **Database**: Supabase Pro PostgreSQL (Sydney, ap-southeast-2), 200 connection pool limit
-- **Cache/Queue**: Upstash Redis (Sydney)
-- **Backend**: Railway or local development
-- **Frontend**: Vercel or local development
+- **Cache/Queue**: Railway Redis (native service, `redis.railway.internal:6379`)
+- **Backend**: Railway (port 8080, Docker, `railway.toml`)
+- **Frontend**: Vercel (Next.js App Router)
 
 ### The Three Core Loops
 
@@ -201,10 +201,10 @@ graph LR
 
 ## 🚀 Quick Start
 
-> **Cloud-First Setup**: StartInsight uses Supabase Cloud PostgreSQL and Upstash Redis by default. No local database required.
+> **Cloud-First Setup**: StartInsight uses Supabase Cloud PostgreSQL (production) and Railway Redis (production). Local dev uses a local Redis instance.
 
 For detailed setup instructions, see **[SETUP.md](SETUP.md)** - a comprehensive guide covering:
-- Prerequisites (Supabase, Upstash accounts)
+- Prerequisites (Supabase accounts)
 - Backend and frontend configuration
 - Database initialization
 - Troubleshooting common issues
@@ -216,7 +216,7 @@ For detailed setup instructions, see **[SETUP.md](SETUP.md)** - a comprehensive 
 - **Node.js 18+**
 - **uv** (Python package manager): `curl -LsSf https://astral.sh/uv/install.sh | sh`
 - **Supabase Account**: [supabase.com](https://supabase.com) (PostgreSQL database + auth)
-- **Upstash Account**: [upstash.com](https://upstash.com) (Redis cache/queue)
+- **Redis**: Local Redis for dev; Railway Redis auto-provisioned in production
 
 ### 1. Clone the Repository
 
@@ -232,11 +232,11 @@ cd StartInsight
 3. Copy your connection string from **Project Settings > Database > Connection string** (Connection Pooling mode)
 4. Copy your API keys from **Project Settings > API**
 
-### 3. Create Upstash Redis
+### 3. Redis Setup
 
-1. Go to [upstash.com](https://upstash.com) and create a new Redis database
-2. Choose **Asia Pacific Southeast (Sydney)** region
-3. Copy the **REST API URL** (format: `redis://default:[password]@[endpoint].upstash.io:6379`)
+**Production**: Handled automatically — Railway Redis service is provisioned in the project (`redis.railway.internal:6379`). No external account needed.
+
+**Local development**: Install Redis locally (`brew install redis` / `apt install redis`) and set `REDIS_URL=redis://localhost:6379`.
 
 ### 4. Configure Backend
 
@@ -256,8 +256,8 @@ SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 JWT_SECRET=your_jwt_secret_from_supabase
 
-# Redis (Upstash Cloud)
-REDIS_URL=redis://default:[PASSWORD]@[ENDPOINT].upstash.io:6379
+# Redis (local dev; production uses Railway Redis automatically)
+REDIS_URL=redis://localhost:6379
 
 # AI (Gemini 2.0 Flash)
 GOOGLE_API_KEY=your_google_api_key
@@ -330,9 +330,8 @@ For troubleshooting, production deployment, and advanced configuration, see:
 |---------|---------|------|------|
 | **Supabase** | PostgreSQL + Auth | Pro | $25/mo |
 | **Gemini 2.0 Flash** | AI analysis | Pay-as-you-go | ~$5/mo |
-| **Railway** | Backend hosting | Free ($5 credit) | $0 |
+| **Railway** | Backend + Redis | Free (500h/mo + free Redis) | $0 |
 | **Vercel** | Frontend hosting | Hobby | $0 |
-| **Upstash** | Redis cache/queue | Free | $0 |
 | **Sentry** | Error tracking | Free (5K events) | $0 |
 | **Resend** | Transactional email | Free (3K emails) | $0 |
 | | | **Total** | **~$30/mo** |
@@ -384,17 +383,11 @@ cd backend && DATABASE_URL="postgresql+asyncpg://..." alembic upgrade head
 
 - **Railway target port** — must be `8080` (Railway injects `PORT=8080`, not 8000)
 - **NEXT_PUBLIC_* vars are build-time** — changing them in Vercel requires a redeploy
-- **Upstash TLS** — URL must be `rediss://` (double-s), use `ssl_cert_reqs=none`
+- **Railway Redis URL** — uses `redis://` (plain TCP on private network), no TLS needed
 - **Sentry env vars** — set via Railway MCP (backend) and GitHub Actions workflow (Vercel)
 - **Alembic migration c008** — `purge_seed_data` is irreversible, run on staging first
-
-### Gotchas
-
-- **Railway 512MB RAM** — Playwright+Chromium takes ~400MB. If OOM, set `USE_CRAWL4AI=false` or reduce workers
-- **NEXT_PUBLIC_* vars are build-time** — changing them in Vercel requires a redeploy
-- **Upstash TLS** — URL must be `rediss://` (double-s), set `REDIS_SSL=true`
-- **Production validator** — app crashes on startup if any required var is missing (intentional safety)
 - **CORS whitelist** — production origins must exactly match `CORS_ALLOWED_PRODUCTION_ORIGINS`
+- **Railway 512MB RAM** — Playwright+Chromium takes ~400MB. If OOM, set `USE_CRAWL4AI=false`
 
 ---
 
@@ -410,18 +403,18 @@ StartInsight uses **cloud services by default** to ensure consistency between de
 - **Cost:** $25/mo (Supabase Pro) vs $69/mo (Neon) = 64% savings
 - **Features:** PostgreSQL 15+, Row-Level Security, connection pooling (200 limit), real-time subscriptions, SSL required
 
-### Upstash Redis (Sydney)
+### Railway Redis (Production)
 
-- **Region:** Asia Pacific Southeast (Sydney) - Lowest latency
-- **Type:** Regional (not Global) for optimal performance
-- **Cost:** Free tier available, scales with usage
-- **Use Cases:** Task queue (Arq), rate limiting, session caching
+- **Location:** Same Railway project as backend (private network, zero latency)
+- **Hostname:** `redis.railway.internal:6379` (internal only, not publicly accessible)
+- **Cost:** Free (Railway free tier includes Redis)
+- **Use Cases:** Arq task queue, rate limiting (tier-based quotas)
 
 ### Why Cloud-First?
 
-1. **No Infrastructure Setup**: Skip Docker, PostgreSQL, Redis installation
-2. **Production Parity**: Development environment matches production exactly
-3. **Managed Backups**: Automatic backups and point-in-time recovery
+1. **No Infrastructure Setup**: Skip Docker, PostgreSQL installation (only local Redis needed for dev)
+2. **Production Parity**: Development environment matches production closely
+3. **Managed Backups**: Automatic backups and point-in-time recovery (Supabase Pro)
 4. **Global Accessibility**: Access your database from anywhere
 5. **RLS Testing**: Test Row-Level Security policies in real Supabase environment
 
@@ -537,8 +530,8 @@ cd backend && uv run python -c "from app.db.session import check_db_connection; 
 # View Supabase logs
 # Go to: https://supabase.com/dashboard/project/[PROJECT_REF]/logs/postgres-logs
 
-# View Upstash Redis metrics
-# Go to: https://console.upstash.com/redis/[DATABASE_ID]
+# View Railway Redis metrics
+# Railway dashboard → startInsight project → Redis service
 
 # Reset database (⚠️ use with caution)
 cd backend && alembic downgrade base && alembic upgrade head
@@ -661,6 +654,7 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 | **Monitoring** | Sentry (errors + traces + logs + AI spans), ascentia-km org, events confirmed |
 | **Security** | HSTS, CSP, JWT ES256 JWKS, XSS prevention (bleach), rate limiting |
 | **CI/CD** | GitHub Actions — main→production, develop→staging, all passing |
+| **Scheduler** | All 8 background jobs running (APScheduler + Railway Redis, verified 2026-02-19) |
 
 **Phase Completion**:
 - ✅ Phase 1-3: MVP Foundation (scrapers, AI analysis, Next.js dashboard)
@@ -673,6 +667,7 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 - ✅ Phase S: Security Hardening (HSTS, CSP, JWT ES256, XSS prevention)
 - ✅ Phase M: Sentry Monitoring (errors + traces + logs + AI spans + Session Replay)
 - ✅ Phase P: Production Deployment (Railway + Vercel + CI/CD pipeline)
+- ✅ Phase R: Redis + Scheduler (Railway Redis provisioned, scheduler running clean)
 
 **Business Metrics (Targets)**:
 - Signup Conversion: 4% target (2% pre-Phase 14 baseline)
