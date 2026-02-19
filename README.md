@@ -364,7 +364,7 @@ Push to develop → Security Scan → Backend Tests → Frontend Tests
 ### Manual Deployment (First Time)
 
 ```bash
-# 1. Create accounts: Railway, Vercel, Upstash, Sentry, Resend, Google AI Studio
+# 1. Create accounts: Railway, Vercel, Sentry, Resend, Google AI Studio
 # 2. Run database migrations against Supabase
 cd backend && DATABASE_URL="postgresql+asyncpg://..." alembic upgrade head
 
@@ -436,7 +436,7 @@ StartInsight/
 │   │   │   ├── success_stories.py # Success stories API (6 endpoints)
 │   │   │   ├── trends.py      # Trends API (5 endpoints)
 │   │   │   └── market_insights.py # Blog API (6 endpoints)
-│   │   ├── agents/            # 6 AI agents (analyzer, research, competitive, market, content)
+│   │   ├── agents/            # 8 AI agents (enhanced_analyzer, research, competitive_intel, market_intel, content_generator, chat_agent, quality_reviewer, market_insight_publisher)
 │   │   ├── scrapers/          # Data collection modules (4 sources)
 │   │   ├── scripts/           # Seed scripts (84 content items)
 │   │   └── main.py            # FastAPI entry point

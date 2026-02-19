@@ -52,7 +52,7 @@ graph TD
     Worker -->|Scrape| Trends[Google Trends]
     Worker -->|Scrape| Twitter[Twitter/X Tweepy]
 
-    Worker -->|Analyze| Claude[Claude 3.5 Sonnet]
+    Worker -->|Analyze| Claude[Gemini 2.0 Flash]
     Worker -->|Store| Supabase
 
     Backend -->|Payments| Stripe[Stripe API]
