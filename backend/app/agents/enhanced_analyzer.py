@@ -17,8 +17,6 @@ import logging
 import time
 from typing import Literal
 
-from app.agents.sentry_tracing import trace_agent_run
-
 from pydantic import BaseModel, Field, HttpUrl
 from pydantic_ai import Agent
 from tenacity import (
@@ -28,6 +26,7 @@ from tenacity import (
     wait_exponential,
 )
 
+from app.agents.sentry_tracing import trace_agent_run
 from app.core.config import settings
 from app.models.insight import Insight
 from app.models.raw_signal import RawSignal

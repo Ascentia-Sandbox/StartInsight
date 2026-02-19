@@ -10,8 +10,6 @@ Sprint 3.3: Provides AI-powered market intelligence including:
 import asyncio
 import logging
 from datetime import UTC, datetime
-
-from app.agents.sentry_tracing import trace_agent_run
 from typing import Any
 from uuid import UUID
 
@@ -20,6 +18,7 @@ from pydantic_ai import Agent, RunContext
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.agents.sentry_tracing import trace_agent_run
 from app.core.config import settings
 from app.models.insight import Insight
 from app.models.trend import Trend

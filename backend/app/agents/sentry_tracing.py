@@ -1,7 +1,6 @@
 """Thin wrapper to add Sentry gen_ai.request spans around PydanticAI agent runs."""
 
 import contextlib
-from typing import Any
 
 
 @contextlib.asynccontextmanager

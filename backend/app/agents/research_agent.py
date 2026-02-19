@@ -17,8 +17,6 @@ import asyncio
 import logging
 import time
 
-from app.agents.sentry_tracing import trace_agent_run
-
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
 from tenacity import (
@@ -28,6 +26,7 @@ from tenacity import (
     wait_exponential,
 )
 
+from app.agents.sentry_tracing import trace_agent_run
 from app.core.config import settings
 from app.monitoring.metrics import get_metrics_tracker
 from app.schemas.research import (
