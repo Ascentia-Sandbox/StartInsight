@@ -60,7 +60,7 @@ async def lifespan(app: FastAPI):
     - Shutdown: Stop task scheduler, close DB pool, close Redis
     """
     # Startup
-    logger.info(f"Starting StartInsight API v{settings.app_version} (staging)")
+    logger.info(f"Starting StartInsight API v{settings.app_version} ({settings.environment})")
 
     # Initialize task scheduler
     try:
