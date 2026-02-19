@@ -137,3 +137,21 @@ memory-bank/*.bak
 
 # Sentry
 .sentryclirc
+sentry-debug.txt
+
+# Playwright GIF recordings (test artifacts)
+*.gif
+!docs/**/*.gif
+
+# Claude Code project memory (machine-local, not source code)
+.claude/projects/
+
+# Railway
+.railway/
+
+# Coverage artifacts
+.coverage.*
+coverage.xml
+
+# Python type checking
+pyrightconfig.json

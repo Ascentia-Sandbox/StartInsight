@@ -716,3 +716,7 @@ For questions or issues:
 ---
 
 **Built with the "Glue Coding" philosophy: Don't reinvent, integrate.**
+
+---
+
+*v1.0 — Production live. All phases complete. Scheduler running. ~$30/mo.*
