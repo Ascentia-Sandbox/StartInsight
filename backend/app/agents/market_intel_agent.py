@@ -10,6 +10,8 @@ Sprint 3.3: Provides AI-powered market intelligence including:
 import asyncio
 import logging
 from datetime import UTC, datetime
+
+from app.agents.sentry_tracing import trace_agent_run
 from typing import Any
 from uuid import UUID
 
@@ -333,17 +335,18 @@ async def generate_market_report(
 
     # Generate report via AI agent
     try:
-        result = await asyncio.wait_for(
-            market_intel_agent.run(
-                user_prompt=f"Generate a {report_type} market intelligence report for this startup idea.",
-                deps={
-                    "insight": insight_data,
-                    "trends": trend_data,
-                    "report_type": report_type,
-                },
-            ),
-            timeout=settings.llm_call_timeout,
-        )
+        async with trace_agent_run("market_intel_agent"):
+            result = await asyncio.wait_for(
+                market_intel_agent.run(
+                    user_prompt=f"Generate a {report_type} market intelligence report for this startup idea.",
+                    deps={
+                        "insight": insight_data,
+                        "trends": trend_data,
+                        "report_type": report_type,
+                    },
+                ),
+                timeout=settings.llm_call_timeout,
+            )
 
         report = result.output
         report.report_id = f"MIR-{insight_id.hex[:8]}-{datetime.now(UTC).strftime('%Y%m%d')}"

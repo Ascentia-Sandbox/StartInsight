@@ -299,6 +299,20 @@ async def _verify_and_get_user(token: str, db: AsyncSession) -> User:
 
     result = await db.execute(stmt)
     user = result.scalar_one()
+
+    # Grant Enterprise tier to admin/superadmin users (in-memory override, not persisted)
+    app_metadata = payload.get("app_metadata", {}) or {}
+    role = app_metadata.get("role", "")
+    if role in ("superadmin", "admin"):
+        user.subscription_tier = "enterprise"
+
+    # Set Sentry user context for this request (no-op if Sentry not initialised)
+    try:
+        import sentry_sdk
+        sentry_sdk.set_user({"id": str(user.id), "email": user.email})
+    except ImportError:
+        pass
+
     await db.commit()
 
     # ✅ Check if user is soft-deleted (account deactivated)

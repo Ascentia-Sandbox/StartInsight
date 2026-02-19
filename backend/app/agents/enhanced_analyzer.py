@@ -17,6 +17,8 @@ import logging
 import time
 from typing import Literal
 
+from app.agents.sentry_tracing import trace_agent_run
+
 from pydantic import BaseModel, Field, HttpUrl
 from pydantic_ai import Agent
 from tenacity import (
@@ -535,7 +537,8 @@ async def analyze_signal_enhanced(raw_signal: RawSignal, language: str = "en") -
         agent = get_enhanced_agent(language)
 
         # Call PydanticAI agent with enhanced schema
-        result = await asyncio.wait_for(agent.run(raw_signal.content), timeout=settings.llm_call_timeout)
+        async with trace_agent_run("enhanced_analyzer"):
+            result = await asyncio.wait_for(agent.run(raw_signal.content), timeout=settings.llm_call_timeout)
 
         # Calculate latency
         latency_ms = (time.time() - start_time) * 1000

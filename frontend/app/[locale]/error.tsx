@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import * as Sentry from '@sentry/nextjs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -12,7 +13,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log the error to an error reporting service
+    Sentry.captureException(error);
     console.error('Application error:', error);
   }, [error]);
 

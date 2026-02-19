@@ -17,6 +17,8 @@ import asyncio
 import logging
 import time
 
+from app.agents.sentry_tracing import trace_agent_run
+
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
 from tenacity import (
@@ -266,10 +268,11 @@ Please provide a comprehensive 40-step analysis following all frameworks:
 
         # ✅ Execute analysis with timeout protection (5 minutes max)
         try:
-            result = await asyncio.wait_for(
-                agent.run(prompt),
-                timeout=MAX_ANALYSIS_TIMEOUT_SECONDS,
-            )
+            async with trace_agent_run("research_agent"):
+                result = await asyncio.wait_for(
+                    agent.run(prompt),
+                    timeout=MAX_ANALYSIS_TIMEOUT_SECONDS,
+                )
         except TimeoutError:
             raise Exception(
                 f"Analysis timed out after {MAX_ANALYSIS_TIMEOUT_SECONDS}s. "

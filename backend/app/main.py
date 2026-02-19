@@ -22,24 +22,33 @@ from app.middleware.request_size_limit import RequestSizeLimitMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.tasks import schedule_scraping_tasks, stop_scheduler
 
-# Sentry error tracking (production)
-if settings.sentry_dsn and settings.environment == "production":
+# Sentry error tracking (production + staging)
+if settings.sentry_dsn and settings.environment in ("production", "staging"):
+    import logging as _logging
+
     import sentry_sdk
     from sentry_sdk.integrations.fastapi import FastApiIntegration
+    from sentry_sdk.integrations.logging import LoggingIntegration
     from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
     sentry_sdk.init(
         dsn=settings.sentry_dsn,
         environment=settings.environment,
+        release=os.environ.get("RAILWAY_GIT_COMMIT_SHA", "local"),
         traces_sample_rate=settings.sentry_traces_sample_rate,
         profiles_sample_rate=settings.sentry_profiles_sample_rate,
+        enable_logs=True,
         integrations=[
             FastApiIntegration(transaction_style="url"),
             SqlalchemyIntegration(),
+            LoggingIntegration(
+                level=_logging.INFO,          # Breadcrumbs from INFO+
+                event_level=_logging.ERROR,   # Sentry issues from ERROR+
+                sentry_logs_level=_logging.WARNING,  # Sentry Logs tab from WARNING+
+            ),
         ],
-        # Filter out health check noise
         before_send=lambda event, hint:
-            None if event.get("request", {}).get("url", "").endswith("/health") else event
+            None if event.get("request", {}).get("url", "").endswith("/health") else event,
     )
 
 # Configure structured logging
