@@ -11,6 +11,7 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
+  const next = searchParams.get('next');
   const redirectTo = searchParams.get('redirectTo') || '/dashboard';
 
   if (code) {
@@ -18,6 +19,10 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
+      // Recovery flow: send to update-password page
+      if (next === 'recovery') {
+        return NextResponse.redirect(`${origin}/auth/update-password`);
+      }
       return NextResponse.redirect(`${origin}${redirectTo}`);
     }
   }
