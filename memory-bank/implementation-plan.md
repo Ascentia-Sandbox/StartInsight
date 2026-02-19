@@ -58,8 +58,11 @@
 | **Q7** | SEO Overhaul (Metadata, JSON-LD, Sitemap) | N/A | ✅ 100% | N/A | **COMPLETE** (2026-02-15) |
 | **Q8** | Data Quality (ILIKE Sanitization, Stats) | ✅ 100% | ✅ 100% | N/A | **COMPLETE** (2026-02-15) |
 | **Q9** | Error Handling & Rate Limiting | ✅ 100% | N/A | N/A | **COMPLETE** (2026-02-15) |
+| **S** | Security Hardening (HSTS, CSP, JWT ES256, XSS, rate limits) | ✅ 100% | ✅ 100% | N/A | **COMPLETE** (2026-02-19) |
+| **M** | Sentry Monitoring (errors + traces + logs + AI spans + Session Replay) | ✅ 100% | ✅ 100% | N/A | **COMPLETE** (2026-02-19) |
+| **P** | Production Deployment (Railway + Vercel + CI/CD pipeline) | ✅ 100% | ✅ 100% | ✅ 100% | **COMPLETE** (2026-02-18/19) |
 
-**Overall:** Phase 1-10 Complete + Phases A-L + Q1-Q9 Complete (Professional Overhaul + Quality Audit Fixes)
+**Overall:** Phase 1-10 Complete + Phases A-L + Q1-Q9 + S + M + P Complete (Production Live 2026-02-19)
 
 ### Phase A: Superadmin Content Completeness (2026-02-14)
 **Delivered:** Full CRUD for insights, agent schedule editor, cost analytics, 3 new admin pages, sidebar updated to 14 nav items
@@ -176,6 +179,32 @@
 - Q9.1: Pulse error handling — 6 DB queries wrapped in try/except with fallback
 - Q9.2: Rate limiting — `@limiter.limit("30/minute")` on pulse, tools, trends, contact
 
+### Phase S: Security Hardening (2026-02-19)
+**Delivered:** Production-grade security middleware, JWT ES256 JWKS validation, XSS prevention
+- S1: Security middleware — HSTS (`max-age=31536000`), CSP headers, X-Frame-Options, X-Content-Type-Options
+- S2: JWT ES256 validation via Supabase JWKS endpoint (`{supabase_url}/auth/v1/.well-known/jwks.json`)
+- S3: XSS prevention — `bleach` sanitization on all text inputs; `markupsafe.escape()` for display
+- S4: Rate limiting hardening — strict limits on auth endpoints (5/minute login, 3/minute signup)
+- S5: Update-password page (`/auth/update-password`) — Supabase recovery token flow with middleware redirect
+- S6: Ruff lint clean — all security middleware files pass `ruff check` (import order I001, unused F401)
+
+### Phase M: Sentry Monitoring (2026-02-19)
+**Delivered:** Full professional Sentry coverage on backend + frontend, production + staging
+- M1: Backend init — `sentry_sdk.init()` gated on `environment in ("production", "staging")`, LoggingIntegration + enable_logs, FastApiIntegration, SqlalchemyIntegration, `before_send` health check filter
+- M2: User context — `sentry_sdk.set_user({"id": ..., "email": ...})` in `deps.py` after auth
+- M3: AI agent spans — `sentry_tracing.py` utility with `trace_agent_run()` async context manager; wrapped in enhanced_analyzer, research_agent, market_intel_agent
+- M4: Frontend init — `instrumentation.ts` for Next.js App Router; `sentry.edge.config.ts` for edge runtime; `sentry.client.config.ts` with `browserTracingIntegration` + `replayIntegration` + `consoleLoggingIntegration`
+- M5: Error boundaries — `Sentry.captureException(error)` added to 3 error.tsx files
+- M6: Env vars — Railway staging/production set via MCP; Vercel preview set via GitHub Actions `set-vercel-sentry-env.yml`
+
+### Phase P: Production Deployment (2026-02-18/19)
+**Delivered:** Both environments live, CI/CD pipeline operational
+- P1: Railway backend deployed — `https://backend-production-e845.up.railway.app` (port 8080 fix was key)
+- P2: Vercel frontend deployed — `https://start-insight-ascentias-projects.vercel.app`
+- P3: Staging environment — Railway staging + Vercel preview + Supabase staging branch
+- P4: CI/CD pipeline — `.github/workflows/ci-cd.yml`: Security Scan → Tests → Migrate → Build → Deploy
+- P5: Arq worker — runs alongside uvicorn via `start.sh`; Redis TLS via urlparse pattern
+
 ---
 
 ## Completed Features by Phase
@@ -243,25 +272,25 @@
 
 ## Production Deployment Checklist
 
-### P0 - Critical (Must Complete Before Launch)
+### P0 - Critical (Completed 2026-02-18/19) ✅
 
 **Backend Deployment (Railway):**
-- [ ] Create Railway project and link GitHub repo
-- [ ] Set environment variables (see section below)
-- [ ] Configure build command: `cd backend && uv sync && alembic upgrade head`
-- [ ] Configure start command: `cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-- [ ] Verify health endpoint: `https://[app-name].railway.app/health`
-- [ ] Test database connection (Supabase pooler)
-- [ ] Verify Redis connection (Upstash)
+- [x] Create Railway project and link GitHub repo (project `a3ece066-4758-4780-84d6-0379f1312227`)
+- [x] Set environment variables (all env vars set via Railway MCP)
+- [x] Configure build command: `cd backend && uv sync && alembic upgrade head`
+- [x] Configure start command: `sh -c 'uvicorn app.main:app --host 0.0.0.0 --port $PORT'`
+- [x] Verify health endpoint: `https://backend-production-e845.up.railway.app/health`
+- [x] Test database connection (Supabase pooler, c009 migration applied)
+- [x] Verify Redis connection (Upstash TLS, `rediss://` scheme)
 
 **Frontend Deployment (Vercel):**
-- [ ] Import GitHub repo to Vercel
-- [ ] Set environment variables (see section below)
-- [ ] Configure build command: `cd frontend && npm run build`
-- [ ] Configure framework preset: Next.js
-- [ ] Verify deployment URL: `https://[project-name].vercel.app`
-- [ ] Test API connection to Railway backend
-- [ ] Verify Supabase authentication flow
+- [x] Import GitHub repo to Vercel (project `prj_oO31ySjjSFAdW4AaAQ06ingKZIyk`)
+- [x] Set environment variables (all env vars set via Vercel dashboard)
+- [x] Configure build command: `cd frontend && npm run build`
+- [x] Configure framework preset: Next.js
+- [x] Verify deployment URL: `https://start-insight-ascentias-projects.vercel.app`
+- [x] Test API connection to Railway backend
+- [x] Verify Supabase authentication flow
 
 **Production Environment Variables:**
 
@@ -311,11 +340,11 @@ NEXT_PUBLIC_SITE_URL=https://[project-name].vercel.app
 - [ ] Test checkout flow end-to-end
 
 **Monitoring & Alerts:**
-- [ ] Set up Sentry error tracking (backend + frontend)
-- [ ] Configure uptime monitoring (UptimeRobot or Checkly)
-- [ ] Set up Stripe webhook monitoring
-- [ ] Enable Supabase query performance monitoring
-- [ ] Configure Railway metrics dashboard
+- [x] Set up Sentry error tracking (backend + frontend) — org `ascentia-km`, production events confirmed
+- [ ] Configure uptime monitoring (UptimeRobot or Checkly) — pending
+- [x] Set up Stripe webhook monitoring (via Stripe dashboard)
+- [ ] Enable Supabase query performance monitoring — pending
+- [x] Configure Railway metrics dashboard
 
 ### P1 - Post-Launch (Week 1)
 
@@ -705,7 +734,7 @@ psql $DATABASE_URL -c "SELECT COUNT(*) FROM information_schema.tables WHERE tabl
 
 ---
 
-**Last Updated:** 2026-02-14
-**Status:** Production Deployment Ready ✅
-**Infrastructure:** Supabase Pro as sole database (~$30/mo PMF deployment)
-**Next Action:** Deploy to Railway (backend) + Vercel (frontend)
+**Last Updated:** 2026-02-19
+**Status:** Production Live ✅
+**Infrastructure:** Railway (backend) + Vercel (frontend) + Supabase Pro + Upstash Redis + Sentry
+**Production URLs:** `https://backend-production-e845.up.railway.app` (backend), `https://start-insight-ascentias-projects.vercel.app` (frontend)

@@ -207,10 +207,11 @@ async def get_subscription_status(
     subscription = current_user.subscription if hasattr(current_user, "subscription") else None
 
     if not subscription:
+        tier = current_user.subscription_tier  # "enterprise" for admins via deps.py override
         return {
-            "tier": "free",
+            "tier": tier,
             "status": "active",
-            "limits": PRICING_TIERS["free"].limits,
+            "limits": PRICING_TIERS.get(tier, PRICING_TIERS["free"]).limits,
         }
 
     return {

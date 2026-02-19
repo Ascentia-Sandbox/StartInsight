@@ -4,36 +4,57 @@
 **Read When:** Before every task to understand current phase status
 **Dependencies:** Read project-brief.md first for context
 **Purpose:** Current phase tracking, immediate tasks, blockers, what's working/next
-**Last Updated:** 2026-02-17
+**Last Updated:** 2026-02-19
 ---
 
 # Active Context: StartInsight Development
 
 ## Current Phase
-**Phase 1-10 + A-L:** Fully Complete (100% - Professional Overhaul)
-**Testing Complete:** 233+ backend tests passing, 47 E2E tests (5 browsers)
-**Production Status:** Deployment templates ready, staging deployment next
+**Phase 1-10 + A-L + Q1-Q9 + Security + Sentry:** Fully Complete (100% - Production Deployed)
+**Testing Complete:** 291 backend tests passing, 47 E2E tests (5 browsers)
+**Production Status:** ✅ LIVE — Backend (Railway) + Frontend (Vercel) + Sentry monitoring active
 **Database:** 69 tables, 232+ API endpoints, 8 AI agents, 6 active scrapers
-**Infrastructure:** Supabase Pro ($25/mo) as sole database, Railway Free backend, Vercel frontend (~$30/mo PMF deployment)
-**Design System:** Instrument Serif + Satoshi + JetBrains Mono, teal/amber palette (no longer IdeaBrowser clone)
+**Infrastructure:** Supabase Pro ($25/mo) + Railway (backend) + Vercel (frontend) + Upstash Redis + Sentry
+**Design System:** Instrument Serif + Satoshi + JetBrains Mono, teal/amber palette (distinctive identity)
 **Content Pipeline:** 6 scrapers (Reddit, PH, Google Trends, Twitter/X, HN, Firecrawl), 150+ signals/day target
-**Admin Excellence:** Dashboard charts, Cmd+K palette, pagination, export, bulk ops
-**Public UX:** Editorial homepage, magazine-style detail pages, confidence badges, real stats API
+**Security:** HTTPS everywhere, JWT ES256 validation, HSTS, CSP headers, rate limiting, RBAC
+**Monitoring:** Sentry (errors + traces + logs + AI spans) on production + staging, LoggingIntegration active
 
-## Deployment Status (2026-02-17)
+## Deployment Status (2026-02-19)
 
-**Current State:** Ready for staging deployment — env templates created, deployment configs updated
-**Production URLs:** `startinsight.app` (frontend), `api.startinsight.app` (backend)
-**Infrastructure:**
-- **Backend:** Railway (free tier, $5/mo credit) — `backend/Dockerfile` + `railway.toml`
-- **Frontend:** Vercel (hobby tier, $0) — `frontend/vercel.json`
-- **Database:** Supabase Pro ($25/mo, ap-southeast-2 Sydney)
-- **Cache/Queue:** Upstash Redis (free tier, TLS required)
-- **Error Tracking:** Sentry (free tier, 5K events/mo)
-- **Email:** Resend (free tier, 3K emails/mo)
-**Monthly Cost:** ~$30/mo (Supabase $25 + Gemini ~$5)
-**Env Templates:** `backend/.env.staging.example`, `backend/.env.production.example`, `frontend/.env.staging.example`, `frontend/.env.production.example`
-**Next Steps:** Create Railway project, deploy staging, verify health endpoints, then DNS + production flip
+**Current State:** ✅ LIVE IN PRODUCTION — Both backend and frontend deployed and healthy
+
+### Production Environment
+- **Backend:** `https://backend-production-e845.up.railway.app` (Railway, healthy ✅)
+- **Frontend:** `https://start-insight-ascentias-projects.vercel.app` (Vercel, 200 OK ✅)
+- **Database:** Supabase Pro (Sydney ap-southeast-2, c009 migration applied)
+- **Cache/Queue:** Upstash Redis (TLS, `rediss://` scheme with `ssl_cert_reqs=none`)
+- **Error Tracking:** Sentry (ascentia-km org, backend + frontend projects, active ✅)
+- **Email:** Resend (live mode, 3K emails/mo free tier)
+
+### Staging Environment
+- **Backend:** `https://backend-staging-fbd7.up.railway.app` (Railway)
+- **Frontend:** `https://start-insight-staging-ascentias-projects.vercel.app` (Vercel preview)
+- **Database:** Supabase staging branch `jsprkxymvuwoqoqkromr` (ap-southeast-2, session-mode pooler)
+- **Sentry:** Same DSN as production but `ENVIRONMENT=staging`, 100% sample rate
+
+### CI/CD Pipeline
+- **Trigger:** Push to `main` → production; push to `develop` → staging
+- **Pipeline:** Security Scan → Backend Tests → Frontend Tests → Migrate DB → Build Docker → Deploy
+- **GitHub Actions:** `.github/workflows/ci-cd.yml` + `.github/workflows/set-vercel-sentry-env.yml`
+- **Railway:** Project `a3ece066-4758-4780-84d6-0379f1312227`, `RAILWAY_API_TOKEN` account-level token
+
+### Sentry Configuration
+- **Org:** `ascentia-km`
+- **Backend Project:** FastAPI + SQLAlchemy + LoggingIntegration, `enable_logs=True`, AI agent spans
+- **Frontend Project:** Next.js App Router + browserTracingIntegration + consoleLoggingIntegration, Session Replay
+- **AI Monitoring:** Manual `gen_ai.request` spans on enhanced_analyzer, research_agent, market_intel_agent
+- **Staging Rate:** 100% traces+profiles; Production Rate: 10% traces+profiles (SENTRY_TRACES_SAMPLE_RATE)
+- **Env Vars:** Set via Railway MCP (backend) + GitHub Actions `set-vercel-sentry-env.yml` workflow (frontend)
+
+### Infrastructure Costs
+- **Monthly:** ~$30/mo (Supabase Pro $25 + Gemini API ~$5)
+- **Free Tiers:** Railway (500h/mo), Vercel (hobby), Upstash Redis, Sentry (5K events/mo), Resend (3K emails/mo)
 
 ## Phase Completion Criteria
 
@@ -72,18 +93,29 @@
 
 ## Current Focus
 
-**Beating IdeaBrowser - Superadmin + Competitive Features (2026-02-14)**
+**Post-Launch: Monitoring, Growth & Content Seeding (2026-02-19)**
 
 **System Status:**
-- ✅ **Phase 1-10 Complete:** All 69 tables, 232+ endpoints, 8 AI agents operational
-- ✅ **Phase A Complete:** Superadmin Content Completeness (6 tasks, 14 admin nav items)
+- ✅ **LIVE IN PRODUCTION** (deployed 2026-02-18/19)
+- ✅ **Phase 1-10 + A-L + Q1-Q9 Complete:** All 69 tables, 232+ endpoints, 8 AI agents
+- ✅ **Security Hardened:** HSTS, CSP, XSS prevention, JWT ES256, rate limiting, update-password flow
+- ✅ **Sentry Monitoring:** Errors + traces + logs + AI spans on production + staging
+- ✅ **CI/CD Pipeline:** main→production, develop→staging, all passing
 - ✅ **Quality Infrastructure:** Content review queue, pipeline monitoring, user analytics
 - ✅ **Engagement Features:** User preferences, idea chat, community voting, gamification
 - ✅ **Enterprise Ready:** Integration ecosystem, OAuth, webhooks, API marketplace
 - ✅ **Security Hardened:** Authentication middleware, route protection, RLS policies
 - 📊 **Deployment Status:** Code complete, superadmin fully functional
 
-**Recent Milestones (2026-02-14):**
+**Recent Milestones (2026-02-19):**
+1. ✅ Security Enhancements — HSTS, CSP, XSS prevention, rate limiting hardening, security middleware
+2. ✅ Update-password page — Supabase auth recovery redirect, `/auth/update-password` flow
+3. ✅ Sentry full coverage — backend (FastAPI+SQLAlchemy+AI spans) + frontend (Next.js+replay+tracing)
+4. ✅ Production deployed — Railway backend + Vercel frontend + Supabase Pro, all healthy
+5. ✅ CI/CD pipeline — main→production, develop→staging, full pipeline (tests→migrate→build→deploy)
+6. ✅ Stripe wiring — payment integration end-to-end (Phase 6.1, live mode)
+
+**Previous Milestones (2026-02-14/15):**
 1. ✅ Phase A1 - Admin Create Insight (synthetic RawSignal, full form with 7 dimension scores)
 2. ✅ Phase A2 - Agent Schedule Editor UI (cron/interval/manual, next/last run display)
 3. ✅ Phase A3 - Agent Cost Analytics Chart (7d/30d/90d breakdown by agent)
@@ -129,13 +161,13 @@
 - Backend: `cd backend && pytest tests/ -v --cov=app`
 - Frontend: `cd frontend && npx playwright test`
 
-**Next Priority: Production Deployment**
-1. Deploy backend to Railway (production env vars, Supabase connection)
-2. Deploy frontend to Vercel (Supabase credentials, public API URL)
-3. Configure Stripe live mode keys
-4. Set up monitoring (Sentry error tracking, uptime checks)
-5. Run E2E tests with authenticated flows
-6. Verify route protection on production URLs
+**Current Priority: Post-Launch Monitoring & Content Seeding**
+1. Monitor Sentry for production errors (check weekly)
+2. Seed 50+ insights across 10+ categories via admin portal
+3. Verify scraper pipeline health (Reddit, PH, Google Trends, HN, Twitter/X)
+4. Submit sitemap to Google Search Console
+5. Set up UptimeRobot / Checkly uptime monitoring
+6. Monitor Stripe webhook health (checkout, subscription events)
 
 **Previous Focus: Competitive Parity & Visualization Layer Implementation (2026-01-25)**
 

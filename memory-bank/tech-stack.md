@@ -4,7 +4,7 @@
 **Read When:** When choosing libraries, verifying dependencies, resolving conflicts, cost planning
 **Dependencies:** Read project-brief.md for "Glue Coding" philosophy
 **Purpose:** Phase 1-10 dependencies, cost analysis, revenue projections ($59K MRR at 10K users)
-**Last Updated:** 2026-02-09
+**Last Updated:** 2026-02-19
 ---
 
 Tech Stack: StartInsight
@@ -966,8 +966,8 @@ dev = [
 # Production only (not in dev)
 [project]
 dependencies = [
-    "gunicorn>=21.0.0",     # Production WSGI server
-    "sentry-sdk>=1.40.0",   # Error tracking
+    "gunicorn>=21.0.0",            # Production WSGI server
+    "sentry-sdk[fastapi]>=2.0.0",  # Error tracking + FastAPI/SQLAlchemy integrations
 ]
 ```
 
@@ -1224,15 +1224,28 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 ---
 
-## 10. Phase A-L & Q1-Q9 Stack Additions
-**Last Updated**: 2026-02-17
+## 10. Phase A-L, Q1-Q9, Security & Sentry Stack Additions
+**Last Updated**: 2026-02-19
 
-### 10.1 Error Tracking — Sentry
-- **Sentry** Free tier (5K events/month)
-- Two projects: `startinsight-backend` (FastAPI SDK), `startinsight-frontend` (Next.js SDK)
-- Backend: `sentry-sdk[fastapi]` — captures unhandled exceptions + slow requests
-- Frontend: `@sentry/nextjs` — captures client-side + SSR errors
-- DSN configured via `SENTRY_DSN` env var (backend) and `NEXT_PUBLIC_SENTRY_DSN` (frontend)
+### 10.1 Error Tracking & Observability — Sentry (Production Active)
+- **Sentry** Free tier (5K events/month), org `ascentia-km`
+- **Backend package**: `sentry-sdk[fastapi]>=2.0.0` — FastAPI + SQLAlchemy + LoggingIntegration
+- **Frontend package**: `@sentry/nextjs@^10.38.0` — App Router + browserTracing + consoleLogging + Session Replay
+- **Backend init** (`main.py`): gated on `environment in ("production", "staging")`; `enable_logs=True`; `LoggingIntegration(level=INFO, event_level=ERROR, sentry_logs_level=WARNING)`; `before_send` filters `/health` endpoint
+- **User context** (`deps.py`): `sentry_sdk.set_user({"id": ..., "email": ...})` after successful JWT verification
+- **AI agent spans** (`agents/sentry_tracing.py`): async context manager `trace_agent_run()` wraps PydanticAI calls with `gen_ai.request` spans; wrapped in enhanced_analyzer, research_agent, market_intel_agent
+- **Frontend files**: `instrumentation.ts` (Next.js App Router hook), `sentry.edge.config.ts` (edge runtime), `sentry.client.config.ts` (browser + replay), `sentry.server.config.ts` (server-side)
+- **Error boundaries**: `Sentry.captureException(error)` in all 3 `error.tsx` files
+- **Env vars**: `SENTRY_DSN`, `SENTRY_TRACES_SAMPLE_RATE` (0.1 prod / 1.0 staging), `SENTRY_PROFILES_SAMPLE_RATE`; `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_AUTH_TOKEN` (GitHub secret for source maps), `SENTRY_ORG=ascentia-km`, `SENTRY_PROJECT`
+- **Release tracking**: `release=os.environ.get("RAILWAY_GIT_COMMIT_SHA", "local")` — auto-injected by Railway
+
+### 10.2 Security Hardening Stack
+- **Backend security middleware** (`app/middleware/security.py`): HSTS header, CSP policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
+- **JWT validation**: ES256 (ECDSA P-256) via Supabase JWKS endpoint — `python-jose[cryptography]` with JWK dict key
+- **XSS prevention**: `bleach` — sanitizes HTML inputs; `markupsafe` — escapes display output
+- **Auth recovery**: `/auth/update-password` page — Supabase recovery token redirect flow
+- **Rate limiting hardening**: auth endpoints (5/minute login, 3/minute signup) via SlowAPI
+- **CORS**: `CORS_ALLOWED_PRODUCTION_ORIGINS` environment variable list; staging uses in-memory storage (avoids Redis dep)
 
 ### 10.2 Admin Portal Stack
 - **System Settings**: JSONB store in `system_settings` table; grouped GET API; upsert PUT API
