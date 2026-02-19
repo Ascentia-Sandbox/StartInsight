@@ -2,8 +2,6 @@
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
-from typing import Optional
 
 from app.core.config import settings
 from app.db.session import async_engine
@@ -15,7 +13,7 @@ logger = logging.getLogger(__name__)
 class DataRetentionWorker:
     """Worker for managing data retention policies."""
 
-    def __init__(self, db_url: Optional[str] = None):
+    def __init__(self, db_url: str | None = None):
         """
         Initialize the data retention worker.
 

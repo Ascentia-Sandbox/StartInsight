@@ -316,12 +316,6 @@ async def handle_webhook_event(
             logger.warning("Webhook payload exceeds maximum size (1MB)")
             raise ValueError("Webhook payload exceeds maximum size (1MB)")
 
-        # Validate content type
-        content_type = request.headers.get("content-type", "")
-        if "application/json" not in content_type:
-            logger.warning(f"Webhook content-type not application/json: {content_type}")
-            raise ValueError("Webhook content-type must be application/json")
-
         # Validate event ID format (Stripe event IDs start with "evt_")
         if not event["id"].startswith("evt_"):
             logger.warning(f"Webhook event ID format invalid: {event['id']}")

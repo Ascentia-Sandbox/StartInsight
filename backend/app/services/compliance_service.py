@@ -2,15 +2,10 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
-from uuid import UUID
+from typing import Any
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-
-from app.core.config import settings
-from app.models.webhook_event import WebhookEvent
-from app.models.subscription import PaymentHistory
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +121,7 @@ class AuditLoggingService:
         operation: str,
         details: dict,
         success: bool = True,
-        request_id: Optional[str] = None
+        request_id: str | None = None
     ):
         """
         Log a payment-related operation for audit purposes.
@@ -163,8 +158,8 @@ class AuditLoggingService:
         event_id: str,
         event_type: str,
         status: str,
-        user_id: Optional[str] = None,
-        request_id: Optional[str] = None
+        user_id: str | None = None,
+        request_id: str | None = None
     ):
         """
         Log webhook processing for audit purposes.
@@ -195,8 +190,8 @@ class AuditLoggingService:
     async def log_security_event(
         db: AsyncSession,
         event_type: str,
-        user_id: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        user_id: str | None = None,
+        details: dict[str, Any] | None = None,
         severity: str = "INFO"
     ):
         """

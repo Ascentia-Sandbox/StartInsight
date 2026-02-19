@@ -1,17 +1,13 @@
 """Data Loss Prevention (DLP) monitoring middleware for StartInsight."""
 
 import logging
-from typing import Dict, List, Set
 from collections import defaultdict, deque
-from datetime import datetime, timedelta
 from dataclasses import dataclass
-from typing import Optional
+from datetime import datetime, timedelta
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
-
-from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +16,9 @@ class SecurityEvent:
     """Represents a security event for monitoring."""
     timestamp: datetime
     event_type: str
-    user_id: Optional[str]
+    user_id: str | None
     ip_address: str
-    details: Dict[str, str]
+    details: dict[str, str]
 
 class DLPMonitoringMiddleware(BaseHTTPMiddleware):
     """
@@ -105,7 +101,7 @@ class DLPMonitoringMiddleware(BaseHTTPMiddleware):
         # Fallback to remote address
         return request.client.host if request.client else "unknown"
 
-    def _detect_suspicious_patterns(self, request: Request) -> List[str]:
+    def _detect_suspicious_patterns(self, request: Request) -> list[str]:
         """Detect suspicious patterns in the request."""
         suspicious_events = []
 
@@ -194,12 +190,6 @@ class DLPMonitoringMiddleware(BaseHTTPMiddleware):
         """Clean up old suspicious activities."""
         current_time = datetime.utcnow()
         time_window = timedelta(minutes=self.time_window_minutes)
-
-        # Remove old events outside the time window
-        old_events = [
-            event for event in self.suspicious_activities[ip_address]["events"]
-            if current_time - event.timestamp > time_window
-        ]
 
         # Keep only recent events
         self.suspicious_activities[ip_address]["events"] = [

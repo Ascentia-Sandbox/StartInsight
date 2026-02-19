@@ -1,12 +1,10 @@
 """Compliance management services for GDPR, PCI-DSS, and other regulations."""
 
 import logging
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
-import re
+from datetime import datetime
+from typing import Any
 
-from app.core.config import settings
-from app.services.compliance_service import DataRetentionService, AuditLoggingService
+from app.services.compliance_service import DataRetentionService
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +37,7 @@ class ComplianceManager:
             }
         }
 
-    async def validate_gdpr_compliance(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def validate_gdpr_compliance(self, user_data: dict[str, Any]) -> dict[str, Any]:
         """
         Validate GDPR compliance for user data.
 
@@ -73,7 +71,7 @@ class ComplianceManager:
             "timestamp": datetime.utcnow().isoformat()
         }
 
-    async def validate_pci_dss_compliance(self, payment_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def validate_pci_dss_compliance(self, payment_data: dict[str, Any]) -> dict[str, Any]:
         """
         Validate PCI-DSS compliance for payment data.
 
@@ -107,7 +105,7 @@ class ComplianceManager:
             "timestamp": datetime.utcnow().isoformat()
         }
 
-    async def implement_data_retention_policies(self, db) -> Dict[str, Any]:
+    async def implement_data_retention_policies(self, db) -> dict[str, Any]:
         """
         Implement automated data retention policies.
 
@@ -147,7 +145,7 @@ class ComplianceManager:
                 "timestamp": datetime.utcnow().isoformat()
             }
 
-    async def generate_compliance_report(self) -> Dict[str, Any]:
+    async def generate_compliance_report(self) -> dict[str, Any]:
         """
         Generate a comprehensive compliance report.
 
@@ -202,13 +200,13 @@ class ComplianceManager:
 
         return report
 
-    def _is_excessive_data_collection(self, user_data: Dict[str, Any]) -> bool:
+    def _is_excessive_data_collection(self, user_data: dict[str, Any]) -> bool:
         """Check if data collection is excessive."""
         # This is a simplified check - in reality, you'd want to define
         # what constitutes excessive data collection based on your specific policies
         return False  # Placeholder
 
-    def _has_proper_consent(self, user_data: Dict[str, Any]) -> bool:
+    def _has_proper_consent(self, user_data: dict[str, Any]) -> bool:
         """Check if proper consent has been obtained."""
         # Check for consent fields
         if "consent" in user_data:
@@ -216,22 +214,22 @@ class ComplianceManager:
                    user_data["consent"].get("analytics", False)
         return True  # If no consent data, assume compliant for now
 
-    def _meets_data_retention_policies(self, user_data: Dict[str, Any]) -> bool:
+    def _meets_data_retention_policies(self, user_data: dict[str, Any]) -> bool:
         """Check if data retention policies are met."""
         # This would check if data is being retained according to policies
         return True  # Placeholder
 
-    def _has_proper_encryption(self, payment_data: Dict[str, Any]) -> bool:
+    def _has_proper_encryption(self, payment_data: dict[str, Any]) -> bool:
         """Check if payment data is properly encrypted."""
         # In a real implementation, you'd check encryption methods
         return True  # Placeholder
 
-    def _handles_card_data_correctly(self, payment_data: Dict[str, Any]) -> bool:
+    def _handles_card_data_correctly(self, payment_data: dict[str, Any]) -> bool:
         """Check if card data is handled correctly."""
         # Check for proper handling of sensitive card data
         return True  # Placeholder
 
-    def _has_proper_access_controls(self, payment_data: Dict[str, Any]) -> bool:
+    def _has_proper_access_controls(self, payment_data: dict[str, Any]) -> bool:
         """Check if access controls are properly implemented."""
         # Check for proper access controls
         return True  # Placeholder

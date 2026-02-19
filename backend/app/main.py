@@ -127,10 +127,10 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         return response
 
 
-from app.middleware.tracing import TracingMiddleware
-from app.middleware.zero_trust_security import ZeroTrustSecurityMiddleware
 from app.middleware.dlp_monitoring import DLPMonitoringMiddleware
 from app.middleware.session_security import SessionSecurityMiddleware
+from app.middleware.tracing import TracingMiddleware
+from app.middleware.zero_trust_security import ZeroTrustSecurityMiddleware
 
 app.add_middleware(TracingMiddleware)
 app.add_middleware(RequestIDMiddleware)
@@ -157,6 +157,7 @@ app.state.limiter = limiter
 
 # Add rate limiting middleware for sensitive endpoints
 from app.middleware.rate_limiter import RateLimiterMiddleware
+
 app.add_middleware(RateLimiterMiddleware, max_requests=100, window_seconds=3600)
 
 
