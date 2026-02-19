@@ -25,7 +25,8 @@ def _get_redis_settings() -> RedisSettings:
         host=parsed.hostname or "localhost",
         port=parsed.port or 6379,
         password=parsed.password,
-        database=int(parsed.path.lstrip("/") or "0"),
+        database=int((parsed.path or "/0").lstrip("/") or "0"),
+        ssl=settings.redis_url.startswith("rediss://"),
         conn_timeout=3,
         conn_retries=0,
     )
