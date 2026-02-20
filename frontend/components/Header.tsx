@@ -97,6 +97,13 @@ function UserMenu({ user }: { user: User }) {
               >
                 Settings
               </Link>
+              <Link
+                href="/billing"
+                className="block px-3 py-2 text-sm rounded-md hover:bg-muted"
+                onClick={() => setOpen(false)}
+              >
+                Billing
+              </Link>
             </div>
             <div className="border-t p-1">
               <button

@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import { config } from "@/lib/env";
 
 interface MarketInsight {
@@ -135,11 +136,20 @@ export default function MarketInsightsPage() {
   const [category, setCategory] = useState("All");
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const limit = 12;
 
   useEffect(() => {
     fetchArticles();
   }, [category, page]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await getSupabaseClient().auth.getSession();
+      setIsLoggedIn(!!session);
+    };
+    void checkAuth();
+  }, []);
 
   const fetchArticles = async () => {
     setLoading(true);
@@ -319,7 +329,9 @@ export default function MarketInsightsPage() {
               Discover validated startup ideas backed by market data. Join founders who build smarter.
             </p>
             <Button asChild size="lg">
-              <Link href="/auth/signup">Get Started Free</Link>
+              <Link href={isLoggedIn ? "/dashboard" : "/auth/signup"}>
+                {isLoggedIn ? "Go to Dashboard" : "Get Started Free"}
+              </Link>
             </Button>
           </CardContent>
         </Card>
