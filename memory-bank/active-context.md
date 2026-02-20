@@ -50,6 +50,11 @@ Railway Project ID: `a3ece066-4758-4780-84d6-0379f1312227`
 | Sample Rates | Production: 10% traces/profiles; Staging: 100% |
 | Env Vars | Backend via Railway MCP; Frontend via GitHub Actions `set-vercel-sentry-env.yml` |
 
+## Recent Work (2026-02-20)
+
+1. ✅ **QA P0/P1/P2 bug fixes** — 11 bugs fixed: /terms + /privacy pages (404→200), payments CORS fix, email prefs 404, Deep Research link, `$$` double-dollar, contact domain/duplicate-select, Enterprise billing tier, Google OAuth on signup, context-aware CTAs, skeleton loaders
+2. ✅ **Gemini 429 fix** — `quality_reviewer.py` now uses `tenacity` retry (4 attempts, 5s→10s→20s→40s backoff) + `asyncio.sleep(2)` inter-call delay for both insight audit + market article review loops; `tenacity>=8.2.0` added to `pyproject.toml`
+
 ## Recent Work (2026-02-19)
 
 1. ✅ **Redis provisioned** — Railway native Redis service (`redis.railway.internal:6379`), `REDIS_URL` set on backend
@@ -120,5 +125,5 @@ All arq tasks now scheduled and running via APScheduler + Railway Redis:
 
 ---
 
-**Last Updated:** 2026-02-19
-**Status:** LIVE IN PRODUCTION — All planned phases complete. Scheduler running. Content seeding next.
+**Last Updated:** 2026-02-20
+**Status:** LIVE IN PRODUCTION — All planned phases complete. Scheduler running. 11 QA bugs fixed. Gemini 429 retry added. Content seeding next.

@@ -94,6 +94,10 @@ Unlike traditional brainstorming tools, StartInsight relies on **real-time marke
 - **Team Collaboration**: RBAC with owner/admin/member roles, shared insights
 - **Custom Research**: Submit research requests with tier-based approval
 
+**Reliability & Rate-Limit Handling**
+- **Gemini 429 Retry**: `quality_reviewer.py` uses `tenacity` with 4-attempt exponential backoff (5s → 10s → 20s → 40s) + 2s inter-call sleep — eliminates RESOURCE_EXHAUSTED cascades in 10/20-insight audit batches
+- **All AI Agents Protected**: `enhanced_analyzer.py` and `research_agent.py` also use tenacity retry — consistent pattern across all LLM-calling agents
+
 **Security & Observability**
 - **Security Headers**: HSTS (`max-age=31536000`), CSP, X-Frame-Options, X-Content-Type-Options via middleware
 - **JWT Authentication**: ES256 (ECDSA P-256) via Supabase JWKS endpoint — no shared secret needed
@@ -657,7 +661,7 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 | **Monitoring** | Sentry (errors + traces + logs + AI spans), ascentia-km org, events confirmed |
 | **Security** | HSTS, CSP, JWT ES256 JWKS, XSS prevention (bleach), rate limiting |
 | **CI/CD** | GitHub Actions — main→production, develop→staging, all passing |
-| **Scheduler** | All 8 background jobs running (APScheduler + Railway Redis, verified 2026-02-19) |
+| **Scheduler** | All background jobs running (APScheduler + Railway Redis, verified 2026-02-19) — Gemini 429 retry active |
 
 **Phase Completion**:
 - ✅ Phase 1-3: MVP Foundation (scrapers, AI analysis, Next.js dashboard)
@@ -671,6 +675,8 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 - ✅ Phase M: Sentry Monitoring (errors + traces + logs + AI spans + Session Replay)
 - ✅ Phase P: Production Deployment (Railway + Vercel + CI/CD pipeline)
 - ✅ Phase R: Redis + Scheduler (Railway Redis provisioned, scheduler running clean)
+- ✅ QA Bug Fixes: 11 P0/P1/P2 bugs fixed (terms/privacy 404, CORS, Deep Research, `$$`, Google OAuth signup, context-aware CTAs, skeleton loaders)
+- ✅ 429 Rate-Limit Fix: tenacity retry + inter-call sleep in quality_reviewer.py (Gemini RESOURCE_EXHAUSTED eliminated)
 
 **Business Metrics (Targets)**:
 - Signup Conversion: 4% target (2% pre-Phase 14 baseline)
@@ -722,4 +728,4 @@ For questions or issues:
 
 ---
 
-*v1.0 — Production live. All phases complete. Scheduler running. ~$30/mo. (2026-02-20)*
+*v1.0.1 — Production live. 11 QA bugs fixed. Gemini 429 retry added. Scheduler running. ~$30/mo. (2026-02-20)*
