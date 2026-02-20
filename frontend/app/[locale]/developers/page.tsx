@@ -27,14 +27,10 @@ import {
   Terminal,
   Webhook,
   BarChart3,
-  ChevronRight,
   Copy,
   Check,
   ExternalLink,
   Sparkles,
-  Clock,
-  Users,
-  Database,
 } from "lucide-react";
 
 // API Endpoints data
