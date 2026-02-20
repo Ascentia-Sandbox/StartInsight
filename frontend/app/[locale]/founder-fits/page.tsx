@@ -26,7 +26,7 @@ async function fetchFounderFitPicks() {
 function getScoreColor(score: number) {
   if (score >= 9) return 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30';
   if (score >= 8) return 'text-blue-600 bg-blue-50 dark:bg-blue-950/30';
-  if (score >= 7) return 'text-violet-600 bg-violet-50 dark:bg-violet-950/30';
+  if (score >= 7) return 'text-teal-600 bg-teal-50 dark:bg-teal-950/30';
   return 'text-gray-600 bg-gray-50 dark:bg-gray-950/30';
 }
 
@@ -64,16 +64,16 @@ export default function FounderFitsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-violet-50 to-white dark:from-violet-950/20 dark:to-background">
+    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white dark:from-teal-950/20 dark:to-background">
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-12">
         <div className="text-center mb-12">
-          <Badge className="mb-4 bg-gradient-to-r from-violet-500 to-purple-500 text-white border-0 px-4 py-2 text-sm">
+          <Badge className="mb-4 bg-teal-600 text-white border-0 px-4 py-2 text-sm">
             <Target className="h-4 w-4 mr-2" />
             Founder Fits
           </Badge>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Ideas Perfect for <span className="text-violet-600">Solo Founders</span>
+            Ideas Perfect for <span className="text-teal-600">Solo Founders</span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-8">
             Curated startup ideas scored for accessibility, low initial investment, and solo-founder viability.
@@ -83,7 +83,7 @@ export default function FounderFitsPage() {
           {/* Stats */}
           <div className="flex flex-wrap justify-center gap-8 mb-8">
             <div className="text-center">
-              <div className="text-3xl font-bold text-violet-600">{ideas?.length || 0}</div>
+              <div className="text-3xl font-bold text-teal-600">{ideas?.length || 0}</div>
               <div className="text-sm text-muted-foreground">High-Fit Ideas</div>
             </div>
             <div className="text-center">
@@ -100,7 +100,7 @@ export default function FounderFitsPage() {
         {/* Why Founder Fit Matters */}
         <div className="max-w-4xl mx-auto mb-12 p-6 bg-white dark:bg-card rounded-xl shadow-lg border">
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <Users className="h-5 w-5 text-violet-600" />
+            <Users className="h-5 w-5 text-teal-600" />
             Why Founder Fit Matters
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -151,7 +151,7 @@ export default function FounderFitsPage() {
               <Card key={idea.id} className={`relative overflow-hidden hover:shadow-xl transition-all ${index === 0 ? 'md:col-span-2 lg:col-span-1' : ''}`}>
                 {/* Top Badge */}
                 {index === 0 && (
-                  <div className="absolute top-0 right-0 bg-gradient-to-l from-violet-500 to-purple-500 text-white px-3 py-1 text-xs font-bold rounded-bl-lg">
+                  <div className="absolute top-0 right-0 bg-gradient-to-l from-teal-500 to-teal-600 text-white px-3 py-1 text-xs font-bold rounded-bl-lg">
                     #1 FOUNDER FIT
                   </div>
                 )}
@@ -198,7 +198,7 @@ export default function FounderFitsPage() {
                     <span className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(idea.created_at), { addSuffix: true })}
                     </span>
-                    <Button asChild size="sm" className="bg-violet-600 hover:bg-violet-700">
+                    <Button asChild size="sm" className="bg-teal-600 hover:bg-teal-700">
                       <Link href={`/insights/${idea.slug || idea.id}`}>
                         Explore Idea
                         <ArrowRight className="ml-1 h-4 w-4" />
@@ -218,7 +218,7 @@ export default function FounderFitsPage() {
           <Button asChild size="lg" variant="outline">
             <Link href="/insights">
               <Rocket className="mr-2 h-5 w-5" />
-              Browse All {ideas?.length || 15}+ Ideas
+              Browse All Insights
             </Link>
           </Button>
         </div>

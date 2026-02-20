@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
-import { ShieldCheck, ShieldAlert, ShieldQuestion, Database } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, ShieldQuestion, Database, GitCompareArrows } from 'lucide-react';
 import type { Insight } from '@/lib/types';
 import { TrendSparkline } from '@/components/trend-sparkline';
 
@@ -203,12 +203,23 @@ export function InsightCard({ insight }: InsightCardProps) {
           </div>
         )}
 
-        {/* Footer: Market size + date */}
+        {/* Footer: Market size + date + compare */}
         <div className="mt-auto flex items-center justify-between pt-2 border-t border-border/50">
           <MarketSizeIndicator size={insight.market_size_estimate} />
-          <span className="text-xs text-muted-foreground">
-            {formatDistanceToNow(new Date(insight.created_at), { addSuffix: true })}
-          </span>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/compare?ids=${insight.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+              title="Compare this insight"
+            >
+              <GitCompareArrows className="h-3.5 w-3.5" />
+              Compare
+            </Link>
+            <span className="text-xs text-muted-foreground">
+              {formatDistanceToNow(new Date(insight.created_at), { addSuffix: true })}
+            </span>
+          </div>
         </div>
       </div>
     </Link>
