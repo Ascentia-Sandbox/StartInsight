@@ -217,9 +217,9 @@ export default function InsightDetailPage() {
   const searchInterest = getSearchInterest(insight.relevance_score);
   const sourceName = insight.raw_signal?.source || 'Unknown';
 
-  // Revenue display value
+  // Revenue display value — convert dollar-tier strings (e.g. "$$") to numeric
   const revenueDisplay = typeof insight.revenue_potential_score === 'string'
-    ? insight.revenue_potential_score
+    ? `${revenueMap[insight.revenue_potential_score] ?? insight.revenue_potential_score}/10`
     : insight.revenue_potential_score != null
       ? `${insight.revenue_potential_score}/10`
       : null;
@@ -737,7 +737,7 @@ export default function InsightDetailPage() {
             </Button>
           </div>
           <Button size="sm" className="bg-primary text-primary-foreground" asChild>
-            <Link href={`/insights/${slug}/build`}>
+            <Link href={`/research?insight_id=${slug}`}>
               <Zap className="h-4 w-4 mr-2" /> Deep Research
             </Link>
           </Button>

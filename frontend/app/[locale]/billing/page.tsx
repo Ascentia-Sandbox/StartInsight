@@ -9,6 +9,7 @@ import { getSupabaseClient } from '@/lib/supabase/client';
 import { fetchSubscriptionStatus, createCheckoutSession, createPortalSession } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const plans = [
   {
@@ -53,6 +54,24 @@ const plans = [
       'API access (1,000 calls/month)',
       'Dedicated support',
     ],
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    price: '$299',
+    period: 'per month',
+    description: 'For large teams and organizations',
+    features: [
+      'Everything in Pro',
+      'Unlimited team members',
+      'Unlimited API access',
+      'Custom AI model fine-tuning',
+      'Dedicated account manager',
+      'SLA guarantee (99.9% uptime)',
+      'White-label options',
+      'SSO & SAML support',
+    ],
+    contactSales: true,
   },
 ];
 
@@ -111,10 +130,36 @@ export default function BillingPage() {
 
   if (isCheckingAuth || subscriptionLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="animate-spin h-8 w-8 text-primary mx-auto" />
-          <p className="mt-2 text-muted-foreground">Loading billing...</p>
+      <div className="min-h-screen bg-background">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header skeleton */}
+          <div className="text-center mb-12">
+            <Skeleton className="h-9 w-48 mx-auto mb-2" />
+            <Skeleton className="h-4 w-72 mx-auto" />
+          </div>
+          {/* Plan cards skeleton — 4 columns matching the real grid */}
+          <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-20 mb-2" />
+                  <Skeleton className="h-10 w-24 mb-1" />
+                  <Skeleton className="h-4 w-36" />
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {[...Array(5)].map((_, j) => (
+                    <div key={j} className="flex items-center gap-2">
+                      <Skeleton className="h-5 w-5 rounded-full shrink-0" />
+                      <Skeleton className="h-4 flex-1" />
+                    </div>
+                  ))}
+                </CardContent>
+                <CardFooter>
+                  <Skeleton className="h-9 w-full" />
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -123,19 +168,22 @@ export default function BillingPage() {
   const currentTier = subscription?.tier || 'free';
 
   const getButtonText = (planId: string) => {
+    if (planId === 'enterprise') return 'Contact Sales';
     if (planId === currentTier) return 'Current Plan';
     if (planId === 'free') return 'Downgrade';
     return `Upgrade to ${planId.charAt(0).toUpperCase() + planId.slice(1)}`;
   };
 
   const handlePlanAction = (planId: string) => {
+    if (planId === 'enterprise') {
+      window.location.href = 'mailto:enterprise@startinsight.ai';
+      return;
+    }
     if (planId === currentTier) return;
     if (planId === 'free') {
-      // Open portal to cancel subscription
       portalMutation.mutate();
     } else {
-      // Create checkout session
-      checkoutMutation.mutate(planId as 'starter' | 'pro' | 'enterprise');
+      checkoutMutation.mutate(planId as 'starter' | 'pro');
     }
   };
 
@@ -159,18 +207,25 @@ export default function BillingPage() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid gap-8 md:grid-cols-3">
+        <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-4">
           {plans.map((plan) => (
             <Card
               key={plan.name}
               className={`relative ${plan.popular ? 'border-primary shadow-lg' : ''} ${
                 plan.id === currentTier ? 'ring-2 ring-primary' : ''
-              }`}
+              } ${'contactSales' in plan ? 'border-violet-200 dark:border-violet-900' : ''}`}
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full">
                     Most Popular
+                  </span>
+                </div>
+              )}
+              {'contactSales' in plan && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="bg-violet-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                    Enterprise
                   </span>
                 </div>
               )}
@@ -200,17 +255,26 @@ export default function BillingPage() {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Button
-                  className="w-full"
-                  variant={plan.popular && plan.id !== currentTier ? 'default' : 'outline'}
-                  disabled={plan.id === currentTier || checkoutMutation.isPending || portalMutation.isPending}
-                  onClick={() => handlePlanAction(plan.id)}
-                >
-                  {(checkoutMutation.isPending || portalMutation.isPending) && plan.id !== currentTier ? (
-                    <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                  ) : null}
-                  {getButtonText(plan.id)}
-                </Button>
+                {'contactSales' in plan ? (
+                  <Button
+                    className="w-full bg-violet-600 hover:bg-violet-700 text-white"
+                    onClick={() => handlePlanAction(plan.id)}
+                  >
+                    Contact Sales
+                  </Button>
+                ) : (
+                  <Button
+                    className="w-full"
+                    variant={plan.popular && plan.id !== currentTier ? 'default' : 'outline'}
+                    disabled={plan.id === currentTier || checkoutMutation.isPending || portalMutation.isPending}
+                    onClick={() => handlePlanAction(plan.id)}
+                  >
+                    {(checkoutMutation.isPending || portalMutation.isPending) && plan.id !== currentTier ? (
+                      <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                    ) : null}
+                    {getButtonText(plan.id)}
+                  </Button>
+                )}
               </CardFooter>
             </Card>
           ))}

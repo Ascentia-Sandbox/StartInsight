@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Check, X, Zap, Crown, Building2, Rocket } from "lucide-react";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -122,6 +124,16 @@ const faqs = [
 ];
 
 export default function PricingPage() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await getSupabaseClient().auth.getSession();
+      setIsLoggedIn(!!session);
+    };
+    void checkAuth();
+  }, []);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -217,7 +229,9 @@ export default function PricingPage() {
                   className="w-full"
                   variant={tier.popular ? "default" : "outline"}
                 >
-                  <Link href={tier.href}>{tier.cta}</Link>
+                  <Link href={isLoggedIn ? "/billing" : tier.href}>
+                    {isLoggedIn ? "Manage Plan" : tier.cta}
+                  </Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -291,7 +305,9 @@ export default function PricingPage() {
               Join 10,000+ founders who discovered their startup ideas with StartInsight.
             </p>
             <Button asChild size="lg" variant="secondary">
-              <Link href="/auth/signup">Start Free Trial</Link>
+              <Link href={isLoggedIn ? "/dashboard" : "/auth/signup"}>
+                {isLoggedIn ? "Go to Dashboard" : "Start Free Trial"}
+              </Link>
             </Button>
           </CardContent>
         </Card>
