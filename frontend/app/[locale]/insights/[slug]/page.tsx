@@ -2,8 +2,9 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
-import { fetchInsightById } from '@/lib/api';
+import { useState, useEffect } from 'react';
+import { fetchInsightById, saveInsight, unsaveInsight } from '@/lib/api';
+import { getSupabaseClient } from '@/lib/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,7 +17,7 @@ import {
   Clock, ArrowRight, CheckCircle2, BarChart3,
   Users, Globe, ChevronRight, Lightbulb, Search, MessageCircle,
   MessageSquare, BookmarkPlus, ArrowLeft, ExternalLink,
-  Eye, Bookmark, Share2, ShieldCheck, Database, Info,
+  Eye, Bookmark, ShieldCheck, Database, Loader2,
 } from 'lucide-react';
 import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 import { TrendChart } from '@/components/trend-chart';
@@ -83,6 +84,14 @@ export default function InsightDetailPage() {
   const params = useParams();
   const slug = params.slug as string;
   const [saved, setSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    getSupabaseClient().auth.getSession().then(({ data: { session } }) => {
+      if (session) setAccessToken(session.access_token);
+    });
+  }, []);
 
   const { data: insight, isLoading, error } = useQuery({
     queryKey: ['insight', slug],
@@ -278,7 +287,7 @@ export default function InsightDetailPage() {
       <section className="py-8 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="grid lg:grid-cols-[1fr_320px] gap-6">
-            {/* Left: Trend Chart */}
+            {/* Left: Trend Chart, or ScoreRadar when no trend data */}
             <Card>
               <CardContent className="p-6">
                 {trendChartData ? (
@@ -288,6 +297,20 @@ export default function InsightDetailPage() {
                     volume={primaryKeyword?.volume}
                     growth={primaryKeyword?.growth}
                     allKeywords={insight.trend_keywords ?? undefined}
+                  />
+                ) : scoreCards.length >= 3 ? (
+                  <ScoreRadar
+                    scores={{
+                      opportunity: insight.opportunity_score ?? undefined,
+                      problem: insight.problem_score ?? undefined,
+                      feasibility: insight.feasibility_score ?? undefined,
+                      why_now: insight.why_now_score ?? undefined,
+                      go_to_market: insight.go_to_market_score ?? undefined,
+                      founder_fit: insight.founder_fit_score ?? undefined,
+                      execution_difficulty: insight.execution_difficulty_score ?? undefined,
+                      revenue_potential: insight.revenue_potential_score ?? undefined,
+                    }}
+                    size="md"
                   />
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 gap-3">
@@ -344,27 +367,6 @@ export default function InsightDetailPage() {
           </div>
         </div>
       </section>
-
-      {/* ===== INTERACTIVE SCORE RADAR ===== */}
-      {scoreCards.length >= 3 && (
-        <section className="px-6 pb-8">
-          <div className="max-w-5xl mx-auto">
-            <ScoreRadar
-              scores={{
-                opportunity: insight.opportunity_score ?? undefined,
-                problem: insight.problem_score ?? undefined,
-                feasibility: insight.feasibility_score ?? undefined,
-                why_now: insight.why_now_score ?? undefined,
-                go_to_market: insight.go_to_market_score ?? undefined,
-                founder_fit: insight.founder_fit_score ?? undefined,
-                execution_difficulty: insight.execution_difficulty_score ?? undefined,
-                revenue_potential: insight.revenue_potential_score ?? undefined,
-              }}
-              size="md"
-            />
-          </div>
-        </section>
-      )}
 
       {/* ===== DESCRIPTION (clean prose) ===== */}
       <section className="py-10 px-6">
@@ -727,9 +729,28 @@ export default function InsightDetailPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setSaved(!saved)}
+              disabled={isSaving || !accessToken}
+              onClick={async () => {
+                if (!accessToken || !insightId) return;
+                setIsSaving(true);
+                try {
+                  if (saved) {
+                    await unsaveInsight(accessToken, insightId);
+                    setSaved(false);
+                  } else {
+                    await saveInsight(accessToken, insightId);
+                    setSaved(true);
+                  }
+                } catch {
+                  // silent fail — button state reverts
+                } finally {
+                  setIsSaving(false);
+                }
+              }}
             >
-              {saved ? (
+              {isSaving ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</>
+              ) : saved ? (
                 <><CheckCircle2 className="h-4 w-4 mr-2 text-green-500" /> Saved</>
               ) : (
                 <><BookmarkPlus className="h-4 w-4 mr-2" /> Save</>
