@@ -176,7 +176,7 @@ export default function BillingPage() {
 
   const handlePlanAction = (planId: string) => {
     if (planId === 'enterprise') {
-      window.location.href = 'mailto:enterprise@startinsight.ai';
+      window.location.assign('mailto:enterprise@startinsight.ai');
       return;
     }
     if (planId === currentTier) return;
