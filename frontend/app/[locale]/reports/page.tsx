@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
   Card,
@@ -38,10 +38,7 @@ import {
   RefreshCw,
   ChevronRight,
   Lightbulb,
-  DollarSign,
-  Users,
   Clock,
-  AlertTriangle,
   CheckCircle2,
   ArrowUpRight,
   Zap,

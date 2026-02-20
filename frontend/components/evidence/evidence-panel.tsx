@@ -199,7 +199,7 @@ export function EvidencePanel({
                   Search Trends
                   {trendData.keyword && (
                     <span className="text-muted-foreground ml-1">
-                      "{trendData.keyword}"
+                      &quot;{trendData.keyword}&quot;
                     </span>
                   )}
                 </h4>

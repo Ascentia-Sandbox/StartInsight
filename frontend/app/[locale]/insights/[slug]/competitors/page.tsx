@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, TrendingUp, TrendingDown, Target, Lightbulb, Download, Plus, Trash2 } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Target, Lightbulb, Plus, Trash2 } from 'lucide-react';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ZAxis } from 'recharts';
 import Link from 'next/link';
 import { toast } from 'sonner';

@@ -2,7 +2,6 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { ExternalLink } from 'lucide-react';
 
 // Builder platform configurations
 export const BUILDER_PLATFORMS = {

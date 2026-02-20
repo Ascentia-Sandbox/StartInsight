@@ -124,7 +124,7 @@ function getDimensionExplanation(dimension: string, score: number): {
   };
 }
 
-export function ScoreRadar({ scores, size = 'md' }: ScoreRadarProps) {
+export function ScoreRadar({ scores }: ScoreRadarProps) {
   const [selectedDimension, setSelectedDimension] = useState<{ name: string; score: number; key: string } | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -137,7 +137,7 @@ export function ScoreRadar({ scores, size = 'md' }: ScoreRadarProps) {
 
   // Transform data for radar chart
   const chartData = Object.entries(normalizedScores)
-    .filter(([_, value]) => value !== undefined)
+    .filter(([, value]) => value !== undefined)
     .map(([dimension, value]) => ({
       dimension: getDimensionLabel(dimension),
       dimensionKey: dimension,

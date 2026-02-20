@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
 import { config } from "@/lib/env";
 
 interface SuccessStory {
@@ -271,7 +270,7 @@ export default function SuccessStoryDetailPage() {
         {/* CTA */}
         <Card className="bg-primary text-primary-foreground">
           <CardContent className="pt-8 pb-8 text-center">
-            <h2 className="text-2xl font-bold mb-2">Inspired by {story.founder_name}'s Story?</h2>
+            <h2 className="text-2xl font-bold mb-2">Inspired by {story.founder_name}&apos;s Story?</h2>
             <p className="mb-6 text-primary-foreground/80">
               Start your own journey and find your million-dollar startup idea.
             </p>

@@ -161,7 +161,7 @@ export default function FAQPage() {
           <div className="text-center py-12">
             <HelpCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground mb-4">
-              No questions found matching "{searchTerm}"
+              No questions found matching &quot;{searchTerm}&quot;
             </p>
             <Button variant="outline" onClick={() => setSearchTerm("")}>
               Clear Search
@@ -195,7 +195,7 @@ export default function FAQPage() {
             <HelpCircle className="h-12 w-12 text-primary mx-auto mb-4" />
             <h2 className="text-2xl font-bold mb-2">Still Have Questions?</h2>
             <p className="text-muted-foreground mb-6">
-              Our support team is here to help. Reach out and we'll get back to you within 24 hours.
+              Our support team is here to help. Reach out and we&apos;ll get back to you within 24 hours.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild>

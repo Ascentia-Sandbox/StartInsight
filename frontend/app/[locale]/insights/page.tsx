@@ -21,7 +21,7 @@ const PAGE_SIZE = 20;
 function AllInsightsContent() {
   const searchParams = useSearchParams();
   const [allInsights, setAllInsights] = useState<Insight[]>([]);
-  const [offset, setOffset] = useState(0);
+  const [, setOffset] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Validate sort parameter — default to newest (latest insights = highest value)

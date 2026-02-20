@@ -10,7 +10,7 @@ import {
 import { getSupabaseClient } from '@/lib/supabase/client';
 import {
   fetchSystemSettings, updateSystemSetting,
-  type SystemSettingsGrouped, type SystemSetting,
+  type SystemSetting,
 } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

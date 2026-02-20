@@ -29,7 +29,7 @@ interface MobileMenuProps {
   onSignIn?: () => void;
 }
 
-export function MobileMenu({ isAuthenticated, onSignIn }: MobileMenuProps) {
+export function MobileMenu({ isAuthenticated }: MobileMenuProps) {
   const [open, setOpen] = React.useState(false);
 
   const closeMenu = () => setOpen(false);

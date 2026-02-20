@@ -1,6 +1,6 @@
 'use client';
 
-import { TrendingUp, TrendingDown, Minus, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface TrendIndicatorProps {
@@ -16,7 +16,6 @@ export function TrendIndicator({ growth, volume, size = 'md', showVolume = false
   const growthNum = parseFloat(growthStr.replace(/[+%,]/g, ''));
   const isPositive = growthNum > 0;
   const isNegative = growthNum < 0;
-  const isStable = growthNum === 0;
 
   // Size configurations
   const sizeConfig = {

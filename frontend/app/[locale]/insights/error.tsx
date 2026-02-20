@@ -26,7 +26,7 @@ export default function InsightsError({
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-muted-foreground">
-            We couldn't load the insights page. This might be due to:
+            We couldn&apos;t load the insights page. This might be due to:
           </p>
           <ul className="list-disc list-inside text-muted-foreground space-y-1">
             <li>Backend server not running</li>

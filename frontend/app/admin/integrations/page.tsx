@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Loader2, Plug, Plus, Trash2, Bell, Hash, ExternalLink,
+  Loader2, Plug, Plus, Trash2, Bell, Hash,
 } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,15 +13,11 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table';
-import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
-import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { formatDateTimeMYT } from '@/lib/utils';
 import { config } from '@/lib/env';
@@ -46,17 +42,6 @@ interface Integration {
   created_at: string;
 }
 
-interface BotSubscription {
-  id: string;
-  integration_id: string;
-  channel_id: string;
-  channel_name: string | null;
-  subscription_type: string;
-  keywords: string[] | null;
-  min_score: number | null;
-  is_active: boolean;
-  last_notified_at: string | null;
-}
 
 export default function IntegrationsPage() {
   const router = useRouter();

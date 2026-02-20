@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   Loader2,
-  AlertTriangle,
   ClipboardList,
   ChevronDown,
   ChevronRight,
@@ -14,8 +13,6 @@ import { getSupabaseClient } from "@/lib/supabase/client";
 import {
   fetchAuditLogs,
   fetchAuditLogStats,
-  type AuditLogEntry,
-  type AuditLogStats,
 } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

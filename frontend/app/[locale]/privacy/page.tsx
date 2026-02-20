@@ -72,7 +72,7 @@ export default function PrivacyPage() {
           </div>
           <h1 className="text-4xl font-bold tracking-tight mb-4">Privacy Policy</h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            We take your privacy seriously. Here's how we handle your data.
+            We take your privacy seriously. Here&apos;s how we handle your data.
           </p>
           <p className="text-sm text-muted-foreground mt-4">Last updated: February 20, 2026</p>
         </div>

@@ -53,7 +53,6 @@ export function LanguageSwitcher() {
     return 'en'; // Default to English
   }, [pathname]);
 
-  const currentLanguage = LANGUAGES.find(lang => lang.code === currentLocale) || LANGUAGES[0];
 
   const handleLanguageChange = (languageCode: string) => {
     // Remove current locale from pathname

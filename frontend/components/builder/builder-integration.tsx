@@ -30,7 +30,7 @@ interface BuilderIntegrationProps {
   compact?: boolean;
 }
 
-export function BuilderIntegration({ insight, defaultExpanded = true, compact = false }: BuilderIntegrationProps) {
+export function BuilderIntegration({ insight, compact = false }: BuilderIntegrationProps) {
   const [selectedPlatform, setSelectedPlatform] = useState<BuilderPlatformId | null>(null);
   const [selectedPromptType, setSelectedPromptType] = useState<PromptTypeId>('landing_page');
   const [isModalOpen, setIsModalOpen] = useState(false);

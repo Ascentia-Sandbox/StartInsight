@@ -8,7 +8,6 @@ import {
   Users,
   DollarSign,
   TrendingUp,
-  TrendingDown,
   Activity,
   Eye,
   Bookmark,
@@ -18,7 +17,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -79,7 +78,6 @@ function MetricCard({
 
 function HealthIndicator({ label, rate }: { label: string; rate: number }) {
   const color = rate >= 90 ? 'text-green-500 dark:text-green-400' : rate >= 70 ? 'text-yellow-500 dark:text-yellow-400' : 'text-red-500 dark:text-red-400';
-  const bgColor = rate >= 90 ? 'bg-green-500 dark:bg-green-400' : rate >= 70 ? 'bg-yellow-500 dark:bg-yellow-400' : 'bg-red-500 dark:bg-red-400';
   const Icon = rate >= 90 ? CheckCircle2 : rate >= 70 ? AlertTriangle : XCircle;
 
   return (

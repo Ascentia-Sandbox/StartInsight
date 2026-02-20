@@ -27,7 +27,7 @@ interface TrendChartProps {
   onKeywordChange?: (keyword: TrendKeyword) => void;
 }
 
-export function TrendChart({ data, source, keyword, volume, growth, allKeywords, onKeywordChange }: TrendChartProps) {
+export function TrendChart({ data, keyword, volume, growth, allKeywords, onKeywordChange }: TrendChartProps) {
   const [selectedIdx, setSelectedIdx] = useState(0);
 
   // Determine active keyword info (from dropdown or props)

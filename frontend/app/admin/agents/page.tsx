@@ -32,7 +32,6 @@ import {
   Maximize2,
   Minimize2,
   ScrollText,
-  X,
   DollarSign,
   Radio,
 } from 'lucide-react';
@@ -54,7 +53,6 @@ import {
   type AgentConfig,
   type AgentStats,
   type AgentExecutionLog,
-  type CostAnalytics,
 } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

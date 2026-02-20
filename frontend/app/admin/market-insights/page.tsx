@@ -681,7 +681,7 @@ export default function AdminMarketInsightsPage() {
           <DialogHeader>
             <DialogTitle>Delete Article</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{deletingArticle?.title}"?
+              Are you sure you want to delete &quot;{deletingArticle?.title}&quot;?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
