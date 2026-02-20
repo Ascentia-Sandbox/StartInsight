@@ -1,0 +1,100 @@
+name: Set Vercel Sentry Env Vars
+
+# Run manually once to configure Sentry environment variables on Vercel
+# After running, delete or disable this workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Vercel environment (preview or production)"
+        required: true
+        default: "preview"
+        type: choice
+        options:
+          - preview
+          - production
+
+jobs:
+  set-env-vars:
+    name: Set Sentry Env Vars on Vercel
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Link Vercel project
+        run: vercel link --yes --project start-insight --team ascentias-projects --token=$VERCEL_TOKEN
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
+
+      - name: Set SENTRY_DSN
+        run: |
+          vercel env rm SENTRY_DSN ${{ github.event.inputs.environment }} --yes --token=$VERCEL_TOKEN 2>/dev/null || true
+          echo "$VALUE" | vercel env add SENTRY_DSN ${{ github.event.inputs.environment }} --token=$VERCEL_TOKEN
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
+          VALUE: "https://215c08d832e4f23a269a7bbfcb73358f@o4510905330958336.ingest.us.sentry.io/4510912888569856"
+
+      - name: Set NEXT_PUBLIC_SENTRY_DSN
+        run: |
+          vercel env rm NEXT_PUBLIC_SENTRY_DSN ${{ github.event.inputs.environment }} --yes --token=$VERCEL_TOKEN 2>/dev/null || true
+          echo "$VALUE" | vercel env add NEXT_PUBLIC_SENTRY_DSN ${{ github.event.inputs.environment }} --token=$VERCEL_TOKEN
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
+          VALUE: "https://215c08d832e4f23a269a7bbfcb73358f@o4510905330958336.ingest.us.sentry.io/4510912888569856"
+
+      - name: Set SENTRY_ORG
+        run: |
+          vercel env rm SENTRY_ORG ${{ github.event.inputs.environment }} --yes --token=$VERCEL_TOKEN 2>/dev/null || true
+          echo "$VALUE" | vercel env add SENTRY_ORG ${{ github.event.inputs.environment }} --token=$VERCEL_TOKEN
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
+          VALUE: "ascentia-km"
+
+      - name: Set SENTRY_PROJECT
+        run: |
+          vercel env rm SENTRY_PROJECT ${{ github.event.inputs.environment }} --yes --token=$VERCEL_TOKEN 2>/dev/null || true
+          echo "$VALUE" | vercel env add SENTRY_PROJECT ${{ github.event.inputs.environment }} --token=$VERCEL_TOKEN
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
+          VALUE: "frontend"
+
+      - name: Set SENTRY_AUTH_TOKEN
+        run: |
+          vercel env rm SENTRY_AUTH_TOKEN ${{ github.event.inputs.environment }} --yes --token=$VERCEL_TOKEN 2>/dev/null || true
+          echo "$VALUE" | vercel env add SENTRY_AUTH_TOKEN ${{ github.event.inputs.environment }} --token=$VERCEL_TOKEN
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
+          VALUE: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+      - name: Set NEXT_PUBLIC_ENVIRONMENT
+        run: |
+          vercel env rm NEXT_PUBLIC_ENVIRONMENT ${{ github.event.inputs.environment }} --yes --token=$VERCEL_TOKEN 2>/dev/null || true
+          echo "$VALUE" | vercel env add NEXT_PUBLIC_ENVIRONMENT ${{ github.event.inputs.environment }} --token=$VERCEL_TOKEN
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
+          VALUE: "staging"
+
+      - name: Set NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE
+        run: |
+          vercel env rm NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE ${{ github.event.inputs.environment }} --yes --token=$VERCEL_TOKEN 2>/dev/null || true
+          echo "$VALUE" | vercel env add NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE ${{ github.event.inputs.environment }} --token=$VERCEL_TOKEN
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
+          VALUE: "1.0"
+
+      - name: Verify env vars
+        run: vercel env ls ${{ github.event.inputs.environment }} --token=$VERCEL_TOKEN | grep -E "SENTRY|ENVIRONMENT"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}

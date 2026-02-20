@@ -1,6 +1,8 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import {
   Sparkles,
   Search,
@@ -182,6 +184,16 @@ const featureCategories = [
 ];
 
 export default function FeaturesPage() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await getSupabaseClient().auth.getSession();
+      setIsLoggedIn(!!session);
+    };
+    void checkAuth();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       {/* Hero Section */}
@@ -195,7 +207,9 @@ export default function FeaturesPage() {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button asChild size="lg">
-            <Link href="/auth/signup">Start Free Trial</Link>
+            <Link href={isLoggedIn ? "/dashboard" : "/auth/signup"}>
+              {isLoggedIn ? "Go to Dashboard" : "Start Free Trial"}
+            </Link>
           </Button>
           <Button asChild size="lg" variant="outline">
             <Link href="/pricing">View Pricing</Link>
@@ -311,7 +325,9 @@ export default function FeaturesPage() {
               Join 10,000+ founders using AI-powered idea discovery.
             </p>
             <Button asChild size="lg" variant="secondary">
-              <Link href="/auth/signup">Start Free Trial</Link>
+              <Link href={isLoggedIn ? "/dashboard" : "/auth/signup"}>
+              {isLoggedIn ? "Go to Dashboard" : "Start Free Trial"}
+            </Link>
             </Button>
           </CardContent>
         </Card>

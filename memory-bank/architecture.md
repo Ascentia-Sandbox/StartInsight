@@ -4,7 +4,7 @@
 **Read When:** Before implementing features, designing database models, creating APIs
 **Dependencies:** Read active-context.md for current phase, implementation-plan.md for tasks
 **Purpose:** System architecture, 69 database tables, 232+ API endpoints, auth, RLS, deployment
-**Last Updated:** 2026-02-09
+**Last Updated:** 2026-02-19
 ---
 
 # System Architecture: StartInsight
@@ -52,7 +52,7 @@ graph TD
     Worker -->|Scrape| Trends[Google Trends]
     Worker -->|Scrape| Twitter[Twitter/X Tweepy]
 
-    Worker -->|Analyze| Claude[Claude 3.5 Sonnet]
+    Worker -->|Analyze| Claude[Gemini 2.0 Flash]
     Worker -->|Store| Supabase
 
     Backend -->|Payments| Stripe[Stripe API]
@@ -2004,6 +2004,52 @@ insights = await session.execute(
 
 ## 13. Monitoring & Error Handling
 
+### 13.0 Sentry Observability Architecture (Production Active)
+
+**Configuration** (`backend/app/main.py`):
+```python
+if settings.sentry_dsn and settings.environment in ("production", "staging"):
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        environment=settings.environment,
+        release=os.environ.get("RAILWAY_GIT_COMMIT_SHA", "local"),
+        traces_sample_rate=settings.sentry_traces_sample_rate,  # 0.1 prod / 1.0 staging
+        enable_logs=True,
+        integrations=[
+            FastApiIntegration(transaction_style="url"),
+            SqlalchemyIntegration(),
+            LoggingIntegration(level=logging.INFO, event_level=logging.ERROR, sentry_logs_level=logging.WARNING),
+        ],
+        before_send=lambda event, hint: None if event.get("request", {}).get("url", "").endswith("/health") else event,
+    )
+```
+
+**User Context** (`backend/app/api/deps.py`):
+```python
+sentry_sdk.set_user({"id": str(user.id), "email": user.email})  # after JWT verification
+```
+
+**AI Agent Spans** (`backend/app/agents/sentry_tracing.py`):
+```python
+@contextlib.asynccontextmanager
+async def trace_agent_run(agent_name: str, model: str = "google-gla:gemini-2.0-flash"):
+    with sentry_sdk.start_span(op="gen_ai.request", name=agent_name) as span:
+        span.set_data("gen_ai.request.model", model)
+        yield span
+```
+Wrapped in: `enhanced_analyzer.py`, `research_agent.py`, `market_intel_agent.py`
+
+**Frontend** (`frontend/`):
+- `instrumentation.ts` — Next.js App Router registration hook
+- `sentry.client.config.ts` — `browserTracingIntegration()` + `replayIntegration(maskAllText)` + `consoleLoggingIntegration(["warn","error"])`
+- `sentry.server.config.ts` — server-side traces + `enable_logs: true`
+- `sentry.edge.config.ts` — middleware and edge API routes
+- 3x `error.tsx` — `Sentry.captureException(error)` before `console.error`
+
+**Sentry Projects**:
+- Backend: `ascentia-km` org, backend project, DSN in `SENTRY_DSN` (Railway env var)
+- Frontend: `NEXT_PUBLIC_SENTRY_DSN` (Vercel env var), `SENTRY_AUTH_TOKEN` (GitHub secret for source maps)
+
 ### 13.1 Logging Strategy
 
 **Structured logging** (JSON format):
@@ -2198,14 +2244,101 @@ def mock_claude():
 
 ---
 
+## 16. Security Architecture (Phase S, 2026-02-19)
+
+### 16.1 HTTP Security Headers (Middleware)
+
+**File**: `backend/app/middleware/security.py`
+```
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; ...
+X-Frame-Options: DENY
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+```
+
+### 16.2 JWT Authentication (ES256)
+
+**Algorithm**: ES256 (ECDSA P-256) — matches Supabase's actual JWT signing algorithm
+**JWKS Endpoint**: `{SUPABASE_URL}/auth/v1/.well-known/jwks.json`
+**Issuer**: `{SUPABASE_URL}/auth/v1`
+**Validation**: `python-jose[cryptography]` with JWK dict keys (not shared HS256 secret)
+**User Role**: from `app_metadata.role` in JWT payload
+
+### 16.3 XSS Prevention
+
+- `bleach` library: sanitizes all user-controlled text inputs before storage
+- `markupsafe.escape()`: escapes output in HTML contexts
+- Next.js: React's built-in JSX escaping; `rehype-sanitize` on markdown rendering
+
+### 16.4 Auth Recovery Flow
+
+1. User requests password reset → Supabase sends recovery email with token
+2. Supabase redirects to `/auth/callback?type=recovery&...`
+3. Frontend middleware detects recovery type → redirects to `/auth/update-password`
+4. User submits new password → `supabase.auth.updateUser({ password })` → session update
+
+### 16.5 Rate Limiting Tiers
+
+| Endpoint | Limit | Storage |
+|----------|-------|---------|
+| Public API | 30/minute | Redis (prod) / memory (staging) |
+| Login | 5/minute | Redis (prod) / memory (staging) |
+| Signup | 3/minute | Redis (prod) / memory (staging) |
+| Contact form | 5/hour | Redis (prod) / memory (staging) |
+
+## 17. Production Deployment Architecture (Phase P, 2026-02-18)
+
+### 17.1 Infrastructure Topology
+
+```
+GitHub (main) → CI/CD Pipeline → Railway (backend) + Vercel (frontend)
+                                        ↓                    ↓
+                              Supabase Pro PostgreSQL   Supabase Auth
+                              Upstash Redis (TLS)       CORS: Vercel URL
+                              Sentry (errors+traces)    Sentry (frontend)
+```
+
+### 17.2 Railway Configuration
+
+- **Dockerfile**: `backend/Dockerfile` — `uv sync` + `uvicorn`
+- **Start command**: `sh -c 'bash /app/start.sh'` (runs both uvicorn + arq worker)
+- **Port**: `$PORT` (Railway injects 8080 — target port in domain settings must match)
+- **Watch paths**: `/backend/**` triggers rebuild
+- **Env vars**: Set via Railway MCP; `RAILWAY_GIT_COMMIT_SHA` auto-injected for Sentry releases
+
+### 17.3 Vercel Configuration
+
+- **Framework**: Next.js (auto-detected)
+- **Root dir**: `frontend/`
+- **Build command**: `npm run build` (Next.js 16, App Router)
+- **NEXT_PUBLIC_* env vars**: Build-time — requires redeploy to take effect
+- **Sentry env vars**: Set via GitHub Actions `set-vercel-sentry-env.yml` (uses `VERCEL_TOKEN_STAGING` secret)
+
+### 17.4 CI/CD Pipeline (`.github/workflows/ci-cd.yml`)
+
+| Job | Trigger | Action |
+|-----|---------|--------|
+| Security Scan | push | Trivy container scan |
+| Backend Tests | push | pytest (291 tests) |
+| Frontend Tests | push | ESLint + Next.js build |
+| Migrate Production DB | main push | `alembic upgrade head` via Railway |
+| Build Docker Image | main push | Build + push to GHCR |
+| Deploy to Production | main push | Railway deploy |
+| Migrate Staging DB | develop push | `alembic upgrade head` via Railway staging |
+| Deploy to Staging | develop push | Railway staging + Vercel preview deploy |
+
+---
+
 ## Conclusion
 
 StartInsight architecture prioritizes:
 1. **Simplicity**: Glue coding over custom implementation
-2. **Reliability**: Battle-tested libraries (Supabase, Stripe, Firecrawl)
+2. **Reliability**: Battle-tested libraries (Supabase, Stripe, Firecrawl, Sentry)
 3. **Scalability**: Async Python, connection pooling, Redis caching
-4. **Security**: RLS policies, JWT auth, HTTPS enforcement
-5. **Performance**: Query optimization, eager loading, ISR
-6. **Extensibility**: Phase 8-10 adds 43 tables and 99 endpoints for admin control, user engagement, and integration ecosystem
+4. **Security**: HSTS/CSP headers, JWT ES256 JWKS, RLS policies, XSS prevention
+5. **Performance**: Query optimization, eager loading, ISR, p95 < 500ms target
+6. **Observability**: Sentry errors + traces + logs + AI agent spans on production + staging
+7. **Extensibility**: Phase 8-10 adds 43 tables and 99 endpoints for enterprise features
 
-**Current status**: Production deployed (Railway + Vercel + Supabase Pro). Phase A-L + Q1-Q9 complete.
+**Current status**: ✅ Production live (Railway + Vercel + Supabase Pro). Phase A-L + Q1-Q9 + Security + Sentry complete. Deployed 2026-02-18/19.

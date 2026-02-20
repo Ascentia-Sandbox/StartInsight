@@ -3,12 +3,6 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   environment: process.env.ENVIRONMENT || "development",
-
-  // Tracing
   tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || "0.1"),
-
-  // Structured logging
   enableLogs: true,
-
-  // Note: Session Replay is only available on the client side
 });

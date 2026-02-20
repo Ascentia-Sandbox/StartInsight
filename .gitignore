@@ -34,7 +34,7 @@ env/
 
 # uv
 .uv/
-uv.lock
+# uv.lock is intentionally tracked — ensures reproducible installs (like package-lock.json)
 
 # IDEs
 .vscode/
@@ -137,3 +137,32 @@ memory-bank/*.bak
 
 # Sentry
 .sentryclirc
+sentry-debug.txt
+
+# Playwright GIF recordings (test artifacts)
+*.gif
+!docs/**/*.gif
+
+# Claude Code project memory (machine-local, not source code)
+.claude/projects/
+
+# Railway
+.railway/
+
+# Coverage artifacts
+.coverage.*
+coverage.xml
+
+# Python type checking
+pyrightconfig.json
+
+# Jupyter / IPython
+*.ipynb
+!docs/**/*.ipynb
+
+# macOS extended attributes
+.AppleDouble
+.LSOverride
+
+# Claude Code conversation transcripts
+*.jsonl

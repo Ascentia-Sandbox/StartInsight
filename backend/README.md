@@ -287,8 +287,6 @@ uv run alembic downgrade -1
 # View migration history
 uv run alembic history
 
-# Check database connection
-uv run python check_db_connection.py
 ```
 
 ## Docker Services
@@ -314,9 +312,6 @@ docker compose --profile tools up -d
 ```bash
 # Database is hosted on Supabase Pro (no local PostgreSQL)
 # Check your DATABASE_URL in .env points to Supabase
-
-# Test connection from Python
-uv run python check_db_connection.py
 
 # Check Supabase connection pool
 # Go to: Supabase Dashboard > Project Settings > Database > Connection Pooling
@@ -434,7 +429,7 @@ See `.env.example` for all available environment variables.
 - 94% cost reduction vs production config (~$30/mo vs $483/mo)
 
 **For Production (>100 users, $300-500/month):**
-- See [`../memory-bank/production-plan.md`](../memory-bank/production-plan.md) for full production setup
+- See [`../memory-bank/active-context.md`](../memory-bank/active-context.md) for current deployment status
 - Deploy backend to Railway Pro
 - Deploy frontend to Vercel Pro
 - Configure production environment variables

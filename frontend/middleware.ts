@@ -91,8 +91,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect logged-in users away from auth pages
-  if (user && (pathWithoutLocale.startsWith('/auth/') || pathname.startsWith('/auth/'))) {
+  // Redirect logged-in users away from auth pages (except update-password which requires a session)
+  const isUpdatePassword = pathWithoutLocale === '/auth/update-password' || pathname === '/auth/update-password';
+  if (user && !isUpdatePassword && (pathWithoutLocale.startsWith('/auth/') || pathname.startsWith('/auth/'))) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);

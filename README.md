@@ -8,6 +8,19 @@ StartInsight is a daily, automated intelligence platform that discovers, validat
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-00C7B7.svg)](https://fastapi.tiangolo.com)
 [![Next.js 16+](https://img.shields.io/badge/Next.js-16+-black.svg)](https://nextjs.org)
+[![CI/CD](https://github.com/Ascentia-Sandbox/StartInsight/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Ascentia-Sandbox/StartInsight/actions/workflows/ci-cd.yml)
+
+---
+
+## 🌐 Live Production
+
+| Environment | URL | Status |
+|-------------|-----|--------|
+| **Frontend** | [start-insight-ascentias-projects.vercel.app](https://start-insight-ascentias-projects.vercel.app) | ✅ Live (Vercel) |
+| **Backend API** | [backend-production-e845.up.railway.app](https://backend-production-e845.up.railway.app) | ✅ Live (Railway) |
+| **Staging Frontend** | [start-insight-staging-ascentias-projects.vercel.app](https://start-insight-staging-ascentias-projects.vercel.app) | ✅ Live |
+| **Staging Backend** | [backend-staging-fbd7.up.railway.app](https://backend-staging-fbd7.up.railway.app) | ✅ Live |
+| **API Docs** | `/docs` (Swagger) | [Available](https://backend-production-e845.up.railway.app/docs) |
 
 ---
 
@@ -25,7 +38,7 @@ Unlike traditional brainstorming tools, StartInsight relies on **real-time marke
 
 ## ✨ Features
 
-### Current (Phase 1-10, 12-14, A-L Complete)
+### Current (Phase 1-10, 12-14, A-L, Q1-Q9, Security, Sentry — Production Live)
 
 **Data Intelligence**
 - **Automated Data Collection**: 6 scrapers (Reddit, Product Hunt, Google Trends, Twitter/X, Hacker News, Firecrawl) — 150+ signals/day target
@@ -81,12 +94,22 @@ Unlike traditional brainstorming tools, StartInsight relies on **real-time marke
 - **Team Collaboration**: RBAC with owner/admin/member roles, shared insights
 - **Custom Research**: Submit research requests with tier-based approval
 
+**Security & Observability**
+- **Security Headers**: HSTS (`max-age=31536000`), CSP, X-Frame-Options, X-Content-Type-Options via middleware
+- **JWT Authentication**: ES256 (ECDSA P-256) via Supabase JWKS endpoint — no shared secret needed
+- **XSS Prevention**: `bleach` sanitization on all user inputs, `markupsafe.escape()` for display
+- **Password Recovery**: `/auth/update-password` page with Supabase recovery token flow
+- **Sentry Monitoring**: Errors + performance traces + structured logs + AI spans on production + staging
+- **AI Agent Observability**: Manual `gen_ai.request` spans (model, token usage, latency) in Sentry Traces
+- **Session Replay**: Sentry Session Replay (maskAllText, blockAllMedia) on frontend errors
+
 **Developer Features**
-- **Public API**: 230+ REST endpoints with comprehensive documentation
+- **Public API**: 232+ REST endpoints with Swagger/OpenAPI documentation
 - **API Key Management**: Scoped keys with usage tracking, rate limiting
 - **Export Tools**: CSV/JSON exports with brand customization
 - **Row-Level Security**: Supabase RLS policies on all 69 tables
-- **Comprehensive Testing**: 233+ backend tests passing, 47 E2E tests (8 suites, 5 browsers)
+- **Comprehensive Testing**: 291 backend tests passing, 47 E2E tests (8 suites, 5 browsers)
+- **CI/CD Pipeline**: GitHub Actions — Security Scan → Tests → Migrate → Build → Deploy
 
 ---
 
@@ -100,14 +123,14 @@ graph LR
     D -->|8-Dim Insights| C
     C -->|API| E[FastAPI]
     E -->|JSON/SSE| F[Next.js Dashboard]
-    G[Upstash Redis] -.->|Queue| B
+    G[Railway Redis] -.->|Queue| B
 ```
 
-**Cloud Infrastructure (Supabase Pro):**
+**Cloud Infrastructure:**
 - **Database**: Supabase Pro PostgreSQL (Sydney, ap-southeast-2), 200 connection pool limit
-- **Cache/Queue**: Upstash Redis (Sydney)
-- **Backend**: Railway or local development
-- **Frontend**: Vercel or local development
+- **Cache/Queue**: Railway Redis (native service, `redis.railway.internal:6379`)
+- **Backend**: Railway (port 8080, Docker, `railway.toml`)
+- **Frontend**: Vercel (Next.js App Router)
 
 ### The Three Core Loops
 
@@ -155,9 +178,16 @@ graph LR
 - **RSS**: feedparser (custom feeds)
 
 ### Services
-- **Payments**: Stripe (4-tier subscriptions, webhooks)
+- **Payments**: Stripe (4-tier subscriptions, webhooks) — live mode, 3 products, 6 prices (monthly + yearly), webhook configured
 - **Email**: Resend (6 email templates)
 - **Rate Limiting**: SlowAPI + Redis (tier-based quotas)
+- **Error Tracking**: Sentry (`sentry-sdk[fastapi]>=2.0.0`, `@sentry/nextjs@^10.38.0`) — errors + traces + logs
+
+### DevOps & CI/CD
+- **CI/CD**: GitHub Actions (`.github/workflows/ci-cd.yml`) — `main` → production, `develop` → staging
+- **Backend Hosting**: Railway (Dockerfile + `railway.toml`, port 8080)
+- **Frontend Hosting**: Vercel (App Router, Next.js 16+)
+- **IaC**: Railway MCP + Vercel MCP for environment variable management
 
 ### DevOps
 - **Database**: Supabase Pro (PostgreSQL 15+, Row-Level Security, DB_SSL=True)
@@ -171,10 +201,10 @@ graph LR
 
 ## 🚀 Quick Start
 
-> **Cloud-First Setup**: StartInsight uses Supabase Cloud PostgreSQL and Upstash Redis by default. No local database required.
+> **Cloud-First Setup**: StartInsight uses Supabase Cloud PostgreSQL (production) and Railway Redis (production). Local dev uses a local Redis instance.
 
 For detailed setup instructions, see **[SETUP.md](SETUP.md)** - a comprehensive guide covering:
-- Prerequisites (Supabase, Upstash accounts)
+- Prerequisites (Supabase accounts)
 - Backend and frontend configuration
 - Database initialization
 - Troubleshooting common issues
@@ -186,7 +216,7 @@ For detailed setup instructions, see **[SETUP.md](SETUP.md)** - a comprehensive 
 - **Node.js 18+**
 - **uv** (Python package manager): `curl -LsSf https://astral.sh/uv/install.sh | sh`
 - **Supabase Account**: [supabase.com](https://supabase.com) (PostgreSQL database + auth)
-- **Upstash Account**: [upstash.com](https://upstash.com) (Redis cache/queue)
+- **Redis**: Local Redis for dev; Railway Redis auto-provisioned in production
 
 ### 1. Clone the Repository
 
@@ -202,11 +232,11 @@ cd StartInsight
 3. Copy your connection string from **Project Settings > Database > Connection string** (Connection Pooling mode)
 4. Copy your API keys from **Project Settings > API**
 
-### 3. Create Upstash Redis
+### 3. Redis Setup
 
-1. Go to [upstash.com](https://upstash.com) and create a new Redis database
-2. Choose **Asia Pacific Southeast (Sydney)** region
-3. Copy the **REST API URL** (format: `redis://default:[password]@[endpoint].upstash.io:6379`)
+**Production**: Handled automatically — Railway Redis service is provisioned in the project (`redis.railway.internal:6379`). No external account needed.
+
+**Local development**: Install Redis locally (`brew install redis` / `apt install redis`) and set `REDIS_URL=redis://localhost:6379`.
 
 ### 4. Configure Backend
 
@@ -226,8 +256,8 @@ SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 JWT_SECRET=your_jwt_secret_from_supabase
 
-# Redis (Upstash Cloud)
-REDIS_URL=redis://default:[PASSWORD]@[ENDPOINT].upstash.io:6379
+# Redis (local dev; production uses Railway Redis automatically)
+REDIS_URL=redis://localhost:6379
 
 # AI (Gemini 2.0 Flash)
 GOOGLE_API_KEY=your_google_api_key
@@ -300,9 +330,8 @@ For troubleshooting, production deployment, and advanced configuration, see:
 |---------|---------|------|------|
 | **Supabase** | PostgreSQL + Auth | Pro | $25/mo |
 | **Gemini 2.0 Flash** | AI analysis | Pay-as-you-go | ~$5/mo |
-| **Railway** | Backend hosting | Free ($5 credit) | $0 |
+| **Railway** | Backend + Redis | Free (500h/mo + free Redis) | $0 |
 | **Vercel** | Frontend hosting | Hobby | $0 |
-| **Upstash** | Redis cache/queue | Free | $0 |
 | **Sentry** | Error tracking | Free (5K events) | $0 |
 | **Resend** | Transactional email | Free (3K emails) | $0 |
 | | | **Total** | **~$30/mo** |
@@ -315,37 +344,50 @@ For troubleshooting, production deployment, and advanced configuration, see:
 | **Production** | [`backend/.env.production.example`](backend/.env.production.example) | [`frontend/.env.production.example`](frontend/.env.production.example) |
 | **Development** | [`backend/.env.example`](backend/.env.example) | [`frontend/.env.example`](frontend/.env.example) |
 
-### Staging Deployment (6 steps)
+### CI/CD Pipeline (Automated)
+
+Deployment is fully automated via GitHub Actions:
+
+```
+Push to main  → Security Scan → Backend Tests → Frontend Tests
+             → Migrate Production DB → Build Docker Image → Deploy to Production
+
+Push to develop → Security Scan → Backend Tests → Frontend Tests
+               → Migrate Staging DB → Deploy to Staging
+```
+
+**Deployed URLs:**
+- Production Backend: `https://backend-production-e845.up.railway.app`
+- Production Frontend: `https://start-insight-ascentias-projects.vercel.app`
+- Staging Backend: `https://backend-staging-fbd7.up.railway.app`
+
+### Manual Deployment (First Time)
 
 ```bash
-# 1. Create accounts: Railway, Vercel, Upstash, Sentry, Resend, Google AI Studio
+# 1. Create accounts: Railway, Vercel, Sentry, Resend, Google AI Studio
 # 2. Run database migrations against Supabase
 cd backend && DATABASE_URL="postgresql+asyncpg://..." alembic upgrade head
 
 # 3. Deploy backend to Railway (link GitHub repo, set root dir to repo root)
-#    Add all vars from backend/.env.staging.example in Railway dashboard
+#    Add all vars from backend/.env.production.example in Railway dashboard
+#    ⚠️ Set target port = 8080 in Railway domain settings
 
 # 4. Deploy frontend to Vercel (import repo, set root dir to frontend/)
-#    Add all vars from frontend/.env.staging.example in Vercel dashboard
+#    Add all vars from frontend/.env.production.example in Vercel dashboard
 
 # 5. Update CORS: set Railway CORS_ORIGINS to match Vercel URL
 # 6. Verify: curl https://[railway-url]/health → {"status":"healthy"}
 ```
 
-### Production Go-Live
-
-1. **DNS**: Add CNAMEs — `www.startinsight.app` → Vercel, `api.startinsight.app` → Railway
-2. **Env flip**: Update `ENVIRONMENT=production`, `APP_URL=https://api.startinsight.app`, `CORS_ORIGINS=https://startinsight.app,https://www.startinsight.app` in Railway; update `NEXT_PUBLIC_API_URL=https://api.startinsight.app` in Vercel
-3. **Redeploy both** (NEXT_PUBLIC_* vars require a rebuild)
-4. **Update Supabase Auth**: Set Site URL to `https://startinsight.app`
-
 ### Gotchas
 
-- **Railway 512MB RAM** — Playwright+Chromium takes ~400MB. If OOM, set `USE_CRAWL4AI=false` or reduce workers
+- **Railway target port** — must be `8080` (Railway injects `PORT=8080`, not 8000)
 - **NEXT_PUBLIC_* vars are build-time** — changing them in Vercel requires a redeploy
-- **Upstash TLS** — URL must be `rediss://` (double-s), set `REDIS_SSL=true`
-- **Production validator** — app crashes on startup if any required var is missing (intentional safety)
+- **Railway Redis URL** — uses `redis://` (plain TCP on private network), no TLS needed
+- **Sentry env vars** — set via Railway MCP (backend) and GitHub Actions workflow (Vercel)
+- **Alembic migration c008** — `purge_seed_data` is irreversible, run on staging first
 - **CORS whitelist** — production origins must exactly match `CORS_ALLOWED_PRODUCTION_ORIGINS`
+- **Railway 512MB RAM** — Playwright+Chromium takes ~400MB. If OOM, set `USE_CRAWL4AI=false`
 
 ---
 
@@ -361,18 +403,18 @@ StartInsight uses **cloud services by default** to ensure consistency between de
 - **Cost:** $25/mo (Supabase Pro) vs $69/mo (Neon) = 64% savings
 - **Features:** PostgreSQL 15+, Row-Level Security, connection pooling (200 limit), real-time subscriptions, SSL required
 
-### Upstash Redis (Sydney)
+### Railway Redis (Production)
 
-- **Region:** Asia Pacific Southeast (Sydney) - Lowest latency
-- **Type:** Regional (not Global) for optimal performance
-- **Cost:** Free tier available, scales with usage
-- **Use Cases:** Task queue (Arq), rate limiting, session caching
+- **Location:** Same Railway project as backend (private network, zero latency)
+- **Hostname:** `redis.railway.internal:6379` (internal only, not publicly accessible)
+- **Cost:** Free (Railway free tier includes Redis)
+- **Use Cases:** Arq task queue, rate limiting (tier-based quotas)
 
 ### Why Cloud-First?
 
-1. **No Infrastructure Setup**: Skip Docker, PostgreSQL, Redis installation
-2. **Production Parity**: Development environment matches production exactly
-3. **Managed Backups**: Automatic backups and point-in-time recovery
+1. **No Infrastructure Setup**: Skip Docker, PostgreSQL installation (only local Redis needed for dev)
+2. **Production Parity**: Development environment matches production closely
+3. **Managed Backups**: Automatic backups and point-in-time recovery (Supabase Pro)
 4. **Global Accessibility**: Access your database from anywhere
 5. **RLS Testing**: Test Row-Level Security policies in real Supabase environment
 
@@ -394,7 +436,7 @@ StartInsight/
 │   │   │   ├── success_stories.py # Success stories API (6 endpoints)
 │   │   │   ├── trends.py      # Trends API (5 endpoints)
 │   │   │   └── market_insights.py # Blog API (6 endpoints)
-│   │   ├── agents/            # 6 AI agents (analyzer, research, competitive, market, content)
+│   │   ├── agents/            # 8 AI agents (enhanced_analyzer, research, competitive_intel, market_intel, content_generator, chat_agent, quality_reviewer, market_insight_publisher)
 │   │   ├── scrapers/          # Data collection modules (4 sources)
 │   │   ├── scripts/           # Seed scripts (84 content items)
 │   │   └── main.py            # FastAPI entry point
@@ -425,7 +467,13 @@ StartInsight/
 │   ├── implementation-plan.md # 3-phase roadmap
 │   ├── architecture.md        # System design
 │   ├── tech-stack.md          # Technology decisions
-│   └── progress.md            # Development log
+│   ├── progress.md            # Development log
+│   └── archived/              # Historical snapshots (gitignored)
+│
+├── research/                  # Competitive intelligence
+│   ├── ideabrowser-analysis.md          # Full IdeaBrowser teardown
+│   ├── ideabrowser-executive-summary.md # Key findings
+│   └── ideabrowser-competitive-analysis.json
 │
 ├── .claude/                   # Claude Code configuration
 │   ├── agents/                # Custom Claude agents
@@ -466,9 +514,6 @@ cd frontend && npm run lint --fix
 ### Database Utilities
 
 ```bash
-# Check database connection
-uv run python backend/check_db_connection.py
-
 # Create new migration
 cd backend && uv run alembic revision --autogenerate -m "description"
 
@@ -482,14 +527,14 @@ cd backend && uv run alembic downgrade -1
 ### Cloud Service Management
 
 ```bash
-# Check Supabase connection
-cd backend && uv run python -c "from app.db.session import check_db_connection; import asyncio; asyncio.run(check_db_connection())"
+# Verify backend health
+curl https://backend-production-e845.up.railway.app/health
 
 # View Supabase logs
 # Go to: https://supabase.com/dashboard/project/[PROJECT_REF]/logs/postgres-logs
 
-# View Upstash Redis metrics
-# Go to: https://console.upstash.com/redis/[DATABASE_ID]
+# View Railway Redis metrics
+# Railway dashboard → startInsight project → Redis service
 
 # Reset database (⚠️ use with caution)
 cd backend && alembic downgrade base && alembic upgrade head
@@ -590,6 +635,7 @@ The project enforces 4 core skills via Claude Code:
 | **Twitter** | Twitter/X API (Tweepy) | [developer.twitter.com](https://developer.twitter.com) |
 | **Stripe** | Payments (subscriptions) | [stripe.com](https://stripe.com) |
 | **Resend** | Email (transactional) | [resend.com](https://resend.com) |
+| **Sentry** | Error tracking + monitoring | [sentry.io](https://sentry.io) |
 
 Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` files).
 
@@ -597,49 +643,52 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 
 ## 📊 Current Status
 
-**Active Phase**: Phase 1-14 + Q1-Q9 Complete (100%) - Production Ready
+**Status**: ✅ **PRODUCTION LIVE** (2026-02-19)
 
-**Backend**: 232+ API endpoints, 69 database tables, 15+ services
-**Frontend**: 35+ routes (dashboard, workspace, research, admin, teams, 10 public pages, 4 admin content pages)
-**Database**: 25+ Alembic migrations applied, Row-Level Security enabled
-**AI Agents**: 8 agents (analyzer, enhanced_analyzer, research, competitive_intel, market_intel, content_generator, chat_agent, market_insight_publisher)
-**Testing**: 291 backend tests (22 files, 85% coverage), 47 E2E tests (8 suites, 5 browsers, WCAG 2.1 AA)
-**Content**: 84+ items (54 tools, 12 success stories, 180+ trends, 13 blog articles)
-**API**: 232+ endpoints (incl. pulse.py, contact.py, tools/categories)
+| Metric | Value |
+|--------|-------|
+| **Backend** | 232+ API endpoints, 69 database tables, 15+ services |
+| **Frontend** | 35+ routes (dashboard, workspace, research, admin, 10 public pages) |
+| **Database** | 25+ Alembic migrations (c009 latest), Row-Level Security enabled |
+| **AI Agents** | 8 agents (enhanced_analyzer, research, competitive_intel, market_intel, content_generator, chat_agent, quality_reviewer, weekly_digest) |
+| **Testing** | 291 backend tests (22 files, 85% coverage), 47 E2E tests (8 suites, 5 browsers) |
+| **Content** | 84+ seeded items (54 tools, 12 success stories, 180+ trends, 13 blog articles) |
+| **Payments** | Stripe live mode — 3 products, 6 prices (monthly + yearly), webhook active |
+| **Monitoring** | Sentry (errors + traces + logs + AI spans), ascentia-km org, events confirmed |
+| **Security** | HSTS, CSP, JWT ES256 JWKS, XSS prevention (bleach), rate limiting |
+| **CI/CD** | GitHub Actions — main→production, develop→staging, all passing |
+| **Scheduler** | All 8 background jobs running (APScheduler + Railway Redis, verified 2026-02-19) |
 
-**Completed**:
-- ✅ Phase 1-3: MVP Foundation (scrapers, analyzer, Next.js dashboard)
-- ✅ Phase 4: Authentication & Admin Portal (Supabase Auth, SSE streaming, 8-dimension scoring)
-- ✅ Phase 5: AI Research Agent (40-step research, admin approval queue, brand/landing generators)
-- ✅ Phase 5.2: Super Admin Sovereignty + Evidence Visualizations (research request queue, radar charts, KPI cards)
-- ✅ Phase 6: Monetization (Stripe 4-tier, Resend email, team collaboration)
-- ✅ Phase 7: Expansion (Twitter/X scraper, API keys, multi-tenancy)
-- ✅ Phase 8: Content Quality & Pipeline Monitoring (quality gates, SHA-256 dedup, superadmin dashboard)
-- ✅ Phase 9: User Engagement (preferences, AI idea chat, community voting/comments, gamification, social networking)
-- ✅ Phase 10: Integration Ecosystem (external integrations, webhooks with retry, OAuth connections)
-- ✅ Phase 12: Public Content Infrastructure (4 models, 26 endpoints, 4 admin pages, 84 seeded items)
-- ✅ Phase 13: Public Pages (10 pages, mega-menu navigation, mobile drawer, 9 shadcn components)
-- ✅ Phase 14: Marketing Optimization (SEO infrastructure, homepage redesign, blog launch, 2%→4% conversion)
-- ✅ Phase Q6-Q9: Quality Audit Fixes (3 critical bugs, 19 SEO layouts, ILIKE sanitization, rate limiting)
+**Phase Completion**:
+- ✅ Phase 1-3: MVP Foundation (scrapers, AI analysis, Next.js dashboard)
+- ✅ Phase 4: Authentication & Admin Portal (Supabase Auth, 8-dimension scoring)
+- ✅ Phase 5-7: Advanced Features (research, Stripe, teams, API keys, multi-tenancy)
+- ✅ Phase 8-10: Enterprise Features (superadmin, engagement, integrations)
+- ✅ Phase 12-14: Public Content & SEO (tools, success stories, trends, blog, sitemap)
+- ✅ Phase A-L: Professional Overhaul (design system, admin portal, competitive features)
+- ✅ Phase Q1-Q9: Quality Audit Fixes (Pulse, SEO, sanitization, rate limiting)
+- ✅ Phase S: Security Hardening (HSTS, CSP, JWT ES256, XSS prevention)
+- ✅ Phase M: Sentry Monitoring (errors + traces + logs + AI spans + Session Replay)
+- ✅ Phase P: Production Deployment (Railway + Vercel + CI/CD pipeline)
+- ✅ Phase R: Redis + Scheduler (Railway Redis provisioned, scheduler running clean)
 
-**Business Metrics (Post-Phase Q9)**:
-- Signup Conversion: 2% → 4% (+100%)
-- Organic Traffic: 500 → 2,500/mo (+400%)
-- Revenue Impact: +$9,500/mo MRR (doubled paid conversion)
-- PMF Validation Cost: ~$30/mo (Supabase Pro $25 + Redis $5)
-- Full Production Cost: $703-752/mo (including marketing)
+**Business Metrics (Targets)**:
+- Signup Conversion: 4% target (2% pre-Phase 14 baseline)
+- PMF Validation Cost: ~$30/mo (Supabase Pro $25 + Gemini ~$5)
+- Revenue Target: $59K MRR at 10K users (10% paid conversion)
 
 **Competitive Position**:
 - 100% feature parity with IdeaBrowser
 - 11 unique competitive advantages
 - 50-70% lower pricing
 
-**Next**:
-- 🚀 Production Deployment (Railway + Vercel + Supabase Cloud)
-- 📊 Monitoring Setup (Sentry, uptime checks)
-- 🔍 Phase 15-16: Advanced Features (competitive intelligence, predictive analytics)
+**Post-Launch Priorities**:
+- 📊 Content seeding (50+ insights via admin portal)
+- 📈 Uptime monitoring (UptimeRobot / Checkly)
+- 🔍 Google Search Console submission
+- 📢 Phase 15-16: APAC multi-language (backend ready, frontend English-only)
 
-See `memory-bank/active-context.md` for deployment checklist.
+See `memory-bank/active-context.md` for current deployment status and priorities.
 
 ---
 
@@ -670,3 +719,7 @@ For questions or issues:
 ---
 
 **Built with the "Glue Coding" philosophy: Don't reinvent, integrate.**
+
+---
+
+*v1.0 — Production live. All phases complete. Scheduler running. ~$30/mo. (2026-02-20)*

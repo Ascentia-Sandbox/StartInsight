@@ -194,7 +194,7 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_URL=https://backend-production-e845.up.railway.app
             NEXT_PUBLIC_SUPABASE_URL=https://mxduetfcsgttwwgszjae.supabase.co
-            NEXT_PUBLIC_SUPABASE_ANON_KEY=placeholder
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
 
   # Migrate Staging Database (on develop push)
   migrate-staging:
@@ -336,7 +336,12 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
-        run: vercel --prod --token=$VERCEL_TOKEN
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          vercel --prod --token=$VERCEL_TOKEN \
+            --build-env NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+            --build-env NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 
       - name: Post-deploy health check
         env:

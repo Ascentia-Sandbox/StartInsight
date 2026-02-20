@@ -25,7 +25,8 @@ def _get_redis_settings() -> RedisSettings:
         host=parsed.hostname or "localhost",
         port=parsed.port or 6379,
         password=parsed.password,
-        database=int(parsed.path.lstrip("/") or "0"),
+        database=int((parsed.path or "/0").lstrip("/") or "0"),
+        ssl=settings.redis_url.startswith("rediss://"),
         conn_timeout=3,
         conn_retries=0,
     )
@@ -257,6 +258,12 @@ async def _schedule_agent_from_config(redis, config: AgentConfiguration, db) -> 
         "research_agent": "fetch_daily_insight_task",
         "competitive_intel": "update_success_stories_task",
         "market_intel": "market_insight_publisher_task",
+        # DB-registered agent names (from AgentConfiguration)
+        "daily_insight_agent": "fetch_daily_insight_task",
+        "success_stories_agent": "update_success_stories_task",
+        "market_insight_publisher": "market_insight_publisher_task",
+        "insight_quality_reviewer": "insight_quality_audit_task",
+        "market_insight_quality_reviewer": "market_insight_quality_review_task",
     }
 
     task_name = task_map.get(config.agent_name)

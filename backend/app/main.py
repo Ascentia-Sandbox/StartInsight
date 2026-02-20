@@ -22,24 +22,33 @@ from app.middleware.request_size_limit import RequestSizeLimitMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.tasks import schedule_scraping_tasks, stop_scheduler
 
-# Sentry error tracking (production)
-if settings.sentry_dsn and settings.environment == "production":
+# Sentry error tracking (production + staging)
+if settings.sentry_dsn and settings.environment in ("production", "staging"):
+    import logging as _logging
+
     import sentry_sdk
     from sentry_sdk.integrations.fastapi import FastApiIntegration
+    from sentry_sdk.integrations.logging import LoggingIntegration
     from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
     sentry_sdk.init(
         dsn=settings.sentry_dsn,
         environment=settings.environment,
+        release=os.environ.get("RAILWAY_GIT_COMMIT_SHA", "local"),
         traces_sample_rate=settings.sentry_traces_sample_rate,
         profiles_sample_rate=settings.sentry_profiles_sample_rate,
+        enable_logs=True,
         integrations=[
             FastApiIntegration(transaction_style="url"),
             SqlalchemyIntegration(),
+            LoggingIntegration(
+                level=_logging.INFO,          # Breadcrumbs from INFO+
+                event_level=_logging.ERROR,   # Sentry issues from ERROR+
+                sentry_logs_level=_logging.WARNING,  # Sentry Logs tab from WARNING+
+            ),
         ],
-        # Filter out health check noise
         before_send=lambda event, hint:
-            None if event.get("request", {}).get("url", "").endswith("/health") else event
+            None if event.get("request", {}).get("url", "").endswith("/health") else event,
     )
 
 # Configure structured logging
@@ -60,7 +69,7 @@ async def lifespan(app: FastAPI):
     - Shutdown: Stop task scheduler, close DB pool, close Redis
     """
     # Startup
-    logger.info(f"Starting StartInsight API v{settings.app_version} (staging)")
+    logger.info(f"Starting StartInsight API v{settings.app_version} ({settings.environment})")
 
     # Initialize task scheduler
     try:
@@ -127,10 +136,16 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         return response
 
 
+from app.middleware.dlp_monitoring import DLPMonitoringMiddleware
+from app.middleware.session_security import SessionSecurityMiddleware
 from app.middleware.tracing import TracingMiddleware
+from app.middleware.zero_trust_security import ZeroTrustSecurityMiddleware
 
 app.add_middleware(TracingMiddleware)
 app.add_middleware(RequestIDMiddleware)
+app.add_middleware(ZeroTrustSecurityMiddleware)
+app.add_middleware(DLPMonitoringMiddleware)
+app.add_middleware(SessionSecurityMiddleware)
 
 # Security headers and API version (BEFORE CORS)
 app.add_middleware(SecurityHeadersMiddleware)
@@ -148,6 +163,11 @@ app.add_middleware(
 
 # Register SlowAPI limiter (Phase 2: Code Simplification)
 app.state.limiter = limiter
+
+# Add rate limiting middleware for sensitive endpoints
+from app.middleware.rate_limiter import RateLimiterMiddleware
+
+app.add_middleware(RateLimiterMiddleware, max_requests=100, window_seconds=3600)
 
 
 # ============================================================================

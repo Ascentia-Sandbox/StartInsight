@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { config } from "@/lib/env";
+import { getSupabaseClient } from "@/lib/supabase/client";
 
 interface SuccessStory {
   id: string;
@@ -44,11 +45,20 @@ export default function SuccessStoriesPage() {
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const limit = 10;
 
   useEffect(() => {
     fetchStories();
   }, [page]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await getSupabaseClient().auth.getSession();
+      setIsLoggedIn(!!session);
+    };
+    void checkAuth();
+  }, []);
 
   const fetchStories = async () => {
     setLoading(true);
@@ -137,8 +147,8 @@ export default function SuccessStoriesPage() {
           <Card className="text-center">
             <CardContent className="pt-6">
               <DollarSign className="h-8 w-8 text-green-500 mx-auto mb-2" />
-              <div className="text-2xl font-bold">$2.4M</div>
-              <p className="text-sm text-muted-foreground">Ideas Validated</p>
+              <div className="text-2xl font-bold">$2.4M+</div>
+              <p className="text-sm text-muted-foreground">Funding Raised</p>
             </CardContent>
           </Card>
           <Card className="text-center">
@@ -300,7 +310,9 @@ export default function SuccessStoriesPage() {
               Join thousands of founders who discovered their successful startup ideas with us.
             </p>
             <Button asChild size="lg" variant="secondary">
-              <Link href="/auth/signup">Start Your Story</Link>
+              <Link href={isLoggedIn ? "/dashboard" : "/auth/signup"}>
+                {isLoggedIn ? "Go to Dashboard" : "Start Your Story"}
+              </Link>
             </Button>
           </CardContent>
         </Card>

@@ -204,30 +204,39 @@ async def get_subscription_status(
 
     Requires authentication.
     """
-    subscription = current_user.subscription if hasattr(current_user, "subscription") else None
+    try:
+        subscription = current_user.subscription if hasattr(current_user, "subscription") else None
 
-    if not subscription:
+        if not subscription:
+            tier = getattr(current_user, "subscription_tier", "free")
+            return {
+                "tier": tier,
+                "status": "active",
+                "limits": PRICING_TIERS.get(tier, PRICING_TIERS["free"]).limits,
+            }
+
+        return {
+            "tier": subscription.tier if hasattr(subscription, "tier") else "free",
+            "status": subscription.status if hasattr(subscription, "status") else "active",
+            "current_period_end": (
+                subscription.current_period_end.isoformat()
+                if hasattr(subscription, "current_period_end") and subscription.current_period_end
+                else None
+            ),
+            "cancel_at_period_end": (
+                subscription.cancel_at_period_end
+                if hasattr(subscription, "cancel_at_period_end")
+                else False
+            ),
+            "limits": PRICING_TIERS.get(
+                subscription.tier if hasattr(subscription, "tier") else "free",
+                PRICING_TIERS["free"],
+            ).limits,
+        }
+    except Exception:
+        logger.exception("Error fetching subscription status for user %s", current_user.id)
         return {
             "tier": "free",
             "status": "active",
             "limits": PRICING_TIERS["free"].limits,
         }
-
-    return {
-        "tier": subscription.tier if hasattr(subscription, "tier") else "free",
-        "status": subscription.status if hasattr(subscription, "status") else "active",
-        "current_period_end": (
-            subscription.current_period_end.isoformat()
-            if hasattr(subscription, "current_period_end") and subscription.current_period_end
-            else None
-        ),
-        "cancel_at_period_end": (
-            subscription.cancel_at_period_end
-            if hasattr(subscription, "cancel_at_period_end")
-            else False
-        ),
-        "limits": PRICING_TIERS.get(
-            subscription.tier if hasattr(subscription, "tier") else "free",
-            PRICING_TIERS["free"],
-        ).limits,
-    }

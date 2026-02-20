@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import * as Sentry from '@sentry/nextjs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
@@ -13,6 +14,7 @@ export default function InsightsError({
   reset: () => void;
 }) {
   useEffect(() => {
+    Sentry.captureException(error);
     console.error('Insights page error:', error);
   }, [error]);
 

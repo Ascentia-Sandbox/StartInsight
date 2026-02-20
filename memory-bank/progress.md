@@ -4,7 +4,7 @@
 **Read When:** After completing tasks (for logging), before starting work (to avoid duplication)
 **Dependencies:** Read active-context.md to know what phase you're in before logging
 **Purpose:** Completion log (Phase 1-10 complete + Production Readiness), recent changes, upcoming tasks
-**Last Updated:** 2026-02-17
+**Last Updated:** 2026-02-19
 ---
 
 # StartInsight - Progress Log
@@ -12,6 +12,57 @@
 This file tracks all significant changes made to the project. Each entry follows the format defined in CLAUDE.md Workflows section.
 
 ---
+
+## Recent Progress (2026-02-20)
+
+- [2026-02-20] [CLEANUP]: Remove ~28 redundant files, reorganize memory-bank
+  - Files: README.md, backend/README.md, memory-bank/archived/, research/
+  - Tech: Deleted stale .bak + Jan-2026 snapshots + root PNGs (~1MB) + backend dev artifacts; moved version2/ → archived/version2-proposed/, ideabrowser-analysis.md → research/
+  - Status: [✓ Complete]
+
+## Recent Progress (2026-02-19)
+
+- [2026-02-19] [REDIS-FIX]: Provision Railway Redis + fix scheduler SSL + task_map
+  - Files: backend/app/tasks/scheduler.py
+  - Tech: Railway native Redis (`redis.railway.internal:6379`); `ssl=` added to `_get_redis_settings()`; 5 missing agent→task mappings added
+  - Status: [✓ Complete — Sentry confirmed: scheduler running, localhost:6379 error cleared]
+
+- [2026-02-19] [SENTRY-FULL]: Full Sentry coverage for staging + production
+  - Files: backend/app/main.py, backend/app/api/deps.py, backend/app/agents/sentry_tracing.py (NEW), enhanced_analyzer.py, research_agent.py, market_intel_agent.py, frontend/sentry.client.config.ts, frontend/sentry.server.config.ts, frontend/instrumentation.ts (NEW), frontend/sentry.edge.config.ts (NEW), 3x error.tsx, .github/workflows/set-vercel-sentry-env.yml (NEW)
+  - Tech: LoggingIntegration + enable_logs + user context (backend); browserTracingIntegration + consoleLoggingIntegration + Session Replay (frontend); manual gen_ai.request spans for 3 AI agents; Vercel env vars set via GitHub Actions workflow; Railway vars set via MCP
+  - Status: [✓ Complete — Sentry receiving events in production, org ascentia-km]
+
+- [2026-02-19] [PHASE-6.1]: Wire Stripe payment integration end-to-end
+  - Files: config.py, payment_service.py, tests/services/test_payment_service.py
+  - Tech: 3 live-mode Stripe products + 6 prices; _get_price_id() covers all 6 combos; 15 tests pass
+  - Status: [✓ Complete]
+
+## Recent Progress (2026-02-18/19)
+
+- [2026-02-19] [SECURITY]: Comprehensive security enhancements (commit 3d815bb)
+  - Files: backend/app/middleware/security.py (NEW), backend/app/middleware/rate_limit.py, frontend/next.config.ts, frontend/middleware.ts
+  - Tech: HSTS + CSP + X-Frame-Options headers; JWT ES256 validation via JWKS; bleach XSS prevention; update-password page for auth recovery
+  - Status: [✓ Complete]
+
+- [2026-02-19] [AUTH-RECOVERY]: Update-password page + auth recovery redirect (commit 20b7dea)
+  - Files: frontend/app/[locale]/auth/update-password/page.tsx (NEW), frontend/middleware.ts
+  - Tech: Supabase recovery token flow, auth callback redirect to /auth/update-password, password update form
+  - Status: [✓ Complete]
+
+- [2026-02-18] [PRODUCTION-DEPLOY]: Production deployment — Railway + Vercel live
+  - Files: railway.toml, backend/Dockerfile, frontend/vercel.json, .github/workflows/ci-cd.yml
+  - Tech: backend-production-e845.up.railway.app (Railway port 8080); start-insight-ascentias-projects.vercel.app (Vercel); target port 8080 fix was root cause of 502
+  - Status: [✓ Complete — both environments healthy]
+
+- [2026-02-18] [STAGING-DEPLOY]: Staging environment fully operational
+  - Files: ci-cd.yml, .github/workflows/ci-cd.yml
+  - Tech: Supabase staging branch jsprkxymvuwoqoqkromr; session-mode pooler; c009 migration at head; develop→staging CI/CD
+  - Status: [✓ Complete]
+
+- [2026-02-18] [WORKER-FIX]: Fix arq worker + process 327-signal backlog
+  - Files: backend/app/worker.py, backend/start.sh (NEW), backend/railway.toml, backend/Dockerfile
+  - Tech: urlparse-based Redis URL parsing for Upstash TLS; arq runs as background process alongside uvicorn
+  - Status: [✓ Complete]
 
 ## Recent Progress (2026-02-17)
 
