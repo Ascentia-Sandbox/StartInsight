@@ -71,6 +71,7 @@ jobs:
           REDDIT_CLIENT_ID: test_client
           REDDIT_CLIENT_SECRET: test_secret
           REDDIT_USER_AGENT: test_agent
+          RESEND_API_KEY: ""
         run: |
           pytest tests/ -v --cov=app --cov-report=xml
 

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { FileText } from "lucide-react";
 
 export const metadata = {
-  title: "Terms of Service | StartInsight",
+  title: "Terms of Service",
   description: "Terms of Service for StartInsight — AI-powered startup intelligence platform.",
 };
 

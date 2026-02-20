@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Shield } from "lucide-react";
 
 export const metadata = {
-  title: "Privacy Policy | StartInsight",
+  title: "Privacy Policy",
   description: "Privacy Policy for StartInsight — how we collect, use, and protect your data.",
 };
 
