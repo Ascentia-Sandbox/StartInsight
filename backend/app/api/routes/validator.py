@@ -123,10 +123,10 @@ async def validate_idea(
     synthetic_signal = RawSignal(
         id=uuid4(),
         source="idea_validator",
-        title=body.idea_description[:200],
         content=body.idea_description,
         url=None,
         extra_metadata={
+            "title": body.idea_description[:200],
             "target_market": body.target_market,
             "budget": body.budget,
             "user_id": str(user.id),
