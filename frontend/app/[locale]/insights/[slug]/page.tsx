@@ -88,9 +88,11 @@ export default function InsightDetailPage() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
-    getSupabaseClient().auth.getSession().then(({ data: { session } }) => {
-      if (session) setAccessToken(session.access_token);
-    });
+    const loadToken = async () => {
+      const { data } = await getSupabaseClient().auth.getSession();
+      if (data.session) setAccessToken(data.session.access_token);
+    };
+    void loadToken();
   }, []);
 
   const { data: insight, isLoading, error } = useQuery({
