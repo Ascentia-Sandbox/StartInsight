@@ -84,7 +84,7 @@ export default function AboutPage() {
           Democratizing Startup Discovery
         </h1>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-          We believe great startup ideas shouldn't be limited to those with insider access.
+          We believe great startup ideas shouldn&apos;t be limited to those with insider access.
           StartInsight uses AI to surface market opportunities that anyone can build into successful businesses.
         </p>
       </section>
@@ -100,13 +100,13 @@ export default function AboutPage() {
               reserved for well-connected VCs and serial entrepreneurs.
             </p>
             <p className="text-muted-foreground mb-4">
-              We're changing that. StartInsight analyzes millions of conversations, trends,
+              We&apos;re changing that. StartInsight analyzes millions of conversations, trends,
               and market signals to surface opportunities that are validated by real demand.
-              Whether you're a first-time founder or a seasoned entrepreneur, you deserve
+              Whether you&apos;re a first-time founder or a seasoned entrepreneur, you deserve
               access to the same quality of market intelligence.
             </p>
             <p className="text-muted-foreground">
-              Our AI doesn't just generate ideas—it validates them against real market data,
+              Our AI doesn&apos;t just generate ideas—it validates them against real market data,
               scores them across 8 critical dimensions, and provides the research you need
               to move forward with confidence.
             </p>
