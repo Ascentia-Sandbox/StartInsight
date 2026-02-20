@@ -12,9 +12,11 @@ from enum import Enum
 from typing import Annotated
 
 import httpx
+import jwt
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
+from jwt.algorithms import ECAlgorithm
+from jwt.exceptions import InvalidTokenError
 from redis import asyncio as aioredis
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
@@ -217,19 +219,14 @@ async def _verify_and_get_user(token: str, db: AsyncSession) -> User:
         if alg == "ES256" and kid and settings.supabase_url:
             # ES256: Verify using JWKS public key from Supabase
             jwk_key = await _get_jwks_key(kid)
+            public_key = ECAlgorithm.from_jwk(jwk_key)
             payload = jwt.decode(
                 token,
-                jwk_key,
+                public_key,
                 algorithms=["ES256"],
                 audience="authenticated",
                 issuer=issuer,
-                options={
-                    "verify_exp": True,
-                    "verify_aud": True,
-                    "verify_iss": True,
-                    "require_exp": True,
-                    "require_sub": True,
-                },
+                options={"require": ["exp", "sub"]},
             )
         elif settings.jwt_secret:
             # HS256: Verify using shared secret (legacy / testing)
@@ -239,13 +236,7 @@ async def _verify_and_get_user(token: str, db: AsyncSession) -> User:
                 algorithms=["HS256"],
                 audience="authenticated",
                 issuer=issuer,
-                options={
-                    "verify_exp": True,
-                    "verify_aud": True,
-                    "verify_iss": True,
-                    "require_exp": True,
-                    "require_sub": True,
-                },
+                options={"require": ["exp", "sub"]},
             )
         else:
             logger.error("No JWT verification method available (no JWKS kid and no JWT_SECRET)")
@@ -274,7 +265,7 @@ async def _verify_and_get_user(token: str, db: AsyncSession) -> User:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-    except JWTError as e:
+    except InvalidTokenError as e:
         logger.warning(f"JWT verification failed: {e}")
         raise credentials_exception
     except (httpx.HTTPError, ValueError) as e:

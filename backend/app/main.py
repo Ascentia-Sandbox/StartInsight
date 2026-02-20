@@ -10,7 +10,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from jose import JWTError
+from jwt.exceptions import InvalidTokenError
 from slowapi.errors import RateLimitExceeded
 from sqlalchemy.exc import IntegrityError, OperationalError
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -263,8 +263,8 @@ async def operational_error_handler(request: Request, exc: OperationalError):
     )
 
 
-@app.exception_handler(JWTError)
-async def jwt_error_handler(request: Request, exc: JWTError):
+@app.exception_handler(InvalidTokenError)
+async def jwt_error_handler(request: Request, exc: InvalidTokenError):
     """Handle JWT authentication errors (401 errors)."""
     logger.warning(f"JWT error on {request.url.path}: {exc}")
 

@@ -19,7 +19,7 @@ dependencies = [
     "asyncpg>=0.29.0",
     "redis>=5.0.1",
     # AI & Agents (Phase 2 - included for completeness)
-    "pydantic-ai>=0.0.13",
+    "pydantic-ai>=1.56.0",  # >=1.56.0 patches SSRF + XSS (CVE-2025 Dependabot #11-14)
     "anthropic>=0.25.0",
     "openai>=1.12.0",
     # Web Scraping
@@ -35,8 +35,8 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "httpx>=0.26.0",
     "apscheduler>=3.11.2",
-    # Authentication
-    "python-jose[cryptography]>=3.3.0",
+    # Authentication — PyJWT replaces python-jose to eliminate ecdsa Minerva-attack dep (#8)
+    "PyJWT[crypto]>=2.10.1",
     # SSE (Server-Sent Events) for admin real-time updates
     "sse-starlette>=1.6.5",
     # Phase 6: Payments & Email
@@ -51,6 +51,11 @@ dependencies = [
     "bleach>=6.1.0",  # Input sanitization for XSS prevention
     "itsdangerous>=2.1.0",  # Token signing for email unsubscribe
     "tenacity>=8.2.0",  # Retry logic for AI agent calls (rate limit handling)
+    # Security pins — explicit versions to override vulnerable transitives
+    "cryptography>=46.0.5",      # SECT curve subgroup attack fix (#15)
+    "pillow>=12.1.1",            # PSD OOB write fix (#16)
+    "protobuf>=6.33.5",          # JSON recursion bypass fix (#10)
+    "python-multipart>=0.0.22",  # Arbitrary file write fix (#9)
 ]
 
 [project.optional-dependencies]
