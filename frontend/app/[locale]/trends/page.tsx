@@ -242,7 +242,7 @@ export default function TrendsPage() {
                 <span className="text-center">Search Volume</span>
                 <span className="text-center">Growth</span>
                 <span className="text-center">Status</span>
-                <span className="w-20 text-center">Category</span>
+                <span className="text-center">Category</span>
               </div>
 
               <div className="divide-y">
@@ -279,7 +279,7 @@ export default function TrendsPage() {
                       <div className="text-center">
                         <Badge variant={growthInfo.variant}>{growthInfo.label}</Badge>
                       </div>
-                      <Badge variant="outline" className="w-20 justify-center shrink-0">
+                      <Badge variant="outline" className="whitespace-nowrap shrink-0">
                         {trend.category}
                       </Badge>
                     </div>
