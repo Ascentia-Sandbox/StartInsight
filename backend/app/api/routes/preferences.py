@@ -25,7 +25,7 @@ from app.models.user_preferences import EmailPreferences, UserPreferences
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/preferences", tags=["User Preferences"])
+router = APIRouter(prefix="/api/preferences", tags=["User Preferences"])
 
 
 # ============================================

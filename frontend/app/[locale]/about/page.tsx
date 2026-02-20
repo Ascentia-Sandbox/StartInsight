@@ -1,10 +1,12 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Lightbulb, Target, Users, Zap, Globe, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { getSupabaseClient } from "@/lib/supabase/client";
 
 const values = [
   {
@@ -59,6 +61,16 @@ const orgJsonLd = {
 };
 
 export default function AboutPage() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await getSupabaseClient().auth.getSession();
+      setIsLoggedIn(!!session);
+    };
+    void checkAuth();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       <script
@@ -181,7 +193,9 @@ export default function AboutPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" variant="secondary">
-                <Link href="/auth/signup">Start Free</Link>
+                <Link href={isLoggedIn ? "/dashboard" : "/auth/signup"}>
+                  {isLoggedIn ? "Go to Dashboard" : "Start Free"}
+                </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="bg-transparent border-primary-foreground/20 hover:bg-primary-foreground/10">
                 <Link href="/contact">Talk to Us</Link>
