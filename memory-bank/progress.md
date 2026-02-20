@@ -4,7 +4,7 @@
 **Read When:** After completing tasks (for logging), before starting work (to avoid duplication)
 **Dependencies:** Read active-context.md to know what phase you're in before logging
 **Purpose:** Completion log (Phase 1-10 complete + Production Readiness), recent changes, upcoming tasks
-**Last Updated:** 2026-02-19
+**Last Updated:** 2026-02-20
 ---
 
 # StartInsight - Progress Log
@@ -14,6 +14,11 @@ This file tracks all significant changes made to the project. Each entry follows
 ---
 
 ## Recent Progress (2026-02-20)
+
+- [2026-02-20] [PROD-FIX]: Fix RawSignal title kwarg + regex→pattern
+  - Files: backend/app/api/routes/validator.py, backend/app/api/routes/research.py
+  - Tech: Removed invalid title= kwarg from RawSignal(); Query(regex)→Query(pattern)
+  - Status: [✓ Complete]
 
 - [2026-02-20] [429-FIX]: Gemini rate-limit retry in quality_reviewer.py
   - Files: backend/app/agents/quality_reviewer.py, backend/pyproject.toml

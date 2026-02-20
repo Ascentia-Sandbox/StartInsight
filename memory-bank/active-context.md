@@ -4,7 +4,7 @@
 **Read When:** Before every task to understand current phase status
 **Dependencies:** Read project-brief.md first for context
 **Purpose:** Current phase tracking, immediate tasks, blockers, what's working/next
-**Last Updated:** 2026-02-19
+**Last Updated:** 2026-02-20
 ---
 
 # Active Context: StartInsight Development
@@ -52,7 +52,8 @@ Railway Project ID: `a3ece066-4758-4780-84d6-0379f1312227`
 
 ## Recent Work (2026-02-20)
 
-1. ✅ **QA P0/P1/P2 bug fixes** — 11 bugs fixed: /terms + /privacy pages (404→200), payments CORS fix, email prefs 404, Deep Research link, `$$` double-dollar, contact domain/duplicate-select, Enterprise billing tier, Google OAuth on signup, context-aware CTAs, skeleton loaders
+1. ✅ **API validator + research fixes** — `validator.py`: removed invalid `title=` kwarg from `RawSignal()` (was 500-ing on every `/api/validate` POST); `research.py:536`: `Query(regex=)` → `Query(pattern=)` (FastAPI deprecation warning cleared)
+2. ✅ **QA P0/P1/P2 bug fixes** — 11 bugs fixed: /terms + /privacy pages (404→200), payments CORS fix, email prefs 404, Deep Research link, `$$` double-dollar, contact domain/duplicate-select, Enterprise billing tier, Google OAuth on signup, context-aware CTAs, skeleton loaders
 2. ✅ **Gemini 429 fix** — `quality_reviewer.py` now uses `tenacity` retry (4 attempts, 5s→10s→20s→40s backoff) + `asyncio.sleep(2)` inter-call delay for both insight audit + market article review loops; `tenacity>=8.2.0` added to `pyproject.toml`
 
 ## Recent Work (2026-02-19)
