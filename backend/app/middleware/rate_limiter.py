@@ -12,11 +12,7 @@ logger = logging.getLogger(__name__)
 
 # In-memory rate limiting for non-production environments
 # For production, use Redis-based rate limiting
-_rate_limits = defaultdict(lambda: defaultdict(list))
-
-# In-memory rate limiting for non-production environments
-# For production, use Redis-based rate limiting
-_rate_limits = defaultdict(lambda: defaultdict(list))
+_rate_limits: defaultdict[str, list] = defaultdict(list)
 
 class RateLimiterMiddleware(BaseHTTPMiddleware):
     """
