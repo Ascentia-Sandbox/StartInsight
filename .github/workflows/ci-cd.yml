@@ -71,6 +71,7 @@ jobs:
           REDDIT_CLIENT_ID: test_client
           REDDIT_CLIENT_SECRET: test_secret
           REDDIT_USER_AGENT: test_agent
+          RESEND_API_KEY: ""
         run: |
           pytest tests/ -v --cov=app --cov-report=xml
 
@@ -326,7 +327,9 @@ jobs:
       - name: Deploy Backend to Railway (Production)
         env:
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway up --service backend --environment production --project a3ece066-4758-4780-84d6-0379f1312227
+        run: |
+          railway up --service backend --environment production --project a3ece066-4758-4780-84d6-0379f1312227 || true
+          echo "Railway deploy triggered (CLI log streaming may fail in CI — health check below confirms actual status)"
 
       - name: Install Vercel CLI
         run: npm i -g vercel
@@ -347,5 +350,12 @@ jobs:
         env:
           BACKEND_URL: ${{ secrets.BACKEND_URL }}
         run: |
-          sleep 10
-          curl -f ${BACKEND_URL}/health || exit 1
+          echo "Waiting 90s for Railway to build and deploy..."
+          sleep 90
+          for i in {1..5}; do
+            curl -sf ${BACKEND_URL}/health && echo "Health check passed" && exit 0
+            echo "Attempt $i failed, retrying in 30s..."
+            sleep 30
+          done
+          echo "Health check failed after 5 attempts"
+          exit 1

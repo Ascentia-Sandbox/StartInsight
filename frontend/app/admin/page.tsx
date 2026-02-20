@@ -24,7 +24,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { AgentStatus, DashboardMetrics } from '@/lib/types';
+import type { AgentStatus } from '@/lib/types';
 import { formatDateTimeMYT } from '@/lib/utils';
 import { toast } from 'sonner';
 import { config } from '@/lib/env';

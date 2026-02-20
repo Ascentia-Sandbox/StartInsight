@@ -26,14 +26,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { config } from "@/lib/env";
@@ -579,7 +571,7 @@ export default function AdminSuccessStoriesPage() {
           <DialogHeader>
             <DialogTitle>Delete Success Story</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete the story for "{deletingStory?.company_name}"?
+              Are you sure you want to delete the story for &quot;{deletingStory?.company_name}&quot;?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

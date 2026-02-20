@@ -16,7 +16,7 @@ See architecture.md "Enhanced Scoring Architecture" for full specification.
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 # ============================================
 # Score Enums and Types
@@ -196,8 +196,7 @@ class EnhancedInsightResponse(BaseModel):
     # Computed
     aggregate_score: float | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
     def calculate_aggregate_score(self) -> float | None:
         """Calculate weighted aggregate of all scores."""

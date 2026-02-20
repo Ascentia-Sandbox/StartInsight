@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -16,8 +15,6 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
-
   const handleGoogleSignup = async () => {
     setLoading(true);
     setError(null);
@@ -34,7 +31,7 @@ export default function SignUpPage() {
       if (error) {
         setError(error.message);
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -77,7 +74,7 @@ export default function SignUpPage() {
       }
 
       setSuccess(true);
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);

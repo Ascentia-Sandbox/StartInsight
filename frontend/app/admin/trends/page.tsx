@@ -509,7 +509,7 @@ export default function AdminTrendsPage() {
           <DialogHeader>
             <DialogTitle>Delete Trend</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{deletingTrend?.keyword}"?
+              Are you sure you want to delete &quot;{deletingTrend?.keyword}&quot;?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

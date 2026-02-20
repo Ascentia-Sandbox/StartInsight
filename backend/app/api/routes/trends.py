@@ -11,7 +11,7 @@ from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -40,8 +40,7 @@ class TrendPredictionResponse(BaseModel):
     velocity_alert: bool = Field(default=False, description="Whether trend velocity spike detected")
     velocity_change: float = Field(default=0.0, description="7-day velocity change percentage")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TrendComparisonResponse(BaseModel):

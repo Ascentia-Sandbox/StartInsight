@@ -647,7 +647,7 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 
 ## 📊 Current Status
 
-**Status**: ✅ **PRODUCTION LIVE** (2026-02-19)
+**Status**: ✅ **PRODUCTION LIVE** (2026-02-20)
 
 | Metric | Value |
 |--------|-------|
@@ -677,6 +677,7 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 - ✅ Phase R: Redis + Scheduler (Railway Redis provisioned, scheduler running clean)
 - ✅ QA Bug Fixes: 11 P0/P1/P2 bugs fixed (terms/privacy 404, CORS, Deep Research, `$$`, Google OAuth signup, context-aware CTAs, skeleton loaders)
 - ✅ 429 Rate-Limit Fix: tenacity retry + inter-call sleep in quality_reviewer.py (Gemini RESOURCE_EXHAUSTED eliminated)
+- ✅ API Fixes: `/api/validate` 500 fixed (invalid `RawSignal` kwarg); `research.py` FastAPI deprecation warning cleared
 
 **Business Metrics (Targets)**:
 - Signup Conversion: 4% target (2% pre-Phase 14 baseline)
@@ -728,4 +729,4 @@ For questions or issues:
 
 ---
 
-*v1.0.1 — Production live. 11 QA bugs fixed. Gemini 429 retry added. Scheduler running. ~$30/mo. (2026-02-20)*
+*v1.0.2 — /api/validate 500 fixed (invalid RawSignal kwarg). FastAPI deprecation warnings cleared. ~$30/mo. (2026-02-20)*

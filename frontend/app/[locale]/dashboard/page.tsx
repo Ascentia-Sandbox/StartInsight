@@ -86,12 +86,6 @@ export default function DashboardPage() {
   const handleGeneratePrompt = () => {
     if (!selectedPlatform || !ideaDescription.trim()) return;
     const platform = BUILDER_PLATFORMS[selectedPlatform];
-    const insight = {
-      problem_statement: ideaDescription,
-      proposed_solution: ideaDescription,
-      market_size_estimate: 'To be determined',
-      relevance_score: 0.8,
-    };
     const prompt = `${platform.promptPrefix}\n\n## Idea Description\n${ideaDescription}\n\nBuild a ${PROMPT_TYPES[selectedPromptType].name.toLowerCase()} for this idea. Include:\n- Modern, responsive design\n- Clear value proposition\n- Professional layout\n- Mobile-friendly`;
     setGeneratedPrompt(prompt);
     setIsModalOpen(true);
@@ -133,7 +127,7 @@ export default function DashboardPage() {
                     {statusLoading ? (
                       <Loader2 className="animate-spin h-5 w-5" />
                     ) : (
-                      status?.saved_count || 0
+                      Number(status?.saved_count ?? 0)
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -152,7 +146,7 @@ export default function DashboardPage() {
                     {statusLoading ? (
                       <Loader2 className="animate-spin h-5 w-5" />
                     ) : (
-                      status?.ratings_count || 0
+                      Number(status?.ratings_count ?? 0)
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -265,10 +259,13 @@ export default function DashboardPage() {
                     </div>
                   ) : (
                     <div className="text-center text-muted-foreground py-8">
-                      <p>No recent activity yet.</p>
-                      <p className="text-sm mt-2">
-                        Start by browsing and saving insights, or run a research analysis.
-                      </p>
+                      <p className="mb-3">No recent activity yet. Save insights to see your progress here.</p>
+                      <Link
+                        href="/insights?sort=top"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:opacity-90 transition-opacity"
+                      >
+                        Browse Today&apos;s Top Ideas →
+                      </Link>
                     </div>
                   )}
                 </CardContent>

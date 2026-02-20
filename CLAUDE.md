@@ -131,3 +131,27 @@ When creating git commits, update relevant README.md files:
 - `backend/README.md`: If backend entry points or setup changed
 - Root `README.md`: If overall project setup changed
 
+## 🏷️ Release & Versioning Standard
+
+### Automated Releases
+Every push to `main` auto-creates a GitHub Release via `.github/workflows/release.yml`:
+- **Tag format:** `v{YYYY}.{MM}.{DD}.{ci_run_number}` (e.g. `v2026.02.20.42`)
+- **Changelog:** Auto-generated from commits since last tag
+- No manual action required — happens after every merge/push to main
+
+### Commit Message Standard (Conventional Commits — REQUIRED)
+```
+<type>(<scope>): <short description>
+```
+Types: `feat` | `fix` | `docs` | `refactor` | `test` | `chore` | `ci` | `perf`
+
+Examples:
+- `feat(insights): add save button API integration`
+- `fix(trends): remove hardcoded w-20 causing category truncation`
+- `fix(ci): resolve TS7006 implicit any in getSession`
+
+### Rules
+1. Every merge to `main` MUST produce a GitHub Release with a descriptive changelog
+2. Commit messages MUST follow conventional commits (enforced by clarity, not lint — yet)
+3. Breaking changes: prefix with `BREAKING CHANGE:` in commit body
+

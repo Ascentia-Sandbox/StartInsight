@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Shield } from "lucide-react";
 
 export const metadata = {
-  title: "Privacy Policy | StartInsight",
+  title: "Privacy Policy",
   description: "Privacy Policy for StartInsight — how we collect, use, and protect your data.",
 };
 
@@ -72,7 +72,7 @@ export default function PrivacyPage() {
           </div>
           <h1 className="text-4xl font-bold tracking-tight mb-4">Privacy Policy</h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            We take your privacy seriously. Here's how we handle your data.
+            We take your privacy seriously. Here&apos;s how we handle your data.
           </p>
           <p className="text-sm text-muted-foreground mt-4">Last updated: February 20, 2026</p>
         </div>

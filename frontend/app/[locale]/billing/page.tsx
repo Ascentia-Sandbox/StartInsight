@@ -7,6 +7,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { Loader2, Check, ExternalLink } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { fetchSubscriptionStatus, createCheckoutSession, createPortalSession } from '@/lib/api';
+import { PLAN_FEATURES } from '@/lib/plans';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,12 +19,7 @@ const plans = [
     price: '$0',
     period: 'forever',
     description: 'Get started with basic features',
-    features: [
-      '5 insights per day',
-      'Basic market analysis',
-      'Save up to 10 insights',
-      'Email support',
-    ],
+    features: [...PLAN_FEATURES.free],
   },
   {
     id: 'starter',
@@ -31,13 +27,7 @@ const plans = [
     price: '$19',
     period: 'per month',
     description: 'For individual entrepreneurs',
-    features: [
-      'Unlimited insights',
-      'Advanced scoring (8 dimensions)',
-      '5 AI research analyses per month',
-      'Export to PDF/CSV',
-      'Priority support',
-    ],
+    features: [...PLAN_FEATURES.starter],
     popular: true,
   },
   {
@@ -46,14 +36,7 @@ const plans = [
     price: '$49',
     period: 'per month',
     description: 'For serious founders and teams',
-    features: [
-      'Everything in Starter',
-      'Unlimited AI research analyses',
-      'Team collaboration (up to 5 members)',
-      'Brand asset generator',
-      'API access (1,000 calls/month)',
-      'Dedicated support',
-    ],
+    features: [...PLAN_FEATURES.pro],
   },
   {
     id: 'enterprise',
@@ -61,16 +44,7 @@ const plans = [
     price: '$299',
     period: 'per month',
     description: 'For large teams and organizations',
-    features: [
-      'Everything in Pro',
-      'Unlimited team members',
-      'Unlimited API access',
-      'Custom AI model fine-tuning',
-      'Dedicated account manager',
-      'SLA guarantee (99.9% uptime)',
-      'White-label options',
-      'SSO & SAML support',
-    ],
+    features: [...PLAN_FEATURES.enterprise],
     contactSales: true,
   },
 ];
@@ -213,7 +187,7 @@ export default function BillingPage() {
               key={plan.name}
               className={`relative ${plan.popular ? 'border-primary shadow-lg' : ''} ${
                 plan.id === currentTier ? 'ring-2 ring-primary' : ''
-              } ${'contactSales' in plan ? 'border-violet-200 dark:border-violet-900' : ''}`}
+              } ${'contactSales' in plan ? 'border-primary/20' : ''}`}
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -224,7 +198,7 @@ export default function BillingPage() {
               )}
               {'contactSales' in plan && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="bg-violet-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                  <span className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full">
                     Enterprise
                   </span>
                 </div>
@@ -257,7 +231,8 @@ export default function BillingPage() {
               <CardFooter>
                 {'contactSales' in plan ? (
                   <Button
-                    className="w-full bg-violet-600 hover:bg-violet-700 text-white"
+                    className="w-full"
+                    variant="default"
                     onClick={() => handlePlanAction(plan.id)}
                   >
                     Contact Sales

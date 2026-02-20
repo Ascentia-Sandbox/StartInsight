@@ -58,8 +58,6 @@ const PlatformIcon = ({ platform }: { platform: string }) => {
 
 export function BuilderIntegrationEnhanced({
   insightId,
-  problemStatement,
-  proposedSolution,
 }: BuilderIntegrationProps) {
   const apiUrl = config.apiUrl;
 
@@ -98,10 +96,8 @@ export function BuilderIntegrationEnhanced({
       );
 
       if (response.ok) {
-        const data = await response.json();
-        // For OAuth flow, redirect to authorization URL
-        // window.location.href = data.auth_url;
-
+        // OAuth flow not yet configured
+        await response.json();
         // For now, show message about OAuth setup needed
         alert(`OAuth setup required for ${platformId}. Please configure ${platformId.toUpperCase()}_CLIENT_ID and ${platformId.toUpperCase()}_CLIENT_SECRET environment variables.`);
       } else {
@@ -280,7 +276,7 @@ export function BuilderIntegrationEnhanced({
               )}
             </ul>
             <p className="text-xs pt-2">
-              ℹ️ v0.dev doesn't require OAuth (uses browser automation)
+              ℹ️ v0.dev doesn&apos;t require OAuth (uses browser automation)
             </p>
           </CardContent>
         </Card>

@@ -21,7 +21,6 @@ export default function ResearchPage() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [inputType, setInputType] = useState<InputType>('idea');
-  const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [targetMarket, setTargetMarket] = useState('');
   const [budgetRange, setBudgetRange] = useState('bootstrap');

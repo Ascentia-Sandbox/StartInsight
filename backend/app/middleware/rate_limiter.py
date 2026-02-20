@@ -1,7 +1,7 @@
 """Rate limiting middleware for payment endpoints."""
 import logging
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -12,11 +12,7 @@ logger = logging.getLogger(__name__)
 
 # In-memory rate limiting for non-production environments
 # For production, use Redis-based rate limiting
-_rate_limits = defaultdict(lambda: defaultdict(list))
-
-# In-memory rate limiting for non-production environments
-# For production, use Redis-based rate limiting
-_rate_limits = defaultdict(lambda: defaultdict(list))
+_rate_limits: defaultdict[str, list] = defaultdict(list)
 
 class RateLimiterMiddleware(BaseHTTPMiddleware):
     """
@@ -105,7 +101,7 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
 
     def _is_rate_limited(self, client_ip: str) -> bool:
         """Check if client is rate limited."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         window_start = now - timedelta(seconds=self.window_seconds)
 
         # Get requests in current window
@@ -120,7 +116,7 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
 
     def _record_request(self, client_ip: str):
         """Record a request for rate limiting."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         _rate_limits[client_ip].append(now)
 
         # Clean up old requests

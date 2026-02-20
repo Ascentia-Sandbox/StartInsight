@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
-import { Target, TrendingUp, Wrench, Star, Users, Rocket, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Target, Users, Rocket, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 // Helper to truncate title to a max length
 function truncateTitle(title: string, maxLength: number = 80): string {

@@ -6,6 +6,7 @@ import pytest
 
 from app.services.email_service import (
     TEMPLATES,
+    _render_template,
     send_analysis_ready_email,
     send_daily_digest,
     send_email,
@@ -154,3 +155,52 @@ class TestSendPasswordReset:
                 reset_url="https://example.com/reset/token123",
             )
             assert isinstance(result, dict)
+
+
+class TestContactFormTemplate:
+    """Tests for contact_form template."""
+
+    def test_contact_form_template_exists(self):
+        """Test that contact_form template exists."""
+        assert "contact_form" in TEMPLATES
+
+    @pytest.mark.asyncio
+    async def test_send_contact_form_email(self):
+        """Test sending a contact form email returns a dict."""
+        with patch("app.services.email_service.send_email", new_callable=AsyncMock) as mock_send:
+            mock_send.return_value = {"status": "sent", "id": "test-id"}
+            result = await send_email(
+                to="hello@startinsight.ai",
+                template="contact_form",
+                variables={
+                    "name": "Test User",
+                    "email": "user@example.com",
+                    "subject": "Test",
+                    "message": "Hello",
+                    "timestamp": "2026-02-20",
+                },
+            )
+            assert isinstance(result, dict)
+
+
+class TestEmailNotConfigured:
+    """Tests for graceful skip when email is not configured."""
+
+    @pytest.mark.asyncio
+    async def test_send_email_skips_when_not_configured(self):
+        """Test send_email returns skipped status when API key is None."""
+        with patch("app.services.email_service.settings") as mock_settings:
+            mock_settings.resend_api_key = None
+            result = await send_email("t@e.com", "welcome", {"name": "Test"})
+            assert result["status"] == "skipped"
+            assert result["reason"] == "not_configured"
+
+
+class TestRenderTemplate:
+    """Tests for _render_template helper."""
+
+    def test_render_template_substitutes_variables(self):
+        """Test that template variables are substituted correctly."""
+        result = _render_template("Hello {{name}}", {"name": "Alice"})
+        assert "Alice" in result
+        assert "{{" not in result

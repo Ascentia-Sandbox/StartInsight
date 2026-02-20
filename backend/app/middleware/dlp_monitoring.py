@@ -3,7 +3,7 @@
 import logging
 from collections import defaultdict, deque
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -55,7 +55,7 @@ class DLPMonitoringMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         # Record request start time
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         # Process the request
         response = await call_next(request)
@@ -134,13 +134,7 @@ class DLPMonitoringMiddleware(BaseHTTPMiddleware):
         """Check if user agent is suspicious."""
         # Common suspicious user agents
         suspicious_patterns = [
-            "sqlmap",
-            "nikto",
-            "burpsuite",
-            "owasp",
-            "metasploit",
-            "curl",
-            "wget"
+            "sqlmap", "nikto", "burpsuite", "owasp", "metasploit"
         ]
 
         user_agent_lower = user_agent.lower()
@@ -170,7 +164,7 @@ class DLPMonitoringMiddleware(BaseHTTPMiddleware):
 
     def _track_suspicious_activity(self, ip_address: str, event: str):
         """Track suspicious activity for threshold checking."""
-        current_time = datetime.utcnow()
+        current_time = datetime.now(UTC)
 
         # Add to queue of recent activities
         self.suspicious_activities[ip_address]["events"].append(
@@ -188,7 +182,7 @@ class DLPMonitoringMiddleware(BaseHTTPMiddleware):
 
     def _cleanup_old_activities(self, ip_address: str):
         """Clean up old suspicious activities."""
-        current_time = datetime.utcnow()
+        current_time = datetime.now(UTC)
         time_window = timedelta(minutes=self.time_window_minutes)
 
         # Keep only recent events
@@ -199,7 +193,7 @@ class DLPMonitoringMiddleware(BaseHTTPMiddleware):
 
     def _exceeds_suspicious_threshold(self, ip_address: str) -> bool:
         """Check if suspicious activity threshold is exceeded."""
-        current_time = datetime.utcnow()
+        current_time = datetime.now(UTC)
         time_window = timedelta(minutes=self.time_window_minutes)
 
         # Count recent suspicious events

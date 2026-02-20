@@ -112,9 +112,9 @@ class Settings(BaseSettings):
     default_llm_model: str = "google-gla:gemini-2.0-flash"
     llm_call_timeout: int = 120  # seconds
 
-    # Database Connection Pool (Supabase Pro tier: 200 connections)
-    db_pool_size: int = 20
-    db_max_overflow: int = 30
+    # Database Connection Pool (Supabase session-mode pooler safe ceiling)
+    db_pool_size: int = 5       # session-mode pooler: 15 total connections max
+    db_max_overflow: int = 10   # total: 15 — handles FastAPI async concurrency safely
     db_pool_timeout: int = 30
     db_pool_recycle: int = 3600
     db_ssl: bool = True  # Supabase requires SSL

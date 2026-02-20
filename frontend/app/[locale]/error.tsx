@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import * as Sentry from '@sentry/nextjs';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -43,7 +44,7 @@ export default function Error({
             Try again
           </Button>
           <Button variant="outline" asChild>
-            <a href="/">Go to Homepage</a>
+            <Link href="/">Go to Homepage</Link>
           </Button>
         </CardFooter>
       </Card>

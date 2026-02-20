@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 # ============================================
 # Analysis Input Schemas
@@ -202,8 +202,7 @@ class ResearchAnalysisResponse(BaseModel):
     started_at: datetime | None = None
     completed_at: datetime | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ResearchAnalysisSummary(BaseModel):
@@ -218,8 +217,7 @@ class ResearchAnalysisSummary(BaseModel):
     created_at: datetime
     completed_at: datetime | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ResearchAnalysisListResponse(BaseModel):
@@ -268,8 +266,7 @@ class ResearchRequestResponse(BaseModel):
     # Optional: include user email for admin queue display
     user_email: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ResearchRequestSummary(BaseModel):
@@ -284,8 +281,7 @@ class ResearchRequestSummary(BaseModel):
     created_at: datetime
     reviewed_at: datetime | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ResearchRequestListResponse(BaseModel):

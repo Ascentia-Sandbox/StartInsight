@@ -10,7 +10,7 @@ import { fetchWorkspaceStatus, fetchSavedInsights, fetchUserRatings } from '@/li
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { WorkspaceStatus, SavedInsight, UserRating } from '@/lib/types';
+import type { SavedInsight, UserRating } from '@/lib/types';
 
 type TabType = 'saved' | 'ratings' | 'building';
 

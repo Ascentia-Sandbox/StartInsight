@@ -15,8 +15,6 @@ import {
   Eye,
   UserX,
   UserCheck,
-  CheckSquare,
-  Square,
   X,
 } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabase/client";
@@ -28,7 +26,6 @@ import {
   deleteAdminUser,
   bulkAdminUserAction,
   type AdminUserListItem,
-  type AdminUserDetail,
 } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

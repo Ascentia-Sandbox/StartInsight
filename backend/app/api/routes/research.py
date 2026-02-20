@@ -533,7 +533,7 @@ async def list_user_requests(
 @router.get("/admin/requests", response_model=ResearchRequestListResponse)
 async def list_all_requests(
     admin_user: AdminUser,
-    status: Annotated[str | None, Query(regex="^(pending|approved|rejected|completed)$")] = None,
+    status: Annotated[str | None, Query(pattern="^(pending|approved|rejected|completed)$")] = None,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
     db: AsyncSession = Depends(get_db),

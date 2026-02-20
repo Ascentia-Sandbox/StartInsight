@@ -70,7 +70,7 @@ export default function HomePage() {
   const insightCount = stats
     ? stats.total_insights.toLocaleString()
     : "500+";
-  const sourceCount = stats ? String(stats.active_sources) : "6";
+  const sourceCount = stats ? String(stats.active_sources) : "7";
   const dimensionCount = stats ? String(stats.scoring_dimensions) : "8";
 
   // Dimension cards data for the scoring deep-dive section

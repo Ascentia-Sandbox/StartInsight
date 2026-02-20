@@ -51,7 +51,7 @@ export default function SettingsPage() {
   });
 
   // Fetch email preferences from EmailPreferences table
-  const { data: emailPrefs, isLoading: emailPrefsLoading } = useQuery({
+  const { data: emailPrefs } = useQuery({
     queryKey: ['email-preferences', accessToken],
     queryFn: () => fetchEmailPreferences(accessToken!),
     enabled: !!accessToken,

@@ -154,7 +154,10 @@ export function InsightCard({ insight }: InsightCardProps) {
 
         {/* Problem statement excerpt */}
         <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-          {insight.problem_statement.split('.')[0]}.
+          {(() => {
+            const firstSentence = insight.problem_statement.split('.')[0];
+            return firstSentence.length >= 30 ? `${firstSentence}.` : insight.problem_statement;
+          })()}
         </p>
 
         {/* Confidence badge + data points */}

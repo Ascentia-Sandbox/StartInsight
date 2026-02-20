@@ -276,7 +276,7 @@ export default function ChatPage() {
       }
 
       queryClient.invalidateQueries({ queryKey: ['chat-sessions'] });
-    } catch (err) {
+    } catch {
       setMessages(prev => [...prev, {
         id: `error-${Date.now()}`,
         role: 'assistant',
@@ -303,10 +303,6 @@ export default function ChatPage() {
       </div>
     );
   }
-
-  const activeModeConfig = activeChatId && activeChat?.mode
-    ? MODE_CONFIG[activeChat.mode as ChatMode]
-    : null;
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-6xl">

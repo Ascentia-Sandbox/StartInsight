@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { TrendingUp, TrendingDown, Search, ArrowUpDown, BarChart3 } from "lucide-react";
+import { TrendingUp, TrendingDown, Search, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { config } from "@/lib/env";
+import { getSupabaseClient } from "@/lib/supabase/client";
 
 interface Trend {
   id: string;
@@ -51,6 +52,7 @@ export default function TrendsPage() {
   const [sort, setSort] = useState("recent");
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const limit = 12;
 
   useEffect(() => {
@@ -60,6 +62,14 @@ export default function TrendsPage() {
   useEffect(() => {
     fetchTrends();
   }, [search, category, sort, page]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await getSupabaseClient().auth.getSession();
+      setIsLoggedIn(!!session);
+    };
+    void checkAuth();
+  }, []);
 
   const fetchCategories = async () => {
     try {
@@ -242,7 +252,7 @@ export default function TrendsPage() {
                 <span className="text-center">Search Volume</span>
                 <span className="text-center">Growth</span>
                 <span className="text-center">Status</span>
-                <span className="w-20 text-center">Category</span>
+                <span className="text-center">Category</span>
               </div>
 
               <div className="divide-y">
@@ -279,7 +289,7 @@ export default function TrendsPage() {
                       <div className="text-center">
                         <Badge variant={growthInfo.variant}>{growthInfo.label}</Badge>
                       </div>
-                      <Badge variant="outline" className="w-20 justify-center shrink-0">
+                      <Badge variant="outline" className="whitespace-nowrap shrink-0">
                         {trend.category}
                       </Badge>
                     </div>
@@ -323,7 +333,9 @@ export default function TrendsPage() {
               Our AI analyzes trends and generates validated startup opportunities.
             </p>
             <Button asChild size="lg" variant="secondary">
-              <Link href="/auth/signup">Generate Ideas from Trends</Link>
+              <Link href={isLoggedIn ? "/insights" : "/auth/signup"}>
+                {isLoggedIn ? "Explore Insights" : "Generate Ideas from Trends"}
+              </Link>
             </Button>
           </CardContent>
         </Card>

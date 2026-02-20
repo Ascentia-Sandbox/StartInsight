@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -22,22 +21,16 @@ import {
 } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import {
-  Code2,
   Key,
-  Zap,
   Shield,
   BookOpen,
   Terminal,
   Webhook,
   BarChart3,
-  ChevronRight,
   Copy,
   Check,
   ExternalLink,
   Sparkles,
-  Clock,
-  Users,
-  Database,
 } from "lucide-react";
 
 // API Endpoints data
