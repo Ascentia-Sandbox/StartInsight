@@ -131,7 +131,7 @@ export default function TrendsPage() {
       <section className="container mx-auto px-4 py-16 text-center">
         <Badge variant="secondary" className="mb-4">Trends Database</Badge>
         <h1 className="text-4xl md:text-5xl font-bold mb-4">
-          180+ Trending Business Opportunities
+          175+ Trending Business Opportunities
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
           Real-time search volume and growth data to identify emerging markets and validate your ideas.

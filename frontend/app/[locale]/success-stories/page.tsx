@@ -19,7 +19,7 @@ interface SuccessStory {
   idea_summary: string;
   journey_narrative: string;
   metrics: {
-    mrr?: number;
+    mrr?: number | string;
     users?: number;
     funding?: string;
     growth?: string;
@@ -82,10 +82,21 @@ export default function SuccessStoriesPage() {
     }
   };
 
-  const formatMRR = (mrr: number) => {
+  const formatMRR = (mrr: number | string) => {
+    if (typeof mrr === 'string') return mrr.startsWith('$') ? mrr : `$${mrr}`;
     if (mrr >= 1000000) return `$${(mrr / 1000000).toFixed(1)}M`;
     if (mrr >= 1000) return `$${(mrr / 1000).toFixed(0)}K`;
     return `$${mrr}`;
+  };
+
+  const formatFunding = (funding: string) => {
+    if (!funding) return funding;
+    if (funding.startsWith('$') || /[KMB]$/i.test(funding)) return funding;
+    const num = parseFloat(funding);
+    if (isNaN(num)) return funding;
+    if (num >= 1000000) return `$${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `$${(num / 1000).toFixed(0)}K`;
+    return `$${num}`;
   };
 
   const formatUsers = (users: number) => {
@@ -140,7 +151,7 @@ export default function SuccessStoriesPage() {
           <Card className="text-center">
             <CardContent className="pt-6">
               <Trophy className="h-8 w-8 text-primary mx-auto mb-2" />
-              <div className="text-2xl font-bold">12</div>
+              <div className="text-2xl font-bold">{total || '...'}</div>
               <p className="text-sm text-muted-foreground">Curated Stories</p>
             </CardContent>
           </Card>
@@ -260,7 +271,7 @@ export default function SuccessStoriesPage() {
                       {story.metrics.funding && (
                         <div className="text-center">
                           <div className="text-lg font-bold text-purple-600">
-                            {story.metrics.funding}
+                            {formatFunding(story.metrics.funding)}
                           </div>
                           <span className="text-xs text-muted-foreground">Funding</span>
                         </div>

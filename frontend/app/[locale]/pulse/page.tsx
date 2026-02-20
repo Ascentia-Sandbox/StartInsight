@@ -86,7 +86,9 @@ export default function PulsePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold">{data.signals_24h.toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground mt-1">Raw signals collected from all sources</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {data.signals_24h === 0 ? 'Collection runs hourly' : 'Raw signals collected from all sources'}
+                  </p>
                 </CardContent>
               </Card>
               <Card>
@@ -175,7 +177,7 @@ export default function PulsePage() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground py-4 text-center">No signals collected yet</p>
+                    <p className="text-sm text-muted-foreground py-4 text-center">Signals are processed throughout the day</p>
                   )}
                 </CardContent>
               </Card>
