@@ -21,7 +21,7 @@ interface SuccessStory {
   metrics: {
     mrr?: number | string;
     users?: number;
-    funding?: string;
+    funding?: string | number;
     growth?: string;
   };
   timeline: Array<{
@@ -89,11 +89,12 @@ export default function SuccessStoriesPage() {
     return `$${mrr}`;
   };
 
-  const formatFunding = (funding: string) => {
-    if (!funding) return funding;
-    if (funding.startsWith('$') || /[KMB]$/i.test(funding)) return funding;
-    const num = parseFloat(funding);
-    if (isNaN(num)) return funding;
+  const formatFunding = (funding: string | number | undefined) => {
+    if (!funding && funding !== 0) return '';
+    const str = String(funding);
+    if (str.startsWith('$') || /[KMB]$/i.test(str)) return str;
+    const num = parseFloat(str);
+    if (isNaN(num)) return str;
     if (num >= 1000000) return `$${(num / 1000000).toFixed(1)}M`;
     if (num >= 1000) return `$${(num / 1000).toFixed(0)}K`;
     return `$${num}`;
