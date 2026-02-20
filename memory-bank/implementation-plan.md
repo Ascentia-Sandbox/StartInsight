@@ -62,8 +62,10 @@
 | **M** | Sentry Monitoring (errors + traces + logs + AI spans + Session Replay) | ✅ 100% | ✅ 100% | N/A | **COMPLETE** (2026-02-19) |
 | **P** | Production Deployment (Railway + Vercel + CI/CD pipeline) | ✅ 100% | ✅ 100% | ✅ 100% | **COMPLETE** (2026-02-18/19) |
 | **R** | Redis + Scheduler Fix (Railway Redis, SSL, task_map) | ✅ 100% | N/A | N/A | **COMPLETE** (2026-02-19) |
+| **QA-BUGS** | 11 QA Bug Fixes (P0/P1/P2: terms/privacy, CORS, Deep Research, $$, Google OAuth, CTAs) | ✅ 100% | ✅ 100% | N/A | **COMPLETE** (2026-02-20) |
+| **429-FIX** | Gemini 429 retry logic in quality_reviewer.py (tenacity + sleep) | ✅ 100% | N/A | N/A | **COMPLETE** (2026-02-20) |
 
-**Overall:** Phase 1-10 Complete + Phases A-L + Q1-Q9 + S + M + P + R Complete (Production Live + Scheduler Running 2026-02-19)
+**Overall:** Phase 1-10 Complete + Phases A-L + Q1-Q9 + S + M + P + R + QA-BUGS + 429-FIX Complete (Production Live 2026-02-20)
 
 ### Phase A: Superadmin Content Completeness (2026-02-14)
 **Delivered:** Full CRUD for insights, agent schedule editor, cost analytics, 3 new admin pages, sidebar updated to 14 nav items
@@ -282,7 +284,7 @@
 - [x] Configure start command: `sh -c 'uvicorn app.main:app --host 0.0.0.0 --port $PORT'`
 - [x] Verify health endpoint: `https://backend-production-e845.up.railway.app/health`
 - [x] Test database connection (Supabase pooler, c009 migration applied)
-- [x] Verify Redis connection (Upstash TLS, `rediss://` scheme)
+- [x] Verify Redis connection (Railway Redis, `redis://redis.railway.internal:6379`)
 
 **Frontend Deployment (Vercel):**
 - [x] Import GitHub repo to Vercel (project `prj_oO31ySjjSFAdW4AaAQ06ingKZIyk`)
@@ -303,8 +305,8 @@ SUPABASE_URL=https://[project-id].supabase.co
 SUPABASE_ANON_KEY=eyJhbGc...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...
 
-# Redis (Upstash Production)
-REDIS_URL=redis://default:[password]@[host].upstash.io:6379
+# Redis (Railway internal)
+REDIS_URL=redis://redis.railway.internal:6379
 
 # External APIs
 GOOGLE_API_KEY=AIza...  # Gemini 2.0 Flash (primary LLM)
@@ -615,7 +617,7 @@ npx playwright test --project=chromium  # Single browser
 ### Prerequisites
 
 1. **Supabase Account:** Create project in Sydney region (ap-southeast-2)
-2. **Upstash Account:** Create Redis database
+2. **Railway Account:** Backend + Redis (auto-provisioned in same project, free tier)
 3. **API Keys:** Google Gemini, Firecrawl, Reddit, Twitter (optional)
 
 ### Backend Setup
@@ -737,5 +739,5 @@ psql $DATABASE_URL -c "SELECT COUNT(*) FROM information_schema.tables WHERE tabl
 
 **Last Updated:** 2026-02-19
 **Status:** Production Live ✅
-**Infrastructure:** Railway (backend) + Vercel (frontend) + Supabase Pro + Upstash Redis + Sentry
+**Infrastructure:** Railway (backend + Redis) + Vercel (frontend) + Supabase Pro + Sentry
 **Production URLs:** `https://backend-production-e845.up.railway.app` (backend), `https://start-insight-ascentias-projects.vercel.app` (frontend)

@@ -15,6 +15,16 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ## Recent Progress (2026-02-20)
 
+- [2026-02-20] [429-FIX]: Gemini rate-limit retry in quality_reviewer.py
+  - Files: backend/app/agents/quality_reviewer.py, backend/pyproject.toml
+  - Tech: tenacity 4-attempt exponential backoff (5s→60s) + asyncio.sleep(2) inter-call delay for both review loops
+  - Status: [✓ Complete]
+
+- [2026-02-20] [QA-FIXES]: 11 P0/P1/P2 QA bug fixes (commit c1e2369)
+  - Files: frontend terms/privacy pages (NEW), payments.py, users.py, insights/[id]/page.tsx, contact/page.tsx, billing/page.tsx, auth/signup/page.tsx, success-stories/page.tsx, about/features/pricing/page.tsx, settings/page.tsx
+  - Tech: /terms + /privacy 404 fixed; CORS unhandled exception; email prefs endpoint; Deep Research link; Enterprise tier; Google OAuth signup; context-aware CTAs; skeleton loaders
+  - Status: [✓ Complete]
+
 - [2026-02-20] [CLEANUP]: Remove ~28 redundant files, reorganize memory-bank
   - Files: README.md, backend/README.md, memory-bank/archived/, research/
   - Tech: Deleted stale .bak + Jan-2026 snapshots + root PNGs (~1MB) + backend dev artifacts; moved version2/ → archived/version2-proposed/, ideabrowser-analysis.md → research/
@@ -463,19 +473,12 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
-## Current Blockers
+## Current Focus (Post-Launch)
 
-### 1. Production Deployment - HIGH (Ready to Execute)
-- **Status:** All code complete, ready for deployment
-- **Environment:** Railway (backend), Vercel (frontend), Supabase (database)
-- **Prerequisites:** Configure production environment variables
-- **Next Action:** Deploy backend to Railway, frontend to Vercel
-- **Reference:** See memory-bank/architecture.md Section 5.10 for blue-green deployment strategy
-
-### 2. E2E Test Updates - LOW (Optional for MVP)
-- **Status:** Not started
-- **Components:** Login/logout flows, workspace interactions, research submission
-- **Next Action:** Update Playwright tests for authenticated user flows (post-launch)
+- Content seeding via admin portal (50+ insights, 10+ categories)
+- UptimeRobot / Checkly uptime monitoring setup
+- Google Search Console submission (sitemap already live)
+- ProductHunt / waitlist launch
 
 ---
 
@@ -726,23 +729,9 @@ This file tracks all significant changes made to the project. Each entry follows
   - Tech: Worker now uses analyze_signal_enhanced (exceeds IdeaBrowser 400-word benchmark by 12.5%)
   - Status: [x] Complete
 
-## Upcoming Tasks
-
-- [PRODUCTION-DEPLOYMENT]: Deploy to production (READY)
-  - Deploy backend to Railway with production env vars
-  - Deploy frontend to Vercel with Supabase credentials
-  - Configure production Stripe keys (live mode)
-  - Set up monitoring (Sentry, uptime checks)
-
-- [E2E-TESTING]: Update Playwright tests (OPTIONAL - post-launch)
-  - Login/logout flows with Supabase Auth
-  - Workspace save/rate/claim functionality
-  - Research submission and result viewing
-  - Admin dashboard access control
-
 ---
 
-*Last updated: 2026-01-25*
+*Last updated: 2026-02-20*
 *Format: [DATE] [TASK_ID]: [Brief Description] | Files | Technical Notes | Status*
 
 ---

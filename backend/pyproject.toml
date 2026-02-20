@@ -50,6 +50,7 @@ dependencies = [
     "beautifulsoup4>=4.14.3",
     "bleach>=6.1.0",  # Input sanitization for XSS prevention
     "itsdangerous>=2.1.0",  # Token signing for email unsubscribe
+    "tenacity>=8.2.0",  # Retry logic for AI agent calls (rate limit handling)
 ]
 
 [project.optional-dependencies]

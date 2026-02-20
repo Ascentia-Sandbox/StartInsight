@@ -5030,6 +5030,7 @@ dependencies = [
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "sse-starlette" },
     { name = "stripe" },
+    { name = "tenacity" },
     { name = "tweepy" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -5084,6 +5085,7 @@ requires-dist = [
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.25" },
     { name = "sse-starlette", specifier = ">=1.6.5" },
     { name = "stripe", specifier = ">=7.0.0" },
+    { name = "tenacity", specifier = ">=8.2.0" },
     { name = "tweepy", specifier = ">=4.14.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.27.0" },
 ]

@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from pydantic_ai import Agent
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from app.core.config import settings
 from app.db.session import AsyncSessionLocal
@@ -142,6 +143,37 @@ Flag insights that need re-analysis.
 
 
 # ============================================================================
+# RETRY HELPERS (handles Gemini 429 / RESOURCE_EXHAUSTED)
+# ============================================================================
+
+
+@retry(
+    stop=stop_after_attempt(4),
+    wait=wait_exponential(multiplier=2, min=5, max=60),
+    retry=retry_if_exception_type(Exception),
+    reraise=True,
+)
+async def _review_article_with_retry(prompt: str) -> ArticleReview:
+    result = await asyncio.wait_for(
+        market_review_agent.run(prompt), timeout=settings.llm_call_timeout
+    )
+    return result.output
+
+
+@retry(
+    stop=stop_after_attempt(4),
+    wait=wait_exponential(multiplier=2, min=5, max=60),
+    retry=retry_if_exception_type(Exception),
+    reraise=True,
+)
+async def _audit_insight_with_retry(prompt: str) -> InsightAuditResult:
+    result = await asyncio.wait_for(
+        insight_review_agent.run(prompt), timeout=settings.llm_call_timeout
+    )
+    return result.output
+
+
+# ============================================================================
 # MARKET INSIGHT QUALITY REVIEW
 # ============================================================================
 
@@ -180,6 +212,7 @@ async def review_draft_articles(session: AsyncSession) -> list[dict]:
 
     results = []
     for article in drafts:
+        await asyncio.sleep(2)  # pace calls to avoid back-to-back quota exhaustion
         try:
             review_prompt = (
                 f"Review this market insight article:\n\n"
@@ -189,10 +222,7 @@ async def review_draft_articles(session: AsyncSession) -> list[dict]:
                 f"Content:\n{article.content[:3000]}"
             )
 
-            review_result = await asyncio.wait_for(
-                market_review_agent.run(review_prompt), timeout=settings.llm_call_timeout
-            )
-            review = review_result.output
+            review = await _review_article_with_retry(review_prompt)
 
             # Apply improvements if suggested
             if review.improved_title:
@@ -270,6 +300,7 @@ async def audit_insights(session: AsyncSession, batch_size: int = 20) -> list[di
 
     results = []
     for insight in insights:
+        await asyncio.sleep(2)  # pace calls to avoid back-to-back quota exhaustion
         try:
             # Build context for review
             fields_summary = {
@@ -297,10 +328,7 @@ async def audit_insights(session: AsyncSession, batch_size: int = 20) -> list[di
                 f"Problem (first 500 chars): {insight.problem_statement[:500]}"
             )
 
-            audit_result = await asyncio.wait_for(
-                insight_review_agent.run(audit_prompt), timeout=settings.llm_call_timeout
-            )
-            audit = audit_result.output
+            audit = await _audit_insight_with_retry(audit_prompt)
 
             results.append({
                 "insight_id": str(insight.id),
