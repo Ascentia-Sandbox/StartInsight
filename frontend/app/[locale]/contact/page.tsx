@@ -146,7 +146,7 @@ export default function ContactPage() {
           <CardHeader>
             <CardTitle>Send Us a Message</CardTitle>
             <CardDescription>
-              Fill out the form below and we'll get back to you within 24 hours.
+              Fill out the form below and we&apos;ll get back to you within 24 hours.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -155,7 +155,7 @@ export default function ContactPage() {
                 <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold mb-2">Message Sent!</h3>
                 <p className="text-muted-foreground mb-6">
-                  Thanks for reaching out. We'll get back to you within 24 hours.
+                  Thanks for reaching out. We&apos;ll get back to you within 24 hours.
                 </p>
                 <Button
                   variant="outline"
