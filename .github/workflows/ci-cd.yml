@@ -244,6 +244,7 @@ jobs:
 
       - name: Deploy Backend to Railway (Staging)
         continue-on-error: true
+        working-directory: ./backend
         env:
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
         run: railway up --service backend --environment staging --project a3ece066-4758-4780-84d6-0379f1312227
@@ -325,6 +326,7 @@ jobs:
         run: npm i -g @railway/cli
 
       - name: Deploy Backend to Railway (Production)
+        working-directory: ./backend
         env:
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: railway up --service backend --environment production --project a3ece066-4758-4780-84d6-0379f1312227
