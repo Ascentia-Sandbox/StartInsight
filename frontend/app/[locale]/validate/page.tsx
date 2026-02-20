@@ -110,6 +110,7 @@ function getOverallRating(score: number) {
 
 export default function ValidatePage() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [ideaDescription, setIdeaDescription] = useState('');
   const [targetMarket, setTargetMarket] = useState<string | null>(null);
   const [budget, setBudget] = useState<string | null>(null);
@@ -119,6 +120,7 @@ export default function ValidatePage() {
     const supabase = getSupabaseClient();
     supabase.auth.getSession().then(({ data }: { data: { session: { access_token: string } | null } }) => {
       setAccessToken(data.session?.access_token ?? null);
+      setAuthLoading(false);
     });
   }, []);
 
@@ -151,9 +153,9 @@ export default function ValidatePage() {
               Get instant 8-dimension scoring, market analysis, and competitive landscape.
               More comprehensive than any other idea validation tool.
             </p>
-            {!accessToken && (
+            {!authLoading && (
               <div className="mt-4 inline-flex items-center gap-2 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 rounded-full px-4 py-1.5 text-sm font-medium">
-                <Lock className="h-3.5 w-3.5" />
+                {!accessToken && <Lock className="h-3.5 w-3.5" />}
                 Free tier: 3 validations/month
               </div>
             )}
@@ -225,6 +227,7 @@ export default function ValidatePage() {
               onClick={() => mutation.mutate()}
               disabled={
                 mutation.isPending ||
+                authLoading ||
                 !accessToken ||
                 ideaDescription.length < 20
               }
@@ -244,7 +247,7 @@ export default function ValidatePage() {
               )}
             </Button>
 
-            {!accessToken && (
+            {!authLoading && !accessToken && (
               <p className="text-sm text-muted-foreground text-center">
                 Sign in to validate your idea.
               </p>

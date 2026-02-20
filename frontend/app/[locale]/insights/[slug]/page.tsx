@@ -17,7 +17,7 @@ import {
   Clock, ArrowRight, CheckCircle2, BarChart3,
   Users, Globe, ChevronRight, Lightbulb, Search, MessageCircle,
   MessageSquare, BookmarkPlus, ArrowLeft, ExternalLink,
-  Eye, Bookmark, ShieldCheck, Database, Loader2,
+  Eye, Bookmark, ShieldCheck, Database, Loader2, Share2,
 } from 'lucide-react';
 import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 import { TrendChart } from '@/components/trend-chart';
@@ -759,11 +759,28 @@ export default function InsightDetailPage() {
               )}
             </Button>
           </div>
-          <Button size="sm" className="bg-primary text-primary-foreground" asChild>
-            <Link href={`/research?insight_id=${slug}`}>
-              <Zap className="h-4 w-4 mr-2" /> Deep Research
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const url = window.location.href;
+                if (navigator.clipboard) {
+                  navigator.clipboard.writeText(url).then(() => {
+                    // brief visual feedback via title
+                  });
+                }
+              }}
+              title="Copy link"
+            >
+              <Share2 className="h-4 w-4 mr-2" /> Share
+            </Button>
+            <Button size="sm" className="bg-primary text-primary-foreground" asChild>
+              <Link href={`/research?insight_id=${slug}`}>
+                <Zap className="h-4 w-4 mr-2" /> Deep Research
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
     </div>
