@@ -7,7 +7,7 @@ from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 # ============================================
 # Enums
@@ -99,10 +99,9 @@ class ExecutionLogResponse(BaseModel):
     items_processed: int = 0
     items_failed: int = 0
     error_message: str | None = None
-    metadata: dict = Field(default_factory=dict)
+    metadata: dict = Field(default_factory=dict, validation_alias="extra_metadata")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
 class ExecutionLogListResponse(BaseModel):
