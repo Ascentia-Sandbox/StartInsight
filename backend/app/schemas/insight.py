@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class CompetitorResponse(BaseModel):
@@ -37,8 +37,7 @@ class CompetitorListItemResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CompetitorSnapshotResponse(BaseModel):
@@ -50,8 +49,7 @@ class CompetitorSnapshotResponse(BaseModel):
     scraped_at: datetime
     scrape_method: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CompetitorDetailResponse(CompetitorListItemResponse):
@@ -63,8 +61,7 @@ class CompetitorDetailResponse(CompetitorListItemResponse):
     analysis_model: str | None = None
     snapshots: list[CompetitorSnapshotResponse] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MessageResponse(BaseModel):
@@ -111,8 +108,7 @@ class RawSignalSummary(BaseModel):
     url: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TrendData(BaseModel):
@@ -206,9 +202,7 @@ class InsightResponse(BaseModel):
                     for k, val in v.items()]
         return v
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
 class InsightListResponse(BaseModel):

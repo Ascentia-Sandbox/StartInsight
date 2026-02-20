@@ -13,7 +13,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -46,8 +46,7 @@ class AchievementResponse(BaseModel):
     category: str | None
     is_active: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserAchievementResponse(BaseModel):
@@ -56,8 +55,7 @@ class UserAchievementResponse(BaseModel):
     earned_at: datetime
     achievement: AchievementResponse
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserPointsResponse(BaseModel):
@@ -70,8 +68,7 @@ class UserPointsResponse(BaseModel):
     longest_streak: int
     last_activity_date: date | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserCreditsResponse(BaseModel):
@@ -81,8 +78,7 @@ class UserCreditsResponse(BaseModel):
     lifetime_earned: int
     lifetime_spent: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CreditTransactionResponse(BaseModel):
@@ -92,8 +88,7 @@ class CreditTransactionResponse(BaseModel):
     description: str | None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LeaderboardEntry(BaseModel):

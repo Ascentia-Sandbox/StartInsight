@@ -12,7 +12,7 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -58,8 +58,7 @@ class HealthCheckResponse(BaseModel):
     error_message: str | None
     checked_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class QuotaUsageResponse(BaseModel):
     id: UUID
@@ -69,8 +68,7 @@ class QuotaUsageResponse(BaseModel):
     period_start: datetime
     period_end: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class AlertCreate(BaseModel):
     alert_name: str = Field(..., max_length=100)
@@ -91,8 +89,7 @@ class AlertResponse(BaseModel):
     is_active: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class IncidentResponse(BaseModel):
     id: UUID
@@ -102,8 +99,7 @@ class IncidentResponse(BaseModel):
     created_at: datetime
     resolved_at: datetime | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class IncidentAction(BaseModel):
     action: str = Field(..., pattern="^(acknowledge|resolve)$")

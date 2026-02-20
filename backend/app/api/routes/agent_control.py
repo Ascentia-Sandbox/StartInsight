@@ -13,7 +13,7 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse
@@ -51,8 +51,7 @@ class AgentConfigResponse(BaseModel):
     last_run_at: datetime | None = None
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class AgentConfigCreate(BaseModel):
     agent_name: str = Field(..., min_length=1, max_length=50)
@@ -95,8 +94,7 @@ class AgentScheduleResponse(BaseModel):
     last_run_at: datetime | None
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class AgentStatsResponse(BaseModel):
     agent_name: str
@@ -116,8 +114,7 @@ class AuditLogResponse(BaseModel):
     ip_address: str | None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================

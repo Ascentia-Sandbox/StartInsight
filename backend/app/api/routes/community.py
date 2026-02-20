@@ -12,7 +12,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -48,8 +48,7 @@ class VoteResponse(BaseModel):
     vote_type: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class VoteSummary(BaseModel):
@@ -82,8 +81,7 @@ class CommentResponse(BaseModel):
     author_name: str | None = None
     reply_count: int = 0
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PollCreate(BaseModel):
@@ -104,8 +102,7 @@ class PollResponse(BaseModel):
     response_count: int = 0
     results: dict | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PollVote(BaseModel):

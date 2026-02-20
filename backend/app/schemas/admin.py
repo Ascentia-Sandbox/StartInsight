@@ -127,8 +127,7 @@ class MetricResponse(BaseModel):
     dimensions: dict = Field(default_factory=dict)
     recorded_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MetricQueryRequest(BaseModel):
@@ -295,8 +294,7 @@ class InsightAdminResponse(BaseModel):
     execution_plan: dict | None = None
     competitor_analysis: list | dict | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class InsightReviewResponse(BaseModel):
@@ -392,8 +390,7 @@ class AdminUserResponse(BaseModel):
     user_email: str | None = None
     user_display_name: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AdminUserListResponse(BaseModel):

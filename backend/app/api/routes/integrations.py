@@ -15,7 +15,7 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -59,8 +59,7 @@ class IntegrationResponse(BaseModel):
     sync_error: str | None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class IntegrationUpdate(BaseModel):
@@ -84,8 +83,7 @@ class WebhookResponse(BaseModel):
     failure_count: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ExtensionTokenResponse(BaseModel):
@@ -107,8 +105,7 @@ class ExtensionTokenInfo(BaseModel):
     is_active: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BotSubscriptionCreate(BaseModel):
@@ -133,8 +130,7 @@ class BotSubscriptionResponse(BaseModel):
     last_notified_at: datetime | None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SyncHistoryResponse(BaseModel):
@@ -147,8 +143,7 @@ class SyncHistoryResponse(BaseModel):
     started_at: datetime
     completed_at: datetime | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================

@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, Generic, TypeVar
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 T = TypeVar("T")
 
@@ -20,10 +20,7 @@ class RawSignalResponse(BaseModel):
     created_at: datetime = Field(..., description="Timestamp when signal was created")
     processed: bool = Field(..., description="Whether signal has been analyzed")
 
-    class Config:
-        """Pydantic config."""
-
-        from_attributes = True  # Pydantic V2 (replaces orm_mode)
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PaginatedResponse(BaseModel, Generic[T]):

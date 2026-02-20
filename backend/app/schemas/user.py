@@ -6,7 +6,7 @@ See architecture.md Section "API Architecture Phase 4+" for full specification.
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 # ============================================
 # User Profile Schemas
@@ -43,8 +43,7 @@ class UserResponse(UserBase):
     preferences: dict = Field(default_factory=dict)
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserPublicResponse(BaseModel):
@@ -54,8 +53,7 @@ class UserPublicResponse(BaseModel):
     display_name: str | None = None
     avatar_url: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================
@@ -67,14 +65,14 @@ class SavedInsightCreate(BaseModel):
     """Schema for saving an insight."""
 
     notes: str | None = Field(None, max_length=2000)
-    tags: list[str] | None = Field(None, max_items=10)
+    tags: list[str] | None = Field(None, max_length=10)
 
 
 class SavedInsightUpdate(BaseModel):
     """Schema for updating a saved insight."""
 
     notes: str | None = Field(None, max_length=2000)
-    tags: list[str] | None = Field(None, max_items=10)
+    tags: list[str] | None = Field(None, max_length=10)
     status: str | None = Field(None, pattern="^(interested|saved|building|not_interested)$")
 
 
@@ -90,8 +88,7 @@ class SavedInsightResponse(BaseModel):
     saved_at: datetime
     shared_count: int = 0
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SavedInsightWithDetails(SavedInsightResponse):
@@ -137,8 +134,7 @@ class RatingResponse(BaseModel):
     feedback: str | None = None
     rated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RatingListResponse(BaseModel):
@@ -193,8 +189,7 @@ class InsightSummary(BaseModel):
     relevance_score: float = Field(ge=0.0, le=1.0)
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================
@@ -224,8 +219,7 @@ class InteractionResponse(BaseModel):
     extra_metadata: dict = Field(default_factory=dict)
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class InteractionStatsResponse(BaseModel):
