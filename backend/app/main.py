@@ -170,6 +170,25 @@ from app.middleware.rate_limiter import RateLimiterMiddleware
 
 app.add_middleware(RateLimiterMiddleware, max_requests=100, window_seconds=3600)
 
+# Temporary CORS debug middleware — logs Origin + requested headers for OPTIONS
+import logging as _logging
+_cors_debug_logger = _logging.getLogger("app.cors_debug")
+
+class _CORSDebugMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if request.method == "OPTIONS":
+            origin = request.headers.get("origin", "<none>")
+            req_headers = request.headers.get("access-control-request-headers", "<none>")
+            req_method = request.headers.get("access-control-request-method", "<none>")
+            response = await call_next(request)
+            _cors_debug_logger.warning(
+                f"OPTIONS preflight: origin={origin!r} method={req_method!r} "
+                f"headers={req_headers!r} → status={response.status_code}"
+            )
+            return response
+        return await call_next(request)
+
+app.add_middleware(_CORSDebugMiddleware)
 
 # ============================================================================
 # Global Exception Handlers (Production Security)
