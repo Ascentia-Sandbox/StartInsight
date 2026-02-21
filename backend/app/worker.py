@@ -887,10 +887,11 @@ class WorkerSettings:
             minute=0,
             run_at_startup=False,  # Don't run immediately on worker start
         ),
-        # Run hourly trends update every hour
+        # Run trends update 4x daily to avoid Google Trends rate limiting
         cron(
             hourly_trends_update_task,
-            minute=0,  # Run at the top of every hour
+            hour={0, 6, 12, 18},
+            minute=30,
             run_at_startup=False,  # Don't run immediately on worker start
         ),
         # Analyze signals 30min after each scrape cycle

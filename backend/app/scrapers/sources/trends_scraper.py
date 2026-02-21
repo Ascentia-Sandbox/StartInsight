@@ -14,7 +14,7 @@ from app.scrapers.firecrawl_client import ScrapeResult
 logger = logging.getLogger(__name__)
 
 # Default delay between API calls (seconds)
-DEFAULT_BATCH_DELAY = 2.0
+DEFAULT_BATCH_DELAY = 30.0
 # Maximum retries for 429 errors
 MAX_RETRIES = 3
 # Base delay for exponential backoff (seconds)
