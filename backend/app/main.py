@@ -31,6 +31,15 @@ if settings.sentry_dsn and settings.environment in ("production", "staging"):
     from sentry_sdk.integrations.logging import LoggingIntegration
     from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
+    def _before_send(event, hint):
+        # Drop health-check noise
+        if event.get("request", {}).get("url", "").endswith("/health"):
+            return None
+        # Drop harmless Prophet/plotly missing-dependency warning
+        if "Importing plotly failed" in event.get("logentry", {}).get("message", ""):
+            return None
+        return event
+
     sentry_sdk.init(
         dsn=settings.sentry_dsn,
         environment=settings.environment,
@@ -47,8 +56,7 @@ if settings.sentry_dsn and settings.environment in ("production", "staging"):
                 sentry_logs_level=_logging.WARNING,  # Sentry Logs tab from WARNING+
             ),
         ],
-        before_send=lambda event, hint:
-            None if event.get("request", {}).get("url", "").endswith("/health") else event,
+        before_send=_before_send,
     )
 
 # Configure structured logging
@@ -76,7 +84,7 @@ async def lifespan(app: FastAPI):
         await schedule_scraping_tasks()
         logger.info("Task scheduler initialized")
     except Exception as e:
-        logger.error(f"Failed to initialize task scheduler: {e}")
+        logger.warning(f"Task scheduler unavailable (Redis not configured): {e}")
 
     yield
 

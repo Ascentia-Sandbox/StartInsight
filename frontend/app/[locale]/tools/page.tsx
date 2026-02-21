@@ -28,6 +28,7 @@ interface Tool {
   pricing: string;
   website_url: string;
   logo_url: string | null;
+  affiliate_url: string | null;
   is_featured: boolean;
 }
 
@@ -268,10 +269,15 @@ export default function ToolsPage() {
                       {tool.description}
                     </p>
                     <div className="flex items-center justify-between">
-                      <Badge variant="outline">{tool.category}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">{tool.category}</Badge>
+                        {tool.affiliate_url && (
+                          <Badge variant="secondary" className="text-xs">Sponsored</Badge>
+                        )}
+                      </div>
                       <Button asChild variant="ghost" size="sm">
                         <a
-                          href={tool.website_url}
+                          href={tool.affiliate_url ?? tool.website_url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-1"

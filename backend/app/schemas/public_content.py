@@ -21,6 +21,7 @@ class ToolBase(BaseModel):
     pricing: str = Field(..., min_length=1, max_length=200, description="Pricing model")
     website_url: str = Field(..., min_length=1, max_length=500, description="Official website URL")
     logo_url: str | None = Field(None, max_length=500, description="Logo image URL")
+    affiliate_url: str | None = Field(None, max_length=500, description="Affiliate/referral URL (overrides website_url for Visit button)")
 
 
 class ToolCreate(ToolBase):
@@ -38,6 +39,7 @@ class ToolUpdate(BaseModel):
     pricing: str | None = Field(None, min_length=1, max_length=200)
     website_url: str | None = Field(None, min_length=1, max_length=500)
     logo_url: str | None = Field(None, max_length=500)
+    affiliate_url: str | None = Field(None, max_length=500)
     is_featured: bool | None = None
     sort_order: int | None = Field(None, ge=0)
 
