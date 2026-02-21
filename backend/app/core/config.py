@@ -153,7 +153,7 @@ class Settings(BaseSettings):
     cors_allowed_headers: str = "*"
     cors_origin_regex: str = ""  # Optional regex for dynamic origins (e.g. Vercel preview deployments)
     csp_connect_src: str = "'self' https://generativelanguage.googleapis.com https://*.supabase.co"
-    cors_allowed_production_origins: str = "https://startinsight.app,https://www.startinsight.app,https://app.startinsight.app"
+    cors_allowed_production_origins: str = "https://startinsight.co,https://www.startinsight.co"
 
     # Application
     app_version: str = "0.1.0"

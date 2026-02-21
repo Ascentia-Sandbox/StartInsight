@@ -193,7 +193,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            NEXT_PUBLIC_API_URL=https://backend-production-e845.up.railway.app
+            NEXT_PUBLIC_API_URL=https://api.startinsight.co
             NEXT_PUBLIC_SUPABASE_URL=https://mxduetfcsgttwwgszjae.supabase.co
             NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
 
