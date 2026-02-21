@@ -150,7 +150,7 @@ class Settings(BaseSettings):
     jwks_fetch_timeout: float = 10.0
     jwks_cache_ttl: int = 3600
     cors_allowed_methods: str = "GET,POST,PUT,PATCH,DELETE,OPTIONS"
-    cors_allowed_headers: str = "Authorization,Content-Type,X-Request-ID,X-API-Key,Accept,Accept-Language,sentry-trace,baggage"
+    cors_allowed_headers: str = "*"
     cors_origin_regex: str = ""  # Optional regex for dynamic origins (e.g. Vercel preview deployments)
     csp_connect_src: str = "'self' https://generativelanguage.googleapis.com https://*.supabase.co"
     cors_allowed_production_origins: str = "https://startinsight.app,https://www.startinsight.app,https://app.startinsight.app"
