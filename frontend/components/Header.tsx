@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
+import { TierBadge } from '@/components/ui/TierBadge';
 import { getSupabaseClient } from '@/lib/supabase/client';
+import { useSubscription } from '@/hooks/useSubscription';
 import dynamic from 'next/dynamic';
 import { MegaMenu } from '@/components/navigation/mega-menu';
 import { MobileMenu } from '@/components/navigation/mobile-menu';
@@ -28,6 +30,7 @@ function UserMenu({ user }: { user: User }) {
   const [open, setOpen] = useState(false);
   const supabase = getSupabaseClient();
   const showAdmin = isAdmin(user);
+  const { tier } = useSubscription();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -47,6 +50,7 @@ function UserMenu({ user }: { user: User }) {
       <button
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 rounded-full bg-primary text-primary-foreground w-9 h-9 items-center justify-center text-sm font-medium hover:opacity-80 transition-opacity"
+        aria-label={`User menu — ${tier} plan`}
       >
         {initials}
       </button>
@@ -58,12 +62,15 @@ function UserMenu({ user }: { user: User }) {
             <div className="p-3 border-b">
               <p className="text-sm font-medium">{userName}</p>
               <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-              {showAdmin && (
-                <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded">
-                  <Shield className="h-2.5 w-2.5" />
-                  Super Admin
-                </span>
-              )}
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <TierBadge tier={tier} />
+                {showAdmin && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded">
+                    <Shield className="h-2.5 w-2.5" />
+                    Super Admin
+                  </span>
+                )}
+              </div>
             </div>
             <div className="p-1">
               {showAdmin && (

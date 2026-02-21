@@ -13,6 +13,13 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-02-21)
+
+- [2026-02-21] [TIER-DIFF]: Subscription tier differentiation — full feature set
+  - Files: payments.py, useSubscription.ts, TierBadge.tsx, FeatureLock.tsx, UpgradeModal.tsx
+  - Tech: Backend usage queries + React Query hook + 3 new UI components + 4 page updates
+  - Status: ✓ Complete
+
 ## Recent Progress (2026-02-20)
 
 - [2026-02-20] [PROD-FIX]: Fix RawSignal title kwarg + regex→pattern
