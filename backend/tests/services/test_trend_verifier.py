@@ -71,17 +71,15 @@ class TestTrendVerifierInit:
 
         assert verifier._hl == "en-US"
         assert verifier._tz == 360
-        assert verifier._retries == 3
         assert verifier._pytrends is None
         assert verifier._cache == {}
 
     def test_custom_initialization(self):
         """Should accept custom settings."""
-        verifier = TrendVerifier(hl="de-DE", tz=60, retries=5)
+        verifier = TrendVerifier(hl="de-DE", tz=60)
 
         assert verifier._hl == "de-DE"
         assert verifier._tz == 60
-        assert verifier._retries == 5
 
 
 class TestVerifyTrendKeywords:
