@@ -156,6 +156,7 @@ app.add_middleware(APIVersionMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
+    allow_origin_regex=settings.cors_origin_regex or None,
     allow_credentials=True,
     allow_methods=[m.strip() for m in settings.cors_allowed_methods.split(",")],
     allow_headers=[h.strip() for h in settings.cors_allowed_headers.split(",")],
