@@ -933,3 +933,18 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: implementation-plan.md (2638 → 459 lines)
   - Tech: Removed redundant Phase details (1-7 complete), consolidated Post-MVP roadmap, added DR-002 rollback notes
   - Status: [✓ Complete] Deployment-ready documentation
+
+- [2026-02-22] [DOMAIN-SWEEP]: Replace all startinsight.app → startinsight.co (19 instances, 11 files)
+  - Files: layout.tsx, sitemap.ts, robots.txt, developers/page.tsx (+7 more)
+  - Tech: Replace old domain + critical api.startinsight.ai fix in developer docs
+  - Status: [✓ Complete]
+
+- [2026-02-22] [FAVICON]: Professional favicon update (SVG + apple-icon + OG image)
+  - Files: app/icon.svg, app/apple-icon.tsx, app/opengraph-image.tsx, app/layout.tsx
+  - Tech: Next.js file-convention icons + ImageResponse OG image
+  - Status: [✓ Complete]
+
+- [2026-02-22] [CI-FIX]: Fix VERCEL_TOKEN_STAGING used for production deploy
+  - Files: .github/workflows/ci-cd.yml
+  - Tech: One-line fix, production frontend now deploys with correct token
+  - Status: [✓ Complete]

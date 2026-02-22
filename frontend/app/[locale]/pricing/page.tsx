@@ -140,7 +140,7 @@ export default function PricingPage() {
     name: "StartInsight",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
-    url: "https://startinsight.app/pricing",
+    url: "https://startinsight.co/pricing",
     offers: [
       { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD", description: "5 idea generations/month, basic scoring" },
       { "@type": "Offer", name: "Starter", price: "19", priceCurrency: "USD", billingIncrement: "MON", description: "50 ideas/month, 8-dimension scoring, AI research" },

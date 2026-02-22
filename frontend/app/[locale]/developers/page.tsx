@@ -148,13 +148,13 @@ const pricingTiers = [
 
 // Code examples
 const codeExamples = {
-  curl: `curl -X GET "https://api.startinsight.ai/api/insights" \\
+  curl: `curl -X GET "https://api.startinsight.co/api/insights" \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json"`,
   python: `import requests
 
 response = requests.get(
-    "https://api.startinsight.ai/api/insights",
+    "https://api.startinsight.co/api/insights",
     headers={
         "Authorization": "Bearer YOUR_API_KEY",
         "Content-Type": "application/json"
@@ -164,7 +164,7 @@ response = requests.get(
 insights = response.json()
 print(f"Found {len(insights['data'])} insights")`,
   javascript: `const response = await fetch(
-  'https://api.startinsight.ai/api/insights',
+  'https://api.startinsight.co/api/insights',
   {
     headers: {
       'Authorization': 'Bearer YOUR_API_KEY',

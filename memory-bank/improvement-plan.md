@@ -1,8 +1,8 @@
 # StartInsight — Professional Improvement Plan
 
-**Date:** 2026-02-20
+**Date:** 2026-02-22
 **Status:** Production Live — All Phases 1-10 + A-L + Q1-Q9 + Security + Sentry + Redis complete
-**Live URL:** https://start-insight-ascentias-projects.vercel.app
+**Live URL:** https://startinsight.co
 
 ---
 
@@ -14,13 +14,13 @@ StartInsight is technically complete and production-stable. All 338 tests pass, 
 
 ---
 
-## Current Baselines
+## Current Baselines (Updated 2026-02-22)
 
 | Metric | Value |
 |--------|-------|
 | Total insights in DB | ~399 |
-| Daily new insights | **0** (scraper pipeline stalled) |
-| Pulse signals (24h) | **0** (confirming scraper issue) |
+| Daily new insights | Recovering (scraper pipeline fixed 2026-02-22) |
+| Pulse signals (24h) | Recovering — Crawl4AI timeout + duplicate scheduling fixed |
 | Organic search traffic | ~0 (not yet indexed) |
 | Uptime monitoring | None |
 | User analytics | None |
@@ -33,19 +33,15 @@ StartInsight is technically complete and production-stable. All 338 tests pass, 
 
 > These unlock the product's ability to grow and are blocking or near-blocking.
 
-### 1.1 Fix the Scraper Pipeline ⚠️ BLOCKING
+### 1.1 Fix the Scraper Pipeline ✓ FIXED (2026-02-22)
 
-**Problem:** `signals_24h: 0` on `/pulse` despite all 6 scrapers being registered. No new raw signals means no new insights — the AI pipeline is effectively stalled.
+**Root cause:** Two bugs found and fixed:
+1. `AsyncWebCrawler.arun()` in `crawl4ai_client.py` had no timeout → hung indefinitely, killed by Arq's 600s job timeout
+2. `scrape_all_sources_task` + `analyze_signals_task` were scheduled by BOTH Arq `cron_jobs` AND APScheduler → competing double-runs
 
-**Investigation steps:**
-1. Open Sentry → filter by `arq_worker` context → look for scraper task exceptions
-2. Trigger each scraper manually via admin panel → inspect logs
-3. Verify Railway env vars: `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `TWITTER_BEARER_TOKEN`
-4. Check for permanent rate-limit bans (Reddit, Twitter/X)
+**Fix applied:** `asyncio.wait_for(..., timeout=30.0)` in crawl4ai_client.py; removed duplicate APScheduler entries.
 
-**Likely fix:** Expired API credentials or silent exception swallowing in scraper error handlers.
-
-**Files:** `backend/app/scrapers/`, `backend/app/worker.py`, `backend/app/scheduler.py`
+**Files:** `backend/app/scrapers/crawl4ai_client.py`, `backend/app/scheduler.py`
 
 ---
 
@@ -158,7 +154,19 @@ StartInsight is technically complete and production-stable. All 338 tests pass, 
 
 ---
 
-### 2.5 ProductHunt Launch
+### 2.5 Frontend Sentry Release Tracking
+
+**Problem:** Backend uses `RAILWAY_GIT_COMMIT_SHA` for release tracking, but frontend Sentry does not emit release tags. Errors can't be attributed to specific deploys.
+
+**Implementation:**
+- Pass `VERCEL_GIT_COMMIT_SHA` as `NEXT_PUBLIC_SENTRY_RELEASE` in Vercel env vars
+- Update `sentry.client.config.ts` to use `process.env.NEXT_PUBLIC_SENTRY_RELEASE` as the release identifier
+
+**Files:** `frontend/sentry.client.config.ts`, Vercel project settings
+
+---
+
+### 2.6 ProductHunt Launch
 
 **Problem:** The product is launch-ready but no launch has been executed. A ProductHunt launch can drive 500–2,000 visitors in a single day.
 
@@ -275,8 +283,8 @@ Month 3+
 
 | Metric | Today | Target |
 |--------|-------|--------|
-| Pulse signals_24h | 0 | 50+ |
-| Daily new insights | 0 | 20+ |
+| Pulse signals_24h | Recovering (scraper fixed) | 50+ |
+| Daily new insights | Recovering (scraper fixed) | 20+ |
 | Total insights | ~399 | 600+ |
 | Organic search visitors | ~0 | 200+/month |
 | Registered users | Unknown | 100+ |

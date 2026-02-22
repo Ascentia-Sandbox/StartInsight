@@ -188,7 +188,7 @@ export default function MarketInsightsPage() {
               "@context": "https://schema.org",
               "@type": "CollectionPage",
               name: "Market Insights & Analysis",
-              url: "https://startinsight.app/market-insights",
+              url: "https://startinsight.co/market-insights",
               mainEntity: {
                 "@type": "ItemList",
                 itemListElement: articles.slice(0, 10).map((a, i) => ({
@@ -198,7 +198,7 @@ export default function MarketInsightsPage() {
                     "@type": "Article",
                     headline: a.title,
                     description: a.summary,
-                    url: `https://startinsight.app/market-insights/${a.slug}`,
+                    url: `https://startinsight.co/market-insights/${a.slug}`,
                   },
                 })),
               },

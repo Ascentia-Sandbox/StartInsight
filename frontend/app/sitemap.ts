@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 import { config } from "@/lib/env";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://startinsight.app";
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://startinsight.co";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static pages

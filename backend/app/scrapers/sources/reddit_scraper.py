@@ -17,7 +17,7 @@ from app.scrapers.firecrawl_client import ScrapeResult
 logger = logging.getLogger(__name__)
 
 # Reddit JSON API requires a descriptive User-Agent to avoid 429s
-_REDDIT_USER_AGENT = "StartInsight/1.0 (startup signal aggregator; +https://startinsight.app)"
+_REDDIT_USER_AGENT = "StartInsight/1.0 (startup signal aggregator; +https://startinsight.co)"
 _POST_ID_RE = re.compile(r"/comments/([a-z0-9]+)/")
 
 

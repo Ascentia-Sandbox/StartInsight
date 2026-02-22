@@ -19,6 +19,13 @@ export const metadata: Metadata = {
   title: "StartInsight - AI-Powered Startup Idea Discovery",
   description:
     "Discover your next million-dollar startup idea with AI-powered market intelligence.",
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '32x32' },
+    ],
+    apple: [{ url: '/apple-icon', sizes: '180x180' }],
+  },
 };
 
 // Root Layout wraps ALL routes including those outside [locale].
