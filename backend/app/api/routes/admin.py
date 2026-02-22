@@ -474,12 +474,19 @@ async def trigger_agent(
     task_name = agent_task_map.get(agent_type)
     if task_name:
         try:
+            from urllib.parse import urlparse as _urlparse
             from arq.connections import ArqRedis, create_pool
             from arq.connections import RedisSettings as ArqRedisSettings
 
+            _parsed = _urlparse(settings.redis_url)
             pool: ArqRedis = await create_pool(ArqRedisSettings(
-                host=settings.redis_host,
-                port=settings.redis_port,
+                host=_parsed.hostname or "localhost",
+                port=_parsed.port or 6379,
+                password=_parsed.password,
+                database=int((_parsed.path or "/0").lstrip("/") or "0"),
+                ssl=settings.redis_url.startswith("rediss://"),
+                conn_timeout=3,
+                conn_retries=0,
             ))
             job = await pool.enqueue_job(task_name)
             await pool.aclose()
