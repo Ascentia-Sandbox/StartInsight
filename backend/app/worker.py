@@ -733,96 +733,80 @@ async def analyze_signals_task(ctx: dict[str, Any]) -> dict[str, Any]:
     batch_size = settings.analysis_batch_size
 
     try:
+        # Phase 1: fetch IDs only — short session, no long-held lock.
+        # Each signal is then processed in its own fresh session so the
+        # Supabase session-mode pooler never sees an idle connection for
+        # longer than a single Gemini API call (~30-40s).
         async with AsyncSessionLocal() as session:
-            # Get unprocessed signals with row-level lock to prevent concurrent processing
             result = await session.execute(
-                select(RawSignal)
+                select(RawSignal.id)
                 .where(RawSignal.processed == False)  # noqa: E712
-                .order_by(RawSignal.created_at.asc())  # Process oldest first
+                .order_by(RawSignal.created_at.asc())
                 .limit(batch_size)
-                .with_for_update(skip_locked=True)  # Prevent concurrent processing
             )
-            signals = result.scalars().all()
+            signal_ids: list = [row[0] for row in result.fetchall()]
 
-            if not signals:
-                logger.info("No unprocessed signals to analyze")
-                return {
-                    "status": "success",
-                    "analyzed": 0,
-                    "total": 0,
-                }
+        if not signal_ids:
+            logger.info("No unprocessed signals to analyze")
+            return {
+                "status": "success",
+                "analyzed": 0,
+                "total": 0,
+            }
 
-            analyzed_count = 0
-            failed_count = 0
-            # Track successfully processed signal IDs for post-commit update
-            successfully_processed_ids: list = []
+        logger.info(f"Processing {len(signal_ids)} signals (one session per signal)")
 
-            for signal in signals:
+        analyzed_count = 0
+        failed_count = 0
+
+        # Phase 2: process each signal in its own short-lived session.
+        for signal_id in signal_ids:
+            async with AsyncSessionLocal() as session:
+                # Re-fetch to confirm still unprocessed (another task may have grabbed it)
+                result = await session.execute(
+                    select(RawSignal)
+                    .where(RawSignal.id == signal_id, RawSignal.processed == False)  # noqa: E712
+                )
+                signal = result.scalar_one_or_none()
+                if signal is None:
+                    continue  # Already processed by concurrent task
+
                 try:
-                    # Analyze signal with enhanced analyzer (450+ word narratives)
                     insight = await analyze_signal_enhanced_with_retry(signal)
                     session.add(insight)
+                    await session.commit()
 
-                    # Track success - DO NOT mark processed yet!
-                    successfully_processed_ids.append(signal.id)
-                    analyzed_count += 1
+                    logger.info(f"Committed insight for signal {signal_id} from {signal.source}")
 
-                    logger.info(
-                        f"Analyzed signal {signal.id} from {signal.source}"
-                    )
-
-                except Exception as e:
-                    failed_count += 1
-                    logger.error(
-                        f"Failed to analyze signal {signal.id}: {type(e).__name__} - {e}"
-                    )
-                    # Signal remains unprocessed for retry
-
-            # Commit insights to database
-            try:
-                await session.commit()
-                logger.info(
-                    f"Committed {analyzed_count} insights to database"
-                )
-
-                # ONLY NOW mark signals as processed (after successful commit)
-                if successfully_processed_ids:
+                    # Mark processed in a separate session after successful commit
                     async with AsyncSessionLocal() as update_session:
                         await update_session.execute(
                             update(RawSignal)
-                            .where(RawSignal.id.in_(successfully_processed_ids))
+                            .where(RawSignal.id == signal_id)
                             .values(processed=True)
                         )
                         await update_session.commit()
-                        logger.info(
-                            f"Marked {len(successfully_processed_ids)} signals as processed"
-                        )
 
-            except Exception as e:
-                await session.rollback()
-                logger.error(
-                    f"Commit failed, no signals marked as processed: "
-                    f"{type(e).__name__} - {e}"
-                )
-                # All signals remain unprocessed for retry
-                return {
-                    "status": "error",
-                    "error": f"Commit failed: {e}",
-                    "analyzed": 0,
-                    "failed": len(signals),
-                    "total": len(signals),
-                }
+                    analyzed_count += 1
+
+                except Exception as e:
+                    await session.rollback()
+                    failed_count += 1
+                    logger.error(
+                        f"Failed to analyze signal {signal_id}: {type(e).__name__} - {e}"
+                    )
+                    # Signal remains unprocessed for retry on next run
 
         logger.info(
             f"Analysis task complete: {analyzed_count} analyzed, "
-            f"{failed_count} failed out of {len(signals)} signals"
+            f"{failed_count} failed out of {len(signal_ids)} signals"
         )
 
         return {
             "status": "success",
             "analyzed": analyzed_count,
             "failed": failed_count,
-            "total": len(signals),
+            "total": len(signal_ids),
         }
 
     except Exception as e:
