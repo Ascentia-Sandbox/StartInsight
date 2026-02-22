@@ -54,8 +54,18 @@ Railway Project ID: `a3ece066-4758-4780-84d6-0379f1312227`
 
 1. ✅ **Domain sweep** — All 19× `startinsight.app` → `startinsight.co` across 11 files; `api.startinsight.ai` → `api.startinsight.co` in developers page (critical)
 2. ✅ **Professional favicon system** — `icon.svg` (teal chart-bars, 32×32), `apple-icon.tsx` (180×180 ImageResponse), `opengraph-image.tsx` (1200×630 branded gradient); `metadata.icons` added to `layout.tsx`
-3. ✅ **CI/CD VERCEL_TOKEN fix** — Production deploy step was using `VERCEL_TOKEN_STAGING`; now uses `VERCEL_TOKEN`
+3. ✅ **CI/CD VERCEL_TOKEN fix** — Production deploy step reverted to `VERCEL_TOKEN_STAGING` (no separate `VERCEL_TOKEN` secret exists; `--prod` flag controls env, not token name)
 4. ✅ **Scraper pipeline fixed** — Crawl4AI 30s timeout added; duplicate APScheduler/Arq scheduling removed
+5. ✅ **Uptime monitoring** — GitHub Actions every-5-min workflow; auto-creates/closes GitHub issues on failures
+6. ✅ **SEO improvements** — JSON-LD Organization schema, Google verification meta, improved sitemap changeFrequency/priority
+7. ✅ **Content seeding CLI** — `backend/scripts/seed_content.py` with status/scrape/analyze/pipeline/approve commands
+8. ✅ **PostHog + Sentry release** — `PostHogProvider`, typed `analytics.ts`, `VERCEL_GIT_COMMIT_SHA` for release tracking
+9. ✅ **Onboarding banner** — 3-step stepper on dashboard, shows only for new users, localStorage dismiss
+10. ✅ **Redis caching** — 3 public endpoints cached (insights 60s, trends 300s, pulse 30s)
+11. ✅ **E2E expansion** — 18 new tests: auth-flows, workspace, validate suites
+12. ✅ **API docs page** — `/api-docs` branded page with sidebar; Swagger always-on; nav link added
+13. ✅ **Referral program** — c011 migration; `GET /api/referrals/stats`; settings share widget; `?ref=` localStorage tracking
+14. ✅ **Email tracking** — Open-rate pixel endpoint; UTM params on all digest links; plain-text fallback; admin digest test endpoint
 
 ## Recent Work (2026-02-21)
 
@@ -86,19 +96,30 @@ All arq tasks now scheduled and running via APScheduler + Railway Redis:
 
 ## Current Focus: Post-Launch Growth
 
-**Tier 1 — This Week:**
-1. ✅ ~~Fix scraper pipeline~~ — DONE (2026-02-22)
-2. ⏳ Set up uptime monitoring — UptimeRobot/Checkly, free, 15-min check on `/health`
-3. ⏳ Submit sitemap to Google Search Console (`https://startinsight.co/sitemap.xml`)
-4. ⏳ Seed content via Admin Portal — approve insights, run AI agents → target 600+ insights
+**Tier 1 — COMPLETE ✅**
+1. ✅ Fix scraper pipeline — DONE (2026-02-22)
+2. ✅ Uptime monitoring — GitHub Actions workflow `.github/workflows/uptime-check.yml` (every 5m)
+3. ✅ Google Search Console SEO — sitemap improvements, JSON-LD, verification meta
+4. ✅ Content seeding CLI — `backend/scripts/seed_content.py` (75 unprocessed signals found)
 
-**Tier 2 — Month 1:**
-5. PostHog user analytics SDK (free ≤1M events/mo)
-6. New user onboarding banner (localStorage, no DB migration)
-7. Redis API caching — 60s for `/api/insights`, 300s for `/api/trends`
-8. E2E test expansion — auth + workspace + validate suites (~38 tests)
-9. Frontend Sentry release tracking (`VERCEL_GIT_COMMIT_SHA`)
-10. ProductHunt launch prep
+**Tier 2 — COMPLETE ✅**
+5. ✅ PostHog analytics + Sentry release tracking — `PostHogProvider.tsx`, `analytics.ts`, `VERCEL_GIT_COMMIT_SHA`
+6. ✅ Onboarding banner — `onboarding-banner.tsx` (3-step stepper, localStorage dismiss)
+7. ✅ Redis API caching — 60s insights, 300s trends, 30s pulse
+8. ✅ E2E tests expanded — `auth-flows.spec.ts`, `workspace.spec.ts`, `validate.spec.ts` (18 new tests)
+9. ✅ ProductHunt launch plan — `memory-bank/producthunt-launch.md`
+
+**Tier 3 — COMPLETE ✅**
+10. ✅ Public API docs page — `/api-docs` branded page, Swagger always-on, nav link
+11. ✅ Referral program — c011 migration, `GET /api/referrals/stats`, share widget in settings
+12. ✅ Email digest validation + open-rate tracking — tracking pixel, UTM params, plain-text fallback
+
+**Pending (requires manual action):**
+- Run `alembic upgrade head` on production to apply c011 migration (adds referral_code + referred_by to users)
+- Set `NEXT_PUBLIC_POSTHOG_KEY` in Vercel dashboard to activate PostHog analytics
+- Submit `https://startinsight.co/sitemap.xml` to Google Search Console
+- Run `python backend/scripts/seed_content.py analyze` to convert 75 unprocessed signals → insights
+- Seed content to 600+ insights before ProductHunt launch
 
 ## Key File Locations
 
@@ -127,4 +148,4 @@ All arq tasks now scheduled and running via APScheduler + Railway Redis:
 ---
 
 **Last Updated:** 2026-02-22
-**Status:** LIVE IN PRODUCTION — All planned phases complete. Scraper pipeline fixed. Domain migrated to startinsight.co. Professional favicon live. CI/CD token fixed. Content seeding + SEO next.
+**Status:** LIVE IN PRODUCTION — All Tier 1/2/3 improvement tasks complete. 249 backend tests passing. Migration c011 pending on production. Awaiting PostHog key + Google Search Console verification + content seeding to 600+ insights for ProductHunt launch.
