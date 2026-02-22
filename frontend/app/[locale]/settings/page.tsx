@@ -4,13 +4,33 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2, Check, User, Bell, CreditCard, Trash2 } from 'lucide-react';
+import { Loader2, Check, User, Bell, CreditCard, Trash2, Gift, Copy, Twitter } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { fetchUserProfile, updateUserProfile, fetchSubscriptionStatus, fetchEmailPreferences, updateEmailPreferences } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { config } from '@/lib/env';
+
+// ---------------------------------------------------------------------------
+// Referral stats types
+// ---------------------------------------------------------------------------
+
+interface ReferralStats {
+  referral_code: string;
+  referral_link: string;
+  referrals_count: number;
+  reward_status: string;
+}
+
+async function fetchReferralStats(token: string): Promise<ReferralStats> {
+  const res = await fetch(`${config.apiUrl}/api/referrals/stats`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch referral stats');
+  return res.json() as Promise<ReferralStats>;
+}
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -23,6 +43,7 @@ export default function SettingsPage() {
   const [researchNotify, setResearchNotify] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // Check authentication
   useEffect(() => {
@@ -79,6 +100,13 @@ export default function SettingsPage() {
     enabled: !!accessToken,
   });
 
+  // Fetch referral stats
+  const { data: referralStats, isLoading: referralLoading } = useQuery({
+    queryKey: ['referral-stats', accessToken],
+    queryFn: () => fetchReferralStats(accessToken!),
+    enabled: !!accessToken,
+  });
+
   // Update profile mutation
   const updateMutation = useMutation({
     mutationFn: (data: { display_name?: string; preferences?: Record<string, unknown> }) =>
@@ -89,6 +117,18 @@ export default function SettingsPage() {
       setTimeout(() => setSaveSuccess(false), 3000);
     },
   });
+
+  // Handle referral link copy
+  const handleCopyReferralLink = async () => {
+    if (!referralStats) return;
+    try {
+      await navigator.clipboard.writeText(referralStats.referral_link);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      // Clipboard not available (non-HTTPS dev) — noop
+    }
+  };
 
   // Handle profile save
   const handleSaveProfile = () => {
@@ -335,6 +375,109 @@ export default function SettingsPage() {
                 <Button>{!subscription?.tier || subscription.tier === 'free' ? 'Upgrade' : 'Manage'}</Button>
               </Link>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Refer a Friend */}
+        <Card className="mb-6 border-teal-200 dark:border-teal-800">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Gift className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+              <CardTitle className="text-teal-700 dark:text-teal-300">Refer a Friend</CardTitle>
+            </div>
+            <CardDescription>
+              Give friends a 14-day Pro trial. Get 1 month free when they subscribe.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {referralLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-10 w-full" />
+                <div className="flex gap-2">
+                  <Skeleton className="h-9 w-32" />
+                  <Skeleton className="h-9 w-32" />
+                </div>
+              </div>
+            ) : referralStats ? (
+              <>
+                {/* Referral count badge */}
+                <div className="flex items-center gap-3 p-3 bg-teal-50 dark:bg-teal-900/20 rounded-lg">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-teal-700 dark:text-teal-300">
+                      {referralStats.referrals_count}
+                    </p>
+                    <p className="text-xs text-teal-600 dark:text-teal-400">
+                      {referralStats.referrals_count === 1 ? 'referral' : 'referrals'}
+                    </p>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {referralStats.reward_status === 'earned'
+                      ? '🎉 You have earned a free month! Contact support to redeem.'
+                      : 'Refer 1 paying subscriber to earn 1 month free.'}
+                  </div>
+                </div>
+
+                {/* Referral link input + copy */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Your referral link</label>
+                  <div className="flex gap-2">
+                    <Input
+                      readOnly
+                      value={referralStats.referral_link}
+                      className="font-mono text-sm bg-muted"
+                      aria-label="Referral link"
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleCopyReferralLink}
+                      aria-label="Copy referral link"
+                      className="shrink-0 border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20"
+                    >
+                      {linkCopied ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Share actions */}
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyReferralLink}
+                    className="border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20"
+                  >
+                    <Copy className="h-3.5 w-3.5 mr-1.5" />
+                    {linkCopied ? 'Copied!' : 'Copy Link'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="border-sky-300 dark:border-sky-700 text-sky-700 dark:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-900/20"
+                  >
+                    <a
+                      href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                        `Discovering my next startup idea with @startinsight — AI-powered market intelligence. Try it free: ${referralStats.referral_link}`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Twitter className="h-3.5 w-3.5 mr-1.5" />
+                      Share on X
+                    </a>
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Unable to load referral stats. Please refresh the page.
+              </p>
+            )}
           </CardContent>
         </Card>
 

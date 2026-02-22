@@ -233,5 +233,21 @@ class InteractionStatsResponse(BaseModel):
     total_exports: int = 0
 
 
+# ============================================
+# Referral Program Schemas
+# ============================================
+
+
+class ReferralStatsResponse(BaseModel):
+    """Referral program statistics for the current user."""
+
+    referral_code: str
+    referral_link: str
+    referrals_count: int
+    reward_status: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 # Update forward references
 SavedInsightWithDetails.model_rebuild()

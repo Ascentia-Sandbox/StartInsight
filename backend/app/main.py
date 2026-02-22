@@ -120,11 +120,17 @@ async def lifespan(app: FastAPI):
 # Create FastAPI application
 app = FastAPI(
     title="StartInsight API",
-    description="AI-powered business intelligence engine for startup idea discovery",
-    version=settings.app_version,
+    description=(
+        "AI-powered startup intelligence. 232+ endpoints for insights, trends, "
+        "signals, and market analysis. "
+        "All endpoints require `Authorization: Bearer YOUR_API_KEY`. "
+        "Get your key at startinsight.co/settings."
+    ),
+    version="1.0.0",
     lifespan=lifespan,
-    docs_url=None if settings.environment == "production" else "/docs",
-    redoc_url=None if settings.environment == "production" else "/redoc",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
 )
 
 # Request ID middleware for correlation (add BEFORE CORS)
@@ -328,6 +334,7 @@ from app.api.routes import (  # noqa: E402
     community,
     contact,
     content_review,
+    email_tracking,
     export,
     feed,
     gamification,
@@ -339,6 +346,7 @@ from app.api.routes import (  # noqa: E402
     pipeline,
     preferences,
     pulse,
+    referrals,
     research,
     signals,
     success_stories,
@@ -385,6 +393,8 @@ app.include_router(chat.router, tags=["Chat Strategist"])  # Phase B
 app.include_router(settings_routes.router, tags=["System Settings"])  # Phase G
 app.include_router(pulse.router, tags=["Market Pulse"])  # Phase Q5.1
 app.include_router(contact.router, tags=["Contact"])  # Phase Q6.3
+app.include_router(referrals.router, tags=["Referrals"])  # Referral program
+app.include_router(email_tracking.router, tags=["Email Tracking"])  # Open pixel tracking
 
 # Static file serving for uploaded images (Phase 20.1)
 os.makedirs("uploads/images", exist_ok=True)

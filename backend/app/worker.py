@@ -273,12 +273,20 @@ async def send_weekly_digest_task(ctx: dict[str, Any]) -> dict[str, Any]:
 
     from sqlalchemy import desc, select
 
+    from app.api.routes.email_tracking import build_tracking_token
     from app.models.insight import Insight
     from app.models.user import User
     from app.models.user_preferences import EmailPreferences, EmailSend
     from app.services.email_service import send_weekly_digest
 
     logger.info("Starting weekly digest task")
+
+    # Base URL for the public API (tracking pixel host)
+    api_base_url = "https://api.startinsight.co"
+    app_base_url = settings.app_url or "https://startinsight.co"
+    # UTM parameters appended to every digest link
+    _utm = "utm_source=email&utm_medium=digest&utm_campaign=weekly_digest"
+
     try:
         async with AsyncSessionLocal() as session:
             # Get top 10 insights from past week
@@ -294,16 +302,27 @@ async def send_weekly_digest_task(ctx: dict[str, Any]) -> dict[str, Any]:
             if not insights:
                 return {"status": "completed", "sent": 0, "reason": "no_insights_this_week"}
 
-            # Format insights for email template
+            # Format insights for email template — include per-insight UTM link
             insight_list = [
                 {
                     "title": i.title or i.proposed_solution[:80],
                     "problem_statement": i.problem_statement[:150],
                     "relevance_score": f"{(i.relevance_score or 0) * 100:.0f}%",
                     "market_size": i.market_size_estimate or "Unknown",
+                    # Absolute insight URL with UTM params (utm_content = insight id)
+                    "insight_url": (
+                        f"https://startinsight.co/insights/{i.id}"
+                        f"?{_utm}&utm_content={i.id}"
+                    ),
                 }
                 for i in insights
             ]
+
+            # Dashboard CTA also gets UTM params
+            dashboard_url = f"{app_base_url}/insights?{_utm}&utm_content=cta_button"
+
+            # Today's date string for tracking token
+            digest_date = date.today().isoformat()
 
             # Get users opted in to weekly digest
             subscribers_result = await session.execute(
@@ -343,12 +362,23 @@ async def send_weekly_digest_task(ctx: dict[str, Any]) -> dict[str, Any]:
                     serializer = URLSafeTimedSerializer(settings.jwt_secret or "dev-secret")
                     unsub_token = serializer.dumps(str(user.id), salt="email-unsubscribe")
 
+                    # Per-user tracking pixel token (never contains email address)
+                    tracking_token = build_tracking_token(
+                        user_id=str(user.id),
+                        digest_date=digest_date,
+                        email_type="weekly_digest",
+                    )
+                    tracking_pixel_url = (
+                        f"{api_base_url}/api/email/track/open/{tracking_token}"
+                    )
+
                     await send_weekly_digest(
                         email=user.email,
                         name=user.display_name or "there",
                         insights=insight_list,
-                        dashboard_url=f"{settings.app_url}/insights",
-                        unsubscribe_url=f"{settings.app_url}/api/email/unsubscribe?token={unsub_token}",
+                        dashboard_url=dashboard_url,
+                        unsubscribe_url=f"{app_base_url}/api/email/unsubscribe?token={unsub_token}",
+                        tracking_pixel_url=tracking_pixel_url,
                     )
 
                     session.add(EmailSend(

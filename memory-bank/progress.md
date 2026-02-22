@@ -15,6 +15,22 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ## Recent Progress (2026-02-22)
 
+- [2026-02-22] [EMAIL-TRACKING]: Weekly digest UTM links + open-rate pixel tracking
+  - Files: email_tracking.py, email_service.py, worker.py, admin.py, main.py
+  - Tech: base64url token pixel; plain-text fallback; admin POST /api/admin/digest/test
+  - Status: ✓ Complete
+
+- [2026-02-22] [REFERRAL]: Referral program — codes, stats API, share widget
+  - Files: referrals.py, c011_add_referral_columns.py, useReferral.ts, settings/page.tsx, providers.tsx
+  - Tech: 8-char code auto-gen on first GET /me; `?ref=` tracked in localStorage 30 days
+  - Status: ✓ Complete
+
+- [2026-02-22] [API-DOCS]: Public API docs page + Swagger always-on
+  - Files: app/[locale]/api-docs/page.tsx, main.py, mega-menu.tsx, sitemap.ts
+  - Tech: Swagger enabled in all envs; branded /api-docs page with sidebar + teal design
+  - Status: [✓ Complete]
+
+
 - [2026-02-22] [E2E-SUITES]: Add auth, workspace, validate E2E test suites
   - Files: auth-flows.spec.ts, workspace.spec.ts, validate.spec.ts
   - Tech: Playwright; 18 tests across 3 suites; live-auth tests skip without env vars
@@ -1023,3 +1039,18 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: memory-bank/producthunt-launch.md
   - Tech: Assets spec, copy, FAQ prep, day-of playbook, success metrics
   - Status: [✓ Complete] — ready to execute when 600+ insights seeded
+
+- [2026-02-22] [API-DOCS]: Public API docs page + Swagger always-on
+  - Files: app/[locale]/api-docs/page.tsx, main.py, mega-menu.tsx, sitemap.ts
+  - Tech: Swagger enabled all envs; branded /api-docs page, sidebar + teal design; nav link added
+  - Status: [✓ Complete]
+
+- [2026-02-22] [REFERRAL]: Referral program — DB, migration, tracking, UI
+  - Files: c011 migration, referrals.py route, user.py model, settings/page.tsx, useReferral.ts, providers.tsx
+  - Tech: referral_code + referred_by on users; ?ref= localStorage tracking; settings share widget; c009→c010→c011 chain
+  - Status: [✓ Complete] — 249 tests passing, migration head at c011
+
+- [2026-02-22] [EMAIL-DIGEST]: Email digest validation + open-rate tracking
+  - Files: email_tracking.py (new), email_service.py, worker.py, admin.py, main.py
+  - Tech: Base64 tracking pixel, UTM params on all links, plain-text fallback added, POST /api/admin/digest/test
+  - Status: [✓ Complete] — 249 tests passing; trigger test via POST /api/admin/digest/test
