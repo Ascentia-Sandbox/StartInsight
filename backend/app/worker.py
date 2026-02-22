@@ -980,5 +980,5 @@ class WorkerSettings:
 
     # Worker settings
     max_jobs = 10  # Max concurrent jobs
-    job_timeout = 600  # 10 minutes timeout per job
+    job_timeout = 1800  # 30 minutes — analysis batch can take ~120s/signal × 10 signals
     keep_result = 3600  # Keep job results for 1 hour
