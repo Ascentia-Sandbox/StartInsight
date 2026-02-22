@@ -61,16 +61,8 @@ async def schedule_scraping_tasks() -> None:
         for config in agent_configs:
             await _schedule_agent_from_config(redis, config, db)
 
-    # Fallback: Schedule legacy scraping tasks if no DB config exists
-    if not scheduler.get_job("scrape_all_sources"):
-        scheduler.add_job(
-            func=redis.enqueue_job,
-            args=("scrape_all_sources_task",),
-            trigger=IntervalTrigger(hours=settings.scrape_interval_hours),
-            id="scrape_all_sources",
-            replace_existing=True,
-            name="Scrape All Sources (Reddit, Product Hunt, Google Trends, Twitter, Hacker News)",
-        )
+    # NOTE: scrape_all_sources_task is scheduled by Arq cron_jobs (WorkerSettings)
+    # at 00/06/12/18:00 UTC. Do NOT also schedule it here — that causes double execution.
 
     # Schedule Twitter scraping every 6 hours (offset by 1h from scrape_all)
     if not scheduler.get_job("scrape_twitter"):
@@ -94,16 +86,8 @@ async def schedule_scraping_tasks() -> None:
             name="Scrape Hacker News (Top Stories + Show HN)",
         )
 
-    # Fallback: Schedule analysis tasks if no DB config
-    if not scheduler.get_job("analyze_signals"):
-        scheduler.add_job(
-            func=redis.enqueue_job,
-            args=("analyze_signals_task",),
-            trigger=IntervalTrigger(hours=settings.scrape_interval_hours),
-            id="analyze_signals",
-            replace_existing=True,
-            name="Analyze Raw Signals (PydanticAI)",
-        )
+    # NOTE: analyze_signals_task is scheduled by Arq cron_jobs (WorkerSettings)
+    # at 00/06/12/18:30 UTC. Do NOT also schedule it here — that causes double execution.
 
     # Schedule daily digest emails at 09:00 UTC (PMF: disabled by default)
     if settings.enable_daily_digest:
