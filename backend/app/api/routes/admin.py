@@ -475,6 +475,7 @@ async def trigger_agent(
     if task_name:
         try:
             from urllib.parse import urlparse as _urlparse
+
             from arq.connections import ArqRedis, create_pool
             from arq.connections import RedisSettings as ArqRedisSettings
 
