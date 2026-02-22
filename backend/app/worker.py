@@ -731,6 +731,19 @@ async def analyze_signals_task(ctx: dict[str, Any]) -> dict[str, Any]:
 
     logger.info("Starting signal analysis task")
 
+    # ─────────────────────────────────────────────────────────────────────
+    # Distributed lock: only one analyze_signals_task may run at a time.
+    # Uses the arq Redis connection that the worker already holds.
+    # ─────────────────────────────────────────────────────────────────────
+    lock_key = "analyze_signals_task:lock"
+    lock_ttl = 1800  # seconds — matches job_timeout
+    redis = ctx.get("redis")
+    if redis is not None:
+        acquired = await redis.set(lock_key, "1", nx=True, ex=lock_ttl)
+        if not acquired:
+            logger.info("analyze_signals_task: another instance is already running; skipping")
+            return {"status": "skipped", "reason": "lock_held"}
+
     batch_size = settings.analysis_batch_size
 
     try:
@@ -818,7 +831,7 @@ async def analyze_signals_task(ctx: dict[str, Any]) -> dict[str, Any]:
             f"{failed_count} failed out of {len(signal_ids)} signals"
         )
 
-        return {
+        result = {
             "status": "success",
             "analyzed": analyzed_count,
             "failed": failed_count,
@@ -827,10 +840,17 @@ async def analyze_signals_task(ctx: dict[str, Any]) -> dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Analysis task failed: {type(e).__name__} - {e}")
-        return {
+        result = {
             "status": "error",
             "error": str(e),
         }
+
+    finally:
+        # Always release the lock so the next scheduled run can proceed.
+        if redis is not None:
+            await redis.delete(lock_key)
+
+    return result
 
 
 async def startup(ctx: dict[str, Any]) -> None:
