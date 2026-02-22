@@ -13,6 +13,18 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-02-22)
+
+- [2026-02-22] [SEED-CONTENT]: Add content seeding CLI script
+  - Files: backend/scripts/seed_content.py
+  - Tech: httpx async CLI with status/scrape/analyze/pipeline/approve-pending commands
+  - Status: [✓ Complete]
+
+- [2026-02-22] [UPTIME]: Add GitHub Actions uptime monitoring workflow
+  - Files: .github/workflows/uptime-check.yml
+  - Tech: Cache-backed staging failure counter; gh CLI issue create/close on state change
+  - Status: [✓ Complete]
+
 ## Recent Progress (2026-02-21)
 
 - [2026-02-21] [TIER-DIFF]: Subscription tier differentiation — full feature set
@@ -948,3 +960,18 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: .github/workflows/ci-cd.yml
   - Tech: One-line fix, production frontend now deploys with correct token
   - Status: [✓ Complete]
+
+- [2026-02-22] [UPTIME-MONITOR]: GitHub Actions uptime monitor for production + staging
+  - Files: .github/workflows/uptime-check.yml
+  - Tech: Every-5-min cron, auto-creates/closes GitHub issues, staging 3-failure threshold via Actions cache
+  - Status: [✓ Complete]
+
+- [2026-02-22] [SEO]: Google Search Console + sitemap + JSON-LD improvements
+  - Files: frontend/app/layout.tsx, frontend/app/sitemap.ts, frontend/.env.example
+  - Tech: Google verification meta tag (env var), corrected sitemap priorities, Organization JSON-LD
+  - Status: [✓ Complete]
+
+- [2026-02-22] [SEED-SCRIPT]: Content seeding CLI for admin pipeline control
+  - Files: backend/scripts/seed_content.py
+  - Tech: httpx async CLI — status, scrape, analyze, pipeline, approve-pending; uses Supabase JWT auth
+  - Status: [✓ Complete] — 75 unprocessed signals ready in production; run `analyze` to generate ~75 insights
