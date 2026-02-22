@@ -723,7 +723,7 @@ async def analyze_signals_task(ctx: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Task result with count of analyzed signals
     """
-    from sqlalchemy import select, update
+    from sqlalchemy import select, text, update
 
     from app.agents.enhanced_analyzer import analyze_signal_enhanced_with_retry
     from app.models.raw_signal import RawSignal
@@ -782,7 +782,9 @@ async def analyze_signals_task(ctx: dict[str, Any]) -> dict[str, Any]:
                 insight = await analyze_signal_enhanced_with_retry(signal)
 
                 # 2c: insert insight (short session, just an INSERT)
+                # Reset statement_timeout in case a pooled connection inherited one.
                 async with AsyncSessionLocal() as session:
+                    await session.execute(text("SET LOCAL statement_timeout = 0"))
                     session.add(insight)
                     await session.commit()
 
@@ -790,6 +792,7 @@ async def analyze_signals_task(ctx: dict[str, Any]) -> dict[str, Any]:
 
                 # 2d: mark signal processed (separate short session)
                 async with AsyncSessionLocal() as session:
+                    await session.execute(text("SET LOCAL statement_timeout = 0"))
                     await session.execute(
                         update(RawSignal)
                         .where(RawSignal.id == signal_id)
