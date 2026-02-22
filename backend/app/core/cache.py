@@ -13,8 +13,11 @@ Uses JSON serialization for simple data structures.
 import json
 import logging
 from collections.abc import Callable
+from datetime import date, datetime
+from decimal import Decimal
 from functools import wraps
 from typing import Any, TypeVar
+from uuid import UUID
 
 import redis.asyncio as redis
 from pydantic import BaseModel
@@ -24,6 +27,19 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
+
+
+class _Encoder(json.JSONEncoder):
+    """Custom JSON encoder that handles types common in SQLAlchemy responses."""
+
+    def default(self, obj: Any) -> Any:
+        if isinstance(obj, UUID):
+            return str(obj)
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return super().default(obj)
 
 # Cache TTL configuration (in seconds)
 CACHE_TTL = {
@@ -75,8 +91,8 @@ def _serialize(data: Any) -> str:
     if isinstance(data, BaseModel):
         return data.model_dump_json()
     if isinstance(data, list) and data and isinstance(data[0], BaseModel):
-        return json.dumps([item.model_dump() for item in data])
-    return json.dumps(data)
+        return json.dumps([item.model_dump() for item in data], cls=_Encoder)
+    return json.dumps(data, cls=_Encoder)
 
 
 def _deserialize(data: str) -> Any:
