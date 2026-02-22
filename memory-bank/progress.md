@@ -15,6 +15,29 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ## Recent Progress (2026-02-22)
 
+- [2026-02-22] [E2E-SUITES]: Add auth, workspace, validate E2E test suites
+  - Files: auth-flows.spec.ts, workspace.spec.ts, validate.spec.ts
+  - Tech: Playwright; 18 tests across 3 suites; live-auth tests skip without env vars
+  - Status: [✓ Complete]
+
+- [2026-02-22] [CACHE]: Redis response caching for 3 public list endpoints
+  - Files: app/core/cache.py, app/api/routes/insights.py, app/api/routes/trends.py, app/api/routes/pulse.py
+  - Tech: MD5-keyed cache_get/cache_set via existing cache.py; TTLs 60s/300s/30s
+  - Status: [✓ Complete]
+
+- [2026-02-22] [ANALYTICS]: Add PostHog analytics + Sentry release tracking
+  - Files: components/PostHogProvider.tsx, lib/analytics.ts, app/layout.tsx, next.config.ts, sentry.client.config.ts
+  - Tech: posthog-js init in client provider; VERCEL_GIT_COMMIT_SHA baked as NEXT_PUBLIC_SENTRY_RELEASE
+  - Status: [✓ Complete]
+
+
+- [2026-02-22] [UX-ONBOARDING]: Add first-time user onboarding banner to dashboard
+  - Files: frontend/components/onboarding-banner.tsx, frontend/app/[locale]/dashboard/page.tsx
+  - Tech: localStorage dismiss key; shows when saved_count === 0; 3-step teal stepper
+  - Status: [✓ Complete]
+
+
+
 - [2026-02-22] [SEED-CONTENT]: Add content seeding CLI script
   - Files: backend/scripts/seed_content.py
   - Tech: httpx async CLI with status/scrape/analyze/pipeline/approve-pending commands
@@ -975,3 +998,28 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: backend/scripts/seed_content.py
   - Tech: httpx async CLI — status, scrape, analyze, pipeline, approve-pending; uses Supabase JWT auth
   - Status: [✓ Complete] — 75 unprocessed signals ready in production; run `analyze` to generate ~75 insights
+
+- [2026-02-22] [POSTHOG]: PostHog analytics + Sentry frontend release tracking
+  - Files: components/PostHogProvider.tsx, lib/analytics.ts, app/layout.tsx, next.config.ts, sentry.client.config.ts
+  - Tech: posthog-js with autocapture off; VERCEL_GIT_COMMIT_SHA baked as NEXT_PUBLIC_SENTRY_RELEASE
+  - Status: [✓ Complete] — set NEXT_PUBLIC_POSTHOG_KEY in Vercel to activate
+
+- [2026-02-22] [ONBOARDING]: First-time user onboarding banner
+  - Files: components/onboarding-banner.tsx, app/[locale]/dashboard/page.tsx
+  - Tech: localStorage-dismissed 3-step stepper; wired to existing saved_count from workspaceStatus query
+  - Status: [✓ Complete]
+
+- [2026-02-22] [REDIS-CACHE]: Redis response caching on 3 list endpoints
+  - Files: app/api/routes/insights.py, trends.py, pulse.py
+  - Tech: cache.py already existed; 60s insights / 300s trends / 30s pulse; language-aware key for insights
+  - Status: [✓ Complete] — 249 tests passing, zero regressions
+
+- [2026-02-22] [E2E-TESTS]: E2E test expansion — auth, workspace, validate suites
+  - Files: tests/frontend/e2e/auth-flows.spec.ts, workspace.spec.ts, validate.spec.ts
+  - Tech: 20 new Playwright tests across 3 suites; TEST_USER_EMAIL guard on auth-gated tests
+  - Status: [✓ Complete]
+
+- [2026-02-22] [PRODUCTHUNT]: ProductHunt launch plan documented
+  - Files: memory-bank/producthunt-launch.md
+  - Tech: Assets spec, copy, FAQ prep, day-of playbook, success metrics
+  - Status: [✓ Complete] — ready to execute when 600+ insights seeded

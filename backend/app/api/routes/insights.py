@@ -4,6 +4,7 @@ Phase 15.4: APAC Multi-language Support - Accept-Language header negotiation
 """
 
 import asyncio
+import hashlib
 import json
 import logging
 from datetime import UTC, datetime, timedelta
@@ -17,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import AdminUser, CurrentUser
+from app.core.cache import cache_get, cache_set
 from app.core.config import settings
 from app.core.rate_limits import limiter
 from app.db.session import get_db
@@ -190,6 +192,15 @@ async def list_insights(
     """
     # Determine target language (explicit parameter takes precedence)
     target_language = language or parse_accept_language(accept_language)
+
+    # --- Cache lookup (TTL: 60s) ---
+    # Key encodes all params that affect the result, including language.
+    _cache_raw = f"{min_score}:{source}:{sort}:{featured}:{limit}:{offset}:{target_language}"
+    cache_key = f"insights:list:{hashlib.md5(_cache_raw.encode()).hexdigest()}"
+    cached_response = await cache_get(cache_key)
+    if cached_response is not None:
+        return InsightListResponse.model_validate(cached_response)
+
     # Build query
     query = select(Insight).options(selectinload(Insight.raw_signal))
 
@@ -253,12 +264,17 @@ async def list_insights(
         insight_dict = _serialize_insight(insight, target_language)
         translated_insights.append(InsightResponse.model_validate(insight_dict))
 
-    return InsightListResponse(
+    response = InsightListResponse(
         insights=translated_insights,
         total=total or 0,
         limit=limit,
         offset=offset,
     )
+
+    # Store serialised response in cache (fire-and-forget; failures are swallowed)
+    await cache_set(cache_key, response.model_dump(), ttl=60)
+
+    return response
 
 
 @router.get("/daily-top", response_model=list[InsightResponse])

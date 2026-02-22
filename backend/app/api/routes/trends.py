@@ -4,6 +4,7 @@ Provides CRUD operations for the 180+ trending keywords with volume/growth metri
 Sprint 3.1: Adds predictive trend analytics with Prophet forecasting.
 """
 
+import hashlib
 import logging
 import random
 from datetime import UTC, datetime, timedelta
@@ -17,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import AdminUser
 from app.api.utils import escape_like
+from app.core.cache import cache_get, cache_set
 from app.core.rate_limits import limiter
 from app.db.session import get_db
 from app.models.trend import Trend
@@ -88,6 +90,13 @@ async def list_trends(
     - **limit**: Number of results per page (default 12, max 100)
     - **offset**: Pagination offset
     """
+    # --- Cache lookup (TTL: 300s) ---
+    _cache_raw = f"{category}:{sort}:{featured}:{search}:{limit}:{offset}"
+    cache_key = f"trends:list:{hashlib.md5(_cache_raw.encode()).hexdigest()}"
+    cached_response = await cache_get(cache_key)
+    if cached_response is not None:
+        return TrendListResponse.model_validate(cached_response)
+
     # Build query - only published trends
     query = select(Trend).where(Trend.is_published == True)
 
@@ -127,12 +136,17 @@ async def list_trends(
 
     logger.info(f"Listed {len(trends)} trends (category={category}, sort={sort}, total={total})")
 
-    return TrendListResponse(
+    response = TrendListResponse(
         trends=[TrendResponse.model_validate(t) for t in trends],
         total=total or 0,
         limit=limit,
         offset=offset,
     )
+
+    # Store serialised response in cache (fire-and-forget; failures are swallowed)
+    await cache_set(cache_key, response.model_dump(), ttl=300)
+
+    return response
 
 
 @router.get("/categories", response_model=list[str])

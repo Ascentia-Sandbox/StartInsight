@@ -17,6 +17,7 @@ import { TierBadge } from '@/components/ui/TierBadge';
 import { BuilderPlatformGrid, BUILDER_PLATFORMS, type BuilderPlatformId } from '@/components/builder/builder-platform-card';
 import { PromptTypeSelector, PROMPT_TYPES, type PromptTypeId } from '@/components/builder/prompt-type-selector';
 import { PromptPreviewModal } from '@/components/builder/prompt-preview-modal';
+import { OnboardingBanner } from '@/components/onboarding-banner';
 import type { User } from '@supabase/supabase-js';
 
 export default function DashboardPage() {
@@ -117,6 +118,9 @@ export default function DashboardPage() {
 
           {/* Overview Tab */}
           <TabsContent value="overview">
+            {/* First-time user onboarding banner — visible until first insight is saved */}
+            <OnboardingBanner insightsSaved={Number(status?.saved_count ?? 0)} />
+
             {/* Quick Stats */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
               <Card>

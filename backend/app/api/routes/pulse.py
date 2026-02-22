@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import cache_get, cache_set
 from app.core.rate_limits import limiter
 from app.db.session import get_db
 from app.models.insight import Insight
@@ -51,6 +52,12 @@ async def get_market_pulse(
     - SEO traffic from "startup trends today" queries
     - Demonstrating pipeline activity to visitors
     """
+    # --- Cache lookup (TTL: 30s) ---
+    _pulse_cache_key = "pulse:stats"
+    cached_pulse = await cache_get(_pulse_cache_key)
+    if cached_pulse is not None:
+        return PulseResponse.model_validate(cached_pulse)
+
     try:
         now = datetime.now(UTC)
         day_ago = now - timedelta(hours=24)
@@ -141,7 +148,7 @@ async def get_market_pulse(
         except Exception as e:
             logger.debug(f"Could not extract hottest markets: {e}")
 
-        return PulseResponse(
+        pulse_response = PulseResponse(
             signals_24h=signals_24h,
             insights_24h=insights_24h,
             total_insights=total_insights,
@@ -150,6 +157,11 @@ async def get_market_pulse(
             top_sources=top_sources,
             last_updated=now.isoformat(),
         )
+
+        # Store in cache; failures are swallowed by cache_set internally
+        await cache_set(_pulse_cache_key, pulse_response.model_dump(), ttl=30)
+
+        return pulse_response
 
     except Exception as e:
         logger.error(f"Catastrophic failure in get_market_pulse: {e}", exc_info=True)
