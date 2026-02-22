@@ -15,6 +15,11 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ## Recent Progress (2026-02-22)
 
+- [2026-02-22] [CONTENT-SEEDING]: Fix analyze_signals_task — 447→522 insights (+75)
+  - Files: worker.py (×4 fixes), enhanced_analyzer.py, cache.py
+  - Tech: Redis lock, micro-sessions, SET LOCAL statement_timeout=0, 60s retry wait, UUID encoder
+  - Status: [✓ Complete]
+
 - [2026-02-22] [EMAIL-TRACKING]: Weekly digest UTM links + open-rate pixel tracking
   - Files: email_tracking.py, email_service.py, worker.py, admin.py, main.py
   - Tech: base64url token pixel; plain-text fallback; admin POST /api/admin/digest/test

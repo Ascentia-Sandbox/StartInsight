@@ -115,11 +115,9 @@ All arq tasks now scheduled and running via APScheduler + Railway Redis:
 12. ✅ Email digest validation + open-rate tracking — tracking pixel, UTM params, plain-text fallback
 
 **Pending (requires manual action):**
-- Run `alembic upgrade head` on production to apply c011 migration (adds referral_code + referred_by to users)
 - Set `NEXT_PUBLIC_POSTHOG_KEY` in Vercel dashboard to activate PostHog analytics
 - Submit `https://startinsight.co/sitemap.xml` to Google Search Console
-- Run `python backend/scripts/seed_content.py analyze` to convert 75 unprocessed signals → insights
-- Seed content to 600+ insights before ProductHunt launch
+- Seed content to 600+ insights before ProductHunt launch (currently 522; pipeline running every 6h)
 
 ## Key File Locations
 
