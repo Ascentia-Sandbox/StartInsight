@@ -29,6 +29,10 @@ Before answering ANY complex question or starting ANY implementation task, you M
    - Purpose: Completion log (Phase 1-10 complete, production ready), recent changes, historical milestones
    - When to read: After completing tasks (for logging), before starting work (to avoid duplication)
 
+7. **`memory-bank/improvement-plan.md`** (~280 lines)
+   - Purpose: Post-launch growth roadmap — Tier 1 (blocking), Tier 2 (Month 1), Tier 3 (Month 2-3) priorities with 30-day success metrics
+   - When to read: Before planning any growth, content, monitoring, or testing work
+
 ### Context-Based Reading Guide
 
 | Scenario | Files to Read | Priority |
@@ -41,6 +45,7 @@ Before answering ANY complex question or starting ANY implementation task, you M
 | **Implementing Phase 8-10 features** | active-context.md, implementation-plan.md (Phase 8-10), architecture.md (Phase 8-10 sections) | CRITICAL |
 | **Authentication/Admin setup** | architecture.md (Authentication Architecture, Admin Portal), implementation-plan.md (Phase 4.1-4.2) | CRITICAL |
 | **Cost/pricing planning** | tech-stack.md (Cost Analysis), project-brief.md (Competitive Positioning) | HIGH |
+| **Growth / next actions** | improvement-plan.md, active-context.md | HIGH |
 | **Debugging/questions** | All files (in reading order above) | MEDIUM |
 
 ### Rules

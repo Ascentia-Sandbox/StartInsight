@@ -15,12 +15,12 @@
 **Testing:** 291 backend tests passing, 47 E2E tests (5 browsers)
 **Database:** 69 tables, 232+ API endpoints, 8 AI agents, 6 active scrapers
 
-## Infrastructure (2026-02-19)
+## Infrastructure (2026-02-21)
 
 | Service | Provider | URL / Details |
 |---------|----------|---------------|
-| **Frontend** | Vercel | `https://start-insight-ascentias-projects.vercel.app` ✅ |
-| **Backend** | Railway | `https://backend-production-e845.up.railway.app` ✅ |
+| **Frontend** | Vercel | `https://startinsight.co` ✅ |
+| **Backend** | Railway | `https://api.startinsight.co` ✅ |
 | **Database** | Supabase Pro | Sydney ap-southeast-2, c009 migration, session-mode pooler |
 | **Redis** | Railway (native) | `redis.railway.internal:6379`, provisioned 2026-02-19 ✅ |
 | **Email** | Resend | Live mode, 3K/mo free tier |
@@ -49,6 +49,12 @@ Railway Project ID: `a3ece066-4758-4780-84d6-0379f1312227`
 | AI Monitoring | Manual `gen_ai.request` spans on enhanced_analyzer, research_agent, market_intel_agent |
 | Sample Rates | Production: 10% traces/profiles; Staging: 100% |
 | Env Vars | Backend via Railway MCP; Frontend via GitHub Actions `set-vercel-sentry-env.yml` |
+
+## Recent Work (2026-02-21)
+
+1. ✅ **Google Trends rate-limit hardening** — 30s batch delay, 10s request interval, 4×/day at :30 past 0/6/12/18h
+2. ✅ **UX Round 2** — compare page, data formatting, teal brand, success-stories `formatFunding` fix
+3. ✅ **`startinsight.co` domain live** — Vercel + Railway + Cloudflare DNS + Supabase + CORS end-to-end
 
 ## Recent Work (2026-02-20)
 
@@ -84,21 +90,11 @@ All arq tasks now scheduled and running via APScheduler + Railway Redis:
 
 ## Current Focus: Post-Launch Operations
 
-**Priority 1 — Content Seeding (Immediate)**
-- Seed 50+ insights across 10+ categories via admin portal
-- Verify scraper pipeline health in admin → Pipeline Monitoring
-- Check content review queue for pending approvals
-
-**Priority 2 — Monitoring (Weekly)**
-- Review Sentry for new production errors
-- Monitor Stripe webhook health (checkout, subscription events)
-- Check Railway metrics (CPU, memory, response times)
-
-**Priority 3 — Growth (Next 2-4 weeks)**
-- Submit sitemap to Google Search Console
-- Set up UptimeRobot / Checkly uptime monitoring
-- Create initial batch of marketing content
-- Launch to waitlist/ProductHunt
+**Tier 1 — Immediate (Blocking)**
+1. Fix scraper pipeline — BLOCKING: Pulse shows 0 signals/24h despite 6 scrapers running
+2. Set up uptime monitoring — UptimeRobot/Checkly, free, 15-min check on `/health`
+3. Submit sitemap to Google Search Console (`/sitemap.xml`)
+4. Seed content via Admin Portal (approve insights, run AI agents → target 600+ insights)
 
 ## Key File Locations
 

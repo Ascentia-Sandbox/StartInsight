@@ -16,11 +16,11 @@ StartInsight is a daily, automated intelligence platform that discovers, validat
 
 | Environment | URL | Status |
 |-------------|-----|--------|
-| **Frontend** | [start-insight-ascentias-projects.vercel.app](https://start-insight-ascentias-projects.vercel.app) | ✅ Live (Vercel) |
-| **Backend API** | [backend-production-e845.up.railway.app](https://backend-production-e845.up.railway.app) | ✅ Live (Railway) |
+| **Frontend** | [startinsight.co](https://startinsight.co) | ✅ Live (Vercel) |
+| **Backend API** | [api.startinsight.co](https://api.startinsight.co) | ✅ Live (Railway) |
 | **Staging Frontend** | [start-insight-staging-ascentias-projects.vercel.app](https://start-insight-staging-ascentias-projects.vercel.app) | ✅ Live |
 | **Staging Backend** | [backend-staging-fbd7.up.railway.app](https://backend-staging-fbd7.up.railway.app) | ✅ Live |
-| **API Docs** | `/docs` (Swagger) | [Available](https://backend-production-e845.up.railway.app/docs) |
+| **API Docs** | `/docs` (Swagger) | [Available](https://api.startinsight.co/docs) |
 
 ---
 
@@ -278,7 +278,7 @@ cp .env.example .env.local
 
 Edit `frontend/.env.local`:
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_API_URL=https://api.startinsight.co  # production; use http://localhost:8000 for local dev
 NEXT_PUBLIC_SUPABASE_URL=https://[PROJECT_REF].supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
@@ -361,8 +361,8 @@ Push to develop → Security Scan → Backend Tests → Frontend Tests
 ```
 
 **Deployed URLs:**
-- Production Backend: `https://backend-production-e845.up.railway.app`
-- Production Frontend: `https://start-insight-ascentias-projects.vercel.app`
+- Production Backend: `https://api.startinsight.co`
+- Production Frontend: `https://startinsight.co`
 - Staging Backend: `https://backend-staging-fbd7.up.railway.app`
 
 ### Manual Deployment (First Time)
@@ -532,7 +532,7 @@ cd backend && uv run alembic downgrade -1
 
 ```bash
 # Verify backend health
-curl https://backend-production-e845.up.railway.app/health
+curl https://api.startinsight.co/health
 
 # View Supabase logs
 # Go to: https://supabase.com/dashboard/project/[PROJECT_REF]/logs/postgres-logs
@@ -647,7 +647,7 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 
 ## 📊 Current Status
 
-**Status**: ✅ **PRODUCTION LIVE** (2026-02-20)
+**Status**: ✅ **PRODUCTION LIVE** (2026-02-22) — Custom domain `startinsight.co` live
 
 | Metric | Value |
 |--------|-------|
@@ -729,4 +729,4 @@ For questions or issues:
 
 ---
 
-*v1.0.2 — /api/validate 500 fixed (invalid RawSignal kwarg). FastAPI deprecation warnings cleared. ~$30/mo. (2026-02-20)*
+*v1.0.3 — Custom domain startinsight.co live. Rate-limit hardening. UX Round 2. ~$30/mo. (2026-02-22)*

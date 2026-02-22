@@ -743,7 +743,22 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
-*Last updated: 2026-02-20*
+- [2026-02-21] [RATE-LIMIT]: Google Trends rate-limit hardening
+  - Files: trends_scraper.py, trend_verification.py, worker.py
+  - Tech: Batch delay 30s, request interval 10s, 4x/day cron at :30 past 0/6/12/18
+  - Status: [✓ Complete]
+
+- [2026-02-21] [UX-FIXES]: Round 2 UX improvements + success-stories formatFunding fix
+  - Files: frontend compare page, success-stories page, brand colours
+  - Tech: Teal brand system, data formatting, runtime number guard
+  - Status: [✓ Complete]
+
+- [2026-02-21] [DOMAIN]: startinsight.co custom domain live
+  - Files: config.py, .env.production.example, ci-cd.yml
+  - Tech: Cloudflare DNS → Vercel (frontend) + api.startinsight.co (Railway)
+  - Status: [✓ Complete]
+
+*Last updated: 2026-02-22*
 *Format: [DATE] [TASK_ID]: [Brief Description] | Files | Technical Notes | Status*
 
 ---
