@@ -759,43 +759,52 @@ async def analyze_signals_task(ctx: dict[str, Any]) -> dict[str, Any]:
         analyzed_count = 0
         failed_count = 0
 
-        # Phase 2: process each signal in its own short-lived session.
+        # Phase 2: three micro-sessions per signal — fetch, insert, mark.
+        # No DB connection is held open during the Gemini API call.
         for signal_id in signal_ids:
-            async with AsyncSessionLocal() as session:
-                # Re-fetch to confirm still unprocessed (another task may have grabbed it)
-                result = await session.execute(
-                    select(RawSignal)
-                    .where(RawSignal.id == signal_id, RawSignal.processed == False)  # noqa: E712
-                )
-                signal = result.scalar_one_or_none()
+            try:
+                # 2a: fetch signal data (close connection before AI call)
+                signal = None
+                async with AsyncSessionLocal() as session:
+                    result = await session.execute(
+                        select(RawSignal)
+                        .where(RawSignal.id == signal_id, RawSignal.processed == False)  # noqa: E712
+                    )
+                    signal = result.scalar_one_or_none()
+                    if signal is not None:
+                        # Expunge so signal is usable after session closes
+                        session.expunge(signal)
+
                 if signal is None:
                     continue  # Already processed by concurrent task
 
-                try:
-                    insight = await analyze_signal_enhanced_with_retry(signal)
+                # 2b: call Gemini (no DB session open)
+                insight = await analyze_signal_enhanced_with_retry(signal)
+
+                # 2c: insert insight (short session, just an INSERT)
+                async with AsyncSessionLocal() as session:
                     session.add(insight)
                     await session.commit()
 
-                    logger.info(f"Committed insight for signal {signal_id} from {signal.source}")
+                logger.info(f"Committed insight for signal {signal_id} from {signal.source}")
 
-                    # Mark processed in a separate session after successful commit
-                    async with AsyncSessionLocal() as update_session:
-                        await update_session.execute(
-                            update(RawSignal)
-                            .where(RawSignal.id == signal_id)
-                            .values(processed=True)
-                        )
-                        await update_session.commit()
-
-                    analyzed_count += 1
-
-                except Exception as e:
-                    await session.rollback()
-                    failed_count += 1
-                    logger.error(
-                        f"Failed to analyze signal {signal_id}: {type(e).__name__} - {e}"
+                # 2d: mark signal processed (separate short session)
+                async with AsyncSessionLocal() as session:
+                    await session.execute(
+                        update(RawSignal)
+                        .where(RawSignal.id == signal_id)
+                        .values(processed=True)
                     )
-                    # Signal remains unprocessed for retry on next run
+                    await session.commit()
+
+                analyzed_count += 1
+
+            except Exception as e:
+                failed_count += 1
+                logger.error(
+                    f"Failed to analyze signal {signal_id}: {type(e).__name__} - {e}"
+                )
+                # Signal remains unprocessed for retry on next run
 
         logger.info(
             f"Analysis task complete: {analyzed_count} analyzed, "
