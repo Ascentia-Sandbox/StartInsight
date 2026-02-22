@@ -472,7 +472,7 @@ StartInsight/
 │   ├── architecture.md        # System design
 │   ├── tech-stack.md          # Technology decisions
 │   ├── progress.md            # Development log
-│   └── archived/              # Historical snapshots (gitignored)
+│   └── improvement-plan.md    # Growth roadmap (Tier 1-3)
 │
 ├── research/                  # Competitive intelligence
 │   ├── ideabrowser-analysis.md          # Full IdeaBrowser teardown
@@ -689,13 +689,21 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 - 11 unique competitive advantages
 - 50-70% lower pricing
 
-**Post-Launch Priorities**:
-- 📊 Content seeding (50+ insights via admin portal)
-- 📈 Uptime monitoring (UptimeRobot / Checkly)
-- 🔍 Google Search Console submission
-- 📢 Phase 15-16: APAC multi-language (backend ready, frontend English-only)
+**Post-Launch Priorities (Tier 1 — This Week)**:
+- ✅ Scraper pipeline fixed (Crawl4AI timeout + duplicate scheduling — 2026-02-22)
+- ✅ CI/CD production deploy token fixed (`VERCEL_TOKEN`)
+- ⏳ Uptime monitoring (UptimeRobot / Checkly — free, 15 min)
+- ⏳ Google Search Console submission (`https://startinsight.co/sitemap.xml`)
+- ⏳ Content seeding (50+ insights via admin portal → target 600+)
 
-See `memory-bank/active-context.md` for current deployment status and priorities.
+**Post-Launch Priorities (Tier 2 — Month 1)**:
+- PostHog user analytics SDK
+- New user onboarding banner
+- Redis API response caching (60–300s TTL)
+- E2E test expansion (auth + workspace + validate — ~38 tests)
+- ProductHunt launch
+
+See `memory-bank/improvement-plan.md` for full growth roadmap and `memory-bank/active-context.md` for current state.
 
 ---
 
@@ -729,4 +737,4 @@ For questions or issues:
 
 ---
 
-*v1.0.3 — Custom domain startinsight.co live. Rate-limit hardening. UX Round 2. ~$30/mo. (2026-02-22)*
+*v1.0.4 — Scraper pipeline fixed. CI/CD token fixed. Domain sweep complete. Professional favicon + OG image. ~$30/mo. (2026-02-22)*

@@ -4,18 +4,18 @@
 **Read When:** Before every task to understand current phase status
 **Dependencies:** Read project-brief.md first for context
 **Purpose:** Current phase tracking, immediate tasks, blockers, what's working/next
-**Last Updated:** 2026-02-20
+**Last Updated:** 2026-02-22
 ---
 
 # Active Context: StartInsight Development
 
 ## Current Phase
-**Status:** ✅ LIVE IN PRODUCTION — Post-launch monitoring & content seeding
-**Completed:** Phase 1-10 + A-L + Q1-Q9 + Security + Sentry + Redis (100%)
+**Status:** ✅ LIVE IN PRODUCTION — Post-launch: content growth & SEO
+**Completed:** Phase 1-10 + A-L + Q1-Q9 + Security + Sentry + Redis + Domain + Favicon (100%)
 **Testing:** 291 backend tests passing, 47 E2E tests (5 browsers)
 **Database:** 69 tables, 232+ API endpoints, 8 AI agents, 6 active scrapers
 
-## Infrastructure (2026-02-21)
+## Infrastructure (2026-02-22)
 
 | Service | Provider | URL / Details |
 |---------|----------|---------------|
@@ -50,6 +50,13 @@ Railway Project ID: `a3ece066-4758-4780-84d6-0379f1312227`
 | Sample Rates | Production: 10% traces/profiles; Staging: 100% |
 | Env Vars | Backend via Railway MCP; Frontend via GitHub Actions `set-vercel-sentry-env.yml` |
 
+## Recent Work (2026-02-22)
+
+1. ✅ **Domain sweep** — All 19× `startinsight.app` → `startinsight.co` across 11 files; `api.startinsight.ai` → `api.startinsight.co` in developers page (critical)
+2. ✅ **Professional favicon system** — `icon.svg` (teal chart-bars, 32×32), `apple-icon.tsx` (180×180 ImageResponse), `opengraph-image.tsx` (1200×630 branded gradient); `metadata.icons` added to `layout.tsx`
+3. ✅ **CI/CD VERCEL_TOKEN fix** — Production deploy step was using `VERCEL_TOKEN_STAGING`; now uses `VERCEL_TOKEN`
+4. ✅ **Scraper pipeline fixed** — Crawl4AI 30s timeout added; duplicate APScheduler/Arq scheduling removed
+
 ## Recent Work (2026-02-21)
 
 1. ✅ **Google Trends rate-limit hardening** — 30s batch delay, 10s request interval, 4×/day at :30 past 0/6/12/18h
@@ -58,22 +65,11 @@ Railway Project ID: `a3ece066-4758-4780-84d6-0379f1312227`
 
 ## Recent Work (2026-02-20)
 
-1. ✅ **API validator + research fixes** — `validator.py`: removed invalid `title=` kwarg from `RawSignal()` (was 500-ing on every `/api/validate` POST); `research.py:536`: `Query(regex=)` → `Query(pattern=)` (FastAPI deprecation warning cleared)
-2. ✅ **QA P0/P1/P2 bug fixes** — 11 bugs fixed: /terms + /privacy pages (404→200), payments CORS fix, email prefs 404, Deep Research link, `$$` double-dollar, contact domain/duplicate-select, Enterprise billing tier, Google OAuth on signup, context-aware CTAs, skeleton loaders
-2. ✅ **Gemini 429 fix** — `quality_reviewer.py` now uses `tenacity` retry (4 attempts, 5s→10s→20s→40s backoff) + `asyncio.sleep(2)` inter-call delay for both insight audit + market article review loops; `tenacity>=8.2.0` added to `pyproject.toml`
+1. ✅ **API validator + research fixes** — `validator.py`: removed invalid `title=` kwarg; `research.py:536`: `Query(regex=)` → `Query(pattern=)`
+2. ✅ **QA P0/P1/P2 bug fixes** — 11 bugs fixed: /terms + /privacy 404s, payments CORS, email prefs, Deep Research link, contact domain, Enterprise billing, Google OAuth, skeleton loaders
+3. ✅ **Gemini 429 fix** — `quality_reviewer.py` tenacity retry (4 attempts, exponential backoff) + inter-call sleep
 
-## Recent Work (2026-02-19)
-
-1. ✅ **Redis provisioned** — Railway native Redis service (`redis.railway.internal:6379`), `REDIS_URL` set on backend
-2. ✅ **Scheduler SSL fix** — `scheduler.py` `_get_redis_settings()` now has `ssl=` parameter matching `worker.py`
-3. ✅ **Scheduler task_map expanded** — 5 missing agent mappings added (`daily_insight_agent`, `success_stories_agent`, `market_insight_publisher`, `insight_quality_reviewer`, `market_insight_quality_reviewer`)
-4. ✅ **Sentry verified** — Redis error gone; scheduler running cleanly; `localhost:6379` error cleared
-5. ✅ **Sentry full coverage** — backend (FastAPI + SQLAlchemy + AI spans) + frontend (Next.js + replay + tracing)
-6. ✅ **Security hardened** — HSTS, CSP, XSS prevention, JWT ES256, rate limiting, update-password flow
-7. ✅ **Production deployed** — Railway backend + Vercel frontend, all healthy
-8. ✅ **CI/CD pipeline** — `main`→production, `develop`→staging, all passing
-
-## Background Jobs (Scheduler) — Now Running
+## Background Jobs (Scheduler) — All Running
 
 All arq tasks now scheduled and running via APScheduler + Railway Redis:
 
@@ -85,16 +81,24 @@ All arq tasks now scheduled and running via APScheduler + Railway Redis:
 | `market_insight_publisher` | `market_insight_publisher_task` | Every 3 days (Wed) |
 | `insight_quality_reviewer` | `insight_quality_audit_task` | Dynamic (DB config) |
 | `market_insight_quality_reviewer` | `market_insight_quality_review_task` | Dynamic (DB config) |
-| Scrapers | `scrape_reddit/product_hunt/trends/twitter/hackernews_task` | Every 6h |
+| Scrapers | `scrape_reddit/product_hunt/trends/twitter/hackernews_task` | Every 6h (Arq cron) |
 | Weekly digest | `send_weekly_digest_task` | Monday 09:00 UTC |
 
-## Current Focus: Post-Launch Operations
+## Current Focus: Post-Launch Growth
 
-**Tier 1 — Immediate (Blocking)**
-1. Fix scraper pipeline — BLOCKING: Pulse shows 0 signals/24h despite 6 scrapers running
-2. Set up uptime monitoring — UptimeRobot/Checkly, free, 15-min check on `/health`
-3. Submit sitemap to Google Search Console (`/sitemap.xml`)
-4. Seed content via Admin Portal (approve insights, run AI agents → target 600+ insights)
+**Tier 1 — This Week:**
+1. ✅ ~~Fix scraper pipeline~~ — DONE (2026-02-22)
+2. ⏳ Set up uptime monitoring — UptimeRobot/Checkly, free, 15-min check on `/health`
+3. ⏳ Submit sitemap to Google Search Console (`https://startinsight.co/sitemap.xml`)
+4. ⏳ Seed content via Admin Portal — approve insights, run AI agents → target 600+ insights
+
+**Tier 2 — Month 1:**
+5. PostHog user analytics SDK (free ≤1M events/mo)
+6. New user onboarding banner (localStorage, no DB migration)
+7. Redis API caching — 60s for `/api/insights`, 300s for `/api/trends`
+8. E2E test expansion — auth + workspace + validate suites (~38 tests)
+9. Frontend Sentry release tracking (`VERCEL_GIT_COMMIT_SHA`)
+10. ProductHunt launch prep
 
 ## Key File Locations
 
@@ -108,11 +112,11 @@ All arq tasks now scheduled and running via APScheduler + Railway Redis:
 | AI agents | `backend/app/agents/` (8 agents) |
 | Frontend pages | `frontend/app/[locale]/` |
 | CI/CD | `.github/workflows/ci-cd.yml` |
-| Production plan | `memory-bank/production-plan.md` |
+| Favicon | `frontend/app/icon.svg`, `frontend/app/apple-icon.tsx`, `frontend/app/opengraph-image.tsx` |
 
 ## Architecture in One Paragraph
 
-6 scrapers → arq tasks → Railway Redis queue → Supabase PostgreSQL → 8 AI agents (Gemini 2.0 Flash) → 232+ FastAPI endpoints → Next.js App Router. Auth via Supabase JWT (ES256). Payments via Stripe. Email via Resend. Errors/traces via Sentry. All infra on Railway (backend + Redis) + Vercel (frontend) + Supabase Pro (DB). CI/CD via GitHub Actions.
+6 scrapers → arq tasks (cron, not APScheduler) → Railway Redis queue → Supabase PostgreSQL → 8 AI agents (Gemini 2.0 Flash) → 232+ FastAPI endpoints → Next.js App Router. Auth via Supabase JWT (ES256). Payments via Stripe. Email via Resend. Errors/traces via Sentry. All infra on Railway (backend + Redis) + Vercel (frontend) + Supabase Pro (DB). CI/CD via GitHub Actions.
 
 ## Testing
 
@@ -122,5 +126,5 @@ All arq tasks now scheduled and running via APScheduler + Railway Redis:
 
 ---
 
-**Last Updated:** 2026-02-20
-**Status:** LIVE IN PRODUCTION — All planned phases complete. Scheduler running. 11 QA bugs fixed. Gemini 429 retry added. Content seeding next.
+**Last Updated:** 2026-02-22
+**Status:** LIVE IN PRODUCTION — All planned phases complete. Scraper pipeline fixed. Domain migrated to startinsight.co. Professional favicon live. CI/CD token fixed. Content seeding + SEO next.
