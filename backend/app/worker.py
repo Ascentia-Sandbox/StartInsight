@@ -1,5 +1,6 @@
 """Arq worker configuration and background tasks."""
 
+import asyncio
 import logging
 from pathlib import Path
 from typing import Any
@@ -808,6 +809,9 @@ async def analyze_signals_task(ctx: dict[str, Any]) -> dict[str, Any]:
                     f"Failed to analyze signal {signal_id}: {type(e).__name__} - {e}"
                 )
                 # Signal remains unprocessed for retry on next run
+
+            # Brief pause between signals to avoid saturating Gemini rate limits.
+            await asyncio.sleep(5)
 
         logger.info(
             f"Analysis task complete: {analyzed_count} analyzed, "
