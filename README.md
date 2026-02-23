@@ -692,6 +692,7 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 **Post-Launch Priorities (Tier 1 — This Week)**:
 - ✅ Scraper pipeline fixed (Crawl4AI timeout + duplicate scheduling — 2026-02-22)
 - ✅ CI/CD production deploy token fixed (`VERCEL_TOKEN`)
+- ✅ Domain sweep: all `startinsight.ai` → `startinsight.co` across codebase (2026-02-23)
 - ⏳ Uptime monitoring (UptimeRobot / Checkly — free, 15 min)
 - ⏳ Google Search Console submission (`https://startinsight.co/sitemap.xml`)
 - ⏳ Content seeding (50+ insights via admin portal → target 600+)
@@ -737,4 +738,4 @@ For questions or issues:
 
 ---
 
-*v1.0.4 — Scraper pipeline fixed. CI/CD token fixed. Domain sweep complete. Professional favicon + OG image. ~$30/mo. (2026-02-22)*
+*v1.0.5 — Domain sweep: all startinsight.ai → startinsight.co (contact, faq, privacy, terms, billing, tenant-settings, config.py, env examples). ~$30/mo. (2026-02-23)*
