@@ -228,7 +228,7 @@ async def verify_custom_domain(
     # In production, this would:
     # 1. Lookup TXT record for _startinsight.{domain}
     # 2. Verify token matches
-    # 3. Check CNAME points to custom.startinsight.ai
+    # 3. Check CNAME points to custom.startinsight.co
 
     # Mock verification for development
     verification_result = {
@@ -263,7 +263,7 @@ async def resolve_tenant_from_host(host: str) -> dict[str, Any] | None:
     # Check if it's a custom domain
     # In production, query database for custom_domain match
 
-    # Check if it's a subdomain of startinsight.ai
+    # Check if it's a subdomain of startinsight.co
     if host.endswith(f".{settings.tenant_base_domain}"):
         subdomain = host.replace(f".{settings.tenant_base_domain}", "")
         if subdomain and subdomain != "www" and subdomain != "app":

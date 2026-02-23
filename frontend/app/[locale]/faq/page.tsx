@@ -95,7 +95,7 @@ const faqCategories = [
       },
       {
         question: "Are you GDPR compliant?",
-        answer: "Yes. We are fully GDPR compliant. You can request data deletion, access your data, or update your preferences at any time. Contact privacy@startinsight.ai for any data-related requests.",
+        answer: "Yes. We are fully GDPR compliant. You can request data deletion, access your data, or update your preferences at any time. Contact privacy@startinsight.co for any data-related requests.",
       },
     ],
   },
@@ -202,7 +202,7 @@ export default function FAQPage() {
                 <Link href="/contact">Contact Support</Link>
               </Button>
               <Button variant="outline" asChild>
-                <a href="mailto:support@startinsight.ai">Email Us</a>
+                <a href="mailto:support@startinsight.co">Email Us</a>
               </Button>
             </div>
           </CardContent>

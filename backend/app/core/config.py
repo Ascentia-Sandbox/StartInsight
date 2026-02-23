@@ -77,9 +77,9 @@ class Settings(BaseSettings):
 
     # Phase 6.2: Email Notifications (Resend)
     resend_api_key: str | None = None
-    email_from_address: str = "noreply@startinsight.ai"
+    email_from_address: str = "noreply@startinsight.co"
     email_from_name: str = "StartInsight"
-    contact_email: str = "hello@startinsight.ai"
+    contact_email: str = "hello@startinsight.co"
 
     # Phase 6.3: Rate Limiting
     rate_limit_per_minute: int = 60
@@ -157,7 +157,7 @@ class Settings(BaseSettings):
 
     # Application
     app_version: str = "0.1.0"
-    tenant_base_domain: str = "startinsight.ai"
+    tenant_base_domain: str = "startinsight.co"
     default_max_users: int = 10
     default_max_teams: int = 3
     default_max_api_keys: int = 2

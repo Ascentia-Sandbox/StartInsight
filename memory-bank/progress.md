@@ -13,6 +13,13 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-02-23)
+
+- [2026-02-23] [DOMAIN-SWEEP]: Replace all startinsight.ai → startinsight.co
+  - Files: contact/page.tsx, faq/page.tsx, privacy/page.tsx, terms/page.tsx, billing/page.tsx, tenant-settings/page.tsx, lib/env.ts, config.py, settings.py, tenant_service.py, tenant.py, .env*.example, architecture.md
+  - Tech: 20+ instances updated; verified 0 remaining (excl. migrations/tests)
+  - Status: [✓ Complete]
+
 ## Recent Progress (2026-02-22)
 
 - [2026-02-22] [CONTENT-SEEDING]: Fix analyze_signals_task — 447→522 insights (+75)

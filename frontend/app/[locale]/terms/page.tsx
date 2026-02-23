@@ -57,7 +57,7 @@ const sections = [
   },
   {
     title: "13. Contact Us",
-    content: `If you have questions about these Terms, please contact us at legal@startinsight.ai or through our contact page.`,
+    content: `If you have questions about these Terms, please contact us at legal@startinsight.co or through our contact page.`,
   },
 ];
 
@@ -99,8 +99,8 @@ export default function TermsPage() {
               Contact our team
             </Link>{" "}
             or email{" "}
-            <a href="mailto:legal@startinsight.ai" className="text-primary underline underline-offset-4">
-              legal@startinsight.ai
+            <a href="mailto:legal@startinsight.co" className="text-primary underline underline-offset-4">
+              legal@startinsight.co
             </a>
           </p>
         </div>

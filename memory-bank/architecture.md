@@ -1322,13 +1322,13 @@ TWITTER_BEARER_TOKEN=AAAA...
 
 # Config
 ENVIRONMENT=production
-API_BASE_URL=https://api.startinsight.ai
-CORS_ORIGINS=https://startinsight.ai
+API_BASE_URL=https://api.startinsight.co
+CORS_ORIGINS=https://startinsight.co
 ```
 
 **Frontend (.env.local)**:
 ```bash
-NEXT_PUBLIC_API_URL=https://api.startinsight.ai
+NEXT_PUBLIC_API_URL=https://api.startinsight.co
 NEXT_PUBLIC_SUPABASE_URL=https://mxduetfcsgttwwgszjae.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
 ```
