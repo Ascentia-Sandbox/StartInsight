@@ -25,6 +25,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Upl
 from pydantic import BaseModel
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from sse_starlette.sse import EventSourceResponse
 from starlette.responses import StreamingResponse
 
@@ -617,8 +618,12 @@ async def get_review_queue(
 
     - **status**: Filter by admin_status (pending, approved, rejected)
     """
-    # Build query
-    query = select(Insight).order_by(Insight.created_at.desc())
+    # Build query with eager-load to avoid N+1 on raw_signal
+    query = (
+        select(Insight)
+        .options(selectinload(Insight.raw_signal))
+        .order_by(Insight.created_at.desc())
+    )
     if status_filter:
         query = query.where(Insight.admin_status == status_filter)
 
@@ -674,7 +679,11 @@ async def list_insights_admin(
     """
     Full paginated insights list for admin with search and filters (Phase 15.1).
     """
-    query = select(Insight).order_by(Insight.created_at.desc())
+    query = (
+        select(Insight)
+        .options(selectinload(Insight.raw_signal))
+        .order_by(Insight.created_at.desc())
+    )
 
     if status_filter:
         query = query.where(Insight.admin_status == status_filter)

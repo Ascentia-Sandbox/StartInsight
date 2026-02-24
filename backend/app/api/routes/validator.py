@@ -64,6 +64,9 @@ class SimilarIdea(BaseModel):
 class IdeaValidationResponse(BaseModel):
     """Full validation result."""
 
+    # Persisted insight ID (for saving to workspace)
+    insight_id: str | None = Field(None, description="Persisted insight UUID")
+
     # Scores
     relevance_score: float = Field(description="Overall viability (0-1)")
     opportunity_score: int | None = Field(None, description="Market size (1-10)")
@@ -87,6 +90,10 @@ class IdeaValidationResponse(BaseModel):
     market_size_estimate: str = ""
     market_gap_analysis: str | None = None
     why_now_analysis: str | None = None
+
+    # Rich data from enhanced analyzer
+    market_sizing: dict | None = Field(None, description="TAM/SAM/SOM breakdown")
+    value_ladder: list[dict] | None = Field(None, description="4-tier pricing model")
 
     # Similar ideas
     similar_ideas: list[SimilarIdea] = Field(default_factory=list)
@@ -140,11 +147,31 @@ async def validate_idea(
 
         insight = await analyze_signal_enhanced_with_retry(synthetic_signal)
     except Exception as e:
+        err_str = str(e)
+        if "429" in err_str or "Resource exhausted" in err_str:
+            logger.warning(f"Gemini rate limit hit during validation: {e}")
+            raise HTTPException(
+                status_code=429,
+                detail="Our AI service is temporarily at capacity. Please try again in 1-2 minutes.",
+            )
         logger.error(f"Idea validation analysis failed: {e}")
         raise HTTPException(
             status_code=503,
             detail="Analysis service temporarily unavailable",
         )
+
+    # Persist RawSignal + Insight so user can save to workspace
+    insight_id: str | None = None
+    try:
+        db.add(synthetic_signal)
+        await db.flush()
+        insight.admin_status = "draft"
+        db.add(insight)
+        await db.commit()
+        insight_id = str(insight.id)
+    except Exception as e:
+        logger.warning(f"Failed to persist validated insight: {e}")
+        await db.rollback()
 
     # Cross-reference with existing insights
     similar_result = await db.execute(
@@ -195,6 +222,7 @@ async def validate_idea(
         })
 
     return IdeaValidationResponse(
+        insight_id=insight_id,
         relevance_score=insight.relevance_score,
         opportunity_score=insight.opportunity_score,
         problem_score=insight.problem_score,
@@ -210,6 +238,8 @@ async def validate_idea(
         market_size_estimate=insight.market_size_estimate,
         market_gap_analysis=insight.market_gap_analysis,
         why_now_analysis=insight.why_now_analysis,
+        market_sizing=insight.market_sizing,
+        value_ladder=insight.value_ladder,
         similar_ideas=similar_ideas,
         competition_overlap=len(similar_ideas),
     )

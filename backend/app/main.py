@@ -38,6 +38,22 @@ if settings.sentry_dsn and settings.environment in ("production", "staging"):
         # Drop harmless Prophet/plotly missing-dependency warning
         if "Importing plotly failed" in event.get("logentry", {}).get("message", ""):
             return None
+        # Check exception string for known non-actionable errors
+        exc_info = hint.get("exc_info")
+        if exc_info and exc_info[1]:
+            exc_str = str(exc_info[1])
+            # Drop Gemini/LLM 429 rate-limit errors (expected, not actionable)
+            if "429" in exc_str and (
+                "Resource exhausted" in exc_str or "rate" in exc_str.lower()
+            ):
+                return None
+            # Drop DB pool exhaustion (transient, self-recovering)
+            if "MaxClientsInSessionMode" in exc_str or "Max client connections" in exc_str:
+                return None
+        # Also check log messages for pool exhaustion
+        log_msg = event.get("logentry", {}).get("message", "")
+        if "MaxClientsInSessionMode" in log_msg or "Max client connections" in log_msg:
+            return None
         return event
 
     sentry_sdk.init(

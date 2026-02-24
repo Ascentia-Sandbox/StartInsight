@@ -734,7 +734,10 @@ async def analyze_signal_enhanced(raw_signal: RawSignal, language: str = "en") -
         # Track failed insight generation
         metrics_tracker.track_insight_failed(e)
 
-        logger.error(f"Enhanced analysis failed for signal {raw_signal.id}: {e}")
+        if "429" in str(e) or "Resource exhausted" in str(e):
+            logger.warning(f"Gemini rate limit for signal {raw_signal.id}: {e}")
+        else:
+            logger.error(f"Enhanced analysis failed for signal {raw_signal.id}: {e}")
         raise
 
 
@@ -768,9 +771,14 @@ async def analyze_signal_enhanced_with_retry(raw_signal: RawSignal) -> Insight:
     try:
         return await analyze_signal_enhanced(raw_signal)
     except Exception as e:
-        logger.error(
-            f"Enhanced analysis failed for signal {raw_signal.id} after retries: {e}"
-        )
+        if "429" in str(e) or "Resource exhausted" in str(e):
+            logger.warning(
+                f"Gemini rate limit for signal {raw_signal.id} after retries: {e}"
+            )
+        else:
+            logger.error(
+                f"Enhanced analysis failed for signal {raw_signal.id} after retries: {e}"
+            )
         raise
 
 

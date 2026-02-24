@@ -251,10 +251,10 @@ class InsightAdminUpdate(BaseModel):
     market_gap_analysis: str | None = None
     why_now_analysis: str | None = None
 
-    # JSONB fields
-    value_ladder: dict | None = None
-    proof_signals: dict | None = None
-    execution_plan: dict | None = None
+    # JSONB fields (AI generates these as lists or dicts)
+    value_ladder: list | dict | None = None
+    proof_signals: list | dict | None = None
+    execution_plan: list | dict | None = None
     competitor_analysis: list | dict | None = None
 
 
@@ -288,10 +288,10 @@ class InsightAdminResponse(BaseModel):
     market_gap_analysis: str | None = None
     why_now_analysis: str | None = None
 
-    # JSONB
-    value_ladder: dict | None = None
-    proof_signals: dict | None = None
-    execution_plan: dict | None = None
+    # JSONB (AI generates these as lists or dicts depending on prompt)
+    value_ladder: list | dict | None = None
+    proof_signals: list | dict | None = None
+    execution_plan: list | dict | None = None
     competitor_analysis: list | dict | None = None
 
     model_config = ConfigDict(from_attributes=True)

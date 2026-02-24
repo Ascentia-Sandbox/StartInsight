@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,8 @@ import {
 import { ScoreRadar } from '@/components/evidence/score-radar';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { config } from '@/lib/env';
+import { saveInsight } from '@/lib/api';
+import { toast } from 'sonner';
 import {
   Loader2,
   Sparkles,
@@ -28,6 +31,8 @@ import {
   Lightbulb,
   AlertTriangle,
   Lock,
+  Bookmark,
+  CheckCircle,
 } from 'lucide-react';
 
 const TARGET_MARKETS = [
@@ -62,7 +67,22 @@ interface SimilarIdea {
   market_size_estimate: string;
 }
 
+interface MarketSizing {
+  tam: string;
+  sam: string;
+  som: string;
+  growth_rate: string;
+}
+
+interface ValueLadderTier {
+  tier_name: string;
+  price: string;
+  description: string;
+  features: string[];
+}
+
 interface ValidationResult {
+  insight_id: string | null;
   relevance_score: number;
   opportunity_score: number | null;
   problem_score: number | null;
@@ -78,6 +98,8 @@ interface ValidationResult {
   market_size_estimate: string;
   market_gap_analysis: string | null;
   why_now_analysis: string | null;
+  market_sizing: MarketSizing | null;
+  value_ladder: ValueLadderTier[] | null;
   similar_ideas: SimilarIdea[];
   competition_overlap: number;
 }
@@ -109,10 +131,13 @@ function getOverallRating(score: number) {
 }
 
 export default function ValidatePage() {
+  const router = useRouter();
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [ideaDescription, setIdeaDescription] = useState('');
   const [targetMarket, setTargetMarket] = useState('');
   const [budget, setBudget] = useState('');
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // Get auth token on mount
   useEffect(() => {
@@ -129,10 +154,32 @@ export default function ValidatePage() {
         target_market: targetMarket || null,
         budget: budget || null,
       }),
+    onMutate: () => setSaved(false),
   });
 
   const result = mutation.data;
   const rating = result ? getOverallRating(result.relevance_score) : null;
+
+  const handleSave = async () => {
+    if (!accessToken || !result?.insight_id) return;
+    setSaving(true);
+    try {
+      await saveInsight(accessToken, result.insight_id);
+      setSaved(true);
+      toast.success('Saved to your workspace');
+    } catch {
+      toast.error('Failed to save insight');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeepResearch = () => {
+    const params = new URLSearchParams();
+    if (ideaDescription) params.set('idea', ideaDescription);
+    if (targetMarket) params.set('market', targetMarket);
+    router.push(`/en/research?${params.toString()}`);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
@@ -262,7 +309,7 @@ export default function ValidatePage() {
         {/* Results */}
         {result && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Overall Score */}
+            {/* Overall Score + Save Button */}
             <Card>
               <CardContent className="pt-6">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -275,15 +322,33 @@ export default function ValidatePage() {
                       <Badge className={rating!.color}>{rating!.label}</Badge>
                     </div>
                   </div>
-                  <div className="flex gap-6 text-center">
-                    <div>
-                      <p className="text-2xl font-bold font-data">{result.revenue_potential || 'N/A'}</p>
-                      <p className="text-xs text-muted-foreground">Revenue Potential</p>
+                  <div className="flex items-center gap-6">
+                    <div className="flex gap-6 text-center">
+                      <div>
+                        <p className="text-2xl font-bold font-data">{result.revenue_potential || 'N/A'}</p>
+                        <p className="text-xs text-muted-foreground">Revenue Potential</p>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold font-data">{result.competition_overlap}</p>
+                        <p className="text-xs text-muted-foreground">Competing Ideas</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-2xl font-bold font-data">{result.competition_overlap}</p>
-                      <p className="text-xs text-muted-foreground">Competing Ideas</p>
-                    </div>
+                    {result.insight_id && (
+                      <Button
+                        variant={saved ? 'secondary' : 'outline'}
+                        size="sm"
+                        onClick={handleSave}
+                        disabled={saving || saved}
+                      >
+                        {saved ? (
+                          <><CheckCircle className="mr-1.5 h-4 w-4" /> Saved</>
+                        ) : saving ? (
+                          <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Saving...</>
+                        ) : (
+                          <><Bookmark className="mr-1.5 h-4 w-4" /> Save to Workspace</>
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -327,7 +392,20 @@ export default function ValidatePage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground">{result.proposed_solution}</p>
+                    <p className="text-sm font-medium">{result.proposed_solution}</p>
+                    {result.value_ladder && result.value_ladder.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Pricing Tiers</p>
+                        {result.value_ladder.map((tier, i) => (
+                          <div key={i} className="flex items-baseline gap-2 text-sm">
+                            <span className="font-semibold text-primary shrink-0">{tier.price}</span>
+                            <span className="text-muted-foreground">
+                              {tier.tier_name} — {tier.description}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
@@ -340,7 +418,28 @@ export default function ValidatePage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground">{result.market_size_estimate}</p>
+                    {result.market_sizing ? (
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">TAM</span>
+                          <span className="font-medium">{result.market_sizing.tam}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">SAM</span>
+                          <span className="font-medium">{result.market_sizing.sam}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">SOM</span>
+                          <span className="font-medium">{result.market_sizing.som}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Growth</span>
+                          <span className="font-medium">{result.market_sizing.growth_rate}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">{result.market_size_estimate}</p>
+                    )}
                   </CardContent>
                 </Card>
               )}
@@ -433,7 +532,11 @@ export default function ValidatePage() {
                       and feasibility assessment. Available for Starter and Pro plans.
                     </p>
                   </div>
-                  <Button variant="default" className="shrink-0 bg-[#0D7377] hover:bg-[#0B6163]">
+                  <Button
+                    variant="default"
+                    className="shrink-0 bg-[#0D7377] hover:bg-[#0B6163]"
+                    onClick={handleDeepResearch}
+                  >
                     Get Deep Research
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>

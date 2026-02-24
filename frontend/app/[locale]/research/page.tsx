@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Lightbulb, Link2, BarChart3, Loader2, CheckCircle, Clock } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase/client';
@@ -31,6 +31,7 @@ export default function ResearchPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  const searchParams = useSearchParams();
   const { tier, limits, usage, atLimit, usagePercent } = useSubscription();
 
   // Check authentication
@@ -50,6 +51,14 @@ export default function ResearchPage() {
 
     checkAuth();
   }, [router]);
+
+  // Pre-fill from query params (e.g. from /validate Deep Research button)
+  useEffect(() => {
+    const idea = searchParams.get('idea');
+    const market = searchParams.get('market');
+    if (idea) setContent(idea);
+    if (market) setTargetMarket(market);
+  }, [searchParams]);
 
   if (isCheckingAuth) {
     return (

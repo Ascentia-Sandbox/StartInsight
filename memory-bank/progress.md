@@ -13,6 +13,18 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-02-24)
+
+- [2026-02-24] [SENTRY-FIXES]: Resolve all 37 Sentry production issues
+  - Files: main.py, enhanced_analyzer.py, metrics.py, admin.py, admin schemas
+  - Tech: before_send filter (429/pool), selectinload N+1 fix, JSONB type correction
+  - Status: [✓ Complete]
+
+- [2026-02-24] [VALIDATE-UX]: Validate page — save to workspace, market sizing, value ladder
+  - Files: validator.py, validate/page.tsx (×2), research/page.tsx
+  - Tech: Persist insight + insight_id return; TAM/SAM/SOM display; pricing tiers; deep research prefill
+  - Status: [✓ Complete]
+
 ## Recent Progress (2026-02-23)
 
 - [2026-02-23] [DOMAIN-SWEEP]: Replace all startinsight.ai → startinsight.co

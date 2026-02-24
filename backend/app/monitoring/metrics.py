@@ -200,10 +200,17 @@ class MetricsTracker:
         error_type = type(error).__name__
         self.metrics.errors_by_type[error_type] += 1
 
-        logger.error(
-            f"Insight generation failed: {error_type} - {error}, "
-            f"total_failed={self.metrics.total_insights_failed}"
-        )
+        err_str = str(error)
+        if "429" in err_str or "Resource exhausted" in err_str:
+            logger.warning(
+                f"Insight generation rate-limited: {error_type} - {error}, "
+                f"total_failed={self.metrics.total_insights_failed}"
+            )
+        else:
+            logger.error(
+                f"Insight generation failed: {error_type} - {error}, "
+                f"total_failed={self.metrics.total_insights_failed}"
+            )
 
     def get_summary(self) -> dict[str, Any]:
         """
