@@ -91,6 +91,20 @@ export default function ResearchPage() {
       return;
     }
 
+    // Frontend validation matching backend min_length requirements
+    if (content.trim().length < 50) {
+      setError('Please provide a more detailed description (at least 50 characters).');
+      toast.error('Description too short');
+      return;
+    }
+
+    const market = targetMarket || 'General Market';
+    if (market.trim().length < 10) {
+      setError('Target market must be at least 10 characters.');
+      toast.error('Target market too short');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -98,7 +112,7 @@ export default function ResearchPage() {
     try {
       const request = await createResearchRequest(accessToken, {
         idea_description: content,
-        target_market: targetMarket || 'General Market',
+        target_market: market,
         budget_range: budgetRange,
       });
 
@@ -273,6 +287,9 @@ export default function ResearchPage() {
                     rows={6}
                     required
                   />
+                )}
+                {content.length > 0 && content.length < 50 && (
+                  <p className="text-xs text-muted-foreground">{content.length}/50 characters minimum</p>
                 )}
               </div>
 
