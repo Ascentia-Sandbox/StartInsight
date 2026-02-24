@@ -77,9 +77,9 @@ class Settings(BaseSettings):
 
     # Phase 6.2: Email Notifications (Resend)
     resend_api_key: str | None = None
-    email_from_address: str = "noreply@startinsight.ai"
+    email_from_address: str = "noreply@startinsight.co"
     email_from_name: str = "StartInsight"
-    contact_email: str = "hello@startinsight.ai"
+    contact_email: str = "hello@startinsight.co"
 
     # Phase 6.3: Rate Limiting
     rate_limit_per_minute: int = 60
@@ -150,13 +150,14 @@ class Settings(BaseSettings):
     jwks_fetch_timeout: float = 10.0
     jwks_cache_ttl: int = 3600
     cors_allowed_methods: str = "GET,POST,PUT,PATCH,DELETE,OPTIONS"
-    cors_allowed_headers: str = "Authorization,Content-Type,X-Request-ID,X-API-Key,Accept,Accept-Language"
+    cors_allowed_headers: str = "*"
+    cors_origin_regex: str = ""  # Optional regex for dynamic origins (e.g. Vercel preview deployments)
     csp_connect_src: str = "'self' https://generativelanguage.googleapis.com https://*.supabase.co"
-    cors_allowed_production_origins: str = "https://startinsight.app,https://www.startinsight.app,https://app.startinsight.app"
+    cors_allowed_production_origins: str = "https://startinsight.co,https://www.startinsight.co"
 
     # Application
     app_version: str = "0.1.0"
-    tenant_base_domain: str = "startinsight.ai"
+    tenant_base_domain: str = "startinsight.co"
     default_max_users: int = 10
     default_max_teams: int = 3
     default_max_api_keys: int = 2

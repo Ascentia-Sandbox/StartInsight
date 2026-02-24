@@ -7,10 +7,10 @@ export const config = {
   apiUrl: process.env.NEXT_PUBLIC_API_URL!,
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
   supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@startinsight.ai',
-  contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'hello@startinsight.ai',
-  enterpriseEmail: process.env.NEXT_PUBLIC_ENTERPRISE_EMAIL || 'enterprise@startinsight.ai',
-  privacyEmail: process.env.NEXT_PUBLIC_PRIVACY_EMAIL || 'privacy@startinsight.ai',
+  supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@startinsight.co',
+  contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'hello@startinsight.co',
+  enterpriseEmail: process.env.NEXT_PUBLIC_ENTERPRISE_EMAIL || 'enterprise@startinsight.co',
+  privacyEmail: process.env.NEXT_PUBLIC_PRIVACY_EMAIL || 'privacy@startinsight.co',
 } as const;
 
 // Runtime validation (throws on server startup or first client load if missing)

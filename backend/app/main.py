@@ -31,6 +31,15 @@ if settings.sentry_dsn and settings.environment in ("production", "staging"):
     from sentry_sdk.integrations.logging import LoggingIntegration
     from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
+    def _before_send(event, hint):
+        # Drop health-check noise
+        if event.get("request", {}).get("url", "").endswith("/health"):
+            return None
+        # Drop harmless Prophet/plotly missing-dependency warning
+        if "Importing plotly failed" in event.get("logentry", {}).get("message", ""):
+            return None
+        return event
+
     sentry_sdk.init(
         dsn=settings.sentry_dsn,
         environment=settings.environment,
@@ -47,8 +56,7 @@ if settings.sentry_dsn and settings.environment in ("production", "staging"):
                 sentry_logs_level=_logging.WARNING,  # Sentry Logs tab from WARNING+
             ),
         ],
-        before_send=lambda event, hint:
-            None if event.get("request", {}).get("url", "").endswith("/health") else event,
+        before_send=_before_send,
     )
 
 # Configure structured logging
@@ -76,7 +84,7 @@ async def lifespan(app: FastAPI):
         await schedule_scraping_tasks()
         logger.info("Task scheduler initialized")
     except Exception as e:
-        logger.error(f"Failed to initialize task scheduler: {e}")
+        logger.warning(f"Task scheduler unavailable (Redis not configured): {e}")
 
     yield
 
@@ -112,11 +120,17 @@ async def lifespan(app: FastAPI):
 # Create FastAPI application
 app = FastAPI(
     title="StartInsight API",
-    description="AI-powered business intelligence engine for startup idea discovery",
-    version=settings.app_version,
+    description=(
+        "AI-powered startup intelligence. 232+ endpoints for insights, trends, "
+        "signals, and market analysis. "
+        "All endpoints require `Authorization: Bearer YOUR_API_KEY`. "
+        "Get your key at startinsight.co/settings."
+    ),
+    version="1.0.0",
     lifespan=lifespan,
-    docs_url=None if settings.environment == "production" else "/docs",
-    redoc_url=None if settings.environment == "production" else "/redoc",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
 )
 
 # Request ID middleware for correlation (add BEFORE CORS)
@@ -156,6 +170,7 @@ app.add_middleware(APIVersionMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
+    allow_origin_regex=settings.cors_origin_regex or None,
     allow_credentials=True,
     allow_methods=[m.strip() for m in settings.cors_allowed_methods.split(",")],
     allow_headers=[h.strip() for h in settings.cors_allowed_headers.split(",")],
@@ -168,7 +183,6 @@ app.state.limiter = limiter
 from app.middleware.rate_limiter import RateLimiterMiddleware
 
 app.add_middleware(RateLimiterMiddleware, max_requests=100, window_seconds=3600)
-
 
 # ============================================================================
 # Global Exception Handlers (Production Security)
@@ -320,6 +334,7 @@ from app.api.routes import (  # noqa: E402
     community,
     contact,
     content_review,
+    email_tracking,
     export,
     feed,
     gamification,
@@ -331,6 +346,7 @@ from app.api.routes import (  # noqa: E402
     pipeline,
     preferences,
     pulse,
+    referrals,
     research,
     signals,
     success_stories,
@@ -377,6 +393,8 @@ app.include_router(chat.router, tags=["Chat Strategist"])  # Phase B
 app.include_router(settings_routes.router, tags=["System Settings"])  # Phase G
 app.include_router(pulse.router, tags=["Market Pulse"])  # Phase Q5.1
 app.include_router(contact.router, tags=["Contact"])  # Phase Q6.3
+app.include_router(referrals.router, tags=["Referrals"])  # Referral program
+app.include_router(email_tracking.router, tags=["Email Tracking"])  # Open pixel tracking
 
 # Static file serving for uploaded images (Phase 20.1)
 os.makedirs("uploads/images", exist_ok=True)

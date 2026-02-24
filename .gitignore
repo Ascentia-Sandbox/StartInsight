@@ -166,3 +166,6 @@ pyrightconfig.json
 
 # Claude Code conversation transcripts
 *.jsonl
+
+# MCP server config (contains local API tokens)
+.mcp.json

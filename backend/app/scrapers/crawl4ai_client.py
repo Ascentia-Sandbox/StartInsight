@@ -1,5 +1,6 @@
 """Crawl4AI client wrapper matching Firecrawl's interface for cost optimization."""
 
+import asyncio
 import logging
 from typing import Any
 
@@ -94,10 +95,14 @@ class Crawl4AIClient:
             # Use AsyncWebCrawler with context manager for proper cleanup
             async with AsyncWebCrawler(verbose=False) as crawler:
                 # word_count_threshold=10 filters out boilerplate
-                result = await crawler.arun(
-                    url=url,
-                    word_count_threshold=10,
-                    bypass_cache=False,  # Use cache for repeated URLs
+                # 30s timeout prevents hanging the entire scrape_all_sources_task
+                result = await asyncio.wait_for(
+                    crawler.arun(
+                        url=url,
+                        word_count_threshold=10,
+                        bypass_cache=False,  # Use cache for repeated URLs
+                    ),
+                    timeout=30.0,
                 )
 
                 # Extract content (prefer markdown, fallback to cleaned HTML)

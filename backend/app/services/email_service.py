@@ -166,7 +166,9 @@ TEMPLATES: dict[str, EmailTemplate] = {
 
             {{#insights}}
             <div style="border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
-                <h3 style="margin: 0 0 6px 0; font-size: 15px;">{{title}}</h3>
+                <h3 style="margin: 0 0 6px 0; font-size: 15px;">
+                    <a href="{{insight_url}}" style="color: #1D4ED8; text-decoration: none;">{{title}}</a>
+                </h3>
                 <p style="color: #6B7280; margin: 0 0 8px 0; font-size: 13px;">{{problem_statement}}</p>
                 <div style="display: flex; gap: 8px;">
                     <span style="background: #DBEAFE; color: #1E40AF; padding: 3px 8px; border-radius: 4px; font-size: 11px;">
@@ -184,8 +186,13 @@ TEMPLATES: dict[str, EmailTemplate] = {
             </a>
 
             <p style="margin-top: 24px; color: #6B7280; font-size: 12px;">
-                <a href="{{unsubscribe_url}}">Unsubscribe from weekly digest</a>
+                <a href="{{unsubscribe_url}}" style="color: #6B7280;">Unsubscribe from weekly digest</a>
+                &nbsp;&middot;&nbsp;
+                <a href="https://startinsight.co/settings?tab=notifications&utm_source=email&utm_medium=digest&utm_campaign=weekly_digest" style="color: #6B7280;">Manage preferences</a>
             </p>
+
+            <!-- Open tracking pixel -->
+            <img src="{{tracking_pixel_url}}" width="1" height="1" style="display:none" alt="" />
         </div>
         """,
     ),
@@ -255,6 +262,7 @@ async def send_email(
     variables: dict[str, Any],
     cc: list[str] | None = None,
     bcc: list[str] | None = None,
+    text: str | None = None,
 ) -> dict[str, Any]:
     """
     Send an email using a template.
@@ -265,6 +273,7 @@ async def send_email(
         variables: Variables to substitute in template
         cc: Optional CC recipients
         bcc: Optional BCC recipients
+        text: Optional plain-text fallback body (CAN-SPAM / accessibility)
 
     Returns:
         Send result with message ID or error
@@ -301,6 +310,8 @@ async def send_email(
             "html": html_content,
         }
 
+        if text:
+            params["text"] = text
         if cc:
             params["cc"] = cc
         if bcc:
@@ -437,8 +448,38 @@ async def send_weekly_digest(
     insights: list[dict],
     dashboard_url: str,
     unsubscribe_url: str,
+    tracking_pixel_url: str = "",
 ) -> dict:
-    """Send weekly digest of top insights."""
+    """Send weekly digest of top insights with open tracking and UTM links.
+
+    Args:
+        email: Recipient email address.
+        name: Recipient display name.
+        insights: List of insight dicts (must include ``insight_url`` key with UTM params).
+        dashboard_url: Absolute URL to the insights dashboard (with UTM params).
+        unsubscribe_url: Signed unsubscribe URL.
+        tracking_pixel_url: URL for the 1x1 open-tracking GIF. Empty string disables tracking.
+    """
+    # Build plain-text fallback from insights list
+    text_lines = [
+        f"Hi {name or 'there'}, here are the top startup opportunities from this week:",
+        "",
+    ]
+    for item in insights[:10]:
+        text_lines.append(f"- {item.get('title', 'Untitled')}")
+        text_lines.append(f"  Score: {item.get('relevance_score', 'N/A')}  |  {item.get('market_size', '')}")
+        insight_url = item.get("insight_url", "")
+        if insight_url:
+            text_lines.append(f"  {insight_url}")
+        text_lines.append("")
+
+    text_lines += [
+        f"Explore all insights: {dashboard_url}",
+        "",
+        f"Unsubscribe: {unsubscribe_url}",
+    ]
+    plain_text = "\n".join(text_lines)
+
     return await send_email(
         to=email,
         template="weekly_digest",
@@ -447,7 +488,9 @@ async def send_weekly_digest(
             "insights": insights[:10],
             "dashboard_url": dashboard_url,
             "unsubscribe_url": unsubscribe_url,
+            "tracking_pixel_url": tracking_pixel_url,
         },
+        text=plain_text,
     )
 
 

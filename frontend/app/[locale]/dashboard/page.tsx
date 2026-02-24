@@ -9,12 +9,15 @@ import { getSupabaseClient } from '@/lib/supabase/client';
 import { fetchWorkspaceStatus, fetchSubscriptionStatus } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { TierBadge } from '@/components/ui/TierBadge';
 import { BuilderPlatformGrid, BUILDER_PLATFORMS, type BuilderPlatformId } from '@/components/builder/builder-platform-card';
 import { PromptTypeSelector, PROMPT_TYPES, type PromptTypeId } from '@/components/builder/prompt-type-selector';
 import { PromptPreviewModal } from '@/components/builder/prompt-preview-modal';
+import { OnboardingBanner } from '@/components/onboarding-banner';
 import type { User } from '@supabase/supabase-js';
 
 export default function DashboardPage() {
@@ -115,6 +118,9 @@ export default function DashboardPage() {
 
           {/* Overview Tab */}
           <TabsContent value="overview">
+            {/* First-time user onboarding banner — visible until first insight is saved */}
+            <OnboardingBanner insightsSaved={Number(status?.saved_count ?? 0)} />
+
             {/* Quick Stats */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
               <Card>
@@ -185,6 +191,86 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Your Plan — Usage Card */}
+            {subscription && (
+              <div className="mb-8">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base font-semibold flex items-center gap-2">
+                        Your Plan
+                        <TierBadge tier={subscription.tier} />
+                      </CardTitle>
+                      <Link href="/billing" className="text-xs text-primary hover:underline">
+                        {subscription.tier === 'free' ? 'Upgrade' : 'Manage'}
+                      </Link>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Insights Today */}
+                    {subscription.limits.insights_per_day !== -1 && (
+                      <div>
+                        <div className="flex items-center justify-between text-sm mb-1">
+                          <span className="text-muted-foreground">Insights today</span>
+                          <span className="font-medium tabular-nums">
+                            {subscription.usage?.insights_today ?? 0} / {subscription.limits.insights_per_day}
+                          </span>
+                        </div>
+                        <Progress
+                          value={
+                            subscription.limits.insights_per_day > 0
+                              ? Math.min(100, Math.round(((subscription.usage?.insights_today ?? 0) / subscription.limits.insights_per_day) * 100))
+                              : 0
+                          }
+                          className={
+                            ((subscription.usage?.insights_today ?? 0) / subscription.limits.insights_per_day) >= 0.8
+                              ? '[&>div]:bg-red-500'
+                              : ''
+                          }
+                        />
+                      </div>
+                    )}
+                    {subscription.limits.insights_per_day === -1 && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Insights per day</span>
+                        <span className="font-medium text-green-600 dark:text-green-400">Unlimited</span>
+                      </div>
+                    )}
+
+                    {/* Research Analyses */}
+                    {subscription.limits.analyses_per_month !== -1 && (
+                      <div>
+                        <div className="flex items-center justify-between text-sm mb-1">
+                          <span className="text-muted-foreground">Research analyses this month</span>
+                          <span className="font-medium tabular-nums">
+                            {subscription.usage?.analyses_this_month ?? 0} / {subscription.limits.analyses_per_month}
+                          </span>
+                        </div>
+                        <Progress
+                          value={
+                            subscription.limits.analyses_per_month > 0
+                              ? Math.min(100, Math.round(((subscription.usage?.analyses_this_month ?? 0) / subscription.limits.analyses_per_month) * 100))
+                              : 0
+                          }
+                          className={
+                            ((subscription.usage?.analyses_this_month ?? 0) / subscription.limits.analyses_per_month) >= 0.8
+                              ? '[&>div]:bg-red-500'
+                              : ''
+                          }
+                        />
+                      </div>
+                    )}
+                    {subscription.limits.analyses_per_month === -1 && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Research analyses per month</span>
+                        <span className="font-medium text-green-600 dark:text-green-400">Unlimited</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
 
             {/* Quick Actions */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

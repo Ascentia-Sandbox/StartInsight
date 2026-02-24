@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Mail, MessageSquare, MapPin, Clock, Send, CheckCircle2 } from "lucide-react";
+import { Mail, MessageSquare, Clock, Send, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,22 +22,15 @@ const contactOptions = [
     icon: Mail,
     title: "Email Us",
     description: "For general inquiries",
-    contact: "hello@startinsight.ai",
-    href: "mailto:hello@startinsight.ai",
+    contact: "hello@startinsight.co",
+    href: "mailto:hello@startinsight.co",
   },
   {
     icon: MessageSquare,
     title: "Support",
     description: "For technical help",
-    contact: "support@startinsight.ai",
-    href: "mailto:support@startinsight.ai",
-  },
-  {
-    icon: MapPin,
-    title: "Location",
-    description: "Where we're based",
-    contact: "Singapore (Remote-first)",
-    href: null,
+    contact: "support@startinsight.co",
+    href: "mailto:support@startinsight.co",
   },
   {
     icon: Clock,

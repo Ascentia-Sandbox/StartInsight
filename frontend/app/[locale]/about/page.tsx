@@ -54,7 +54,7 @@ const orgJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
   name: "StartInsight",
-  url: "https://startinsight.app",
+  url: "https://startinsight.co",
   description: "AI-powered startup idea discovery platform helping entrepreneurs find, validate, and build their next venture.",
   foundingDate: "2024",
   sameAs: ["https://twitter.com/startinsight"],

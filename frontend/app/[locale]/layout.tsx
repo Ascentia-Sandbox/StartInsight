@@ -11,7 +11,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { CommandPalette } from "@/components/command-palette";
 import { locales, type Locale } from '@/i18n';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://startinsight.app";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://startinsight.co";
 
 export async function generateMetadata({
   params,

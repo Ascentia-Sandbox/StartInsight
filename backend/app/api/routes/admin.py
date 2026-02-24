@@ -22,6 +22,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
+from pydantic import BaseModel
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse
@@ -473,12 +474,20 @@ async def trigger_agent(
     task_name = agent_task_map.get(agent_type)
     if task_name:
         try:
+            from urllib.parse import urlparse as _urlparse
+
             from arq.connections import ArqRedis, create_pool
             from arq.connections import RedisSettings as ArqRedisSettings
 
+            _parsed = _urlparse(settings.redis_url)
             pool: ArqRedis = await create_pool(ArqRedisSettings(
-                host=settings.redis_host,
-                port=settings.redis_port,
+                host=_parsed.hostname or "localhost",
+                port=_parsed.port or 6379,
+                password=_parsed.password,
+                database=int((_parsed.path or "/0").lstrip("/") or "0"),
+                ssl=settings.redis_url.startswith("rediss://"),
+                conn_timeout=3,
+                conn_retries=0,
             ))
             job = await pool.enqueue_job(task_name)
             await pool.aclose()
@@ -1721,3 +1730,118 @@ async def upload_image(
         "size": len(contents),
         "content_type": file.content_type,
     }
+
+
+# ============================================
+# EMAIL DIGEST TEST ENDPOINT
+# ============================================
+
+
+class DigestTestRequest(BaseModel):
+    """Request body for test digest endpoint."""
+
+    email: str
+
+
+@router.post("/digest/test")
+@limiter.limit("5/minute")
+async def trigger_test_digest(
+    request: Request,
+    body: DigestTestRequest,
+    admin: AdminUser,
+) -> dict:
+    """
+    Trigger a test weekly digest email to a specified address.
+
+    Sends the same format as the production weekly digest but to an
+    arbitrary email, allowing admins to validate content and layout
+    before the Monday cron runs.
+
+    Security: Admin-only. Rate-limited to 5/minute.
+    """
+    from datetime import UTC, datetime, timedelta
+
+    from pydantic import EmailStr, TypeAdapter
+    from sqlalchemy import desc
+    from sqlalchemy import select as sa_select
+
+    from app.api.routes.email_tracking import build_tracking_token
+    from app.models.insight import Insight
+    from app.services.email_service import send_weekly_digest
+
+    # Validate email address format
+    try:
+        TypeAdapter(EmailStr).validate_python(body.email)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid email address",
+        )
+
+    api_base_url = "https://api.startinsight.co"
+    _utm = "utm_source=email&utm_medium=digest&utm_campaign=weekly_digest&utm_content=admin_test"
+
+    async with AsyncSessionLocal() as session:
+        # Fetch top 10 insights from the past week for the preview
+        one_week_ago = datetime.now(UTC) - timedelta(days=7)
+        result = await session.execute(
+            sa_select(Insight)
+            .where(Insight.created_at >= one_week_ago)
+            .order_by(desc(Insight.relevance_score))
+            .limit(10)
+        )
+        insights = result.scalars().all()
+
+        # Fall back to overall top 10 if nothing was published this week
+        if not insights:
+            result = await session.execute(
+                sa_select(Insight)
+                .order_by(desc(Insight.relevance_score))
+                .limit(10)
+            )
+            insights = result.scalars().all()
+
+    insight_list = [
+        {
+            "title": i.title or (i.proposed_solution or "")[:80],
+            "problem_statement": (i.problem_statement or "")[:150],
+            "relevance_score": f"{(i.relevance_score or 0) * 100:.0f}%",
+            "market_size": i.market_size_estimate or "Unknown",
+            "insight_url": (
+                f"https://startinsight.co/insights/{i.id}?{_utm}"
+            ),
+        }
+        for i in insights
+    ]
+
+    # Use a placeholder tracking token for the test (no real user_id)
+    tracking_token = build_tracking_token(
+        user_id="admin-test",
+        digest_date=datetime.now(UTC).date().isoformat(),
+        email_type="weekly_digest_test",
+    )
+    tracking_pixel_url = f"{api_base_url}/api/email/track/open/{tracking_token}"
+
+    send_result = await send_weekly_digest(
+        email=body.email,
+        name="Admin Preview",
+        insights=insight_list,
+        dashboard_url=f"https://startinsight.co/insights?{_utm}",
+        unsubscribe_url="https://startinsight.co/settings?tab=notifications",
+        tracking_pixel_url=tracking_pixel_url,
+    )
+
+    logger.info(
+        "Admin %s triggered test digest to %s: status=%s",
+        admin.email,
+        body.email,
+        send_result.get("status"),
+    )
+
+    if send_result.get("status") == "error":
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Email send failed: {send_result.get('error')}",
+        )
+
+    return {"status": "sent", "to": body.email, "insights_included": len(insight_list)}

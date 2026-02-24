@@ -84,6 +84,21 @@ class User(Base):
         doc="User preferences as JSON (theme, email_digest, etc.)",
     )
 
+    # Referral program
+    referral_code: Mapped[str | None] = mapped_column(
+        String(12),
+        unique=True,
+        nullable=True,
+        index=True,
+        doc="Unique referral code (8 chars, auto-generated on first login)",
+    )
+
+    referred_by: Mapped[str | None] = mapped_column(
+        String(12),
+        nullable=True,
+        doc="Referral code of the user who referred this user",
+    )
+
     # Phase 15: APAC Language Support
     language: Mapped[str] = mapped_column(
         String(10),

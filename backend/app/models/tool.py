@@ -81,6 +81,12 @@ class Tool(Base):
         doc="Logo image URL (optional)",
     )
 
+    affiliate_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+        doc="Affiliate/referral URL (overrides website_url for Visit button)",
+    )
+
     # Curation flags
     is_featured: Mapped[bool] = mapped_column(
         Boolean,

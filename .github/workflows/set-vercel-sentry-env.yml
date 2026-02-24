@@ -44,7 +44,7 @@ jobs:
           echo "$VALUE" | vercel env add SENTRY_DSN ${{ github.event.inputs.environment }} --token=$VERCEL_TOKEN
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
-          VALUE: "https://215c08d832e4f23a269a7bbfcb73358f@o4510905330958336.ingest.us.sentry.io/4510912888569856"
+          VALUE: ${{ secrets.SENTRY_FRONTEND_DSN }}
 
       - name: Set NEXT_PUBLIC_SENTRY_DSN
         run: |
@@ -52,7 +52,7 @@ jobs:
           echo "$VALUE" | vercel env add NEXT_PUBLIC_SENTRY_DSN ${{ github.event.inputs.environment }} --token=$VERCEL_TOKEN
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
-          VALUE: "https://215c08d832e4f23a269a7bbfcb73358f@o4510905330958336.ingest.us.sentry.io/4510912888569856"
+          VALUE: ${{ secrets.SENTRY_FRONTEND_DSN }}
 
       - name: Set SENTRY_ORG
         run: |

@@ -1,11 +1,11 @@
 # StartInsight Robots.txt
-# https://startinsight.app
+# https://startinsight.co
 
 User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://startinsight.app/sitemap.xml
+Sitemap: https://startinsight.co/sitemap.xml
 
 # Disallow admin pages
 Disallow: /admin/

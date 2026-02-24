@@ -16,10 +16,13 @@ COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/pytho
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Install Playwright dependencies for Crawl4AI (PMF optimization)
+# Set shared path so both root (build) and appuser (runtime) find the browsers
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN apt-get update && \
     apt-get install -y curl wget gnupg && \
     playwright install --with-deps chromium && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    chmod -R 755 /ms-playwright
 
 COPY app ./app
 COPY alembic ./alembic

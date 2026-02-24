@@ -13,6 +13,8 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import type { APIKey } from '@/lib/types';
 import { Breadcrumbs } from '@/components/ui/breadcrumbs';
+import { FeatureLock } from '@/components/ui/FeatureLock';
+import { useSubscription } from '@/hooks/useSubscription';
 
 export default function ApiKeysPage() {
   const router = useRouter();
@@ -23,6 +25,8 @@ export default function ApiKeysPage() {
   const [keyName, setKeyName] = useState('');
   const [newKey, setNewKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  const { tier } = useSubscription();
 
   // Check authentication
   useEffect(() => {
@@ -120,6 +124,8 @@ export default function ApiKeysPage() {
           </div>
           <Button onClick={() => setShowCreateModal(true)}>Create API Key</Button>
         </div>
+
+        <FeatureLock requiredTier="pro" currentTier={tier} featureName="API Keys">
 
         {/* Info Banner */}
         <Card className="mb-8 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
@@ -230,6 +236,8 @@ export default function ApiKeysPage() {
             </div>
           </CardContent>
         </Card>
+
+        </FeatureLock>
 
         {/* Create Key Modal */}
         {showCreateModal && (

@@ -150,7 +150,7 @@ export default function BillingPage() {
 
   const handlePlanAction = (planId: string) => {
     if (planId === 'enterprise') {
-      window.location.assign('mailto:enterprise@startinsight.ai');
+      window.location.assign('mailto:enterprise@startinsight.co');
       return;
     }
     if (planId === currentTier) return;
@@ -318,7 +318,7 @@ export default function BillingPage() {
                 For enterprise teams with custom requirements, we offer tailored plans with
                 dedicated support, SLAs, and white-label options.
               </p>
-              <Link href="mailto:enterprise@startinsight.ai">
+              <Link href="mailto:enterprise@startinsight.co">
                 <Button variant="outline" className="mt-4">
                   Contact Sales
                 </Button>

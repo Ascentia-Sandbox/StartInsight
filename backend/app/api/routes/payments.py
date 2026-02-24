@@ -4,15 +4,21 @@ Endpoints for Stripe subscription management.
 """
 
 import logging
+from datetime import UTC, datetime
 from typing import Any
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models import User
+from app.models.custom_analysis import CustomAnalysis
+from app.models.insight import Insight
+from app.models.team import TeamMember
 from app.services.payment_service import (
     PRICING_TIERS,
     create_checkout_session,
@@ -56,6 +62,14 @@ class PricingResponse(BaseModel):
     """Pricing information response."""
 
     tiers: dict[str, Any]
+
+
+class SubscriptionUsage(BaseModel):
+    """Current usage metrics for the authenticated user."""
+
+    insights_today: int = Field(default=0, description="Insights viewed/accessed today")
+    analyses_this_month: int = Field(default=0, description="Research analyses submitted this month")
+    team_members: int = Field(default=0, description="Total team members across all teams")
 
 
 # ============================================================
@@ -195,16 +209,58 @@ async def handle_stripe_webhook(
 # ============================================================
 
 
+async def _get_subscription_usage(user_id: UUID, db: AsyncSession) -> SubscriptionUsage:
+    """Fetch current usage metrics for a user.
+
+    Queries insights saved today, research analyses this month, and total team members.
+    """
+    today_midnight = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+    first_of_month = datetime.now(UTC).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    # Count insights created today by this user
+    insights_today_result = await db.execute(
+        select(func.count()).select_from(Insight).where(
+            Insight.created_at >= today_midnight,
+        )
+    )
+    insights_today = insights_today_result.scalar_one_or_none() or 0
+
+    # Count research analyses submitted this month
+    analyses_result = await db.execute(
+        select(func.count()).select_from(CustomAnalysis).where(
+            CustomAnalysis.user_id == user_id,
+            CustomAnalysis.created_at >= first_of_month,
+        )
+    )
+    analyses_this_month = analyses_result.scalar_one_or_none() or 0
+
+    # Count team members across all teams the user belongs to
+    team_members_result = await db.execute(
+        select(func.count()).select_from(TeamMember).where(
+            TeamMember.user_id == user_id,
+        )
+    )
+    team_members = team_members_result.scalar_one_or_none() or 0
+
+    return SubscriptionUsage(
+        insights_today=insights_today,
+        analyses_this_month=analyses_this_month,
+        team_members=team_members,
+    )
+
+
 @router.get("/subscription")
 async def get_subscription_status(
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """
-    Get current user's subscription status.
+    Get current user's subscription status including current usage.
 
     Requires authentication.
     """
     try:
+        usage = await _get_subscription_usage(current_user.id, db)
         subscription = current_user.subscription if hasattr(current_user, "subscription") else None
 
         if not subscription:
@@ -213,6 +269,7 @@ async def get_subscription_status(
                 "tier": tier,
                 "status": "active",
                 "limits": PRICING_TIERS.get(tier, PRICING_TIERS["free"]).limits,
+                "usage": usage.model_dump(),
             }
 
         return {
@@ -232,6 +289,7 @@ async def get_subscription_status(
                 subscription.tier if hasattr(subscription, "tier") else "free",
                 PRICING_TIERS["free"],
             ).limits,
+            "usage": usage.model_dump(),
         }
     except Exception:
         logger.exception("Error fetching subscription status for user %s", current_user.id)
@@ -239,4 +297,5 @@ async def get_subscription_status(
             "tier": "free",
             "status": "active",
             "limits": PRICING_TIERS["free"].limits,
+            "usage": {"insights_today": 0, "analyses_this_month": 0, "team_members": 0},
         }

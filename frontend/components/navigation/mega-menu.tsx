@@ -30,6 +30,7 @@ import {
   Trophy,
   Megaphone,
   Mail,
+  Code2,
 } from "lucide-react";
 
 const browseIdeasItems = [
@@ -128,6 +129,12 @@ const resourcesItems = [
     href: "/faq",
     description: "Answers to common questions.",
     icon: HelpCircle,
+  },
+  {
+    title: "API Docs",
+    href: "/api-docs",
+    description: "232+ REST endpoints for insights, trends, and signals.",
+    icon: Code2,
   },
 ];
 

@@ -118,7 +118,7 @@ export default function SuccessStoriesPage() {
               "@context": "https://schema.org",
               "@type": "CollectionPage",
               name: "Startup Success Stories",
-              url: "https://startinsight.app/success-stories",
+              url: "https://startinsight.co/success-stories",
               mainEntity: {
                 "@type": "ItemList",
                 itemListElement: stories.map((s, i) => ({
@@ -127,7 +127,7 @@ export default function SuccessStoriesPage() {
                   item: {
                     "@type": "Article",
                     headline: s.tagline,
-                    url: `https://startinsight.app/success-stories/${s.id}`,
+                    url: `https://startinsight.co/success-stories/${s.id}`,
                   },
                 })),
               },

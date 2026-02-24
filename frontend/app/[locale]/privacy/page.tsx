@@ -37,7 +37,7 @@ const sections = [
   },
   {
     title: "8. Your Rights",
-    content: `Depending on your location, you may have the right to: access the personal data we hold about you; correct inaccurate data; request deletion of your data; restrict or object to processing; and data portability. To exercise these rights, contact us at privacy@startinsight.ai. We will respond within 30 days.`,
+    content: `Depending on your location, you may have the right to: access the personal data we hold about you; correct inaccurate data; request deletion of your data; restrict or object to processing; and data portability. To exercise these rights, contact us at privacy@startinsight.co. We will respond within 30 days.`,
   },
   {
     title: "9. Data Security",
@@ -57,7 +57,7 @@ const sections = [
   },
   {
     title: "13. Contact Us",
-    content: `For privacy-related inquiries, please contact our Data Protection Officer at privacy@startinsight.ai or write to us via our contact page. We aim to respond to all requests within 30 days.`,
+    content: `For privacy-related inquiries, please contact our Data Protection Officer at privacy@startinsight.co or write to us via our contact page. We aim to respond to all requests within 30 days.`,
   },
 ];
 
@@ -99,8 +99,8 @@ export default function PrivacyPage() {
               Contact our team
             </Link>{" "}
             or email{" "}
-            <a href="mailto:privacy@startinsight.ai" className="text-primary underline underline-offset-4">
-              privacy@startinsight.ai
+            <a href="mailto:privacy@startinsight.co" className="text-primary underline underline-offset-4">
+              privacy@startinsight.co
             </a>
           </p>
         </div>

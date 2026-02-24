@@ -1,5 +1,6 @@
 """Arq worker configuration and background tasks."""
 
+import asyncio
 import logging
 from pathlib import Path
 from typing import Any
@@ -273,12 +274,20 @@ async def send_weekly_digest_task(ctx: dict[str, Any]) -> dict[str, Any]:
 
     from sqlalchemy import desc, select
 
+    from app.api.routes.email_tracking import build_tracking_token
     from app.models.insight import Insight
     from app.models.user import User
     from app.models.user_preferences import EmailPreferences, EmailSend
     from app.services.email_service import send_weekly_digest
 
     logger.info("Starting weekly digest task")
+
+    # Base URL for the public API (tracking pixel host)
+    api_base_url = "https://api.startinsight.co"
+    app_base_url = settings.app_url or "https://startinsight.co"
+    # UTM parameters appended to every digest link
+    _utm = "utm_source=email&utm_medium=digest&utm_campaign=weekly_digest"
+
     try:
         async with AsyncSessionLocal() as session:
             # Get top 10 insights from past week
@@ -294,16 +303,27 @@ async def send_weekly_digest_task(ctx: dict[str, Any]) -> dict[str, Any]:
             if not insights:
                 return {"status": "completed", "sent": 0, "reason": "no_insights_this_week"}
 
-            # Format insights for email template
+            # Format insights for email template — include per-insight UTM link
             insight_list = [
                 {
                     "title": i.title or i.proposed_solution[:80],
                     "problem_statement": i.problem_statement[:150],
                     "relevance_score": f"{(i.relevance_score or 0) * 100:.0f}%",
                     "market_size": i.market_size_estimate or "Unknown",
+                    # Absolute insight URL with UTM params (utm_content = insight id)
+                    "insight_url": (
+                        f"https://startinsight.co/insights/{i.id}"
+                        f"?{_utm}&utm_content={i.id}"
+                    ),
                 }
                 for i in insights
             ]
+
+            # Dashboard CTA also gets UTM params
+            dashboard_url = f"{app_base_url}/insights?{_utm}&utm_content=cta_button"
+
+            # Today's date string for tracking token
+            digest_date = date.today().isoformat()
 
             # Get users opted in to weekly digest
             subscribers_result = await session.execute(
@@ -343,12 +363,23 @@ async def send_weekly_digest_task(ctx: dict[str, Any]) -> dict[str, Any]:
                     serializer = URLSafeTimedSerializer(settings.jwt_secret or "dev-secret")
                     unsub_token = serializer.dumps(str(user.id), salt="email-unsubscribe")
 
+                    # Per-user tracking pixel token (never contains email address)
+                    tracking_token = build_tracking_token(
+                        user_id=str(user.id),
+                        digest_date=digest_date,
+                        email_type="weekly_digest",
+                    )
+                    tracking_pixel_url = (
+                        f"{api_base_url}/api/email/track/open/{tracking_token}"
+                    )
+
                     await send_weekly_digest(
                         email=user.email,
                         name=user.display_name or "there",
                         insights=insight_list,
-                        dashboard_url=f"{settings.app_url}/insights",
-                        unsubscribe_url=f"{settings.app_url}/api/email/unsubscribe?token={unsub_token}",
+                        dashboard_url=dashboard_url,
+                        unsubscribe_url=f"{app_base_url}/api/email/unsubscribe?token={unsub_token}",
+                        tracking_pixel_url=tracking_pixel_url,
                     )
 
                     session.add(EmailSend(
@@ -693,114 +724,133 @@ async def analyze_signals_task(ctx: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Task result with count of analyzed signals
     """
-    from sqlalchemy import select, update
+    from sqlalchemy import select, text, update
 
     from app.agents.enhanced_analyzer import analyze_signal_enhanced_with_retry
     from app.models.raw_signal import RawSignal
 
     logger.info("Starting signal analysis task")
 
+    # ─────────────────────────────────────────────────────────────────────
+    # Distributed lock: only one analyze_signals_task may run at a time.
+    # Uses the arq Redis connection that the worker already holds.
+    # ─────────────────────────────────────────────────────────────────────
+    lock_key = "analyze_signals_task:lock"
+    lock_ttl = 1800  # seconds — matches job_timeout
+    redis = ctx.get("redis")
+    if redis is not None:
+        acquired = await redis.set(lock_key, "1", nx=True, ex=lock_ttl)
+        if not acquired:
+            logger.info("analyze_signals_task: another instance is already running; skipping")
+            return {"status": "skipped", "reason": "lock_held"}
+
     batch_size = settings.analysis_batch_size
 
     try:
+        # Phase 1: fetch IDs only — short session, no long-held lock.
+        # Each signal is then processed in its own fresh session so the
+        # Supabase session-mode pooler never sees an idle connection for
+        # longer than a single Gemini API call (~30-40s).
         async with AsyncSessionLocal() as session:
-            # Get unprocessed signals with row-level lock to prevent concurrent processing
             result = await session.execute(
-                select(RawSignal)
+                select(RawSignal.id)
                 .where(RawSignal.processed == False)  # noqa: E712
-                .order_by(RawSignal.created_at.asc())  # Process oldest first
+                .order_by(RawSignal.created_at.asc())
                 .limit(batch_size)
-                .with_for_update(skip_locked=True)  # Prevent concurrent processing
             )
-            signals = result.scalars().all()
+            signal_ids: list = [row[0] for row in result.fetchall()]
 
-            if not signals:
-                logger.info("No unprocessed signals to analyze")
-                return {
-                    "status": "success",
-                    "analyzed": 0,
-                    "total": 0,
-                }
+        if not signal_ids:
+            logger.info("No unprocessed signals to analyze")
+            return {
+                "status": "success",
+                "analyzed": 0,
+                "total": 0,
+            }
 
-            analyzed_count = 0
-            failed_count = 0
-            # Track successfully processed signal IDs for post-commit update
-            successfully_processed_ids: list = []
+        logger.info(f"Processing {len(signal_ids)} signals (one session per signal)")
 
-            for signal in signals:
-                try:
-                    # Analyze signal with enhanced analyzer (450+ word narratives)
-                    insight = await analyze_signal_enhanced_with_retry(signal)
-                    session.add(insight)
+        analyzed_count = 0
+        failed_count = 0
 
-                    # Track success - DO NOT mark processed yet!
-                    successfully_processed_ids.append(signal.id)
-                    analyzed_count += 1
-
-                    logger.info(
-                        f"Analyzed signal {signal.id} from {signal.source}"
-                    )
-
-                except Exception as e:
-                    failed_count += 1
-                    logger.error(
-                        f"Failed to analyze signal {signal.id}: {type(e).__name__} - {e}"
-                    )
-                    # Signal remains unprocessed for retry
-
-            # Commit insights to database
+        # Phase 2: three micro-sessions per signal — fetch, insert, mark.
+        # No DB connection is held open during the Gemini API call.
+        for signal_id in signal_ids:
             try:
-                await session.commit()
-                logger.info(
-                    f"Committed {analyzed_count} insights to database"
-                )
+                # 2a: fetch signal data (close connection before AI call)
+                signal = None
+                async with AsyncSessionLocal() as session:
+                    result = await session.execute(
+                        select(RawSignal)
+                        .where(RawSignal.id == signal_id, RawSignal.processed == False)  # noqa: E712
+                    )
+                    signal = result.scalar_one_or_none()
+                    if signal is not None:
+                        # Expunge so signal is usable after session closes
+                        session.expunge(signal)
 
-                # ONLY NOW mark signals as processed (after successful commit)
-                if successfully_processed_ids:
-                    async with AsyncSessionLocal() as update_session:
-                        await update_session.execute(
-                            update(RawSignal)
-                            .where(RawSignal.id.in_(successfully_processed_ids))
-                            .values(processed=True)
-                        )
-                        await update_session.commit()
-                        logger.info(
-                            f"Marked {len(successfully_processed_ids)} signals as processed"
-                        )
+                if signal is None:
+                    continue  # Already processed by concurrent task
+
+                # 2b: call Gemini (no DB session open)
+                insight = await analyze_signal_enhanced_with_retry(signal)
+
+                # 2c: insert insight (short session, just an INSERT)
+                # Reset statement_timeout in case a pooled connection inherited one.
+                async with AsyncSessionLocal() as session:
+                    await session.execute(text("SET LOCAL statement_timeout = 0"))
+                    session.add(insight)
+                    await session.commit()
+
+                logger.info(f"Committed insight for signal {signal_id} from {signal.source}")
+
+                # 2d: mark signal processed (separate short session)
+                async with AsyncSessionLocal() as session:
+                    await session.execute(text("SET LOCAL statement_timeout = 0"))
+                    await session.execute(
+                        update(RawSignal)
+                        .where(RawSignal.id == signal_id)
+                        .values(processed=True)
+                    )
+                    await session.commit()
+
+                analyzed_count += 1
 
             except Exception as e:
-                await session.rollback()
+                failed_count += 1
                 logger.error(
-                    f"Commit failed, no signals marked as processed: "
-                    f"{type(e).__name__} - {e}"
+                    f"Failed to analyze signal {signal_id}: {type(e).__name__} - {e}"
                 )
-                # All signals remain unprocessed for retry
-                return {
-                    "status": "error",
-                    "error": f"Commit failed: {e}",
-                    "analyzed": 0,
-                    "failed": len(signals),
-                    "total": len(signals),
-                }
+                # Signal remains unprocessed for retry on next run
+
+            # Brief pause between signals to avoid saturating Gemini rate limits.
+            await asyncio.sleep(5)
 
         logger.info(
             f"Analysis task complete: {analyzed_count} analyzed, "
-            f"{failed_count} failed out of {len(signals)} signals"
+            f"{failed_count} failed out of {len(signal_ids)} signals"
         )
 
-        return {
+        result = {
             "status": "success",
             "analyzed": analyzed_count,
             "failed": failed_count,
-            "total": len(signals),
+            "total": len(signal_ids),
         }
 
     except Exception as e:
         logger.error(f"Analysis task failed: {type(e).__name__} - {e}")
-        return {
+        result = {
             "status": "error",
             "error": str(e),
         }
+
+    finally:
+        # Always release the lock so the next scheduled run can proceed.
+        if redis is not None:
+            await redis.delete(lock_key)
+
+    return result
 
 
 async def startup(ctx: dict[str, Any]) -> None:
@@ -887,10 +937,11 @@ class WorkerSettings:
             minute=0,
             run_at_startup=False,  # Don't run immediately on worker start
         ),
-        # Run hourly trends update every hour
+        # Run trends update 4x daily to avoid Google Trends rate limiting
         cron(
             hourly_trends_update_task,
-            minute=0,  # Run at the top of every hour
+            hour={0, 6, 12, 18},
+            minute=30,
             run_at_startup=False,  # Don't run immediately on worker start
         ),
         # Analyze signals 30min after each scrape cycle
@@ -953,5 +1004,5 @@ class WorkerSettings:
 
     # Worker settings
     max_jobs = 10  # Max concurrent jobs
-    job_timeout = 600  # 10 minutes timeout per job
+    job_timeout = 1800  # 30 minutes — analysis batch can take ~120s/signal × 10 signals
     keep_result = 3600  # Keep job results for 1 hour

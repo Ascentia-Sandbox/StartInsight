@@ -745,7 +745,7 @@ async def analyze_signal_enhanced(raw_signal: RawSignal, language: str = "en") -
 
 @retry(
     stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=1, max=10),
+    wait=wait_exponential(multiplier=2, min=60, max=120),
     retry=retry_if_exception_type(Exception),
     reraise=True,
 )
@@ -753,7 +753,8 @@ async def analyze_signal_enhanced_with_retry(raw_signal: RawSignal) -> Insight:
     """
     Analyze signal with enhanced scoring and automatic retry on failures.
 
-    Retries up to 3 times with exponential backoff (1s, 2s, 4s, max 10s).
+    Retries up to 3 times with exponential backoff (60s, 120s) to respect
+    Gemini 429 rate limits.
 
     Args:
         raw_signal: The raw signal to analyze

@@ -64,7 +64,7 @@ class SettingUpdateResponse(BaseModel):
 DEFAULT_SETTINGS: list[dict[str, Any]] = [
     {"key": "general.site_name", "value": "StartInsight", "category": "general", "description": "The public-facing name of the platform"},
     {"key": "general.tagline", "value": "AI-Powered Startup Intelligence", "category": "general", "description": "Tagline displayed on the site header and marketing pages"},
-    {"key": "email.from_address", "value": "noreply@startinsight.ai", "category": "email", "description": "Default sender email address for transactional emails"},
+    {"key": "email.from_address", "value": "noreply@startinsight.co", "category": "email", "description": "Default sender email address for transactional emails"},
     {"key": "email.from_name", "value": "StartInsight", "category": "email", "description": "Display name for outgoing emails"},
     {"key": "email.digest_enabled", "value": True, "category": "email", "description": "Enable or disable weekly digest email sending"},
     {"key": "features.community_voting", "value": True, "category": "features", "description": "Enable community voting on insights"},

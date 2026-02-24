@@ -277,17 +277,25 @@ export const CheckoutResponseSchema = z.object({
   checkout_url: z.string(),
 });
 
+export const SubscriptionUsageSchema = z.object({
+  insights_today: z.number().default(0),
+  analyses_this_month: z.number().default(0),
+  team_members: z.number().default(0),
+});
+
 export const SubscriptionStatusSchema = z.object({
   tier: z.string(),
   status: z.string(),
   current_period_end: z.string().nullable().optional(),
   cancel_at_period_end: z.boolean().optional(),
   limits: z.record(z.string(), z.number()),
+  usage: SubscriptionUsageSchema.optional(),
 });
 
 export type PricingTier = z.infer<typeof PricingTierSchema>;
 export type PricingResponse = z.infer<typeof PricingResponseSchema>;
 export type CheckoutResponse = z.infer<typeof CheckoutResponseSchema>;
+export type SubscriptionUsage = z.infer<typeof SubscriptionUsageSchema>;
 export type SubscriptionStatus = z.infer<typeof SubscriptionStatusSchema>;
 
 // ============================================

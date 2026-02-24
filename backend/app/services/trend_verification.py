@@ -60,7 +60,6 @@ class TrendVerifier:
         hl: str = "en-US",
         tz: int = 360,
         timeout: tuple[int, int] = (10, 30),
-        retries: int = 3,
     ):
         """
         Initialize trend verifier.
@@ -69,16 +68,14 @@ class TrendVerifier:
             hl: Host language for Google Trends
             tz: Timezone offset (360 = US Central)
             timeout: Request timeout (connect, read)
-            retries: Number of retries on failure
         """
         self._hl = hl
         self._tz = tz
         self._timeout = timeout
-        self._retries = retries
         self._pytrends: TrendReq | None = None
         self._cache: dict[str, TrendVerificationResult] = {}
         self._last_request_time: datetime | None = None
-        self._min_request_interval = 1.0  # seconds between requests
+        self._min_request_interval = 10.0  # seconds between requests
 
     def _get_pytrends(self) -> TrendReq:
         """Get or create pytrends instance."""
@@ -87,7 +84,6 @@ class TrendVerifier:
                 hl=self._hl,
                 tz=self._tz,
                 timeout=self._timeout,
-                retries=self._retries,
             )
         return self._pytrends
 

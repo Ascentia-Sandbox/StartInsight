@@ -261,6 +261,8 @@ def setup_logging():
     logging.getLogger("httpcore").setLevel(logging.WARNING)
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
     logging.getLogger("uvicorn.access").setLevel(logging.INFO)
+    # Prophet tries to import plotly for visualizations; suppress the harmless failure
+    logging.getLogger("prophet.plot").setLevel(logging.CRITICAL)
 
     return root_logger
 

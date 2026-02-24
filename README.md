@@ -16,11 +16,11 @@ StartInsight is a daily, automated intelligence platform that discovers, validat
 
 | Environment | URL | Status |
 |-------------|-----|--------|
-| **Frontend** | [start-insight-ascentias-projects.vercel.app](https://start-insight-ascentias-projects.vercel.app) | ✅ Live (Vercel) |
-| **Backend API** | [backend-production-e845.up.railway.app](https://backend-production-e845.up.railway.app) | ✅ Live (Railway) |
+| **Frontend** | [startinsight.co](https://startinsight.co) | ✅ Live (Vercel) |
+| **Backend API** | [api.startinsight.co](https://api.startinsight.co) | ✅ Live (Railway) |
 | **Staging Frontend** | [start-insight-staging-ascentias-projects.vercel.app](https://start-insight-staging-ascentias-projects.vercel.app) | ✅ Live |
 | **Staging Backend** | [backend-staging-fbd7.up.railway.app](https://backend-staging-fbd7.up.railway.app) | ✅ Live |
-| **API Docs** | `/docs` (Swagger) | [Available](https://backend-production-e845.up.railway.app/docs) |
+| **API Docs** | `/docs` (Swagger) | [Available](https://api.startinsight.co/docs) |
 
 ---
 
@@ -278,7 +278,7 @@ cp .env.example .env.local
 
 Edit `frontend/.env.local`:
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_API_URL=https://api.startinsight.co  # production; use http://localhost:8000 for local dev
 NEXT_PUBLIC_SUPABASE_URL=https://[PROJECT_REF].supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
@@ -361,8 +361,8 @@ Push to develop → Security Scan → Backend Tests → Frontend Tests
 ```
 
 **Deployed URLs:**
-- Production Backend: `https://backend-production-e845.up.railway.app`
-- Production Frontend: `https://start-insight-ascentias-projects.vercel.app`
+- Production Backend: `https://api.startinsight.co`
+- Production Frontend: `https://startinsight.co`
 - Staging Backend: `https://backend-staging-fbd7.up.railway.app`
 
 ### Manual Deployment (First Time)
@@ -472,7 +472,7 @@ StartInsight/
 │   ├── architecture.md        # System design
 │   ├── tech-stack.md          # Technology decisions
 │   ├── progress.md            # Development log
-│   └── archived/              # Historical snapshots (gitignored)
+│   └── improvement-plan.md    # Growth roadmap (Tier 1-3)
 │
 ├── research/                  # Competitive intelligence
 │   ├── ideabrowser-analysis.md          # Full IdeaBrowser teardown
@@ -532,7 +532,7 @@ cd backend && uv run alembic downgrade -1
 
 ```bash
 # Verify backend health
-curl https://backend-production-e845.up.railway.app/health
+curl https://api.startinsight.co/health
 
 # View Supabase logs
 # Go to: https://supabase.com/dashboard/project/[PROJECT_REF]/logs/postgres-logs
@@ -647,7 +647,7 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 
 ## 📊 Current Status
 
-**Status**: ✅ **PRODUCTION LIVE** (2026-02-20)
+**Status**: ✅ **PRODUCTION LIVE** (2026-02-22) — Custom domain `startinsight.co` live
 
 | Metric | Value |
 |--------|-------|
@@ -689,13 +689,22 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 - 11 unique competitive advantages
 - 50-70% lower pricing
 
-**Post-Launch Priorities**:
-- 📊 Content seeding (50+ insights via admin portal)
-- 📈 Uptime monitoring (UptimeRobot / Checkly)
-- 🔍 Google Search Console submission
-- 📢 Phase 15-16: APAC multi-language (backend ready, frontend English-only)
+**Post-Launch Priorities (Tier 1 — This Week)**:
+- ✅ Scraper pipeline fixed (Crawl4AI timeout + duplicate scheduling — 2026-02-22)
+- ✅ CI/CD production deploy token fixed (`VERCEL_TOKEN`)
+- ✅ Domain sweep: all `startinsight.ai` → `startinsight.co` across codebase (2026-02-23)
+- ⏳ Uptime monitoring (UptimeRobot / Checkly — free, 15 min)
+- ⏳ Google Search Console submission (`https://startinsight.co/sitemap.xml`)
+- ⏳ Content seeding (50+ insights via admin portal → target 600+)
 
-See `memory-bank/active-context.md` for current deployment status and priorities.
+**Post-Launch Priorities (Tier 2 — Month 1)**:
+- PostHog user analytics SDK
+- New user onboarding banner
+- Redis API response caching (60–300s TTL)
+- E2E test expansion (auth + workspace + validate — ~38 tests)
+- ProductHunt launch
+
+See `memory-bank/improvement-plan.md` for full growth roadmap and `memory-bank/active-context.md` for current state.
 
 ---
 
@@ -729,4 +738,4 @@ For questions or issues:
 
 ---
 
-*v1.0.2 — /api/validate 500 fixed (invalid RawSignal kwarg). FastAPI deprecation warnings cleared. ~$30/mo. (2026-02-20)*
+*v1.0.5 — Domain sweep: all startinsight.ai → startinsight.co (contact, faq, privacy, terms, billing, tenant-settings, config.py, env examples). ~$30/mo. (2026-02-23)*

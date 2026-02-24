@@ -49,7 +49,7 @@ class Tenant(Base):
         nullable=True,
         unique=True,
         index=True,
-    )  # e.g., "acme" for acme.startinsight.ai
+    )  # e.g., "acme" for acme.startinsight.co
     custom_domain: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,

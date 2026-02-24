@@ -11,6 +11,8 @@ See architecture.md "API Architecture Phase 4+" for full specification.
 """
 
 import logging
+import secrets
+import string
 from datetime import UTC, datetime
 from typing import Annotated
 from uuid import UUID
@@ -50,6 +52,13 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
+_REFERRAL_ALPHABET = string.ascii_uppercase + string.digits
+
+
+def _generate_referral_code() -> str:
+    """Generate an 8-char alphanumeric referral code (uppercase)."""
+    return "".join(secrets.choice(_REFERRAL_ALPHABET) for _ in range(8))
+
 
 # ============================================
 # USER PROFILE ENDPOINTS
@@ -59,12 +68,33 @@ router = APIRouter(prefix="/api/users", tags=["users"])
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_profile(
     current_user: CurrentUser,
+    db: AsyncSession = Depends(get_db),
 ) -> UserResponse:
     """
     Get current authenticated user's profile.
 
     Returns user profile including subscription tier and preferences.
+    Also back-fills a referral code for users who don't have one yet.
     """
+    # Back-fill referral code for existing users who don't have one
+    if not current_user.referral_code:
+        for _ in range(5):
+            candidate = _generate_referral_code()
+            existing = await db.scalar(
+                select(current_user.__class__).where(
+                    current_user.__class__.referral_code == candidate
+                ).limit(1)
+            )
+            if not existing:
+                current_user.referral_code = candidate
+                current_user.updated_at = datetime.now(UTC)
+                await db.commit()
+                await db.refresh(current_user)
+                logger.info(
+                    f"Back-filled referral code {candidate} for user {current_user.email}"
+                )
+                break
+
     logger.info(f"User profile accessed: {current_user.email}")
     return UserResponse.model_validate(current_user)
 

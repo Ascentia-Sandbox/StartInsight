@@ -304,7 +304,7 @@ export default function TenantSettingsPage() {
                     placeholder="acme"
                     className="max-w-[200px]"
                   />
-                  <span className="text-muted-foreground">.startinsight.ai</span>
+                  <span className="text-muted-foreground">.startinsight.co</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Lowercase letters, numbers, and hyphens only
@@ -328,7 +328,7 @@ export default function TenantSettingsPage() {
                     <Palette className="h-5 w-5 text-muted-foreground" />
                     <CardTitle>Branding</CardTitle>
                   </div>
-                  <Badge variant="outline">{tenant.subdomain}.startinsight.ai</Badge>
+                  <Badge variant="outline">{tenant.subdomain}.startinsight.co</Badge>
                 </div>
                 <CardDescription>
                   Customize the look and feel of your instance
@@ -505,7 +505,7 @@ export default function TenantSettingsPage() {
                   <CardTitle>Custom Domain</CardTitle>
                 </div>
                 <CardDescription>
-                  Use your own domain instead of {tenant.subdomain}.startinsight.ai
+                  Use your own domain instead of {tenant.subdomain}.startinsight.co
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -540,11 +540,11 @@ export default function TenantSettingsPage() {
                               Add the following CNAME record to your DNS settings:
                             </p>
                             <div className="font-mono text-sm bg-background p-3 rounded border flex items-center justify-between">
-                              <span>CNAME @ proxy.startinsight.ai</span>
+                              <span>CNAME @ proxy.startinsight.co</span>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => copyDnsRecord('proxy.startinsight.ai')}
+                                onClick={() => copyDnsRecord('proxy.startinsight.co')}
                               >
                                 {copiedDns ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                               </Button>

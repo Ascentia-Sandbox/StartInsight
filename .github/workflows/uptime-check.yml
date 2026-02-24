@@ -1,0 +1,317 @@
+name: Uptime Monitor
+
+on:
+  schedule:
+    # Every 5 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+env:
+  PRODUCTION_URL: https://api.startinsight.co/health
+  STAGING_URL: https://backend-staging-fbd7.up.railway.app/health
+  ISSUE_TITLE: "Production API Down"
+  STAGING_ISSUE_TITLE: "Staging API Down"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Production health check — creates/closes a GitHub issue on state changes
+  # ---------------------------------------------------------------------------
+  check-production:
+    name: Check Production API
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Health check
+        id: health
+        # We set continue-on-error true so subsequent steps can run regardless.
+        # The healthy output flag is used to branch logic below.
+        continue-on-error: true
+        run: |
+          RESPONSE=$(curl --silent --max-time 10 --write-out "\n%{http_code}" "${{ env.PRODUCTION_URL }}" 2>&1)
+          HTTP_BODY=$(echo "$RESPONSE" | head -n -1)
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
+
+          echo "status_code=$HTTP_STATUS" >> "$GITHUB_OUTPUT"
+          echo "body=$HTTP_BODY"          >> "$GITHUB_OUTPUT"
+          echo "timestamp=$(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> "$GITHUB_OUTPUT"
+
+          if [[ "$HTTP_STATUS" != "200" ]] || [[ "$HTTP_BODY" != *"healthy"* ]]; then
+            echo "healthy=false" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+          echo "healthy=true" >> "$GITHUB_OUTPUT"
+
+      # ------------------------------------------------------------------
+      # DOWN path: check for existing open issue to avoid duplicates
+      # ------------------------------------------------------------------
+      - name: Find existing open issue
+        if: steps.health.outcome == 'failure'
+        id: find_issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUMBER=$(gh issue list \
+            --state open \
+            --label bug \
+            --search "in:title ${{ env.ISSUE_TITLE }}" \
+            --json number,title \
+            --jq ".[] | select(.title == \"${{ env.ISSUE_TITLE }}\") | .number" \
+            | head -n1)
+          echo "issue_number=${ISSUE_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - name: Open downtime issue
+        if: steps.health.outcome == 'failure' && steps.find_issue.outputs.issue_number == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TIMESTAMP: ${{ steps.health.outputs.timestamp }}
+          STATUS_CODE: ${{ steps.health.outputs.status_code }}
+          RESP_BODY: ${{ steps.health.outputs.body }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          BODY=$(cat <<ISSUE_EOF
+          ## Production API is down
+
+          **Detected at:** ${TIMESTAMP}
+          **Endpoint:** \`${{ env.PRODUCTION_URL }}\`
+          **HTTP status:** \`${STATUS_CODE}\`
+
+          ### Response body
+          \`\`\`
+          ${RESP_BODY}
+          \`\`\`
+
+          ---
+          *Opened automatically by the [Uptime Monitor](${RUN_URL}) workflow.*
+          ISSUE_EOF
+          )
+          gh issue create \
+            --title "${{ env.ISSUE_TITLE }}" \
+            --label bug \
+            --body "$BODY"
+
+      - name: Comment on existing issue (still down)
+        if: steps.health.outcome == 'failure' && steps.find_issue.outputs.issue_number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TIMESTAMP: ${{ steps.health.outputs.timestamp }}
+          STATUS_CODE: ${{ steps.health.outputs.status_code }}
+          RESP_BODY: ${{ steps.health.outputs.body }}
+        run: |
+          COMMENT=$(cat <<COMMENT_EOF
+          Still down as of **${TIMESTAMP}**. HTTP \`${STATUS_CODE}\`.
+
+          \`\`\`
+          ${RESP_BODY}
+          \`\`\`
+          COMMENT_EOF
+          )
+          gh issue comment "${{ steps.find_issue.outputs.issue_number }}" \
+            --body "$COMMENT"
+
+      # ------------------------------------------------------------------
+      # UP path: if a downtime issue is open, post recovery and close it
+      # ------------------------------------------------------------------
+      - name: Find open issue on recovery
+        if: steps.health.outputs.healthy == 'true'
+        id: find_recovery_issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUMBER=$(gh issue list \
+            --state open \
+            --label bug \
+            --search "in:title ${{ env.ISSUE_TITLE }}" \
+            --json number,title \
+            --jq ".[] | select(.title == \"${{ env.ISSUE_TITLE }}\") | .number" \
+            | head -n1)
+          echo "issue_number=${ISSUE_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - name: Comment recovery and close issue
+        if: steps.health.outputs.healthy == 'true' && steps.find_recovery_issue.outputs.issue_number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TIMESTAMP: ${{ steps.health.outputs.timestamp }}
+          STATUS_CODE: ${{ steps.health.outputs.status_code }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          COMMENT=$(cat <<RECOVERY_EOF
+          Service has **recovered** as of **${TIMESTAMP}**.
+          HTTP \`${STATUS_CODE}\` -- response contains \`healthy\`. Closing this issue.
+
+          *Auto-closed by the [Uptime Monitor](${RUN_URL}) workflow.*
+          RECOVERY_EOF
+          )
+          gh issue comment "${{ steps.find_recovery_issue.outputs.issue_number }}" \
+            --body "$COMMENT"
+          gh issue close "${{ steps.find_recovery_issue.outputs.issue_number }}" \
+            --reason completed
+
+  # ---------------------------------------------------------------------------
+  # Staging health check — only creates an issue after 3 consecutive failures.
+  # Uses GitHub Actions cache to persist the failure counter between runs.
+  # The cache key includes the run ID so each run saves a fresh entry;
+  # restore-keys picks up the most recent prior run's state.
+  # ---------------------------------------------------------------------------
+  check-staging:
+    name: Check Staging API
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore failure counter from cache
+        id: cache_restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .uptime-staging-state
+          key: staging-failure-counter-${{ github.run_id }}
+          restore-keys: |
+            staging-failure-counter-
+
+      - name: Initialise state file if missing
+        run: |
+          if [[ ! -f .uptime-staging-state/counter.json ]]; then
+            mkdir -p .uptime-staging-state
+            echo '{"consecutive_failures": 0}' > .uptime-staging-state/counter.json
+          fi
+          echo "Current state: $(cat .uptime-staging-state/counter.json)"
+
+      - name: Staging health check
+        id: staging_health
+        continue-on-error: true
+        run: |
+          RESPONSE=$(curl --silent --max-time 10 --write-out "\n%{http_code}" "${{ env.STAGING_URL }}" 2>&1)
+          HTTP_BODY=$(echo "$RESPONSE" | head -n -1)
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
+
+          echo "status_code=$HTTP_STATUS" >> "$GITHUB_OUTPUT"
+          echo "body=$HTTP_BODY"          >> "$GITHUB_OUTPUT"
+          echo "timestamp=$(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> "$GITHUB_OUTPUT"
+
+          if [[ "$HTTP_STATUS" != "200" ]] || [[ "$HTTP_BODY" != *"healthy"* ]]; then
+            echo "healthy=false" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+          echo "healthy=true" >> "$GITHUB_OUTPUT"
+
+      # ------------------------------------------------------------------
+      # DOWN: increment counter; open issue only on exactly the 3rd failure
+      # ------------------------------------------------------------------
+      - name: Increment failure counter
+        if: steps.staging_health.outcome == 'failure'
+        id: counter_up
+        run: |
+          CURRENT=$(jq '.consecutive_failures' .uptime-staging-state/counter.json)
+          NEW=$((CURRENT + 1))
+          echo "{\"consecutive_failures\": $NEW}" > .uptime-staging-state/counter.json
+          echo "failures=$NEW" >> "$GITHUB_OUTPUT"
+          echo "Consecutive staging failures: $NEW"
+
+      - name: Find existing open staging issue
+        if: steps.staging_health.outcome == 'failure' && steps.counter_up.outputs.failures == '3'
+        id: find_staging_issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUMBER=$(gh issue list \
+            --state open \
+            --label bug \
+            --search "in:title ${{ env.STAGING_ISSUE_TITLE }}" \
+            --json number,title \
+            --jq ".[] | select(.title == \"${{ env.STAGING_ISSUE_TITLE }}\") | .number" \
+            | head -n1)
+          echo "issue_number=${ISSUE_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - name: Open staging downtime issue (3rd consecutive failure)
+        if: >-
+          steps.staging_health.outcome == 'failure' &&
+          steps.counter_up.outputs.failures == '3' &&
+          steps.find_staging_issue.outputs.issue_number == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TIMESTAMP: ${{ steps.staging_health.outputs.timestamp }}
+          STATUS_CODE: ${{ steps.staging_health.outputs.status_code }}
+          RESP_BODY: ${{ steps.staging_health.outputs.body }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          BODY=$(cat <<STAGING_EOF
+          ## Staging API is down (3 consecutive failures)
+
+          **Detected at:** ${TIMESTAMP}
+          **Endpoint:** \`${{ env.STAGING_URL }}\`
+          **HTTP status:** \`${STATUS_CODE}\`
+
+          ### Response body
+          \`\`\`
+          ${RESP_BODY}
+          \`\`\`
+
+          ---
+          *Opened automatically after **3 consecutive failures** by the [Uptime Monitor](${RUN_URL}) workflow.*
+          STAGING_EOF
+          )
+          gh issue create \
+            --title "${{ env.STAGING_ISSUE_TITLE }}" \
+            --label bug \
+            --body "$BODY"
+
+      # ------------------------------------------------------------------
+      # UP: reset counter; close open staging issue if one exists
+      # ------------------------------------------------------------------
+      - name: Reset failure counter
+        if: steps.staging_health.outputs.healthy == 'true'
+        run: |
+          echo '{"consecutive_failures": 0}' > .uptime-staging-state/counter.json
+          echo "Staging is healthy -- counter reset to 0."
+
+      - name: Find open staging issue on recovery
+        if: steps.staging_health.outputs.healthy == 'true'
+        id: find_staging_recovery
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUMBER=$(gh issue list \
+            --state open \
+            --label bug \
+            --search "in:title ${{ env.STAGING_ISSUE_TITLE }}" \
+            --json number,title \
+            --jq ".[] | select(.title == \"${{ env.STAGING_ISSUE_TITLE }}\") | .number" \
+            | head -n1)
+          echo "issue_number=${ISSUE_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - name: Comment recovery and close staging issue
+        if: steps.staging_health.outputs.healthy == 'true' && steps.find_staging_recovery.outputs.issue_number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TIMESTAMP: ${{ steps.staging_health.outputs.timestamp }}
+          STATUS_CODE: ${{ steps.staging_health.outputs.status_code }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          COMMENT=$(cat <<STAGINGRECOVERY_EOF
+          Staging has **recovered** as of **${TIMESTAMP}**.
+          HTTP \`${STATUS_CODE}\` -- response contains \`healthy\`. Closing this issue.
+
+          *Auto-closed by the [Uptime Monitor](${RUN_URL}) workflow.*
+          STAGINGRECOVERY_EOF
+          )
+          gh issue comment "${{ steps.find_staging_recovery.outputs.issue_number }}" \
+            --body "$COMMENT"
+          gh issue close "${{ steps.find_staging_recovery.outputs.issue_number }}" \
+            --reason completed
+
+      # Save the (possibly updated) counter back to cache.
+      # Always runs so the next scheduled run can restore it.
+      - name: Save failure counter cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .uptime-staging-state
+          key: staging-failure-counter-${{ github.run_id }}

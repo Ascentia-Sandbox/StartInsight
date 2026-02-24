@@ -2,16 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Lightbulb, Link2, BarChart3, Loader2, CheckCircle, Clock } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { SelectableCard } from '@/components/ui/SelectableCard';
 import { toast } from 'sonner';
-import { createResearchRequest, fetchUserProfile } from '@/lib/api';
+import { createResearchRequest } from '@/lib/api';
+import { useSubscription } from '@/hooks/useSubscription';
 import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 
 type InputType = 'idea' | 'url' | 'competitor';
@@ -27,9 +30,10 @@ export default function ResearchPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [tier, setTier] = useState<string>('free');
 
-  // Check authentication and fetch user profile
+  const { tier, limits, usage, atLimit, usagePercent } = useSubscription();
+
+  // Check authentication
   useEffect(() => {
     const checkAuth = async () => {
       const supabase = getSupabaseClient();
@@ -42,16 +46,6 @@ export default function ResearchPage() {
 
       setAccessToken(session.access_token);
       setIsCheckingAuth(false);
-
-      // Fetch user profile to get subscription tier
-      try {
-        const profile = await fetchUserProfile(session.access_token);
-        setTier(profile.subscription_tier || 'free');
-      } catch (err) {
-        console.error('Failed to fetch user profile:', err);
-        // Default to free tier on error
-        setTier('free');
-      }
     };
 
     checkAuth();
@@ -127,30 +121,33 @@ export default function ResearchPage() {
                 Get comprehensive market analysis powered by AI
               </p>
             </div>
-            <div>
-              {tier === 'free' && (
+            <div className="flex flex-col items-end gap-2 min-w-[180px]">
+              {tier === 'free' ? (
                 <Badge variant="secondary" className="text-sm">
                   <Clock className="h-3 w-3 mr-1" />
-                  Manual Approval (1/month)
+                  Manual Approval
                 </Badge>
-              )}
-              {tier === 'starter' && (
+              ) : (
                 <Badge variant="default" className="text-sm">
                   <CheckCircle className="h-3 w-3 mr-1" />
-                  Auto-Approved (3/month)
+                  Auto-Approved
                 </Badge>
               )}
-              {tier === 'pro' && (
-                <Badge variant="default" className="text-sm">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Auto-Approved (10/month)
-                </Badge>
+              {/* Quota progress bar */}
+              {limits.analyses_per_month !== undefined && limits.analyses_per_month !== -1 && (
+                <div className="w-full">
+                  <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                    <span>Monthly quota</span>
+                    <span className="tabular-nums">{usage.analyses_this_month} / {limits.analyses_per_month}</span>
+                  </div>
+                  <Progress
+                    value={usagePercent('analyses_this_month')}
+                    className={usagePercent('analyses_this_month') >= 80 ? '[&>div]:bg-red-500' : ''}
+                  />
+                </div>
               )}
-              {tier === 'enterprise' && (
-                <Badge variant="default" className="text-sm">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Auto-Approved (100/month)
-                </Badge>
+              {limits.analyses_per_month === -1 && (
+                <span className="text-xs text-green-600 dark:text-green-400 font-medium">Unlimited analyses</span>
               )}
             </div>
           </div>
@@ -288,7 +285,23 @@ export default function ResearchPage() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading || success}>
+              {atLimit('analyses_this_month') && (
+                <div className="rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-3 text-sm">
+                  <p className="font-medium text-amber-800 dark:text-amber-200">Monthly quota reached</p>
+                  <p className="text-amber-700 dark:text-amber-300 mt-0.5">
+                    You have used all your research analyses for this month.{' '}
+                    <Link href="/billing" className="underline font-medium">
+                      Upgrade your plan
+                    </Link>{' '}
+                    to get more.
+                  </p>
+                </div>
+              )}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading || success || atLimit('analyses_this_month')}
+              >
                 {loading ? (
                   <>
                     <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5" />

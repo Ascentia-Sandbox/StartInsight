@@ -13,6 +13,76 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-02-23)
+
+- [2026-02-23] [DOMAIN-SWEEP]: Replace all startinsight.ai → startinsight.co
+  - Files: contact/page.tsx, faq/page.tsx, privacy/page.tsx, terms/page.tsx, billing/page.tsx, tenant-settings/page.tsx, lib/env.ts, config.py, settings.py, tenant_service.py, tenant.py, .env*.example, architecture.md
+  - Tech: 20+ instances updated; verified 0 remaining (excl. migrations/tests)
+  - Status: [✓ Complete]
+
+## Recent Progress (2026-02-22)
+
+- [2026-02-22] [CONTENT-SEEDING]: Fix analyze_signals_task — 447→522 insights (+75)
+  - Files: worker.py (×4 fixes), enhanced_analyzer.py, cache.py
+  - Tech: Redis lock, micro-sessions, SET LOCAL statement_timeout=0, 60s retry wait, UUID encoder
+  - Status: [✓ Complete]
+
+- [2026-02-22] [EMAIL-TRACKING]: Weekly digest UTM links + open-rate pixel tracking
+  - Files: email_tracking.py, email_service.py, worker.py, admin.py, main.py
+  - Tech: base64url token pixel; plain-text fallback; admin POST /api/admin/digest/test
+  - Status: ✓ Complete
+
+- [2026-02-22] [REFERRAL]: Referral program — codes, stats API, share widget
+  - Files: referrals.py, c011_add_referral_columns.py, useReferral.ts, settings/page.tsx, providers.tsx
+  - Tech: 8-char code auto-gen on first GET /me; `?ref=` tracked in localStorage 30 days
+  - Status: ✓ Complete
+
+- [2026-02-22] [API-DOCS]: Public API docs page + Swagger always-on
+  - Files: app/[locale]/api-docs/page.tsx, main.py, mega-menu.tsx, sitemap.ts
+  - Tech: Swagger enabled in all envs; branded /api-docs page with sidebar + teal design
+  - Status: [✓ Complete]
+
+
+- [2026-02-22] [E2E-SUITES]: Add auth, workspace, validate E2E test suites
+  - Files: auth-flows.spec.ts, workspace.spec.ts, validate.spec.ts
+  - Tech: Playwright; 18 tests across 3 suites; live-auth tests skip without env vars
+  - Status: [✓ Complete]
+
+- [2026-02-22] [CACHE]: Redis response caching for 3 public list endpoints
+  - Files: app/core/cache.py, app/api/routes/insights.py, app/api/routes/trends.py, app/api/routes/pulse.py
+  - Tech: MD5-keyed cache_get/cache_set via existing cache.py; TTLs 60s/300s/30s
+  - Status: [✓ Complete]
+
+- [2026-02-22] [ANALYTICS]: Add PostHog analytics + Sentry release tracking
+  - Files: components/PostHogProvider.tsx, lib/analytics.ts, app/layout.tsx, next.config.ts, sentry.client.config.ts
+  - Tech: posthog-js init in client provider; VERCEL_GIT_COMMIT_SHA baked as NEXT_PUBLIC_SENTRY_RELEASE
+  - Status: [✓ Complete]
+
+
+- [2026-02-22] [UX-ONBOARDING]: Add first-time user onboarding banner to dashboard
+  - Files: frontend/components/onboarding-banner.tsx, frontend/app/[locale]/dashboard/page.tsx
+  - Tech: localStorage dismiss key; shows when saved_count === 0; 3-step teal stepper
+  - Status: [✓ Complete]
+
+
+
+- [2026-02-22] [SEED-CONTENT]: Add content seeding CLI script
+  - Files: backend/scripts/seed_content.py
+  - Tech: httpx async CLI with status/scrape/analyze/pipeline/approve-pending commands
+  - Status: [✓ Complete]
+
+- [2026-02-22] [UPTIME]: Add GitHub Actions uptime monitoring workflow
+  - Files: .github/workflows/uptime-check.yml
+  - Tech: Cache-backed staging failure counter; gh CLI issue create/close on state change
+  - Status: [✓ Complete]
+
+## Recent Progress (2026-02-21)
+
+- [2026-02-21] [TIER-DIFF]: Subscription tier differentiation — full feature set
+  - Files: payments.py, useSubscription.ts, TierBadge.tsx, FeatureLock.tsx, UpgradeModal.tsx
+  - Tech: Backend usage queries + React Query hook + 3 new UI components + 4 page updates
+  - Status: ✓ Complete
+
 ## Recent Progress (2026-02-20)
 
 - [2026-02-20] [PROD-FIX]: Fix RawSignal title kwarg + regex→pattern
@@ -736,7 +806,22 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
-*Last updated: 2026-02-20*
+- [2026-02-21] [RATE-LIMIT]: Google Trends rate-limit hardening
+  - Files: trends_scraper.py, trend_verification.py, worker.py
+  - Tech: Batch delay 30s, request interval 10s, 4x/day cron at :30 past 0/6/12/18
+  - Status: [✓ Complete]
+
+- [2026-02-21] [UX-FIXES]: Round 2 UX improvements + success-stories formatFunding fix
+  - Files: frontend compare page, success-stories page, brand colours
+  - Tech: Teal brand system, data formatting, runtime number guard
+  - Status: [✓ Complete]
+
+- [2026-02-21] [DOMAIN]: startinsight.co custom domain live
+  - Files: config.py, .env.production.example, ci-cd.yml
+  - Tech: Cloudflare DNS → Vercel (frontend) + api.startinsight.co (Railway)
+  - Status: [✓ Complete]
+
+*Last updated: 2026-02-22*
 *Format: [DATE] [TASK_ID]: [Brief Description] | Files | Technical Notes | Status*
 
 ---
@@ -911,3 +996,73 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: implementation-plan.md (2638 → 459 lines)
   - Tech: Removed redundant Phase details (1-7 complete), consolidated Post-MVP roadmap, added DR-002 rollback notes
   - Status: [✓ Complete] Deployment-ready documentation
+
+- [2026-02-22] [DOMAIN-SWEEP]: Replace all startinsight.app → startinsight.co (19 instances, 11 files)
+  - Files: layout.tsx, sitemap.ts, robots.txt, developers/page.tsx (+7 more)
+  - Tech: Replace old domain + critical api.startinsight.ai fix in developer docs
+  - Status: [✓ Complete]
+
+- [2026-02-22] [FAVICON]: Professional favicon update (SVG + apple-icon + OG image)
+  - Files: app/icon.svg, app/apple-icon.tsx, app/opengraph-image.tsx, app/layout.tsx
+  - Tech: Next.js file-convention icons + ImageResponse OG image
+  - Status: [✓ Complete]
+
+- [2026-02-22] [CI-FIX]: Fix VERCEL_TOKEN_STAGING used for production deploy
+  - Files: .github/workflows/ci-cd.yml
+  - Tech: One-line fix, production frontend now deploys with correct token
+  - Status: [✓ Complete]
+
+- [2026-02-22] [UPTIME-MONITOR]: GitHub Actions uptime monitor for production + staging
+  - Files: .github/workflows/uptime-check.yml
+  - Tech: Every-5-min cron, auto-creates/closes GitHub issues, staging 3-failure threshold via Actions cache
+  - Status: [✓ Complete]
+
+- [2026-02-22] [SEO]: Google Search Console + sitemap + JSON-LD improvements
+  - Files: frontend/app/layout.tsx, frontend/app/sitemap.ts, frontend/.env.example
+  - Tech: Google verification meta tag (env var), corrected sitemap priorities, Organization JSON-LD
+  - Status: [✓ Complete]
+
+- [2026-02-22] [SEED-SCRIPT]: Content seeding CLI for admin pipeline control
+  - Files: backend/scripts/seed_content.py
+  - Tech: httpx async CLI — status, scrape, analyze, pipeline, approve-pending; uses Supabase JWT auth
+  - Status: [✓ Complete] — 75 unprocessed signals ready in production; run `analyze` to generate ~75 insights
+
+- [2026-02-22] [POSTHOG]: PostHog analytics + Sentry frontend release tracking
+  - Files: components/PostHogProvider.tsx, lib/analytics.ts, app/layout.tsx, next.config.ts, sentry.client.config.ts
+  - Tech: posthog-js with autocapture off; VERCEL_GIT_COMMIT_SHA baked as NEXT_PUBLIC_SENTRY_RELEASE
+  - Status: [✓ Complete] — set NEXT_PUBLIC_POSTHOG_KEY in Vercel to activate
+
+- [2026-02-22] [ONBOARDING]: First-time user onboarding banner
+  - Files: components/onboarding-banner.tsx, app/[locale]/dashboard/page.tsx
+  - Tech: localStorage-dismissed 3-step stepper; wired to existing saved_count from workspaceStatus query
+  - Status: [✓ Complete]
+
+- [2026-02-22] [REDIS-CACHE]: Redis response caching on 3 list endpoints
+  - Files: app/api/routes/insights.py, trends.py, pulse.py
+  - Tech: cache.py already existed; 60s insights / 300s trends / 30s pulse; language-aware key for insights
+  - Status: [✓ Complete] — 249 tests passing, zero regressions
+
+- [2026-02-22] [E2E-TESTS]: E2E test expansion — auth, workspace, validate suites
+  - Files: tests/frontend/e2e/auth-flows.spec.ts, workspace.spec.ts, validate.spec.ts
+  - Tech: 20 new Playwright tests across 3 suites; TEST_USER_EMAIL guard on auth-gated tests
+  - Status: [✓ Complete]
+
+- [2026-02-22] [PRODUCTHUNT]: ProductHunt launch plan documented
+  - Files: memory-bank/producthunt-launch.md
+  - Tech: Assets spec, copy, FAQ prep, day-of playbook, success metrics
+  - Status: [✓ Complete] — ready to execute when 600+ insights seeded
+
+- [2026-02-22] [API-DOCS]: Public API docs page + Swagger always-on
+  - Files: app/[locale]/api-docs/page.tsx, main.py, mega-menu.tsx, sitemap.ts
+  - Tech: Swagger enabled all envs; branded /api-docs page, sidebar + teal design; nav link added
+  - Status: [✓ Complete]
+
+- [2026-02-22] [REFERRAL]: Referral program — DB, migration, tracking, UI
+  - Files: c011 migration, referrals.py route, user.py model, settings/page.tsx, useReferral.ts, providers.tsx
+  - Tech: referral_code + referred_by on users; ?ref= localStorage tracking; settings share widget; c009→c010→c011 chain
+  - Status: [✓ Complete] — 249 tests passing, migration head at c011
+
+- [2026-02-22] [EMAIL-DIGEST]: Email digest validation + open-rate tracking
+  - Files: email_tracking.py (new), email_service.py, worker.py, admin.py, main.py
+  - Tech: Base64 tracking pixel, UTM params on all links, plain-text fallback added, POST /api/admin/digest/test
+  - Status: [✓ Complete] — 249 tests passing; trigger test via POST /api/admin/digest/test
