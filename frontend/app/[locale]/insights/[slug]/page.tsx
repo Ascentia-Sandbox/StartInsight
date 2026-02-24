@@ -16,8 +16,8 @@ import {
   DollarSign, Rocket, TrendingUp, Target, Zap,
   Clock, ArrowRight, CheckCircle2, BarChart3,
   Users, Globe, ChevronRight, Lightbulb, Search, MessageCircle,
-  MessageSquare, BookmarkPlus, ArrowLeft, ExternalLink,
-  Eye, Bookmark, ShieldCheck, Database, Loader2, Share2,
+  MessageSquare, BookmarkPlus, BookmarkCheck, ArrowLeft, ExternalLink,
+  Eye, Bookmark, ShieldCheck, Database, Loader2, Share2, Check,
 } from 'lucide-react';
 import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 import { TrendChart } from '@/components/trend-chart';
@@ -85,6 +85,7 @@ export default function InsightDetailPage() {
   const slug = params.slug as string;
   const [saved, setSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
@@ -103,6 +104,17 @@ export default function InsightDetailPage() {
 
   // Use the actual UUID for sub-resource API calls
   const insightId = insight?.id;
+
+  // Check if insight is already saved
+  useEffect(() => {
+    if (!accessToken || !insightId) return;
+    fetch(`${config.apiUrl}/api/users/insights/${insightId}/save`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => { if (data) setSaved(data.is_saved); })
+      .catch(() => {});
+  }, [accessToken, insightId]);
 
   // Fetch engagement metrics (non-blocking)
   const { data: engagement } = useQuery<EngagementMetrics | null>({
@@ -729,8 +741,9 @@ export default function InsightDetailPage() {
               </Link>
             </Button>
             <Button
-              variant="outline"
+              variant={saved ? "default" : "outline"}
               size="sm"
+              className={saved ? "bg-amber-500 hover:bg-amber-600 text-white border-amber-500" : ""}
               disabled={isSaving || !accessToken}
               onClick={async () => {
                 if (!accessToken || !insightId) return;
@@ -753,7 +766,7 @@ export default function InsightDetailPage() {
               {isSaving ? (
                 <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</>
               ) : saved ? (
-                <><CheckCircle2 className="h-4 w-4 mr-2 text-green-500" /> Saved</>
+                <><BookmarkCheck className="h-4 w-4 mr-2" /> Saved</>
               ) : (
                 <><BookmarkPlus className="h-4 w-4 mr-2" /> Save</>
               )}
@@ -763,17 +776,23 @@ export default function InsightDetailPage() {
             <Button
               variant="outline"
               size="sm"
+              className={copied ? "text-green-600 border-green-500" : ""}
               onClick={() => {
                 const url = window.location.href;
                 if (navigator.clipboard) {
                   navigator.clipboard.writeText(url).then(() => {
-                    // brief visual feedback via title
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
                   });
                 }
               }}
               title="Copy link"
             >
-              <Share2 className="h-4 w-4 mr-2" /> Share
+              {copied ? (
+                <><Check className="h-4 w-4 mr-2" /> Copied!</>
+              ) : (
+                <><Share2 className="h-4 w-4 mr-2" /> Share</>
+              )}
             </Button>
             <Button size="sm" className="bg-primary text-primary-foreground" asChild>
               <Link href={`/research?insight_id=${slug}`}>

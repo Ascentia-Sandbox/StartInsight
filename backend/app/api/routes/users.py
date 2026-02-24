@@ -22,7 +22,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.api.deps import CurrentUser
+from app.api.deps import CurrentUser, OptionalUser
 from app.db.query_helpers import count_by_field
 from app.db.session import get_db
 from app.models.insight import Insight
@@ -274,6 +274,24 @@ async def list_building_insights(
 # ============================================
 # INSIGHT ACTIONS
 # ============================================
+
+
+@router.get("/insights/{insight_id}/save")
+async def check_insight_saved(
+    insight_id: UUID,
+    current_user: OptionalUser = None,
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Check if the current user has saved an insight."""
+    if current_user is None:
+        return {"is_saved": False}
+    result = await db.execute(
+        select(SavedInsight.id).where(
+            SavedInsight.user_id == current_user.id,
+            SavedInsight.insight_id == insight_id,
+        )
+    )
+    return {"is_saved": result.scalar_one_or_none() is not None}
 
 
 @router.post("/insights/{insight_id}/save", response_model=SavedInsightResponse)

@@ -85,7 +85,7 @@ export default function ResearchPage() {
     try {
       const request = await createResearchRequest(accessToken, {
         idea_description: content,
-        target_market: targetMarket || 'General',
+        target_market: targetMarket || 'General Market',
         budget_range: budgetRange,
       });
 
@@ -272,7 +272,7 @@ export default function ResearchPage() {
                     id="targetMarket"
                     value={targetMarket}
                     onChange={(e) => setTargetMarket(e.target.value)}
-                    placeholder="e.g., Small businesses, B2B SaaS"
+                    placeholder="e.g., Small business owners, B2B SaaS companies (min 10 chars)"
                   />
                 </div>
 
