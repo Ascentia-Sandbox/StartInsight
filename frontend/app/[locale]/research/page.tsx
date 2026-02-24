@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { SelectableCard } from '@/components/ui/SelectableCard';
 import { toast } from 'sonner';
-import { createResearchRequest } from '@/lib/api';
+import { createResearchRequest, fetchInsightById } from '@/lib/api';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 
@@ -56,8 +56,21 @@ export default function ResearchPage() {
   useEffect(() => {
     const idea = searchParams.get('idea');
     const market = searchParams.get('market');
+    const insightId = searchParams.get('insight_id');
     if (idea) setContent(idea);
     if (market) setTargetMarket(market);
+    // When linked from insight detail page, fetch insight and pre-fill
+    if (insightId && !idea) {
+      fetchInsightById(insightId)
+        .then((insight) => {
+          const parts = [
+            insight.proposed_solution,
+            insight.problem_statement,
+          ].filter(Boolean);
+          if (parts.length > 0) setContent(parts.join('\n\n'));
+        })
+        .catch(() => {});
+    }
   }, [searchParams]);
 
   if (isCheckingAuth) {
