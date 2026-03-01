@@ -59,7 +59,7 @@ cp .env.example .env
 # - REDDIT_CLIENT_ID (create app at https://reddit.com/prefs/apps)
 # - REDDIT_CLIENT_SECRET
 # Optional:
-# - ANTHROPIC_API_KEY (for Phase 2 AI analysis)
+# - GOOGLE_API_KEY (for Gemini 2.0 Flash — primary AI, replaces Anthropic)
 ```
 
 ### 4. Run Database Migrations
@@ -142,7 +142,7 @@ backend/
 
 ## API Endpoints
 
-**Total**: 105 endpoints across 9 route files
+**Total**: 232+ endpoints across 35+ route files (Phase 1-10 + A-L + Q1-Q9 + post-launch)
 
 ### Health & Info
 - `GET /health` - Health check endpoint
@@ -372,9 +372,9 @@ See `.env.example` for all available environment variables.
 - `REDDIT_CLIENT_ID` - Reddit OAuth app ID
 - `REDDIT_CLIENT_SECRET` - Reddit OAuth secret
 
-### Optional (Phase 2+)
-- `ANTHROPIC_API_KEY` - Claude API key for AI analysis
-- `OPENAI_API_KEY` - OpenAI API key (fallback)
+### Optional
+- `GOOGLE_API_KEY` - Gemini 2.0 Flash API key (primary AI — get from Google AI Studio)
+- `ANTHROPIC_API_KEY` - Claude API key (fallback only)
 
 ### Configuration
 - `SCRAPE_INTERVAL_HOURS` - Scraping frequency (default: 6)
@@ -382,64 +382,34 @@ See `.env.example` for all available environment variables.
 
 ## Development Status
 
-### ✅ Phase 1-7 Complete (100%)
+### ✅ Phase 1-10 + A-L + Q1-Q9 + Post-Launch Complete (100%) — Production Live
 
-**Phase 1-3: MVP Foundation**
-- ✅ Data collection: 7 scrapers (Reddit, Product Hunt, Google Trends, Hacker News, Twitter/X, RSS, custom)
-- ✅ AI analysis: PydanticAI + Gemini 2.0 Flash (97% cost reduction)
-- ✅ Database: 22 tables, 15 Supabase migrations, Row-Level Security
-- ✅ API: 105 endpoints across 9 route files
+**Phase 1-10 Foundation:**
+- ✅ Data collection: 6 active scrapers (Reddit, Product Hunt, Google Trends, Hacker News, Twitter/X, Firecrawl)
+- ✅ AI analysis: PydanticAI + Gemini 2.0 Flash (8 agents, 97% cost reduction vs Claude)
+- ✅ Database: 69 tables, 25+ Alembic migrations, Row-Level Security on all tables
+- ✅ API: 232+ endpoints across 35+ route files
+- ✅ Auth: Supabase ES256 JWT via JWKS endpoint
+- ✅ Payments: Stripe 4-tier subscriptions (live mode, 3 products / 6 prices)
+- ✅ Teams: RBAC (owner/admin/member), shared insights
+- ✅ Superadmin: Content quality, pipeline monitoring, AI agent prompt control, cost tracking
+- ✅ Integrations: Webhooks with retry, OAuth connections, API key management
 
-**Phase 4: Authentication & Admin Portal**
-- ✅ Supabase Auth integration (OAuth + email/password)
-- ✅ Admin dashboard with SSE streaming (5-second updates)
-- ✅ 8-dimension scoring (opportunity, problem, feasibility, why now, go-to-market, founder fit, execution difficulty, revenue potential)
-- ✅ Workspace features: save, rate, claim insights
+**Post-Launch Features (A-L, Q1-Q9, Security, Sentry):**
+- ✅ Security: HSTS, CSP, XSS prevention (bleach), rate limiting, ES256 JWT
+- ✅ Monitoring: Sentry (errors + traces + AI spans + logs), GitHub Actions uptime monitoring
+- ✅ Redis: Railway native Redis, distributed locks, arq task queue
+- ✅ Chat strategist: 5 modes (general, pressure_test, gtm, pricing, competitive)
+- ✅ Content quality: Post-LLM validation, SHA-256 deduplication, auto-approval at 0.85
 
-**Phase 5: AI Research Agent**
-- ✅ 40-step research agent with comprehensive market analysis
-- ✅ Admin approval queue (Free: manual, Starter/Pro/Enterprise: auto-approved)
-- ✅ Brand generator, landing page generator
-- ✅ PDF/CSV/JSON exports with customization
-- ✅ SSE real-time feed
+### 🚀 Deployment
 
-**Phase 6: Monetization**
-- ✅ Stripe 4-tier subscriptions (Free, Starter $19/mo, Pro $49/mo, Enterprise $199/mo)
-- ✅ Resend email integration (6 templates: welcome, digest, research results, payment receipts, team invitations, password reset)
-- ✅ SlowAPI rate limiting with tier-based quotas
-- ✅ Team collaboration: RBAC (owner/admin/member), shared insights
+**Production (Live):**
+- Frontend: `https://startinsight.co` (Vercel)
+- Backend: `https://api.startinsight.co` (Railway, port 8080)
+- See [`../memory-bank/production-plan.md`](../memory-bank/production-plan.md) for deployment guide
 
-**Phase 7: Expansion**
-- ✅ Twitter/X scraper (Tweepy integration)
-- ✅ API key management: scoped permissions, usage tracking
-- ✅ Multi-tenancy: subdomain routing, custom domains, tenant branding
-- ✅ Advanced rate limiting and cost tracking
-
-**Phase 5.2: Super Admin Sovereignty + Evidence Visualizations**
-- ✅ Research request queue (admin approval system)
-- ✅ Community signals radar chart (4-platform engagement)
-- ✅ 8-dimension scoring KPI cards with color-coded badges
-- ✅ Enhanced evidence panel with collapsible visualizations
-
-### 🚀 Deployment Options
-
-**For PMF Validation (<100 users, ~$30/month):**
-- See [`docs/PMF-DEPLOYMENT.md`](docs/PMF-DEPLOYMENT.md) for minimal-cost deployment
-- Uses: Railway Free ($5), Supabase Pro ($25), Resend Free, Crawl4AI (self-hosted)
-- 94% cost reduction vs production config (~$30/mo vs $483/mo)
-
-**For Production (>100 users, $300-500/month):**
-- See [`../memory-bank/active-context.md`](../memory-bank/active-context.md) for current deployment status
-- Deploy backend to Railway Pro
-- Deploy frontend to Vercel Pro
-- Configure production environment variables
-- Set up monitoring (Sentry, uptime checks)
-
-### 🔧 Current Branch: SI-Claude-vllm
-
-This branch is used for Claude vLLM integration testing.
-
-See `../memory-bank/active-context.md` for deployment checklist and `../memory-bank/implementation-plan.md` for complete roadmap.
+See `../memory-bank/active-context.md` for current status and `../memory-bank/implementation-plan.md` for complete roadmap.
 
 ## Contributing
 

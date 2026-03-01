@@ -3,7 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
-// Builder platform configurations
+// Builder platform configurations with platform-optimized prompt templates
 export const BUILDER_PLATFORMS = {
   lovable: {
     name: 'Lovable',
@@ -11,7 +11,33 @@ export const BUILDER_PLATFORMS = {
     icon: 'L',
     color: 'bg-purple-500',
     url: 'https://lovable.dev',
-    promptPrefix: 'Build me a web application for:',
+    promptPrefix: 'Build a full-stack web application with React + Tailwind CSS + Supabase auth.',
+    promptTemplate: (idea: string, promptType: string) =>
+      `Build a full-stack web application with the following specifications:
+
+## Tech Stack
+- Frontend: React + Tailwind CSS + shadcn/ui components
+- Auth: Supabase (email + Google OAuth)
+- Database: Supabase PostgreSQL
+- Deployment: Auto-deploy
+
+## Visual Style
+Modern, clean, premium SaaS aesthetic. Use consistent spacing, subtle shadows, and professional typography.
+
+## Idea
+${idea}
+
+## What to Build
+Create a ${promptType} with these requirements:
+- Responsive layout (mobile-first)
+- Dark mode support
+- User authentication flow (sign up, login, forgot password)
+- Dashboard with key metrics
+- Clean navigation with sidebar
+- Form validation with helpful error messages
+- Loading states and skeleton screens
+
+Build incrementally — start with the core layout and auth, then add features.`,
   },
   v0: {
     name: 'v0',
@@ -19,7 +45,32 @@ export const BUILDER_PLATFORMS = {
     icon: 'v0',
     color: 'bg-black dark:bg-white dark:text-black',
     url: 'https://v0.dev',
-    promptPrefix: 'Create a React component for:',
+    promptPrefix: 'Create a responsive React component using shadcn/ui and Tailwind CSS.',
+    promptTemplate: (idea: string, promptType: string) =>
+      `Create a production-ready ${promptType} React component with the following specifications:
+
+## Component Requirements
+- Built with Next.js 14 App Router patterns
+- Uses shadcn/ui components (Button, Card, Input, Badge, etc.)
+- Styled with Tailwind CSS utility classes
+- Fully responsive (mobile, tablet, desktop)
+- Accessible (ARIA labels, keyboard navigation, focus states)
+- Dark mode compatible via CSS variables
+
+## Design Specifications
+- Typography: Inter or system font stack, clear hierarchy (text-4xl for hero, text-lg for body)
+- Colors: Use CSS variables for theming (--primary, --muted, --accent)
+- Spacing: Consistent padding (p-4/p-6/p-8) and gap (gap-4/gap-6)
+- Animations: Subtle transitions on hover/focus states
+
+## Context
+${idea}
+
+## Include
+- Sample data with realistic content (not "Lorem ipsum")
+- Proper TypeScript types for all props
+- Mobile-first responsive breakpoints (sm:, md:, lg:)
+- Hover and focus interaction states`,
   },
   replit: {
     name: 'Replit',
@@ -27,7 +78,34 @@ export const BUILDER_PLATFORMS = {
     icon: 'R',
     color: 'bg-orange-500',
     url: 'https://replit.com',
-    promptPrefix: 'Create a Python/Node.js application for:',
+    promptPrefix: 'Create a full-stack application with a clear project structure.',
+    promptTemplate: (idea: string, promptType: string) =>
+      `Create a ${promptType} application with the following project structure:
+
+## Project Setup
+- Language: TypeScript (Node.js)
+- Framework: Express.js backend + React frontend (or Python Flask if simpler)
+- Entry point: index.ts (or main.py)
+- Package manager: npm (package.json with all dependencies listed)
+- Environment: .env file with clearly documented variables
+
+## Idea
+${idea}
+
+## Implementation Steps (build sequentially)
+1. Set up project structure with package.json and dependencies
+2. Create the backend API with 3-5 core endpoints
+3. Add a simple database (SQLite for simplicity, or PostgreSQL)
+4. Build the frontend UI with forms and data display
+5. Connect frontend to backend API
+6. Add basic error handling and input validation
+7. Test the core user flow end-to-end
+
+## Requirements
+- Clear file organization (src/routes, src/models, src/views)
+- Environment variable configuration (no hardcoded secrets)
+- Basic README with setup instructions
+- Working deployment configuration`,
   },
   chatgpt: {
     name: 'ChatGPT',
@@ -35,7 +113,36 @@ export const BUILDER_PLATFORMS = {
     icon: 'GPT',
     color: 'bg-emerald-500',
     url: 'https://chat.openai.com',
-    promptPrefix: 'Help me build:',
+    promptPrefix: 'You are a senior full-stack developer. Help me build a production-ready application.',
+    promptTemplate: (idea: string, promptType: string) =>
+      `You are a senior full-stack developer specializing in modern web applications. Help me build a ${promptType}.
+
+## Context
+${idea}
+
+## Your Task
+Provide a complete, production-ready implementation plan and code. Structure your response as follows:
+
+### 1. Architecture Overview
+- Tech stack recommendation with justification
+- System diagram (describe the components and data flow)
+- Database schema (tables, relationships, key fields)
+
+### 2. Implementation
+- Provide code in clearly labeled files (e.g., \`// src/app/page.tsx\`)
+- Use TypeScript with strict types
+- Include error handling for edge cases
+- Add inline comments only where logic is non-obvious
+
+### 3. Key Decisions
+- Explain any trade-offs you made and why
+- Note any assumptions about the requirements
+
+## Constraints
+- Keep the solution simple — minimum viable, not over-engineered
+- Use well-known libraries (React, Next.js, Tailwind, Prisma, or similar)
+- All code should be copy-paste ready
+- If something needs clarification, state your assumption and proceed`,
   },
   claude: {
     name: 'Claude',
@@ -43,7 +150,44 @@ export const BUILDER_PLATFORMS = {
     icon: 'C',
     color: 'bg-amber-600',
     url: 'https://claude.ai',
-    promptPrefix: 'Help me implement:',
+    promptPrefix: 'Help me implement a well-architected application with clean code patterns.',
+    promptTemplate: (idea: string, promptType: string) =>
+      `<context>
+I'm building a ${promptType} for a startup. I need a well-architected, production-quality implementation.
+</context>
+
+<instructions>
+## Idea
+${idea}
+
+## Architecture Requirements
+- Framework: Next.js 14+ with App Router (or FastAPI for backend-heavy)
+- Language: TypeScript (strict mode) / Python with type hints
+- Styling: Tailwind CSS + shadcn/ui components
+- Database: PostgreSQL with an ORM (Prisma or SQLAlchemy)
+- Auth: NextAuth.js or Supabase Auth
+
+## Implementation Approach
+1. Start with the data model — define types/schemas first
+2. Build API routes with proper validation (Zod or Pydantic)
+3. Create UI components following atomic design (atoms → molecules → organisms)
+4. Wire up data fetching with proper loading/error states
+5. Add auth-gated routes where needed
+
+## Code Standards
+- Prefer composition over inheritance
+- Use async/await for all I/O
+- Extract reusable logic into custom hooks (React) or service classes (Python)
+- No any types — define explicit interfaces
+- File naming: kebab-case for files, PascalCase for components
+
+## Output Format
+Provide the implementation as a series of files with their full paths. Include:
+- Type definitions
+- API routes/endpoints
+- UI components
+- Database schema/migration
+</instructions>`,
   },
 } as const;
 

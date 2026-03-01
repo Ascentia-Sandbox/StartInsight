@@ -89,7 +89,8 @@ export default function DashboardPage() {
   const handleGeneratePrompt = () => {
     if (!selectedPlatform || !ideaDescription.trim()) return;
     const platform = BUILDER_PLATFORMS[selectedPlatform];
-    const prompt = `${platform.promptPrefix}\n\n## Idea Description\n${ideaDescription}\n\nBuild a ${PROMPT_TYPES[selectedPromptType].name.toLowerCase()} for this idea. Include:\n- Modern, responsive design\n- Clear value proposition\n- Professional layout\n- Mobile-friendly`;
+    const promptTypeName = PROMPT_TYPES[selectedPromptType].name.toLowerCase();
+    const prompt = platform.promptTemplate(ideaDescription, promptTypeName);
     setGeneratedPrompt(prompt);
     setIsModalOpen(true);
   };

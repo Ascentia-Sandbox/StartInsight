@@ -9,9 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { config } from '@/lib/env';
-import {
-  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-} from 'recharts';
+import { TrendChart } from '@/components/trend-chart';
 
 interface TrendDetail {
   id: string;
@@ -20,7 +18,7 @@ interface TrendDetail {
   search_volume: number;
   growth_percentage: number;
   business_implications: string;
-  trend_data: { dates?: string[]; values?: number[] } | null;
+  trend_data: { dates?: string[]; values?: number[]; source?: string } | null;
   source: string;
   is_featured: boolean;
   created_at: string;
@@ -133,40 +131,24 @@ export default function TrendDetailPage() {
           </Card>
         </div>
 
-        {/* Sparkline chart */}
-        {chartData && chartData.length > 0 ? (
-          <Card className="mb-8">
-            <CardContent className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Search Interest Over Time</h2>
-              <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 12 }}
-                    className="text-muted-foreground"
-                  />
-                  <YAxis tick={{ fontSize: 12 }} className="text-muted-foreground" />
-                  <Tooltip />
-                  <Line
-                    type="monotone"
-                    dataKey="value"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="mb-8">
-            <CardContent className="p-6 text-center text-muted-foreground py-12">
-              <TrendingUp className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p>Historical trend data is not yet available for this keyword.</p>
-            </CardContent>
-          </Card>
-        )}
+        {/* Trend chart */}
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            <TrendChart
+              data={chartData ?? undefined}
+              keyword={trend.keyword}
+              volume={formatVolume(trend.search_volume)}
+              growth={`${isPositive ? '+' : ''}${trend.growth_percentage.toFixed(0)}%`}
+            />
+            {trend.trend_data?.source && (
+              <p className="text-xs text-muted-foreground text-right mt-2">
+                {trend.trend_data.source === 'estimated'
+                  ? 'Estimated trend data'
+                  : 'Source: Google Trends'}
+              </p>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Business implications */}
         {trend.business_implications && (

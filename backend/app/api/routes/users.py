@@ -41,6 +41,7 @@ from app.schemas.user import (
     SavedInsightListResponse,
     SavedInsightResponse,
     SavedInsightUpdate,
+    SavedInsightWithDetails,
     ShareResponse,
     UserResponse,
     UserUpdate,
@@ -226,7 +227,7 @@ async def list_saved_insights(
     )
 
     return SavedInsightListResponse(
-        items=[SavedInsightResponse.model_validate(s) for s in saved_insights],
+        items=[SavedInsightWithDetails.model_validate(s) for s in saved_insights],
         total=total,
         limit=limit,
         offset=offset,

@@ -472,7 +472,7 @@ StartInsight/
 │   ├── architecture.md        # System design
 │   ├── tech-stack.md          # Technology decisions
 │   ├── progress.md            # Development log
-│   └── improvement-plan.md    # Growth roadmap (Tier 1-3)
+│   └── active-context.md      # Current state (includes Tier 1-3 growth roadmap)
 │
 ├── research/                  # Competitive intelligence
 │   ├── ideabrowser-analysis.md          # Full IdeaBrowser teardown
@@ -689,22 +689,15 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 - 11 unique competitive advantages
 - 50-70% lower pricing
 
-**Post-Launch Priorities (Tier 1 — This Week)**:
-- ✅ Scraper pipeline fixed (Crawl4AI timeout + duplicate scheduling — 2026-02-22)
-- ✅ CI/CD production deploy token fixed (`VERCEL_TOKEN`)
-- ✅ Domain sweep: all `startinsight.ai` → `startinsight.co` across codebase (2026-02-23)
-- ⏳ Uptime monitoring (UptimeRobot / Checkly — free, 15 min)
-- ⏳ Google Search Console submission (`https://startinsight.co/sitemap.xml`)
-- ⏳ Content seeding (50+ insights via admin portal → target 600+)
+**Recent Improvements (2026-02-25)**:
+- ✅ 37 Sentry issues resolved (422 errors, chat fixes, research pre-fill)
+- ✅ Chat agent prompts refactored; admin agents page rewritten
+- ✅ Trends backfill script added (`backend/scripts/backfill_trends_table.py`)
+- ✅ Uptime monitoring — GitHub Actions every-5-min workflow, auto-creates/closes GitHub issues
+- ✅ Scraper pipeline fixed (Crawl4AI timeout + duplicate APScheduler/Arq scheduling removed)
+- ✅ Domain sweep: all `startinsight.ai` → `startinsight.co` across codebase
 
-**Post-Launch Priorities (Tier 2 — Month 1)**:
-- PostHog user analytics SDK
-- New user onboarding banner
-- Redis API response caching (60–300s TTL)
-- E2E test expansion (auth + workspace + validate — ~38 tests)
-- ProductHunt launch
-
-See `memory-bank/improvement-plan.md` for full growth roadmap and `memory-bank/active-context.md` for current state.
+See `memory-bank/active-context.md` for current state and full growth roadmap.
 
 ---
 

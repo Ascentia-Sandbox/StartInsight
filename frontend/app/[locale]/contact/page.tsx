@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Mail, MessageSquare, Clock, Send, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -53,6 +54,7 @@ const subjects = [
 ];
 
 export default function ContactPage() {
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -61,6 +63,30 @@ export default function ContactPage() {
   });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Pre-fill subject from ?subject= query param
+  useEffect(() => {
+    const subjectParam = searchParams.get("subject");
+    if (subjectParam) {
+      // Map URL-friendly slug to exact subject label
+      const slugMap: Record<string, string> = {
+        "general-inquiry": "General Inquiry",
+        "sales-enterprise": "Sales / Enterprise",
+        "technical-support": "Technical Support",
+        "partnership": "Partnership",
+        "tool-suggestion": "Tool Suggestion",
+        "bug-report": "Bug Report",
+        "feature-request": "Feature Request",
+        "press-media": "Press / Media",
+      };
+      const matched = slugMap[subjectParam] || subjects.find(
+        (s) => s.toLowerCase().replace(/[\s/]+/g, "-") === subjectParam.toLowerCase()
+      );
+      if (matched) {
+        setFormData((prev) => ({ ...prev, subject: matched }));
+      }
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,7 +136,7 @@ export default function ContactPage() {
 
       {/* Contact Options */}
       <section className="container mx-auto px-4 pb-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
           {contactOptions.map((option) => (
             <Card key={option.title} className="text-center">
               <CardContent className="pt-6">

@@ -833,7 +833,34 @@ This file tracks all significant changes made to the project. Each entry follows
   - Tech: Cloudflare DNS → Vercel (frontend) + api.startinsight.co (Railway)
   - Status: [✓ Complete]
 
-*Last updated: 2026-02-22*
+- [2026-02-22] [SEEDING]: Content seeding pipeline stabilized; 447→522 insights
+  - Files: worker.py, scheduler.py, cache.py, crawl4ai_client.py
+  - Tech: Redis distributed lock, arq job_timeout=1800, Crawl4AI 30s timeout, APScheduler duplicate removed
+  - Status: [✓ Complete]
+
+## 2026-02-25
+
+- [2026-02-25] [BUGFIX]: Resolve 37 Sentry issues + research pre-fill + frontend validation
+  - Files: insights.py, chat.py, trends/[id]/page.tsx, lib/types.ts
+  - Tech: 422 prevention, insight_id query param pre-fill, 5 production UX fixes
+  - Status: [✓ Complete]
+
+- [2026-02-25] [CHAT]: AI chat agent prompts refactored; admin agents page rewritten
+  - Files: chat_agent.py, admin/agents/page.tsx, insights/[slug]/chat/page.tsx
+  - Tech: Improved system prompts, rewritten agents management UI
+  - Status: [✓ Complete]
+
+- [2026-02-25] [DATA]: Trends backfill script added; trends page redesigned
+  - Files: backend/scripts/backfill_trends_table.py, trends/[id]/page.tsx
+  - Tech: Backfill script for trends table, trend detail page redesign
+  - Status: [✓ Complete]
+
+- [2026-02-25] [DOCS]: Deleted improvement-plan.md + producthunt-launch.md from memory-bank
+  - Files: memory-bank/ (2 files deleted)
+  - Tech: Content consolidated into active-context.md Tier 1-3 table
+  - Status: [✓ Complete]
+
+*Last updated: 2026-02-25*
 *Format: [DATE] [TASK_ID]: [Brief Description] | Files | Technical Notes | Status*
 
 ---

@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.chat_agent import ChatContext, get_chat_response
 from app.api.deps import get_current_user, get_db
+from app.models.agent_control import AgentConfiguration
 from app.models.idea_chat import IdeaChat, IdeaChatMessage
 from app.models.insight import Insight
 from app.models.user import User
@@ -226,6 +227,21 @@ async def send_message(
         for m in sorted(chat.messages, key=lambda x: x.created_at)
     ]
 
+    # Fetch custom prompt for this chat mode from AgentConfiguration
+    custom_prompt = None
+    try:
+        config_result = await db.execute(
+            select(AgentConfiguration).where(AgentConfiguration.agent_name == "chat_agent")
+        )
+        agent_config = config_result.scalar_one_or_none()
+        if agent_config and agent_config.custom_prompts:
+            mode_key = f"{chat.mode}_prompt"
+            prompt_value = agent_config.custom_prompts.get(mode_key)
+            if isinstance(prompt_value, str) and prompt_value.strip():
+                custom_prompt = prompt_value
+    except Exception:
+        logger.warning("Failed to fetch chat_agent config, using hardcoded fallback")
+
     async def generate_sse():
         """SSE event generator."""
         try:
@@ -241,6 +257,7 @@ async def send_message(
                 user_message=payload.content,
                 context=context,
                 conversation_history=conversation_history,
+                custom_prompt=custom_prompt,
             )
 
             # Save assistant message
@@ -261,8 +278,20 @@ async def send_message(
             yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
         except Exception as e:
-            logger.error(f"Chat agent error: {e}", exc_info=True)
-            yield f"data: {json.dumps({'type': 'error', 'message': 'Failed to generate response. Please try again.'})}\n\n"
+            logger.error(f"Chat agent error [{type(e).__name__}]: {e}", exc_info=True)
+            error_msg = "Failed to generate response. Please try again."
+            err_str = str(e).lower()
+            if "429" in str(e) or "rate" in err_str:
+                error_msg = "AI service is busy. Please try again in a moment."
+            elif "timeout" in err_str or "timed out" in err_str:
+                error_msg = "Response timed out. Please try again."
+            elif "api key" in err_str or "authentication" in err_str or "api_key" in err_str:
+                error_msg = "AI service configuration error. Please contact support."
+            elif "model" in err_str and ("not found" in err_str or "not available" in err_str):
+                error_msg = "AI model is temporarily unavailable. Please try again."
+            elif "content" in err_str and ("blocked" in err_str or "safety" in err_str):
+                error_msg = "Response was blocked by safety filters. Try rephrasing."
+            yield f"data: {json.dumps({'type': 'error', 'message': error_msg})}\n\n"
 
     return StreamingResponse(
         generate_sse(),

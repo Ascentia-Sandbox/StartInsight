@@ -130,7 +130,7 @@ export default function ToolsPage() {
       <section className="container mx-auto px-4 py-16 text-center">
         <Badge variant="secondary" className="mb-4">Tools Library</Badge>
         <h1 className="text-4xl md:text-5xl font-bold mb-4">
-          {total > 0 ? total : ''} Tools to Build Your Startup
+          Tools to Build Your Startup
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
           Curated collection of essential tools for payments, marketing, development, and more.

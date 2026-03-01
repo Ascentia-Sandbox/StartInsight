@@ -5,9 +5,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Loader2, MessageCircle, MessageSquare, Send, ArrowLeft, Sparkles,
-  Target, Rocket, DollarSign, Shield, Plus, Trash2,
+  Target, Rocket, DollarSign, Shield, Plus, Trash2, RotateCcw,
 } from 'lucide-react';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { fetchInsightById } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
@@ -122,13 +123,17 @@ export default function ChatPage() {
   // Use the actual UUID for API calls
   const insightId = insight?.id;
 
-  // Auth
+  // Auth — get initial session + listen for token refresh
   useEffect(() => {
     const supabase = getSupabaseClient();
     supabase.auth.getSession().then(({ data }: { data: { session: { access_token: string } | null } }) => {
       if (data.session?.access_token) setAccessToken(data.session.access_token);
       else router.push(`/auth/login?redirectTo=/insights/${slugParam}/chat`);
     });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: { access_token: string } | null) => {
+      if (session?.access_token) setAccessToken(session.access_token);
+    });
+    return () => subscription.unsubscribe();
   }, [router, slugParam]);
 
   // Fetch chat sessions for this insight
@@ -197,14 +202,18 @@ export default function ChatPage() {
       }
       queryClient.invalidateQueries({ queryKey: ['chat-sessions'] });
     },
+    onError: (error, chatId) => {
+      console.error('Delete chat failed:', chatId, error);
+      alert('Failed to delete chat session. Please try again.');
+    },
   });
 
   // Send message with SSE streaming
-  const sendMessage = useCallback(async () => {
-    if (!input.trim() || !activeChatId || !accessToken || isStreaming) return;
+  const sendMessage = useCallback(async (overrideMessage?: string) => {
+    const userMessage = (overrideMessage || input).trim();
+    if (!userMessage || !activeChatId || !accessToken || isStreaming) return;
 
-    const userMessage = input.trim();
-    setInput('');
+    if (!overrideMessage) setInput('');
     setIsStreaming(true);
 
     // Optimistically add user message
@@ -288,6 +297,18 @@ export default function ChatPage() {
     }
   }, [input, activeChatId, accessToken, isStreaming, queryClient]);
 
+  // Retry: remove the error message and re-send the last user message
+  const retryLastMessage = useCallback(() => {
+    const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+    if (!lastUserMsg) return;
+    // Remove the last user message + any error messages after it
+    setMessages(prev => {
+      const lastUserIdx = prev.findLastIndex(m => m.role === 'user');
+      return prev.slice(0, lastUserIdx);
+    });
+    sendMessage(lastUserMsg.content);
+  }, [messages, sendMessage]);
+
   // Handle Enter key
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -305,7 +326,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-6xl">
+    <div className="container mx-auto px-4 py-6 max-w-6xl overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Button asChild variant="ghost" size="icon">
@@ -326,9 +347,9 @@ export default function ChatPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6" style={{ height: 'calc(100vh - 180px)' }}>
-        {/* Sidebar: Chat Sessions */}
-        <div className="lg:col-span-1 flex flex-col gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6 max-w-5xl mx-auto min-h-0" style={{ height: 'calc(100dvh - 180px)', minHeight: '400px' }}>
+        {/* Sidebar: Chat Sessions — hidden on mobile when a chat is active */}
+        <div className={`lg:col-span-1 flex flex-col gap-3 min-h-0 ${activeChatId ? 'hidden lg:flex' : 'flex'}`}>
           {/* New Chat */}
           <Card>
             <CardContent className="p-4 space-y-3">
@@ -398,12 +419,19 @@ export default function ChatPage() {
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                        disabled={deleteChatMutation.isPending}
                         onClick={(e) => {
                           e.stopPropagation();
-                          deleteChatMutation.mutate(session.id);
+                          if (window.confirm('Delete this chat session? This cannot be undone.')) {
+                            deleteChatMutation.mutate(session.id);
+                          }
                         }}
                       >
-                        <Trash2 className="h-3 w-3" />
+                        {deleteChatMutation.isPending && deleteChatMutation.variables === session.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3 w-3" />
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -419,7 +447,7 @@ export default function ChatPage() {
         </div>
 
         {/* Main Chat Area */}
-        <div className="lg:col-span-3 flex flex-col">
+        <div className={`lg:col-span-3 flex flex-col min-h-0 ${activeChatId ? 'col-span-1' : 'hidden lg:flex'}`}>
           {!activeChatId ? (
             /* Mode Selection Cards */
             <div className="flex-1 flex items-center justify-center">
@@ -450,8 +478,15 @@ export default function ChatPage() {
           ) : (
             /* Active Chat */
             <>
-              {/* Mode selector row */}
-              <div className="flex gap-2 p-4 border-b overflow-x-auto">
+              {/* Mobile back button + Mode selector row */}
+              <div className="flex gap-2 p-3 lg:p-4 border-b overflow-x-auto">
+                <button
+                  onClick={() => setActiveChatId(null)}
+                  className="lg:hidden flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap bg-muted text-muted-foreground"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back
+                </button>
                 {(Object.entries(MODE_CONFIG) as [ChatMode, typeof MODE_CONFIG[ChatMode]][]).map(([key, cfg]) => {
                   const isActive = activeChat?.mode === key;
                   return (
@@ -477,29 +512,54 @@ export default function ChatPage() {
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 border border-t-0 rounded-b-lg bg-background">
-                {messages.length === 0 && (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <MessageCircle className="h-8 w-8 mx-auto mb-3 opacity-40" />
-                    <p className="text-sm">Start the conversation. Ask anything about this idea.</p>
-                  </div>
-                )}
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap break-words overflow-hidden ${
-                        msg.role === 'user'
-                          ? 'bg-purple-600 text-white rounded-br-md'
-                          : 'bg-muted rounded-bl-md'
-                      }`}
-                    >
-                      {msg.content}
+              <div className="flex-1 overflow-y-auto p-3 lg:p-4 space-y-4 border border-t-0 rounded-b-lg bg-background">
+                {messages.length === 0 && (() => {
+                  const mode = activeChat?.mode as ChatMode | undefined;
+                  const cfg = mode ? MODE_CONFIG[mode] : null;
+                  return (
+                    <div className="text-center py-12 text-muted-foreground">
+                      {cfg ? <cfg.icon className={`h-8 w-8 mx-auto mb-3 opacity-40 ${cfg.color}`} /> : <MessageCircle className="h-8 w-8 mx-auto mb-3 opacity-40" />}
+                      <p className="text-sm font-medium mb-1">{cfg?.label || 'General'} Mode</p>
+                      <p className="text-xs">{cfg?.description || 'Start the conversation. Ask anything about this idea.'}</p>
                     </div>
-                  </div>
-                ))}
+                  );
+                })()}
+                {messages.map((msg) => {
+                  const isError = msg.id.startsWith('error-');
+                  return (
+                    <div
+                      key={msg.id}
+                      className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-[90%] sm:max-w-[80%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap break-words overflow-hidden ${
+                          msg.role === 'user'
+                            ? 'bg-purple-600 text-white rounded-br-md'
+                            : isError
+                              ? 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 rounded-bl-md'
+                              : 'bg-muted rounded-bl-md'
+                        }`}
+                      >
+                        {msg.role === 'assistant' && !isError ? (
+                          <div className="prose prose-sm dark:prose-invert max-w-none">
+                            <ReactMarkdown>{msg.content}</ReactMarkdown>
+                          </div>
+                        ) : (
+                          msg.content
+                        )}
+                        {isError && (
+                          <button
+                            onClick={retryLastMessage}
+                            className="flex items-center gap-1 mt-2 text-xs font-medium text-red-600 dark:text-red-400 hover:underline"
+                          >
+                            <RotateCcw className="h-3 w-3" />
+                            Retry
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
                 {isStreaming && (
                   <div className="flex justify-start">
                     <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
@@ -514,29 +574,36 @@ export default function ChatPage() {
               </div>
 
               {/* Input */}
-              <div className="mt-3 flex gap-2">
-                <Textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ask about this idea..."
-                  rows={1}
-                  className="resize-none min-h-[44px] max-h-[120px]"
-                  disabled={isStreaming}
-                />
-                <Button
-                  onClick={sendMessage}
-                  disabled={!input.trim() || isStreaming}
-                  className="bg-purple-600 hover:bg-purple-700 self-end"
-                  size="icon"
-                >
-                  {isStreaming ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                </Button>
+              <div className="mt-2 lg:mt-3">
+                <div className="flex gap-2">
+                  <Textarea
+                    ref={textareaRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value.slice(0, 2000))}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Ask about this idea..."
+                    rows={1}
+                    className="resize-none min-h-[44px] max-h-[120px] text-base sm:text-sm"
+                    disabled={isStreaming}
+                  />
+                  <Button
+                    onClick={() => sendMessage()}
+                    disabled={!input.trim() || isStreaming}
+                    className="bg-purple-600 hover:bg-purple-700 self-end h-11 w-11 min-w-[44px]"
+                    size="icon"
+                  >
+                    {isStreaming ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                {input.length > 0 && (
+                  <div className="text-xs text-muted-foreground text-right mt-1">
+                    {input.length}/2000
+                  </div>
+                )}
               </div>
             </>
           )}

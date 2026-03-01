@@ -13,7 +13,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -165,6 +165,9 @@ async def list_insights(
     sort: Annotated[
         str, Query(description="Sort by: relevance, founder_fit, opportunity, problem, feasibility, why_now, go_to_market")
     ] = "relevance",
+    search: Annotated[
+        str | None, Query(description="Search by title or keyword")
+    ] = None,
     featured: Annotated[
         bool, Query(description="Filter only featured/high-quality insights (score >= 0.85)")
     ] = False,
@@ -195,7 +198,7 @@ async def list_insights(
 
     # --- Cache lookup (TTL: 60s) ---
     # Key encodes all params that affect the result, including language.
-    _cache_raw = f"{min_score}:{source}:{sort}:{featured}:{limit}:{offset}:{target_language}"
+    _cache_raw = f"{min_score}:{source}:{sort}:{search}:{featured}:{limit}:{offset}:{target_language}"
     cache_key = f"insights:list:{hashlib.md5(_cache_raw.encode()).hexdigest()}"
     cached_response = await cache_get(cache_key)
     if cached_response is not None:
@@ -215,6 +218,16 @@ async def list_insights(
     # Filter by source (via raw_signal relationship)
     if source:
         query = query.join(Insight.raw_signal).where(RawSignal.source == source)
+
+    # Search by title or proposed solution
+    if search:
+        search_term = f"%{search}%"
+        query = query.where(
+            or_(
+                Insight.title.ilike(search_term),
+                Insight.proposed_solution.ilike(search_term),
+            )
+        )
 
     # Dynamic sorting based on sort parameter
     sort_mapping = {
@@ -249,6 +262,14 @@ async def list_insights(
     if source:
         count_query = count_query.join(Insight.raw_signal).where(
             RawSignal.source == source
+        )
+    if search:
+        search_term = f"%{search}%"
+        count_query = count_query.where(
+            or_(
+                Insight.title.ilike(search_term),
+                Insight.proposed_solution.ilike(search_term),
+            )
         )
 
     total = await db.scalar(count_query)

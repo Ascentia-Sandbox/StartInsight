@@ -9,7 +9,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import AdminUser
@@ -242,6 +242,42 @@ async def create_market_insight(
     await db.refresh(article)
 
     logger.info(f"Created market insight: {article.title} (id={article.id})")
+
+    return MarketInsightResponse.model_validate(article)
+
+
+@router.post("/{article_id}/feature", response_model=MarketInsightResponse)
+async def feature_market_insight(
+    article_id: UUID,
+    admin: AdminUser,
+    db: AsyncSession = Depends(get_db),
+) -> MarketInsightResponse:
+    """
+    Feature a market insight (admin only).
+
+    Unfeatures all currently featured articles, then features the target article.
+    """
+    # Verify article exists
+    query = select(MarketInsight).where(MarketInsight.id == article_id)
+    result = await db.execute(query)
+    article = result.scalar_one_or_none()
+
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    # Unfeature all currently featured articles
+    await db.execute(
+        update(MarketInsight)
+        .where(MarketInsight.is_featured == True)
+        .values(is_featured=False)
+    )
+
+    # Feature the target article
+    article.is_featured = True
+    await db.commit()
+    await db.refresh(article)
+
+    logger.info(f"Featured market insight: {article.title} (id={article.id})")
 
     return MarketInsightResponse.model_validate(article)
 

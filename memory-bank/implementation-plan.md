@@ -4,7 +4,7 @@
 **Read When:** When planning implementation steps, checking phase requirements
 **Dependencies:** Read active-context.md to know current phase, architecture.md for system design
 **Purpose:** Phase completion status, deployment readiness, testing requirements
-**Last Updated:** 2026-02-20
+**Last Updated:** 2026-02-25
 ---
 
 # Implementation Plan: StartInsight
@@ -344,7 +344,7 @@ NEXT_PUBLIC_SITE_URL=https://[project-name].vercel.app
 
 **Monitoring & Alerts:**
 - [x] Set up Sentry error tracking (backend + frontend) — org `ascentia-km`, production events confirmed
-- [ ] Configure uptime monitoring (UptimeRobot or Checkly) — pending
+- [x] Configure uptime monitoring — GitHub Actions every-5-min workflow, auto-creates/closes GitHub issues on failure
 - [x] Set up Stripe webhook monitoring (via Stripe dashboard)
 - [ ] Enable Supabase query performance monitoring — pending
 - [x] Configure Railway metrics dashboard
