@@ -259,10 +259,11 @@ export default function TrendsPage() {
                 {trends.map((trend) => {
                   const growthInfo = getGrowthBadge(trend.growth_percentage);
                   return (
-                    <div key={trend.id} className="flex flex-col md:grid md:grid-cols-[2fr_1fr_1fr_1fr_auto] gap-2 md:gap-4 px-6 py-3 items-start md:items-center hover:bg-muted/30 transition-colors">
+                    <Link key={trend.id} href={`/trends/${trend.id}`} className="block">
+                    <div className="group flex flex-col md:grid md:grid-cols-[2fr_1fr_1fr_1fr_auto] gap-2 md:gap-4 px-6 py-3 items-start md:items-center hover:bg-muted/30 transition-colors cursor-pointer">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium truncate">{trend.keyword}</span>
+                          <span className="font-medium truncate group-hover:text-primary group-hover:underline">{trend.keyword}</span>
                           {trend.is_featured && (
                             <Badge variant="secondary" className="text-xs shrink-0">Hot</Badge>
                           )}
@@ -293,6 +294,7 @@ export default function TrendsPage() {
                         {trend.category}
                       </Badge>
                     </div>
+                    </Link>
                   );
                 })}
               </div>

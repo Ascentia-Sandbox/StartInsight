@@ -87,7 +87,7 @@ const toolsItems = [
   },
   {
     title: "Chat & Strategize",
-    href: "/workspace",
+    href: "/chat",
     description: "Interactive AI chat for strategy refinement.",
     icon: MessageSquare,
   },

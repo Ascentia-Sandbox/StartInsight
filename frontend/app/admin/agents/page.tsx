@@ -180,6 +180,12 @@ export default function AgentCommandCenter() {
     schedule_type: 'manual' as string,
     schedule_cron: '',
     schedule_interval_hours: 6,
+    // Chat agent mode prompts
+    general_prompt: '',
+    pressure_test_prompt: '',
+    gtm_planning_prompt: '',
+    pricing_strategy_prompt: '',
+    competitive_prompt: '',
   });
   const [costPeriod, setCostPeriod] = useState<'7d' | '30d' | '90d'>('7d');
 
@@ -510,23 +516,44 @@ export default function AgentCommandCenter() {
 
   const openAgentEditDialog = (agent: AgentConfig) => {
     setEditingAgent(agent);
+    const cp = agent.custom_prompts || {};
     setAgentEditForm({
       model_name: agent.model_name,
       temperature: agent.temperature,
       max_tokens: agent.max_tokens,
       rate_limit_per_hour: agent.rate_limit_per_hour,
       cost_limit_daily_usd: agent.cost_limit_daily_usd,
-      system_prompt: typeof agent.custom_prompts?.system_prompt === 'string' ? agent.custom_prompts.system_prompt : '',
-      description: typeof agent.custom_prompts?.description === 'string' ? agent.custom_prompts.description : '',
-      schedule: typeof agent.custom_prompts?.schedule === 'string' ? agent.custom_prompts.schedule : '',
+      system_prompt: typeof cp.system_prompt === 'string' ? cp.system_prompt : '',
+      description: typeof cp.description === 'string' ? cp.description : '',
+      schedule: typeof cp.schedule === 'string' ? cp.schedule : '',
       schedule_type: agent.schedule_type || 'manual',
       schedule_cron: agent.schedule_cron || '',
       schedule_interval_hours: agent.schedule_interval_hours || 6,
+      // Chat agent mode prompts
+      general_prompt: typeof cp.general_prompt === 'string' ? cp.general_prompt : '',
+      pressure_test_prompt: typeof cp.pressure_test_prompt === 'string' ? cp.pressure_test_prompt : '',
+      gtm_planning_prompt: typeof cp.gtm_planning_prompt === 'string' ? cp.gtm_planning_prompt : '',
+      pricing_strategy_prompt: typeof cp.pricing_strategy_prompt === 'string' ? cp.pricing_strategy_prompt : '',
+      competitive_prompt: typeof cp.competitive_prompt === 'string' ? cp.competitive_prompt : '',
     });
   };
 
   const handleSaveAgent = () => {
     if (!editingAgent) return;
+    const isChatAgent = editingAgent.agent_name === 'chat_agent';
+    const customPrompts = {
+      ...editingAgent.custom_prompts,
+      system_prompt: agentEditForm.system_prompt || undefined,
+      description: agentEditForm.description || undefined,
+      schedule: agentEditForm.schedule || undefined,
+      ...(isChatAgent ? {
+        general_prompt: agentEditForm.general_prompt || undefined,
+        pressure_test_prompt: agentEditForm.pressure_test_prompt || undefined,
+        gtm_planning_prompt: agentEditForm.gtm_planning_prompt || undefined,
+        pricing_strategy_prompt: agentEditForm.pricing_strategy_prompt || undefined,
+        competitive_prompt: agentEditForm.competitive_prompt || undefined,
+      } : {}),
+    };
     updateMutation.mutate({
       name: editingAgent.agent_name,
       data: {
@@ -535,12 +562,7 @@ export default function AgentCommandCenter() {
         max_tokens: agentEditForm.max_tokens,
         rate_limit_per_hour: agentEditForm.rate_limit_per_hour,
         cost_limit_daily_usd: agentEditForm.cost_limit_daily_usd,
-        custom_prompts: {
-          ...editingAgent.custom_prompts,
-          system_prompt: agentEditForm.system_prompt || undefined,
-          description: agentEditForm.description || undefined,
-          schedule: agentEditForm.schedule || undefined,
-        },
+        custom_prompts: customPrompts,
       },
     });
   };
@@ -789,24 +811,52 @@ export default function AgentCommandCenter() {
       </TabsContent>
 
       <TabsContent value="prompts" className="space-y-4">
-        <div className="space-y-2">
-          <Label>System Prompt</Label>
-          <Textarea
-            value={agentEditForm.system_prompt}
-            onChange={(e) => setAgentEditForm({ ...agentEditForm, system_prompt: e.target.value })}
-            placeholder="Enter the system prompt that guides this agent's behavior..."
-            rows={isFullView ? 20 : 12}
-            className="font-mono text-sm leading-relaxed"
-          />
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">
-              Leave empty to use the default built-in prompt.
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {agentEditForm.system_prompt.length} characters
-            </p>
+        {editingAgent?.agent_name === 'chat_agent' ? (
+          <Tabs defaultValue="general" className="w-full">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="general" className="text-xs">General</TabsTrigger>
+              <TabsTrigger value="pressure_test" className="text-xs">Pressure Test</TabsTrigger>
+              <TabsTrigger value="gtm_planning" className="text-xs">GTM</TabsTrigger>
+              <TabsTrigger value="pricing_strategy" className="text-xs">Pricing</TabsTrigger>
+              <TabsTrigger value="competitive" className="text-xs">Competitive</TabsTrigger>
+            </TabsList>
+            {(['general', 'pressure_test', 'gtm_planning', 'pricing_strategy', 'competitive'] as const).map((mode) => {
+              const key = `${mode}_prompt` as keyof typeof agentEditForm;
+              const labels: Record<string, string> = { general: 'General Strategy', pressure_test: 'Pressure Test', gtm_planning: 'GTM Planning', pricing_strategy: 'Pricing Strategy', competitive: 'Competitive Analysis' };
+              return (
+                <TabsContent key={mode} value={mode} className="space-y-2">
+                  <Label>{labels[mode]} Prompt</Label>
+                  <Textarea
+                    value={agentEditForm[key] as string}
+                    onChange={(e) => setAgentEditForm({ ...agentEditForm, [key]: e.target.value })}
+                    placeholder={`Enter the ${labels[mode]} mode system prompt...`}
+                    rows={isFullView ? 20 : 12}
+                    className="font-mono text-sm leading-relaxed"
+                  />
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">Leave empty to use the default built-in prompt.</p>
+                    <p className="text-xs text-muted-foreground">{(agentEditForm[key] as string).length} characters</p>
+                  </div>
+                </TabsContent>
+              );
+            })}
+          </Tabs>
+        ) : (
+          <div className="space-y-2">
+            <Label>System Prompt</Label>
+            <Textarea
+              value={agentEditForm.system_prompt}
+              onChange={(e) => setAgentEditForm({ ...agentEditForm, system_prompt: e.target.value })}
+              placeholder="Enter the system prompt that guides this agent's behavior..."
+              rows={isFullView ? 20 : 12}
+              className="font-mono text-sm leading-relaxed"
+            />
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">Leave empty to use the default built-in prompt.</p>
+              <p className="text-xs text-muted-foreground">{agentEditForm.system_prompt.length} characters</p>
+            </div>
           </div>
-        </div>
+        )}
       </TabsContent>
 
       <TabsContent value="limits" className="space-y-4">
@@ -1536,9 +1586,9 @@ export default function AgentCommandCenter() {
                 </div>
                 {costData && (
                   <div className="flex gap-6 mt-2 text-sm">
-                    <span>Total: <strong>${costData.total_cost_usd.toFixed(2)}</strong></span>
-                    <span>Tokens: <strong>{costData.total_tokens.toLocaleString()}</strong></span>
-                    <span>Executions: <strong>{costData.total_executions}</strong></span>
+                    <span>Total: <strong>${costData.total_cost_usd?.toFixed(2) ?? '0.00'}</strong></span>
+                    <span>Tokens: <strong>{costData.total_tokens?.toLocaleString() ?? '0'}</strong></span>
+                    <span>Executions: <strong>{costData.total_executions ?? 0}</strong></span>
                   </div>
                 )}
               </CardHeader>
@@ -1727,26 +1777,60 @@ export default function AgentCommandCenter() {
                           <CardHeader className="pb-3">
                             <CardTitle className="text-base flex items-center gap-2">
                               <FileText className="h-4 w-4" />
-                              System Prompt
+                              {editingAgent?.agent_name === 'chat_agent' ? 'Mode Prompts' : 'System Prompt'}
                             </CardTitle>
-                            <CardDescription>The prompt that defines this agent&apos;s behavior and output format.</CardDescription>
+                            <CardDescription>
+                              {editingAgent?.agent_name === 'chat_agent'
+                                ? 'Each chat mode has its own system prompt defining the strategist\'s persona and approach.'
+                                : 'The prompt that defines this agent\'s behavior and output format.'}
+                            </CardDescription>
                           </CardHeader>
                           <CardContent>
-                            <Textarea
-                              value={agentEditForm.system_prompt}
-                              onChange={(e) => setAgentEditForm({ ...agentEditForm, system_prompt: e.target.value })}
-                              placeholder="Enter the system prompt that guides this agent's behavior..."
-                              rows={18}
-                              className="font-mono text-sm leading-relaxed"
-                            />
-                            <div className="flex items-center justify-between mt-2">
-                              <p className="text-xs text-muted-foreground">
-                                Leave empty to use the default built-in prompt.
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {agentEditForm.system_prompt.length} characters
-                              </p>
-                            </div>
+                            {editingAgent?.agent_name === 'chat_agent' ? (
+                              <Tabs defaultValue="general" className="w-full">
+                                <TabsList className="grid w-full grid-cols-5 mb-4">
+                                  <TabsTrigger value="general" className="text-xs">General</TabsTrigger>
+                                  <TabsTrigger value="pressure_test" className="text-xs">Pressure Test</TabsTrigger>
+                                  <TabsTrigger value="gtm_planning" className="text-xs">GTM</TabsTrigger>
+                                  <TabsTrigger value="pricing_strategy" className="text-xs">Pricing</TabsTrigger>
+                                  <TabsTrigger value="competitive" className="text-xs">Competitive</TabsTrigger>
+                                </TabsList>
+                                {(['general', 'pressure_test', 'gtm_planning', 'pricing_strategy', 'competitive'] as const).map((mode) => {
+                                  const key = `${mode}_prompt` as keyof typeof agentEditForm;
+                                  const labels: Record<string, string> = { general: 'General Strategy', pressure_test: 'Pressure Test', gtm_planning: 'GTM Planning', pricing_strategy: 'Pricing Strategy', competitive: 'Competitive Analysis' };
+                                  return (
+                                    <TabsContent key={mode} value={mode} className="space-y-2">
+                                      <Label>{labels[mode]} Prompt</Label>
+                                      <Textarea
+                                        value={agentEditForm[key] as string}
+                                        onChange={(e) => setAgentEditForm({ ...agentEditForm, [key]: e.target.value })}
+                                        placeholder={`Enter the ${labels[mode]} mode system prompt...`}
+                                        rows={18}
+                                        className="font-mono text-sm leading-relaxed"
+                                      />
+                                      <div className="flex items-center justify-between mt-2">
+                                        <p className="text-xs text-muted-foreground">Leave empty to use the default built-in prompt.</p>
+                                        <p className="text-xs text-muted-foreground">{(agentEditForm[key] as string).length} characters</p>
+                                      </div>
+                                    </TabsContent>
+                                  );
+                                })}
+                              </Tabs>
+                            ) : (
+                              <>
+                                <Textarea
+                                  value={agentEditForm.system_prompt}
+                                  onChange={(e) => setAgentEditForm({ ...agentEditForm, system_prompt: e.target.value })}
+                                  placeholder="Enter the system prompt that guides this agent's behavior..."
+                                  rows={18}
+                                  className="font-mono text-sm leading-relaxed"
+                                />
+                                <div className="flex items-center justify-between mt-2">
+                                  <p className="text-xs text-muted-foreground">Leave empty to use the default built-in prompt.</p>
+                                  <p className="text-xs text-muted-foreground">{agentEditForm.system_prompt.length} characters</p>
+                                </div>
+                              </>
+                            )}
                           </CardContent>
                         </Card>
 

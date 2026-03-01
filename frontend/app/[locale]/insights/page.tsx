@@ -34,6 +34,7 @@ function AllInsightsContent() {
     min_score: searchParams.get('min_score') ? parseFloat(searchParams.get('min_score')!) : undefined,
     source: searchParams.get('source') || undefined,
     sort: validSort,
+    search: searchParams.get('search') || undefined,
     featured: searchParams.get('featured') === 'true' ? true : undefined,
     limit: PAGE_SIZE,
     offset: 0,

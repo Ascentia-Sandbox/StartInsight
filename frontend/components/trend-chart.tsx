@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useId } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, TrendingDown, ChevronDown, Search } from 'lucide-react';
 
@@ -29,6 +29,8 @@ interface TrendChartProps {
 
 export function TrendChart({ data, keyword, volume, growth, allKeywords, onKeywordChange }: TrendChartProps) {
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const uniqueId = useId();
+  const gradientId = `trendGradient-${uniqueId.replace(/:/g, '')}`;
 
   // Determine active keyword info (from dropdown or props)
   const activeKeyword = allKeywords?.[selectedIdx];
@@ -117,9 +119,9 @@ export function TrendChart({ data, keyword, volume, growth, allKeywords, onKeywo
           margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
         >
           <defs>
-            <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#0D7377" stopOpacity={0.35}/>
-              <stop offset="95%" stopColor="#0D7377" stopOpacity={0.02}/>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#0D7377" stopOpacity={0.45}/>
+              <stop offset="95%" stopColor="#0D7377" stopOpacity={0.05}/>
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.06} vertical={false} />
@@ -171,7 +173,7 @@ export function TrendChart({ data, keyword, volume, growth, allKeywords, onKeywo
             dataKey="value"
             stroke="#0D7377"
             strokeWidth={2.5}
-            fill="url(#trendGradient)"
+            fill={`url(#${gradientId})`}
             dot={false}
             activeDot={{ r: 5, stroke: '#0D7377', strokeWidth: 2, fill: '#FFFFFF' }}
           />

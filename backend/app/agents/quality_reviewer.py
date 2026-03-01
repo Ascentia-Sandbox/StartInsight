@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
@@ -234,8 +234,15 @@ async def review_draft_articles(session: AsyncSession) -> list[dict]:
             if review.publish_recommendation and review.quality_score >= 7:
                 article.is_published = True
                 article.published_at = datetime.now(UTC)
+                # Feature the latest published article, unfeature others
+                await session.execute(
+                    update(MarketInsight)
+                    .where(MarketInsight.is_featured.is_(True))
+                    .values(is_featured=False)
+                )
+                article.is_featured = True
                 logger.info(
-                    f"Auto-published article '{article.title}' "
+                    f"Auto-published and featured article '{article.title}' "
                     f"(score: {review.quality_score}/10)"
                 )
             else:

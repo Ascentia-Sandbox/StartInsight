@@ -190,7 +190,22 @@ async def get_trend(
     if not trend:
         raise HTTPException(status_code=404, detail="Trend not found")
 
-    return TrendResponse.model_validate(trend)
+    # Populate trend_data with synthetic historical data if empty
+    if not trend.trend_data or not trend.trend_data.get("dates"):
+        dates, values = _get_historical_data(trend)
+        response = TrendResponse.model_validate(trend)
+        response.trend_data = {
+            "dates": dates,
+            "values": values,
+            "source": "estimated",
+        }
+        return response
+
+    response = TrendResponse.model_validate(trend)
+    # Add source label to existing DB data if missing
+    if response.trend_data and "source" not in response.trend_data:
+        response.trend_data["source"] = "google_trends"
+    return response
 
 
 @router.post("", response_model=TrendResponse, status_code=201)
@@ -273,16 +288,21 @@ def _get_historical_data(
     if len(historical_dates) >= 7:
         return historical_dates, historical_values
 
-    base_volume = trend.search_volume or 50
     historical_dates = [
         (datetime.now(UTC) - timedelta(days=i)).strftime("%Y-%m-%d")
         for i in range(days, 0, -1)
     ]
+
+    # Normalize to 0-100 scale (matching Google Trends format)
     growth_rate = (trend.growth_percentage or 10) / 100
-    historical_values = [
-        max(1, int(base_volume * (1 - growth_rate * (days - i) / days) + random.uniform(-5, 5)))
+    raw_values = [
+        max(1.0, 100 * (1 - growth_rate * (days - i) / days) + random.uniform(-3, 3))
         for i in range(days)
     ]
+    # Scale so the peak = 100 (Google Trends convention)
+    peak = max(raw_values) or 1
+    historical_values = [max(1, int(v * 100 / peak)) for v in raw_values]
+
     return historical_dates, historical_values
 
 

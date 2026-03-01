@@ -4,7 +4,7 @@
 **Read When:** Before every task to understand current phase status
 **Dependencies:** Read project-brief.md first for context
 **Purpose:** Current phase tracking, immediate tasks, blockers, what's working/next
-**Last Updated:** 2026-02-22
+**Last Updated:** 2026-02-25
 ---
 
 # Active Context: StartInsight Development
@@ -49,6 +49,14 @@ Railway Project ID: `a3ece066-4758-4780-84d6-0379f1312227`
 | AI Monitoring | Manual `gen_ai.request` spans on enhanced_analyzer, research_agent, market_intel_agent |
 | Sample Rates | Production: 10% traces/profiles; Staging: 100% |
 | Env Vars | Backend via Railway MCP; Frontend via GitHub Actions `set-vercel-sentry-env.yml` |
+
+## Recent Work (2026-02-25)
+
+1. ✅ **37 Sentry issues resolved** — backend 422 errors, chat route fixes, research pre-fill from `insight_id` query param
+2. ✅ **Chat agent refactor** — `chat_agent.py` prompts improved; `insights/[slug]/chat/page.tsx` updated
+3. ✅ **Admin agents page rewrite** — `admin/agents/page.tsx` fully rewritten with improved UX
+4. ✅ **Trends backfill script** — `backend/scripts/backfill_trends_table.py` added; `trends/[id]/page.tsx` redesigned
+5. ✅ **Memory-bank cleanup** — `improvement-plan.md` and `producthunt-launch.md` deleted (content captured in active-context Tier 1-3 table); all 6 remaining files updated to 2026-02-25
 
 ## Recent Work (2026-02-22)
 

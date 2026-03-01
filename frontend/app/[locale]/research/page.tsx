@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { SelectableCard } from '@/components/ui/SelectableCard';
 import { toast } from 'sonner';
-import { createResearchRequest } from '@/lib/api';
+import { createResearchRequest, fetchInsightById } from '@/lib/api';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 
@@ -56,8 +56,21 @@ export default function ResearchPage() {
   useEffect(() => {
     const idea = searchParams.get('idea');
     const market = searchParams.get('market');
+    const insightId = searchParams.get('insight_id');
     if (idea) setContent(idea);
     if (market) setTargetMarket(market);
+    // When linked from insight detail page, fetch insight and pre-fill
+    if (insightId && !idea) {
+      fetchInsightById(insightId)
+        .then((insight) => {
+          const parts = [
+            insight.proposed_solution,
+            insight.problem_statement,
+          ].filter(Boolean);
+          if (parts.length > 0) setContent(parts.join('\n\n'));
+        })
+        .catch(() => {});
+    }
   }, [searchParams]);
 
   if (isCheckingAuth) {
@@ -78,6 +91,20 @@ export default function ResearchPage() {
       return;
     }
 
+    // Frontend validation matching backend min_length requirements
+    if (content.trim().length < 50) {
+      setError('Please provide a more detailed description (at least 50 characters).');
+      toast.error('Description too short');
+      return;
+    }
+
+    const market = targetMarket || 'General Market';
+    if (market.trim().length < 10) {
+      setError('Target market must be at least 10 characters.');
+      toast.error('Target market too short');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -85,7 +112,7 @@ export default function ResearchPage() {
     try {
       const request = await createResearchRequest(accessToken, {
         idea_description: content,
-        target_market: targetMarket || 'General',
+        target_market: market,
         budget_range: budgetRange,
       });
 
@@ -261,6 +288,9 @@ export default function ResearchPage() {
                     required
                   />
                 )}
+                {content.length > 0 && content.length < 50 && (
+                  <p className="text-xs text-muted-foreground">{content.length}/50 characters minimum</p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -272,7 +302,7 @@ export default function ResearchPage() {
                     id="targetMarket"
                     value={targetMarket}
                     onChange={(e) => setTargetMarket(e.target.value)}
-                    placeholder="e.g., Small businesses, B2B SaaS"
+                    placeholder="e.g., Small business owners, B2B SaaS companies (min 10 chars)"
                   />
                 </div>
 

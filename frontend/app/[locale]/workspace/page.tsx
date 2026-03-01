@@ -46,7 +46,7 @@ export default function WorkspacePage() {
   });
 
   // Fetch saved insights
-  const { data: savedInsights, isLoading: savedLoading } = useQuery({
+  const { data: savedInsights, isLoading: savedLoading, error: savedError } = useQuery({
     queryKey: ['saved-insights', accessToken, activeTab],
     queryFn: () => fetchSavedInsights(accessToken!, {
       status: activeTab === 'building' ? 'building' : activeTab === 'saved' ? undefined : undefined,
@@ -56,7 +56,7 @@ export default function WorkspacePage() {
   });
 
   // Fetch user ratings
-  const { data: ratings, isLoading: ratingsLoading } = useQuery({
+  const { data: ratings, isLoading: ratingsLoading, error: ratingsError } = useQuery({
     queryKey: ['user-ratings', accessToken],
     queryFn: () => fetchUserRatings(accessToken!, { limit: 50 }),
     enabled: !!accessToken && activeTab === 'ratings',
@@ -168,7 +168,11 @@ export default function WorkspacePage() {
         </div>
 
         {/* Content */}
-        {isLoading ? (
+        {(savedError || ratingsError) ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>Failed to load data. Please try refreshing.</p>
+          </div>
+        ) : isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="animate-spin h-8 w-8 text-primary" />
           </div>

@@ -100,7 +100,7 @@ class SavedInsightWithDetails(SavedInsightResponse):
 class SavedInsightListResponse(BaseModel):
     """Paginated saved insights response."""
 
-    items: list[SavedInsightResponse]
+    items: list[SavedInsightWithDetails]
     total: int
     limit: int
     offset: int

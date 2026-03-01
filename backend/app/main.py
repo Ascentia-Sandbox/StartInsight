@@ -4,6 +4,12 @@ import logging
 import os
 import uuid
 from contextlib import asynccontextmanager
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Load .env into os.environ so PydanticAI agents can read GOOGLE_API_KEY etc.
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError

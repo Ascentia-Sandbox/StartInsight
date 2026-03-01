@@ -90,6 +90,16 @@ export const InsightSchema = z.object({
   }).nullable().optional(),
 });
 
+// Lightweight schema matching backend's InsightSummary (6 fields only)
+export const InsightSummarySchema = z.object({
+  id: z.string().uuid(),
+  problem_statement: z.string(),
+  proposed_solution: z.string(),
+  market_size_estimate: z.string(),
+  relevance_score: z.number().min(0).max(1),
+  created_at: datetimeValidator,
+});
+
 export const InsightListResponseSchema = z.object({
   insights: z.array(InsightSchema),
   total: z.number(),
@@ -100,6 +110,7 @@ export const InsightListResponseSchema = z.object({
 // TypeScript types derived from Zod schemas
 export type Competitor = z.infer<typeof CompetitorSchema>;
 export type RawSignalSummary = z.infer<typeof RawSignalSummarySchema>;
+export type InsightSummary = z.infer<typeof InsightSummarySchema>;
 export type CommunitySignal = z.infer<typeof CommunitySignalSchema>;
 export type EnhancedScore = z.infer<typeof EnhancedScoreSchema>;
 export type TrendKeyword = z.infer<typeof TrendKeywordSchema>;
@@ -111,6 +122,7 @@ export interface FetchInsightsParams {
   min_score?: number;
   source?: string;
   sort?: 'relevance' | 'founder_fit' | 'opportunity' | 'feasibility' | 'newest';
+  search?: string;
   featured?: boolean;
   limit?: number;
   offset?: number;
@@ -129,7 +141,7 @@ export const WorkspaceStatusSchema = z.object({
 
 export const SavedInsightSchema = z.object({
   id: z.string().uuid(),
-  user_id: z.string().uuid(),
+  user_id: z.string().uuid().optional(),
   insight_id: z.string().uuid(),
   status: z.enum(['saved', 'interested', 'building', 'not_interested']),
   notes: z.string().nullable().optional(),
@@ -137,7 +149,7 @@ export const SavedInsightSchema = z.object({
   shared_count: z.number().default(0),
   saved_at: datetimeValidator,
   claimed_at: datetimeValidator.nullable().optional(),
-  insight: InsightSchema.optional(),
+  insight: InsightSummarySchema.optional(),
 });
 
 export const SavedInsightListResponseSchema = z.object({

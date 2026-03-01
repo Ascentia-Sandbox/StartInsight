@@ -4,7 +4,7 @@
 **Read When:** Before implementing features, designing database models, creating APIs
 **Dependencies:** Read active-context.md for current phase, implementation-plan.md for tasks
 **Purpose:** System architecture, 69 database tables, 232+ API endpoints, auth, RLS, deployment
-**Last Updated:** 2026-02-19
+**Last Updated:** 2026-02-25
 ---
 
 # System Architecture: StartInsight
@@ -20,7 +20,7 @@
 | Component | Technology | Port/URL | Purpose |
 |-----------|-----------|----------|---------|
 | **Frontend** | Next.js 16.1.3 (App Router) | 3000 | User dashboard, admin portal, public pages (34 routes) |
-| **Backend** | FastAPI + Uvicorn ASGI | 8000 | REST API (232+ endpoints), SSE streaming |
+| **Backend** | FastAPI + Uvicorn ASGI | 8080 (Railway injects `PORT=8080`) | REST API (232+ endpoints), SSE streaming |
 | **Database** | PostgreSQL 16 (Supabase Pro) | 5432 | 69 tables with RLS enabled, single source for dev + prod |
 | **Cache/Queue** | Redis 7 | 6379 | Arq task queue, rate limiting |
 | **Worker** | Arq + APScheduler | N/A | Background scraping (6-hour intervals) |
