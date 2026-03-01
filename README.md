@@ -731,4 +731,4 @@ For questions or issues:
 
 ---
 
-*v1.0.5 — Domain sweep: all startinsight.ai → startinsight.co (contact, faq, privacy, terms, billing, tenant-settings, config.py, env examples). ~$30/mo. (2026-02-23)*
+*v1.0.6 — Railway cleanup: removed unused `startinsight-db` (PostgreSQL) and `startinsight-api` (legacy) services from both production and staging. Project now has 2 services: `backend` + `Redis`. (2026-03-01)*
