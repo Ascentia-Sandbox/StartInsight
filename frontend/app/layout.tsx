@@ -9,6 +9,9 @@ const instrumentSerif = Instrument_Serif({
   variable: "--font-instrument-serif",
   subsets: ["latin"],
   weight: "400",
+  // 'optional' prevents font-swap from delaying LCP — system serif used on first load
+  // font applies on subsequent navigations (cached). Better LCP than 'swap'.
+  display: 'optional',
 });
 
 const jetbrainsMono = JetBrains_Mono({
