@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { ShieldCheck, ShieldAlert, ShieldQuestion, Database, GitCompareArrows } from 'lucide-react';
 import type { Insight } from '@/lib/types';
-import { TrendSparkline } from '@/components/trend-sparkline-lazy';
+import { TrendSparkline } from '@/components/trend-sparkline';
 
 interface InsightCardProps {
   insight: Insight;
