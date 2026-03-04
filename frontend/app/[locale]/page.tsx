@@ -1,6 +1,3 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -13,9 +10,7 @@ import {
   TrendingUp,
   DollarSign,
 } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { InsightCard } from "@/components/InsightCard";
-import { config } from "@/lib/env";
 import type { Insight } from "@/lib/types";
 
 interface PublicStats {
@@ -28,62 +23,51 @@ interface PublicStats {
   evidence_validators: number;
 }
 
-export default function HomePage() {
-  const [insights, setInsights] = useState<Insight[]>([]);
-  const [stats, setStats] = useState<PublicStats | null>(null);
-  const [loading, setLoading] = useState(true);
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://api.startinsight.co";
 
-  const fetchHomeData = async () => {
-    const apiUrl = config.apiUrl;
-
-    // Fetch insights and stats in parallel
+async function getHomeData(): Promise<{ insights: Insight[]; stats: PublicStats | null }> {
+  try {
     const [insightsResult, statsResult] = await Promise.allSettled([
-      fetch(`${apiUrl}/api/insights?limit=6&sort=newest`).then((r) =>
-        r.ok ? r.json() : null
-      ),
-      fetch(`${apiUrl}/api/insights/stats/public`).then((r) =>
-        r.ok ? r.json() : null
-      ),
+      fetch(`${API_URL}/api/insights?limit=6&sort=newest`, {
+        next: { revalidate: 300 },
+      }).then((r) => (r.ok ? r.json() : null)),
+      fetch(`${API_URL}/api/insights/stats/public`, {
+        next: { revalidate: 300 },
+      }).then((r) => (r.ok ? r.json() : null)),
     ]);
 
-    // Process insights
-    if (insightsResult.status === "fulfilled" && insightsResult.value) {
-      const data = insightsResult.value;
-      if (data.insights?.length > 0) {
-        setInsights(data.insights.slice(0, 6));
-      }
-    }
+    const insights: Insight[] =
+      insightsResult.status === "fulfilled" && insightsResult.value?.insights?.length > 0
+        ? insightsResult.value.insights.slice(0, 6)
+        : [];
 
-    // Process stats
-    if (statsResult.status === "fulfilled" && statsResult.value) {
-      setStats(statsResult.value as PublicStats);
-    }
+    const stats: PublicStats | null =
+      statsResult.status === "fulfilled" ? statsResult.value : null;
 
-    setLoading(false);
-  };
+    return { insights, stats };
+  } catch {
+    return { insights: [], stats: null };
+  }
+}
 
-  useEffect(() => {
-    fetchHomeData();
-  }, []);
+const dimensionCards = [
+  { key: "opportunity", icon: Target, name: "Opportunity", description: "Size of the market opportunity and potential for disruption", bg: "bg-blue-500/10" },
+  { key: "problem", icon: Lightbulb, name: "Problem Clarity", description: "How well-defined and validated the problem is", bg: "bg-yellow-500/10" },
+  { key: "feasibility", icon: Wrench, name: "Feasibility", description: "Technical and business feasibility of the solution", bg: "bg-green-500/10" },
+  { key: "why_now", icon: Clock, name: "Why Now", description: "Timing factors that make this the right moment", bg: "bg-purple-500/10" },
+  { key: "go_to_market", icon: Megaphone, name: "Go-to-Market", description: "Clarity and viability of distribution strategy", bg: "bg-orange-500/10" },
+  { key: "founder_fit", icon: User, name: "Founder Fit", description: "How well this matches typical founder strengths", bg: "bg-pink-500/10" },
+  { key: "execution_difficulty", icon: TrendingUp, name: "Execution", description: "Complexity and resource requirements to build", bg: "bg-red-500/10" },
+  { key: "revenue_potential", icon: DollarSign, name: "Revenue", description: "Near-term monetization potential", bg: "bg-emerald-500/10" },
+];
 
-  // Fallback values when stats not loaded
-  const insightCount = stats
-    ? stats.total_insights.toLocaleString()
-    : "500+";
+export default async function HomePage() {
+  const { insights, stats } = await getHomeData();
+
+  const insightCount = stats ? stats.total_insights.toLocaleString() : "500+";
   const sourceCount = stats ? String(stats.active_sources) : "7";
   const dimensionCount = stats ? String(stats.scoring_dimensions) : "8";
-
-  // Dimension cards data for the scoring deep-dive section
-  const dimensionCards = [
-    { key: 'opportunity', icon: Target, name: 'Opportunity', description: 'Size of the market opportunity and potential for disruption', bg: 'bg-blue-500/10' },
-    { key: 'problem', icon: Lightbulb, name: 'Problem Clarity', description: 'How well-defined and validated the problem is', bg: 'bg-yellow-500/10' },
-    { key: 'feasibility', icon: Wrench, name: 'Feasibility', description: 'Technical and business feasibility of the solution', bg: 'bg-green-500/10' },
-    { key: 'why_now', icon: Clock, name: 'Why Now', description: 'Timing factors that make this the right moment', bg: 'bg-purple-500/10' },
-    { key: 'go_to_market', icon: Megaphone, name: 'Go-to-Market', description: 'Clarity and viability of distribution strategy', bg: 'bg-orange-500/10' },
-    { key: 'founder_fit', icon: User, name: 'Founder Fit', description: 'How well this matches typical founder strengths', bg: 'bg-pink-500/10' },
-    { key: 'execution_difficulty', icon: TrendingUp, name: 'Execution', description: 'Complexity and resource requirements to build', bg: 'bg-red-500/10' },
-    { key: 'revenue_potential', icon: DollarSign, name: 'Revenue', description: 'Near-term monetization potential', bg: 'bg-emerald-500/10' },
-  ];
 
   return (
     <div className="min-h-screen">
@@ -113,7 +97,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Animated counters -- driven by /api/insights/stats/public */}
+          {/* Stats counters -- driven by /api/insights/stats/public */}
           <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground flex-wrap">
             <div className="flex items-center gap-2">
               <span className="font-data text-2xl font-bold text-foreground">
@@ -158,13 +142,7 @@ export default function HomePage() {
             Fresh market intelligence from today&apos;s data analysis
           </p>
 
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-64 rounded-xl" />
-              ))}
-            </div>
-          ) : insights.length > 0 ? (
+          {insights.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {insights.map((insight) => (
                 <InsightCard key={insight.id} insight={insight} />
