@@ -15,9 +15,9 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
-from starlette.requests import Request
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.requests import Request
 
 from app.agents.research_agent import (
     analyze_idea_with_retry,
