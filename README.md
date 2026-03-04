@@ -698,12 +698,13 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 - ✅ Domain sweep: all `startinsight.ai` → `startinsight.co` across codebase
 
 **Service Health Check (2026-03-04)**:
-- ⚠️ Railway: plan upgraded (was expired); backend needs redeploy via CI/CD push or Railway dashboard
+- ✅ Railway: `api.startinsight.co` → `{"status":"ready","checks":{"database":"healthy","redis":"healthy"}}`
 - ✅ Supabase Pro: PostgreSQL accessible (66 tables, 25 migrations at c009)
 - ✅ Vercel: startinsight.co → HTTP 200
 - ✅ Sentry: `backend` + `frontend` projects active (ascentia-km org)
 - ✅ Google Gemini: gemini-2.0-flash API accessible
-- ✅ CI/CD: surface Railway deploy failures (removed `continue-on-error` masking)
+- ⚠️ Resend: `startinsight.co` domain not yet verified in Resend (no domains configured)
+- ✅ CI/CD: Railway deploy failures now surface (removed `continue-on-error` masking)
 
 See `memory-bank/active-context.md` for current state and full growth roadmap.
 
