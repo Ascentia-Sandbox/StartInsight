@@ -1,14 +1,8 @@
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
 import { formatDistanceToNow } from 'date-fns';
 import { ShieldCheck, ShieldAlert, ShieldQuestion, Database, GitCompareArrows } from 'lucide-react';
 import type { Insight } from '@/lib/types';
-
-// Lazy-load recharts-based sparkline to defer the heavy recharts bundle
-const TrendSparkline = dynamic(
-  () => import('@/components/trend-sparkline').then((m) => m.TrendSparkline),
-  { ssr: false, loading: () => <span className="inline-block w-20 h-6" /> }
-);
+import { TrendSparkline } from '@/components/trend-sparkline-lazy';
 
 interface InsightCardProps {
   insight: Insight;
