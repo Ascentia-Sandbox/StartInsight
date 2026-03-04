@@ -697,6 +697,14 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 - ✅ Scraper pipeline fixed (Crawl4AI timeout + duplicate APScheduler/Arq scheduling removed)
 - ✅ Domain sweep: all `startinsight.ai` → `startinsight.co` across codebase
 
+**Service Health Check (2026-03-04)**:
+- ⚠️ Railway: plan upgraded (was expired); backend needs redeploy via CI/CD push or Railway dashboard
+- ✅ Supabase Pro: PostgreSQL accessible (66 tables, 25 migrations at c009)
+- ✅ Vercel: startinsight.co → HTTP 200
+- ✅ Sentry: `backend` + `frontend` projects active (ascentia-km org)
+- ✅ Google Gemini: gemini-2.0-flash API accessible
+- ✅ CI/CD: surface Railway deploy failures (removed `continue-on-error` masking)
+
 See `memory-bank/active-context.md` for current state and full growth roadmap.
 
 ---
@@ -731,4 +739,4 @@ For questions or issues:
 
 ---
 
-*v1.0.6 — Railway cleanup: removed unused `startinsight-db` (PostgreSQL) and `startinsight-api` (legacy) services from both production and staging. Project now has 2 services: `backend` + `Redis`. (2026-03-01)*
+*v1.0.7 — Service health check 2026-03-04: Railway plan upgraded; CI/CD failure masking removed (`continue-on-error`/`|| true`). Other services (Supabase, Vercel, Sentry, Gemini) confirmed healthy. (2026-03-04)*
