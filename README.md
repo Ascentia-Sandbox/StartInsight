@@ -689,6 +689,19 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 - 11 unique competitive advantages
 - 50-70% lower pricing
 
+**Performance Optimizations (2026-03-04)**:
+- Home page converted to SSR with ISR (revalidate: 300s) — eliminates client-side LCP delay
+- Framer-motion (219 KB) lazy-loaded via dynamic import — TBT: 340ms → 140ms
+- Satoshi font preloaded; Instrument Serif uses font-display:optional — LCP improvement
+- ReactQueryDevtools excluded from production bundle
+- lucide-react, recharts, @radix-ui tree-shaken via optimizePackageImports
+
+**Codebase Cleanup (2026-03-05)**:
+- Deleted stale locale-unaware `/validate` route (duplicate of `[locale]/validate`)
+- Removed orphaned `trend-sparkline-lazy.tsx` component
+- Organized 16 root-level screenshots → `docs/screenshots/`
+- Deleted stale `docs/memory-bank-readme-cleanup-2026-02-25` branch
+
 **Recent Improvements (2026-02-25)**:
 - ✅ 37 Sentry issues resolved (422 errors, chat fixes, research pre-fill)
 - ✅ Chat agent prompts refactored; admin agents page rewritten
@@ -696,6 +709,15 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 - ✅ Uptime monitoring — GitHub Actions every-5-min workflow, auto-creates/closes GitHub issues
 - ✅ Scraper pipeline fixed (Crawl4AI timeout + duplicate APScheduler/Arq scheduling removed)
 - ✅ Domain sweep: all `startinsight.ai` → `startinsight.co` across codebase
+
+**Service Health Check (2026-03-04)**:
+- ✅ Railway: `api.startinsight.co` → `{"status":"ready","checks":{"database":"healthy","redis":"healthy"}}`
+- ✅ Supabase Pro: PostgreSQL accessible (66 tables, 25 migrations at c009)
+- ✅ Vercel: startinsight.co → HTTP 200
+- ✅ Sentry: `backend` + `frontend` projects active (ascentia-km org)
+- ✅ Google Gemini: gemini-2.0-flash API accessible
+- ⚠️ Resend: `startinsight.co` domain not yet verified in Resend (no domains configured)
+- ✅ CI/CD: Railway deploy failures now surface (removed `continue-on-error` masking)
 
 See `memory-bank/active-context.md` for current state and full growth roadmap.
 
@@ -731,4 +753,4 @@ For questions or issues:
 
 ---
 
-*v1.0.5 — Domain sweep: all startinsight.ai → startinsight.co (contact, faq, privacy, terms, billing, tenant-settings, config.py, env examples). ~$30/mo. (2026-02-23)*
+*v1.0.7 — Codebase cleanup + frontend performance (2026-03-05): SSR/ISR home page, framer-motion lazy-load (TBT 340ms→140ms), font preload, stale validate route deleted, screenshots organized into docs/screenshots/.*

@@ -4,7 +4,7 @@
 **Read When:** Before every task to understand current phase status
 **Dependencies:** Read project-brief.md first for context
 **Purpose:** Current phase tracking, immediate tasks, blockers, what's working/next
-**Last Updated:** 2026-02-25
+**Last Updated:** 2026-03-05
 ---
 
 # Active Context: StartInsight Development
@@ -49,6 +49,15 @@ Railway Project ID: `a3ece066-4758-4780-84d6-0379f1312227`
 | AI Monitoring | Manual `gen_ai.request` spans on enhanced_analyzer, research_agent, market_intel_agent |
 | Sample Rates | Production: 10% traces/profiles; Staging: 100% |
 | Env Vars | Backend via Railway MCP; Frontend via GitHub Actions `set-vercel-sentry-env.yml` |
+
+## Recent Work (2026-03-05)
+
+1. ✅ **Frontend performance optimizations** — Home page SSR/ISR (revalidate:300); framer-motion (219KB) lazy via dynamic import; Satoshi font preloaded; Instrument Serif `display:optional`; ReactQueryDevtools prod-excluded; `optimizePackageImports` for lucide-react/recharts/@radix-ui. Staging Lighthouse: TBT 340ms→140ms; expected 85-90+ on production.
+2. ✅ **Codebase cleanup** — Deleted stale root `app/validate/` (locale-unaware duplicate); deleted orphaned `trend-sparkline-lazy.tsx`; moved 16 root-level screenshots → `docs/screenshots/`; deleted stale `docs/memory-bank-readme-cleanup-2026-02-25` branch.
+
+**Pending (from 2026-03-05):**
+- Vercel Lighthouse staging score ~72 (Slow 4G simulation); production expected 85-90+ (ISR warm cache)
+- SEO score 63 on staging (Vercel preview adds `noindex`) → production = 100
 
 ## Recent Work (2026-02-25)
 

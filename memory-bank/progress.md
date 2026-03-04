@@ -13,6 +13,25 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-03-05)
+
+- [2026-03-04] [PERF-1]: Frontend bundle + LCP optimizations
+  - Files: app/[locale]/page.tsx, layout.tsx, providers.tsx, next.config.ts, tour/TourProvider.tsx, tour/index.ts
+  - Tech: ISR home SSR, framer-motion dynamic import, Satoshi font preload
+  - Status: [✓ Complete]
+
+- [2026-03-04] [FIX-1]: Sentry BACKEND-16/17 — slowapi/Pydantic conflict in research.py
+  - Files: backend/app/api/routes/research.py
+  - Tech: Added Starlette Request param, renamed Pydantic body to avoid slowapi conflict
+  - Status: [✓ Complete]
+
+- [2026-03-05] [CLEANUP-1]: Remove redundant files, organize screenshots
+  - Files: app/validate/ (deleted), trend-sparkline-lazy.tsx (deleted), docs/screenshots/
+  - Tech: Deleted stale locale-unaware validate route; moved 16 root PNGs
+  - Status: [✓ Complete]
+
+---
+
 ## Recent Progress (2026-02-24)
 
 - [2026-02-24] [SENTRY-FIXES]: Resolve all 37 Sentry production issues

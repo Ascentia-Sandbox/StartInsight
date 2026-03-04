@@ -17,6 +17,7 @@ from uuid import UUID
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.requests import Request
 
 from app.agents.research_agent import (
     analyze_idea_with_retry,
@@ -149,7 +150,8 @@ async def run_analysis_background(
 @router.post("/analyze", response_model=ResearchAnalysisResponse)
 @limiter.limit("10/hour")  # Phase 2: SlowAPI rate limiting
 async def request_analysis(
-    request: ResearchRequestCreate,
+    request: Request,
+    body: ResearchRequestCreate,
     background_tasks: BackgroundTasks,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
@@ -185,9 +187,9 @@ async def request_analysis(
     # Create analysis record
     analysis = CustomAnalysis(
         user_id=current_user.id,
-        idea_description=request.idea_description,
-        target_market=request.target_market,
-        budget_range=request.budget_range,
+        idea_description=body.idea_description,
+        target_market=body.target_market,
+        budget_range=body.budget_range,
         status=AnalysisStatus.PENDING,
         progress_percent=0,
         current_step="Queued for analysis",
@@ -200,9 +202,9 @@ async def request_analysis(
     background_tasks.add_task(
         run_analysis_background,
         analysis.id,
-        request.idea_description,
-        request.target_market,
-        request.budget_range,
+        body.idea_description,
+        body.target_market,
+        body.budget_range,
     )
 
     logger.info(f"User {current_user.email} requested analysis {analysis.id}")
@@ -388,7 +390,8 @@ async def get_quota(
 @router.post("/request", response_model=ResearchRequestResponse)
 @limiter.limit("5/hour")
 async def create_research_request(
-    request: ResearchRequestCreate,
+    request: Request,
+    body: ResearchRequestCreate,
     current_user: CurrentUser,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
@@ -417,9 +420,9 @@ async def create_research_request(
     # Create research request
     research_request = ResearchRequest(
         user_id=current_user.id,
-        idea_description=request.idea_description,
-        target_market=request.target_market,
-        budget_range=request.budget_range,
+        idea_description=body.idea_description,
+        target_market=body.target_market,
+        budget_range=body.budget_range,
         status="pending",
     )
     db.add(research_request)
@@ -436,9 +439,9 @@ async def create_research_request(
         # Trigger analysis in background
         analysis = CustomAnalysis(
             user_id=current_user.id,
-            idea_description=request.idea_description,
-            target_market=request.target_market,
-            budget_range=request.budget_range,
+            idea_description=body.idea_description,
+            target_market=body.target_market,
+            budget_range=body.budget_range,
             status=AnalysisStatus.PENDING,
             progress_percent=0,
             current_step="Queued for analysis",
@@ -454,9 +457,9 @@ async def create_research_request(
         background_tasks.add_task(
             run_analysis_background,
             analysis.id,
-            request.idea_description,
-            request.target_market,
-            request.budget_range,
+            body.idea_description,
+            body.target_market,
+            body.budget_range,
         )
 
     logger.info(

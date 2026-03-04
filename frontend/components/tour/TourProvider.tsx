@@ -1,7 +1,13 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { GuidedTour, TourStep } from './GuidedTour';
+import dynamic from 'next/dynamic';
+import type { TourStep } from './GuidedTour';
+
+// Lazy-load framer-motion (219 KB) — only needed when tour is triggered
+const GuidedTour = dynamic(() => import('./GuidedTour').then((m) => m.GuidedTour), {
+  ssr: false,
+});
 
 // Define tour steps for the homepage
 const homepageTourSteps: TourStep[] = [
