@@ -1,9 +1,12 @@
 name: Uptime Monitor
 
 on:
-  schedule:
-    # Every 5 minutes
-    - cron: '*/5 * * * *'
+  # Disabled: moved to UptimeRobot (free) to preserve GitHub Actions minutes.
+  # At 288 runs/day × 2 jobs × ~45s each = ~8,640 min/month, this exhausts
+  # the 2,000 min/month free org quota in ~3-4 days.
+  # Monitors: https://uptimerobot.com — check api.startinsight.co/health + staging
+  # schedule:
+  #   - cron: '*/5 * * * *'
   workflow_dispatch:
 
 env:
