@@ -706,7 +706,7 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 - ✅ 37 Sentry issues resolved (422 errors, chat fixes, research pre-fill)
 - ✅ Chat agent prompts refactored; admin agents page rewritten
 - ✅ Trends backfill script added (`backend/scripts/backfill_trends_table.py`)
-- ✅ Uptime monitoring — GitHub Actions every-5-min workflow, auto-creates/closes GitHub issues
+- ✅ Uptime monitoring — UptimeRobot (free, 5-min interval); GitHub Actions schedule cron disabled
 - ✅ Scraper pipeline fixed (Crawl4AI timeout + duplicate APScheduler/Arq scheduling removed)
 - ✅ Domain sweep: all `startinsight.ai` → `startinsight.co` across codebase
 

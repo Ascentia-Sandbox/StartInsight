@@ -73,7 +73,7 @@ Railway Project ID: `a3ece066-4758-4780-84d6-0379f1312227`
 2. ✅ **Professional favicon system** — `icon.svg` (teal chart-bars, 32×32), `apple-icon.tsx` (180×180 ImageResponse), `opengraph-image.tsx` (1200×630 branded gradient); `metadata.icons` added to `layout.tsx`
 3. ✅ **CI/CD VERCEL_TOKEN fix** — Production deploy step reverted to `VERCEL_TOKEN_STAGING` (no separate `VERCEL_TOKEN` secret exists; `--prod` flag controls env, not token name)
 4. ✅ **Scraper pipeline fixed** — Crawl4AI 30s timeout added; duplicate APScheduler/Arq scheduling removed
-5. ✅ **Uptime monitoring** — GitHub Actions every-5-min workflow; auto-creates/closes GitHub issues on failures
+5. ✅ **Uptime monitoring** — UptimeRobot (free, 5-min interval); GitHub Actions schedule cron disabled
 6. ✅ **SEO improvements** — JSON-LD Organization schema, Google verification meta, improved sitemap changeFrequency/priority
 7. ✅ **Content seeding CLI** — `backend/scripts/seed_content.py` with status/scrape/analyze/pipeline/approve commands
 8. ✅ **PostHog + Sentry release** — `PostHogProvider`, typed `analytics.ts`, `VERCEL_GIT_COMMIT_SHA` for release tracking

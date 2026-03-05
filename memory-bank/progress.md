@@ -1124,3 +1124,13 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: email_tracking.py (new), email_service.py, worker.py, admin.py, main.py
   - Tech: Base64 tracking pixel, UTM params on all links, plain-text fallback added, POST /api/admin/digest/test
   - Status: [✓ Complete] — 249 tests passing; trigger test via POST /api/admin/digest/test
+
+- [2026-03-05] [CI-FIX]: Uptime monitoring migrated to UptimeRobot
+  - Files: .github/workflows/uptime-check.yml
+  - Tech: Disabled schedule cron; UptimeRobot handles 5-min checks externally
+  - Status: [✓ Complete]
+
+- [2026-03-05] [CLEANUP]: Deleted 3 dead-code files; updated docs and memory bank
+  - Files: backend/app/services/compliance_manager.py, frontend/components/builder/builder-integration.tsx, frontend/components/builder/builder-integration-enhanced.tsx
+  - Tech: Zero imports confirmed via grep before deletion
+  - Status: [✓ Complete]
