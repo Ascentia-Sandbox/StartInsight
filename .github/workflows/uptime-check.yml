@@ -23,8 +23,6 @@ jobs:
       issues: write
 
     steps:
-      - uses: actions/checkout@v4
-
       - name: Health check
         id: health
         # We set continue-on-error true so subsequent steps can run regardless.
@@ -164,8 +162,6 @@ jobs:
       issues: write
 
     steps:
-      - uses: actions/checkout@v4
-
       - name: Restore failure counter from cache
         id: cache_restore
         uses: actions/cache/restore@v4
