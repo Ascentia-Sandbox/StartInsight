@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-static';
+
 import Link from "next/link";
 import { HelpCircle, Search } from "lucide-react";
 import { useState } from "react";

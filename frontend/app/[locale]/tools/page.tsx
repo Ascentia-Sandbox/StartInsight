@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-static';
+
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { ExternalLink, Search, Filter, Calculator, DollarSign, TrendingUp, Target } from "lucide-react";

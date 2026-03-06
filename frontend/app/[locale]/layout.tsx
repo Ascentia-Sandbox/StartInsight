@@ -8,7 +8,7 @@ import { Footer } from "@/components/Footer";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TourProvider, FloatingTourButton } from "@/components/tour";
 import { Toaster } from "@/components/ui/sonner";
-import { CommandPalette } from "@/components/command-palette";
+import { CommandPaletteClient } from "@/components/command-palette-client";
 import { locales, type Locale } from '@/i18n';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://startinsight.co";
@@ -121,7 +121,7 @@ export default async function LocaleLayout({
             <main id="main-content">{children}</main>
             <Footer />
             <FloatingTourButton />
-            <CommandPalette />
+            <CommandPaletteClient />
             <Toaster />
           </TourProvider>
         </Providers>
