@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { ShieldCheck, ShieldAlert, ShieldQuestion, Database, GitCompareArrows } from 'lucide-react';
 import type { Insight } from '@/lib/types';
@@ -131,6 +132,7 @@ function MarketSizeIndicator({ size }: { size: string }) {
 }
 
 export function InsightCard({ insight }: InsightCardProps) {
+  const router = useRouter();
   const source = insight.raw_signal?.source;
   const sourceDisplay = source ? sourceConfig[source] : null;
   const overallScore = getOverallScore(insight);
@@ -209,15 +211,14 @@ export function InsightCard({ insight }: InsightCardProps) {
         <div className="mt-auto flex items-center justify-between pt-2 border-t border-border/50">
           <MarketSizeIndicator size={insight.market_size_estimate} />
           <div className="flex items-center gap-2">
-            <Link
-              href={`/compare?ids=${insight.id}`}
-              onClick={(e) => e.stopPropagation()}
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/compare?ids=${insight.id}`); }}
               className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
               title="Compare this insight"
             >
               <GitCompareArrows className="h-3.5 w-3.5" />
               Compare
-            </Link>
+            </button>
             <span className="text-xs text-muted-foreground" suppressHydrationWarning>
               {formatDistanceToNow(new Date(insight.created_at), { addSuffix: true })}
             </span>
