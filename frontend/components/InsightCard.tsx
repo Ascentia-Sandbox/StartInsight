@@ -218,7 +218,7 @@ export function InsightCard({ insight }: InsightCardProps) {
               <GitCompareArrows className="h-3.5 w-3.5" />
               Compare
             </Link>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground" suppressHydrationWarning>
               {formatDistanceToNow(new Date(insight.created_at), { addSuffix: true })}
             </span>
           </div>
