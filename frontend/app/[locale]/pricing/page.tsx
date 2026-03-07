@@ -1,7 +1,5 @@
 "use client";
 
-export const dynamic = 'force-static';
-
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Check, X, Zap, Crown, Building2, Rocket } from "lucide-react";

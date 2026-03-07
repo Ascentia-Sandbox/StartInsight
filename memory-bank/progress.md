@@ -13,6 +13,13 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-03-06)
+
+- [2026-03-06] [PERF-2]: Vercel Speed Insights RES optimization (51 → 90+ target)
+  - Files: app/layout.tsx, app/[locale]/page.tsx, app/[locale]/layout.tsx, components/PostHogProvider.tsx, globals.css
+  - Tech: Suspense streaming home page, self-hosted Satoshi font, force-static content pages, deferred PostHog/CommandPalette
+  - Status: [✓ Complete]
+
 ## Recent Progress (2026-03-05)
 
 - [2026-03-04] [PERF-1]: Frontend bundle + LCP optimizations
