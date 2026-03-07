@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { ShieldCheck, ShieldAlert, ShieldQuestion, Database, GitCompareArrows } from 'lucide-react';
