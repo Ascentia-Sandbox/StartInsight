@@ -12,7 +12,16 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     // Tree-shake large packages to reduce unused JS in bundles
-    optimizePackageImports: ['lucide-react', 'recharts', '@radix-ui/react-icons'],
+    optimizePackageImports: [
+      'lucide-react',
+      'recharts',
+      '@radix-ui/react-icons',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-select',
+      '@radix-ui/react-tabs',
+      '@radix-ui/react-tooltip',
+    ],
   },
 };
 

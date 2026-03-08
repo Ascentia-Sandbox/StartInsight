@@ -1,7 +1,6 @@
 name: Set Vercel Sentry Env Vars
 
-# Run manually once to configure Sentry environment variables on Vercel
-# After running, delete or disable this workflow.
+# Run manually as needed to update Sentry environment variables in Vercel.
 on:
   workflow_dispatch:
     inputs:

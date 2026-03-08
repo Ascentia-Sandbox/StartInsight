@@ -4,7 +4,7 @@
 **Read When:** When choosing libraries, verifying dependencies, resolving conflicts, cost planning
 **Dependencies:** Read project-brief.md for "Glue Coding" philosophy
 **Purpose:** Actual technology stack, dependency versions, MVP cost structure
-**Last Updated:** 2026-02-19
+**Last Updated:** 2026-03-08
 ---
 
 # Tech Stack: StartInsight
@@ -46,6 +46,7 @@
 - **shadcn/ui** — 25 components (copy-paste, based on Radix UI)
 - **Design system:** Deep teal primary + warm amber accent — "Data Intelligence" aesthetic
 - **Typography:** Instrument Serif (headings) · Satoshi (body) · JetBrains Mono (data/scores)
+  - **Satoshi self-hosted**: 3 woff2 files in `frontend/public/fonts/`, loaded via `next/font/local` with `display:'optional'`; `globals.css` uses `var(--font-satoshi)` (NOT the string `"Satoshi"`)
 - **Animation:** Framer Motion 12.x — stagger reveals, counter animations, skeleton morphing
 
 ### State & Data
@@ -56,6 +57,9 @@
 ### Charts & Visualization
 - **Recharts 3.6.0** — React 19 compatible; radar charts, scatter charts, line/area/bar
 - All visualizations implemented via Recharts. Tremor is not installed (not needed).
+
+### Analytics
+- **PostHog** — Product analytics; loaded via **deferred dynamic import** inside `useEffect` (removes ~40KB from main bundle). `NEXT_PUBLIC_POSTHOG_KEY` + `NEXT_PUBLIC_POSTHOG_HOST` env vars required.
 
 ### Key Frontend Dependencies (actual `package.json`)
 ```json
@@ -113,7 +117,8 @@
 
 ### AI & Agents
 - **PydanticAI ≥1.x** — Agent orchestration, native async, structured JSON output
-  - All 8 agents use `output_type=` and `result.output` (v1.x API)
+  - **8 active agents**: `analyzer`, `enhanced_analyzer`, `research`, `competitive_intel`, `market_intel`, `content_generator`, `chat_agent`, `market_insight_publisher`
+  - All agents use `output_type=` and `result.output` (v1.x API — `result_type`/`result.data` are deprecated)
   - Model string: `"google-gla:gemini-2.0-flash"` (hardcoded in all agents)
 - **Primary LLM: Gemini 2.0 Flash** via `GOOGLE_API_KEY`
   - $0.10/M input · $0.40/M output — 97% cheaper than Claude
@@ -122,13 +127,13 @@
   - `anthropic>=0.25.0` — Claude 3.5 Sonnet (activate only if Gemini quota exceeded)
   - `openai>=1.12.0` — GPT-4o (activate only for vision tasks if needed)
 
-### Scraping & Data Collection
+### Scraping & Data Collection (6 active scrapers)
 - **PRAW ≥7.7** — Reddit API (structured posts, scores, metadata). Free.
 - **pytrends ≥4.9** — Google Trends (unofficial API, no key needed). Free.
 - **Tweepy ≥4.14** — Twitter/X API (free basic tier, 500K reads/mo)
 - **Firecrawl** (`firecrawl-py>=0.0.16`) — Web → Markdown. Free tier (500 pages/mo) for MVP.
 - **Crawl4AI ≥0.2** (`USE_CRAWL4AI=true` on Railway) — Self-hosted Firecrawl alternative, $0 cost
-- **BeautifulSoup4** — HTML parsing (Product Hunt scraper)
+- **BeautifulSoup4** — HTML parsing (Product Hunt scraper + Hacker News scraper)
 
 ### Authentication & Security
 - **python-jose[cryptography] ≥3.3** — JWT ES256 validation via Supabase JWKS
