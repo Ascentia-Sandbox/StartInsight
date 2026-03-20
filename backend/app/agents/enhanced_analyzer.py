@@ -14,6 +14,7 @@ See architecture.md "Enhanced Scoring Architecture" for specification.
 
 import asyncio
 import logging
+import re
 import time
 from typing import Literal
 
@@ -28,6 +29,7 @@ from tenacity import (
 
 from app.agents.sentry_tracing import trace_agent_run
 from app.core.config import settings
+from app.core.constants import SOURCE_CREDIBILITY_WEIGHTS
 from app.models.insight import Insight
 from app.models.raw_signal import RawSignal
 from app.monitoring.metrics import get_metrics_tracker
@@ -780,6 +782,205 @@ async def analyze_signal_enhanced_with_retry(raw_signal: RawSignal) -> Insight:
                 f"Enhanced analysis failed for signal {raw_signal.id} after retries: {e}"
             )
         raise
+
+
+# ============================================================
+# Phase 6.5A: Rule-Based Extraction (Tier 3 Fallback)
+# ============================================================
+
+
+def _rule_based_extraction(signal: RawSignal) -> Insight:
+    """
+    Tier 3 fallback: extract a minimal Insight from raw signal data without LLM.
+
+    Used when both Gemini and Claude have failed. Produces degraded-quality output
+    with relevance_score=0.3 to signal low confidence to downstream consumers.
+
+    Args:
+        signal: The raw signal to extract from
+
+    Returns:
+        Insight: Minimal insight derived from signal metadata and content
+    """
+    metadata = signal.extra_metadata or {}
+
+    # Extract title from metadata or first meaningful line of content
+    title = metadata.get("title", "")
+    if not title and signal.content:
+        # Use first non-empty line, capped at 120 chars
+        for line in signal.content.splitlines():
+            line = line.strip()
+            if line:
+                title = line[:120]
+                break
+    if not title:
+        title = f"Signal from {signal.source or 'unknown source'}"
+
+    # Use first 500 chars of content as problem statement
+    problem_statement = (signal.content or "")[:500].strip()
+    if not problem_statement:
+        problem_statement = "Content unavailable for rule-based extraction."
+
+    # Derive a minimal proposed solution from title (remove common noise words)
+    proposed_solution = re.sub(r"\b(the|a|an|is|are|was|were)\b", "", title, flags=re.IGNORECASE).strip()
+    proposed_solution = proposed_solution[:50] or "Solution TBD"
+
+    logger.warning(
+        f"Rule-based extraction used for signal {signal.id} "
+        f"(source={signal.source}) — LLM tiers exhausted"
+    )
+
+    return Insight(
+        raw_signal_id=signal.id,
+        title=title,
+        problem_statement=problem_statement,
+        proposed_solution=proposed_solution,
+        market_size_estimate="Unknown",
+        relevance_score=0.3,  # Low confidence flag
+        # 8-dimension scores: mid-range defaults (not meaningful, just non-null)
+        opportunity_score=5,
+        problem_score=5,
+        feasibility_score=5,
+        why_now_score=5,
+        revenue_potential="$$",
+        execution_difficulty=5,
+        go_to_market_score=5,
+        founder_fit_score=5,
+        # Advanced frameworks: empty (not available without LLM)
+        competitor_analysis=[],
+        value_ladder=[],
+        market_gap_analysis="Rule-based extraction — LLM analysis unavailable.",
+        why_now_analysis="Rule-based extraction — LLM analysis unavailable.",
+        proof_signals=[],
+        execution_plan=[],
+        community_signals_chart=[],
+        trend_keywords=[],
+        market_sizing={
+            "tam": "Unknown",
+            "sam": "Unknown",
+            "som": "Unknown",
+            "growth_rate": "Unknown",
+        },
+        # Tag this insight as rule-based so admins can filter/review
+        admin_status="pending",
+        admin_notes="analysis_tier:rule_based",
+    )
+
+
+# ============================================================
+# Phase 6.5A: AI Fallback Chain Wrapper
+# ============================================================
+
+
+async def analyze_signal_enhanced_with_fallback(
+    raw_signal: RawSignal,
+    language: str = "en",
+) -> Insight:
+    """
+    3-tier AI fallback chain for enhanced signal analysis.
+
+    Tier 1: Gemini 2.0 Flash (primary, retries ×3 with exponential backoff)
+    Tier 2: Claude 3.5 Sonnet (if Gemini exhausts all retries)
+    Tier 3: Rule-based extraction (if both LLMs fail — no API cost, degraded quality)
+
+    After producing an insight from any tier, applies source credibility weighting
+    to relevance_score (Phase 6.5B).
+
+    Args:
+        raw_signal: The raw signal to analyze
+        language: Language code for LLM output (en, zh-CN, …)
+
+    Returns:
+        Insight: Structured insight (quality depends on which tier succeeded)
+    """
+    if not settings.ai_fallback_enabled:
+        # Fallback disabled — use existing retry function directly
+        insight = await analyze_signal_enhanced_with_retry(raw_signal)
+        _apply_credibility_weight(insight, raw_signal.source)
+        return insight
+
+    # ── Tier 1: Gemini (existing retry-decorated function) ──────────────────
+    try:
+        insight = await analyze_signal_enhanced_with_retry(raw_signal)
+        insight.admin_notes = "analysis_tier:gemini"
+        _apply_credibility_weight(insight, raw_signal.source)
+        logger.info(f"Tier 1 (Gemini) succeeded for signal {raw_signal.id}")
+        return insight
+    except Exception as gemini_exc:
+        logger.warning(
+            f"Tier 1 (Gemini) exhausted for signal {raw_signal.id}: {gemini_exc}. "
+            "Falling back to Tier 2 (Claude 3.5 Sonnet)."
+        )
+
+    # ── Tier 2: Claude 3.5 Sonnet ───────────────────────────────────────────
+    try:
+        claude_agent = Agent(
+            model="anthropic:claude-3-5-sonnet-latest",
+            system_prompt=get_enhanced_system_prompt(language),
+            output_type=EnhancedInsightSchema,
+        )
+        async with trace_agent_run("enhanced_analyzer_claude_fallback"):
+            claude_result = await asyncio.wait_for(
+                claude_agent.run(raw_signal.content),
+                timeout=settings.llm_call_timeout,
+            )
+        claude_data = claude_result.output
+
+        insight = Insight(
+            raw_signal_id=raw_signal.id,
+            language=language,
+            title=claude_data.title,
+            problem_statement=claude_data.problem_statement,
+            proposed_solution=claude_data.proposed_solution,
+            market_size_estimate=claude_data.market_size_estimate,
+            relevance_score=claude_data.relevance_score,
+            competitor_analysis=[c.model_dump() for c in claude_data.competitor_analysis],
+            opportunity_score=claude_data.opportunity_score,
+            problem_score=claude_data.problem_score,
+            feasibility_score=claude_data.feasibility_score,
+            why_now_score=claude_data.why_now_score,
+            revenue_potential=claude_data.revenue_potential,
+            execution_difficulty=claude_data.execution_difficulty,
+            go_to_market_score=claude_data.go_to_market_score,
+            founder_fit_score=claude_data.founder_fit_score,
+            value_ladder=[t.model_dump() for t in claude_data.value_ladder],
+            market_gap_analysis=claude_data.market_gap_analysis,
+            why_now_analysis=claude_data.why_now_analysis,
+            proof_signals=[p.model_dump() for p in claude_data.proof_signals],
+            execution_plan=[s.model_dump() for s in claude_data.execution_plan],
+            community_signals_chart=[c.model_dump() for c in claude_data.community_signals],
+            trend_keywords=[t.model_dump() for t in claude_data.trend_keywords],
+            market_sizing=claude_data.market_sizing.model_dump(),
+            admin_notes="analysis_tier:claude_fallback",
+        )
+        _apply_credibility_weight(insight, raw_signal.source)
+        logger.info(f"Tier 2 (Claude) succeeded for signal {raw_signal.id}")
+        return insight
+    except Exception as claude_exc:
+        logger.warning(
+            f"Tier 2 (Claude) failed for signal {raw_signal.id}: {claude_exc}. "
+            "Falling back to Tier 3 (rule-based extraction)."
+        )
+
+    # ── Tier 3: Rule-based extraction ───────────────────────────────────────
+    insight = _rule_based_extraction(raw_signal)
+    _apply_credibility_weight(insight, raw_signal.source)
+    return insight
+
+
+def _apply_credibility_weight(insight: Insight, source: str | None) -> None:
+    """
+    Phase 6.5B: Multiply relevance_score by the source credibility weight in-place.
+
+    Caps the result at 1.0. Uses 1.0 as the default weight for unknown sources.
+
+    Args:
+        insight: The insight to adjust (mutated in-place)
+        source: The raw signal source identifier (e.g. "hacker_news", "reddit")
+    """
+    weight = SOURCE_CREDIBILITY_WEIGHTS.get(source or "", 1.0)
+    base_score = insight.relevance_score if insight.relevance_score is not None else 0.5
+    insight.relevance_score = min(1.0, base_score * weight)
 
 
 # ============================================================

@@ -7,12 +7,15 @@ including common functionality for:
 - Error handling with retry logic
 - Rate limiting integration
 - Data deduplication
+- Per-scraper circuit breakers (Phase 6.1A)
 """
 
 import hashlib
 import logging
+import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from enum import Enum
 
 import httpx
 from sqlalchemy import select
@@ -29,6 +32,103 @@ from app.models.raw_signal import RawSignal
 from app.scrapers.firecrawl_client import ScrapeResult  # Shared by both clients
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================
+# Phase 6.1A: Per-Scraper Circuit Breakers
+# ============================================================
+
+
+class CircuitState(str, Enum):
+    """Circuit breaker states."""
+
+    CLOSED = "closed"  # Normal operation — requests flow through
+    OPEN = "open"  # Failures exceeded threshold — requests blocked
+    HALF_OPEN = "half_open"  # Cooldown expired — allow one probe request
+
+
+class CircuitBreaker:
+    """Per-scraper circuit breaker with Redis-backed state.
+
+    Pattern: 2 consecutive failures → 15min cooldown → half-open (1 probe) → close on success.
+
+    Redis keys:
+        scraper:circuit:{source}:state — CLOSED/OPEN/HALF_OPEN
+        scraper:circuit:{source}:failures — consecutive failure count
+        scraper:circuit:{source}:opened_at — timestamp when circuit opened
+    """
+
+    FAILURE_THRESHOLD = 2
+    COOLDOWN_SECONDS = 900  # 15 minutes
+
+    def __init__(self, source_name: str):
+        self.source_name = source_name
+        self._key_prefix = f"scraper:circuit:{source_name}"
+
+    async def _get_redis(self):
+        from app.core.cache import get_redis
+        return await get_redis()
+
+    async def get_state(self) -> CircuitState:
+        """Get current circuit state, auto-transitioning OPEN → HALF_OPEN after cooldown."""
+        try:
+            r = await self._get_redis()
+            state = await r.get(f"{self._key_prefix}:state")
+            if state is None:
+                return CircuitState.CLOSED
+
+            if state == CircuitState.OPEN:
+                opened_at = await r.get(f"{self._key_prefix}:opened_at")
+                if opened_at and (time.time() - float(opened_at)) >= self.COOLDOWN_SECONDS:
+                    await r.set(f"{self._key_prefix}:state", CircuitState.HALF_OPEN)
+                    logger.info(f"Circuit breaker {self.source_name}: OPEN → HALF_OPEN (cooldown expired)")
+                    return CircuitState.HALF_OPEN
+
+            return CircuitState(state)
+        except Exception as e:
+            logger.warning(f"Circuit breaker read error for {self.source_name}: {e}")
+            return CircuitState.CLOSED  # Fail open — allow requests if Redis is down
+
+    async def can_execute(self) -> bool:
+        """Check if a request is allowed through the circuit."""
+        state = await self.get_state()
+        if state == CircuitState.CLOSED:
+            return True
+        if state == CircuitState.HALF_OPEN:
+            return True  # Allow one probe request
+        # OPEN — blocked
+        logger.info(f"Circuit breaker {self.source_name}: OPEN — request blocked")
+        return False
+
+    async def record_success(self) -> None:
+        """Record a successful request. Resets failures and closes circuit."""
+        try:
+            r = await self._get_redis()
+            state = await r.get(f"{self._key_prefix}:state")
+            pipe = r.pipeline()
+            pipe.set(f"{self._key_prefix}:state", CircuitState.CLOSED)
+            pipe.set(f"{self._key_prefix}:failures", "0")
+            pipe.delete(f"{self._key_prefix}:opened_at")
+            await pipe.execute()
+            if state and state != CircuitState.CLOSED:
+                logger.info(f"Circuit breaker {self.source_name}: {state} → CLOSED (success)")
+        except Exception as e:
+            logger.warning(f"Circuit breaker write error for {self.source_name}: {e}")
+
+    async def record_failure(self) -> None:
+        """Record a failed request. Opens circuit after threshold exceeded."""
+        try:
+            r = await self._get_redis()
+            failures = await r.incr(f"{self._key_prefix}:failures")
+            if failures >= self.FAILURE_THRESHOLD:
+                await r.set(f"{self._key_prefix}:state", CircuitState.OPEN)
+                await r.set(f"{self._key_prefix}:opened_at", str(time.time()))
+                logger.warning(
+                    f"Circuit breaker {self.source_name}: CLOSED → OPEN "
+                    f"({failures} consecutive failures, cooldown {self.COOLDOWN_SECONDS}s)"
+                )
+        except Exception as e:
+            logger.warning(f"Circuit breaker write error for {self.source_name}: {e}")
 
 # Exceptions that are safe to retry
 RETRYABLE_EXCEPTIONS = (

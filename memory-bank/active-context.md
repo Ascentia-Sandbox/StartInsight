@@ -4,16 +4,30 @@
 **Read When:** Before every task to understand current phase status
 **Dependencies:** Read project-brief.md first for context
 **Purpose:** Current phase tracking, immediate tasks, blockers, what's working/next
-**Last Updated:** 2026-03-05
+**Last Updated:** 2026-03-20
 ---
 
 # Active Context: StartInsight Development
 
 ## Current Phase
 **Status:** ✅ LIVE IN PRODUCTION — Post-launch: content growth & SEO
-**Completed:** Phase 1-10 + A-L + Q1-Q9 + Security + Sentry + Redis + Domain + Favicon (100%)
-**Testing:** 291 backend tests passing, 47 E2E tests (5 browsers)
-**Database:** 69 tables, 232+ API endpoints, 8 AI agents, 6 active scrapers
+**Completed:** Phase 1-10 + A-L + Q1-Q9 + Security + Sentry + Redis + Domain + Favicon + Phase 6 (100%)
+**Testing:** 398 backend tests passing (47% coverage, was 17%), 47 E2E tests (5 browsers)
+**Database:** 70 tables, 235+ API endpoints, 8 AI agents, 6 active scrapers
+
+## Phase 6: Data Pipeline Resilience & Intelligence (COMPLETE ✅ — 2026-03-20)
+
+**Delivered:**
+- **6.1** Per-scraper circuit breakers, stale-on-error cache fallback, negative caching
+- **6.2** Source health registry (`source_health` table), GET /health/sources, intelligence gap dashboard
+- **6.3** L1 in-memory cache (cachetools TTLCache), bootstrap cache hydration
+- **6.4** Welford anomaly detection, cross-source TF-IDF correlation (union-find grouping), keyword spike detection
+- **6.5** AI fallback chain (Gemini → Claude → rule-based), source credibility weighting, Redis dedup locks
+
+**New tables:** `source_health` (15 columns). **New columns on `insights`:** `correlation_group_id`, `correlation_score`, `source_count`.
+**New endpoints:** GET /health/sources, GET /api/insights/correlated, GET /api/admin/intelligence-gaps.
+**Migrations:** c012 (source_health), c013 (correlation columns).
+**Key patterns:** Adapted from World Monitor (41K-star geopolitical intelligence platform).
 
 ## Infrastructure (2026-02-22)
 
@@ -33,8 +47,9 @@
 - Database: Supabase branch `jsprkxymvuwoqoqkromr` (session-mode pooler only)
 
 **CI/CD:** Push to `main` → production; push to `develop` → staging
-Pipeline: Security Scan → Tests → Migrate → Build Docker → Deploy
-GitHub Actions: `ci-cd.yml` + `set-vercel-sentry-env.yml`
+Pipeline: Security Scan → Tests (split: fast + integration) → Migrate → Build → Deploy
+Coverage gate: 35% enforced (`--cov-fail-under=35`), flaky test reruns (`--reruns 2`), PR coverage comments
+GitHub Actions: `ci-cd.yml` + `set-vercel-sentry-env.yml` + `sentry-daily-triage.yml` + `sentry-autofix.yml`
 Railway Project ID: `a3ece066-4758-4780-84d6-0379f1312227`
 
 **Monthly Cost:** ~$30/mo (Supabase Pro $25 + Gemini ~$5; Railway/Vercel/Redis on free tiers)
@@ -49,6 +64,13 @@ Railway Project ID: `a3ece066-4758-4780-84d6-0379f1312227`
 | AI Monitoring | Manual `gen_ai.request` spans on enhanced_analyzer, research_agent, market_intel_agent |
 | Sample Rates | Production: 10% traces/profiles; Staging: 100% |
 | Env Vars | Backend via Railway MCP; Frontend via GitHub Actions `set-vercel-sentry-env.yml` |
+
+## Recent Work (2026-03-20)
+
+1. ✅ **Test suite expansion** — 398 backend tests (was 307), 47% coverage (was 17%). 8 new test files: cache (25), circuit breaker (12), base scraper (14), health routes (16), insights routes (10), enhanced analyzer (10), scraper pipeline (10), analysis pipeline (6). Phase 6 services (16).
+2. ✅ **CI/CD hardening** — Split tests into fast (unit, no services) + integration (Postgres/Redis) parallel jobs. Added: uv cache, ruff format check, 35% coverage gate, `pytest-rerunfailures` (--reruns 2), PR coverage comments via orgoro/coverage.
+3. ✅ **Sentry automation** — Daily triage workflow (Mon-Fri 9am UTC, creates GitHub issue with unresolved errors). Auto-fix workflow for 4 known patterns (ConnectionDoesNotExist, MaxClients, Gemini 429, analyzer timeout). Sentry issue template.
+4. ✅ **CI/CD credential fix** — Production Vercel deploy was using `VERCEL_TOKEN_STAGING` / `VERCEL_PROJECT_ID_STAGING`; fixed to `VERCEL_TOKEN` / `VERCEL_PROJECT_ID`.
 
 ## Recent Work (2026-03-05)
 

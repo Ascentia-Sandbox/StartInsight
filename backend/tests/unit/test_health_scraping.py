@@ -71,7 +71,7 @@ class TestScraperHealthEndpoint:
                 content=f"Test signal {i}",
                 metadata={},
                 processed=False,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(),
             )
             db_session.add(signal)
         await db_session.commit()
@@ -86,7 +86,7 @@ class TestScraperHealthEndpoint:
         db_session: AsyncSession,
     ):
         """Should count signals from last 24 hours."""
-        now = datetime.utcnow()
+        now = datetime.now()
 
         # Add recent signals (should count)
         for i in range(5):
@@ -124,7 +124,7 @@ class TestScraperHealthEndpoint:
         db_session: AsyncSession,
     ):
         """Should report last run time per source."""
-        now = datetime.utcnow()
+        now = datetime.now()
 
         for source in ["reddit", "product_hunt"]:
             signal = RawSignal(
@@ -159,7 +159,7 @@ class TestScraperHealthEndpoint:
         db_session: AsyncSession,
     ):
         """Should show 0% error rate when all signals have content."""
-        now = datetime.utcnow()
+        now = datetime.now()
 
         # 4 good signals (all have content)
         for i in range(4):

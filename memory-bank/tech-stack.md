@@ -190,6 +190,7 @@ dependencies = [
     "bleach>=6.1.0",
     "itsdangerous>=2.1.0",
     "rich>=14.2.0",
+    "cachetools>=5.3.0",          # Phase 6.3A: L1 in-memory TTL cache
 ]
 ```
 
@@ -201,7 +202,7 @@ dependencies = [
 | Service | Purpose | Tier | Notes |
 |---------|---------|------|-------|
 | **Railway** | Backend (FastAPI + Arq worker) | Free (500h/mo) | Docker, port 8080, `railway.toml` |
-| **Railway Redis** | Task queue + rate limiting | Free (native) | `redis.railway.internal:6379`, plain TCP |
+| **Railway Redis** | Task queue + rate limiting + L2 cache | Free (native) | `redis.railway.internal:6379`, plain TCP; 3-tier caching: L1 cachetools TTLCache (30s) → L2 Redis (60-300s) → stale fallback |
 | **Vercel** | Frontend (Next.js) | Hobby (free) | App Router, unlimited bandwidth |
 
 ### CI/CD

@@ -244,20 +244,44 @@ asyncio.run(test_scraper())
 ### Running Tests
 
 ```bash
-# Run all tests
-uv run pytest tests/ -v
+# Run all tests with coverage
+uv run pytest tests/ -v --cov=app --cov-report=html
 
-# Run with coverage
-uv run pytest --cov=app --cov-report=html tests/
+# Run fast tests only (no external services needed)
+uv run pytest tests/unit tests/services tests/scrapers tests/feature -v --cov=app
+
+# Run with coverage gate (matches CI)
+uv run pytest tests/ -v --cov=app --cov-fail-under=35
 
 # Run specific test file
-uv run pytest tests/test_scrapers.py -v
+uv run pytest tests/unit/test_cache.py -v
 
-# Run phase-specific tests
-uv run python test_phase_1_4.py  # Task queue
-uv run python test_phase_1_5.py  # API endpoints (requires running server)
-uv run python test_phase_1_6.py  # Configuration
+# Run with flaky test reruns
+uv run pytest tests/ -v --reruns 2 --reruns-delay 1
 ```
+
+**Test suite**: 398 tests, 47% coverage (35% enforced in CI). Test categories:
+- `tests/unit/` — Unit tests (cache, circuit breaker, scrapers, routes, analyzer, Phase 6 services)
+- `tests/feature/` — Feature tests (scraper pipeline, analysis pipeline)
+- `tests/services/` — Service-level tests
+- `tests/integration/` — Integration tests (requires Postgres + Redis)
+
+### CI/CD Pipeline
+
+GitHub Actions (`.github/workflows/ci-cd.yml`):
+- **Fast tests**: Unit + feature tests without external services (~60s)
+- **Integration tests**: With Postgres + Redis services (~90s)
+- **Coverage gate**: 35% minimum enforced, PR comments with coverage report
+- **Linting**: `ruff check .` + `ruff format --check .`
+- **Security**: `pip-audit` + `npm audit`
+- Deploys: `develop` → staging, `main` → production
+
+### Monitoring (Sentry)
+
+- **Org**: `ascentia-km`, **Project**: `backend`
+- Errors + performance traces + structured logs + AI agent spans
+- **Daily triage**: `.github/workflows/sentry-daily-triage.yml` — Mon-Fri 9am UTC, creates GitHub issue
+- **Auto-fix**: `.github/workflows/sentry-autofix.yml` — pattern-matched fixes for 4 known errors
 
 ### Code Quality
 

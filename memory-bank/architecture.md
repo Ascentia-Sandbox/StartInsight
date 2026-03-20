@@ -3,8 +3,8 @@
 **Reading Priority:** CRITICAL
 **Read When:** Before implementing features, designing database models, creating APIs
 **Dependencies:** Read active-context.md for current phase, implementation-plan.md for tasks
-**Purpose:** System architecture, 69 database tables, 232+ API endpoints, auth, RLS, deployment
-**Last Updated:** 2026-02-25
+**Purpose:** System architecture, 70 database tables, 235+ API endpoints, auth, RLS, deployment
+**Last Updated:** 2026-03-20
 ---
 
 # System Architecture: StartInsight
@@ -20,8 +20,8 @@
 | Component | Technology | Port/URL | Purpose |
 |-----------|-----------|----------|---------|
 | **Frontend** | Next.js 16.1.3 (App Router) | 3000 | User dashboard, admin portal, public pages (34 routes) |
-| **Backend** | FastAPI + Uvicorn ASGI | 8080 (Railway injects `PORT=8080`) | REST API (232+ endpoints), SSE streaming |
-| **Database** | PostgreSQL 16 (Supabase Pro) | 5432 | 69 tables with RLS enabled, single source for dev + prod |
+| **Backend** | FastAPI + Uvicorn ASGI | 8080 (Railway injects `PORT=8080`) | REST API (235+ endpoints), SSE streaming |
+| **Database** | PostgreSQL 16 (Supabase Pro) | 5432 | 70 tables with RLS enabled, single source for dev + prod |
 | **Cache/Queue** | Redis 7 | 6379 | Arq task queue, rate limiting |
 | **Worker** | Arq + APScheduler | N/A | Background scraping (6-hour intervals) |
 | **AI** | Gemini 2.0 Flash (Google) | API | PydanticAI agents (8 agents: analysis, enhanced analysis, research, competitive intel, market intel, content generation, chat strategist, market insight publisher) |
@@ -102,6 +102,7 @@ User → Next.js → GET /api/insights → FastAPI → PostgreSQL → JSON respo
 - Enhanced scoring (Phase 4.3): opportunity_score, problem_score, feasibility_score, why_now_score, go_to_market_score, founder_fit_score, execution_difficulty_score (all 1-10)
 - Framework fields: value_ladder (JSONB), market_gap_analysis (text), why_now_analysis (text), revenue_potential (text)
 - **slug** (varchar 255, unique, nullable) — SEO-friendly URL slug added via migrations c006-c008; auto-generated from problem_statement; used by frontend route `/insights/[slug]/` (replaced `/insights/[id]/`)
+- Phase 6.4B columns: correlation_group_id (UUID, nullable), correlation_score (float, nullable), source_count (int, nullable)
 
 ### 4.2 User & Auth Tables (Phase 4.1)
 
@@ -604,11 +605,19 @@ User → Next.js → GET /api/insights → FastAPI → PostgreSQL → JSON respo
 | Competitive Intel | competitor_profiles, competitor_snapshots | 2 |
 | Phase 10 (Integrations) | external_integrations, integration_webhooks, integration_syncs, browser_extension_tokens, bot_subscriptions | 5 |
 | **Phase 8-10 Subtotal** | | **43** |
-| **Grand Total** | | **69** |
+| Phase 6 (Pipeline) | source_health | 1 |
+| **Grand Total** | | **70** |
+
+### 4.12 Phase 6 Tables
+
+**`source_health`** (Pipeline health monitoring — migration c012)
+- source_name (varchar PK), status (varchar: healthy/degraded/down), last_success_at (timestamptz), last_failure_at (timestamptz), last_error_message (text), consecutive_failures (int), avg_latency_ms (float), avg_signals_per_run (float), total_runs (int), total_failures (int), circuit_state (varchar: closed/open/half_open), baseline_mean (float), baseline_variance (float), baseline_count (int), updated_at (timestamptz)
+
+**Migrations:** c012 (create source_health), c013 (add correlation columns to insights)
 
 ---
 
-## 5. API Endpoints (230 Total)
+## 5. API Endpoints (235+ Total)
 
 ### 5.1 Phase 1-3 (MVP - 8 endpoints)
 
@@ -921,8 +930,9 @@ User → Next.js → GET /api/insights → FastAPI → PostgreSQL → JSON respo
 | Phase 10 | Integrations | 16 |
 | Health | Application health check | 1 |
 | **Phase 8-10 Subtotal** | | **79** |
+| Phase 6 (Pipeline) | Source health, correlation, intelligence gaps | 3 |
 | **Unspecified/Cross-cutting** | | **19** |
-| **Grand Total** | | **232+** |
+| **Grand Total** | | **235+** |
 
 ---
 

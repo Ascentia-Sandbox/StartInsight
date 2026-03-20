@@ -111,6 +111,7 @@ class Settings(BaseSettings):
     # LLM Configuration
     default_llm_model: str = "google-gla:gemini-2.0-flash"
     llm_call_timeout: int = 120  # seconds
+    ai_fallback_enabled: bool = True  # Phase 6.5A: Enable Claude/rule-based fallback chain
 
     # Database Connection Pool (Supabase session-mode pooler safe ceiling)
     db_pool_size: int = 3       # session-mode pooler: ~7 per process, ~14 total with worker

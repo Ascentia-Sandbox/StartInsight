@@ -1,0 +1,69 @@
+name: Sentry Error Report
+description: Report an error tracked by Sentry
+title: "[Sentry] "
+labels: ["sentry", "bug"]
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: Error Summary
+      description: Brief description of the error
+      placeholder: "ConnectionDoesNotExistError in analyze_signals_task"
+    validations:
+      required: true
+
+  - type: input
+    id: sentry_link
+    attributes:
+      label: Sentry Link
+      description: Direct link to the Sentry issue
+      placeholder: "https://ascentia-km.sentry.io/issues/..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - P0 - Critical (service down or data loss)
+        - P1 - High (feature broken, >3 events/hr)
+        - P2 - Medium (new issue, first occurrence)
+        - P3 - Low (cosmetic or edge case)
+    validations:
+      required: true
+
+  - type: textarea
+    id: stack_trace
+    attributes:
+      label: Stack Trace
+      description: Key portion of the stack trace
+      render: python
+    validations:
+      required: false
+
+  - type: textarea
+    id: request_context
+    attributes:
+      label: Request Context
+      description: Relevant request details (endpoint, headers, params)
+      render: json
+    validations:
+      required: false
+
+  - type: input
+    id: event_count
+    attributes:
+      label: Event Count
+      description: Number of times this error occurred
+      placeholder: "47 events in last 24h"
+    validations:
+      required: false
+
+  - type: textarea
+    id: suggested_fix
+    attributes:
+      label: Suggested Fix
+      description: If you have a theory on how to fix this
+    validations:
+      required: false

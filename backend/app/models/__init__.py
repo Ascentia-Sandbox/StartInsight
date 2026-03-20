@@ -72,6 +72,9 @@ from app.models.saved_insight import SavedInsight
 
 # Phase 9.5: Social
 from app.models.social import ClubMember, ClubPost, FounderConnection, FounderProfile, IdeaClub
+
+# Phase 6.2A: Source Health
+from app.models.source_health import SourceHealth
 from app.models.subscription import PaymentHistory, Subscription
 from app.models.success_story import SuccessStory
 from app.models.system_metric import SystemMetric
@@ -177,4 +180,6 @@ __all__ = [
     "PipelineRun",
     # Phase G: System Settings
     "SystemSetting",
+    # Phase 6.2A: Source Health
+    "SourceHealth",
 ]

@@ -7,9 +7,75 @@ on:
     branches: [main]
 
 jobs:
-  # Backend Tests
-  backend-test:
-    name: Backend Tests
+  # Fast unit tests (no external services needed)
+  backend-test-fast:
+    name: Backend Tests (Fast)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/0.5.14/install.sh | sh
+
+      - name: Cache uv packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-${{ hashFiles('backend/pyproject.toml') }}
+          restore-keys: uv-${{ runner.os }}-
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          uv pip install --system -r pyproject.toml
+          uv pip install --system ".[dev]"
+
+      - name: Run linter and formatter
+        working-directory: ./backend
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Run fast tests
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379
+          ANTHROPIC_API_KEY: test_key
+          OPENAI_API_KEY: test_key
+          FIRECRAWL_API_KEY: test_key
+          REDDIT_CLIENT_ID: test_client
+          REDDIT_CLIENT_SECRET: test_secret
+          REDDIT_USER_AGENT: test_agent
+          RESEND_API_KEY: ""
+        run: |
+          pytest tests/unit tests/services tests/scrapers tests/feature -v \
+            --cov=app --cov-report=xml --cov-fail-under=35 \
+            --reruns 2 --reruns-delay 1
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./backend/coverage.xml
+          flags: backend-fast
+
+      - name: Coverage report on PR
+        if: github.event_name == 'pull_request'
+        uses: orgoro/coverage@v3
+        with:
+          coverageFile: backend/coverage.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  # Integration tests (requires Postgres + Redis services)
+  backend-test-integration:
+    name: Backend Tests (Integration)
     runs-on: ubuntu-latest
 
     services:
@@ -49,18 +115,20 @@ jobs:
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/0.5.14/install.sh | sh
 
+      - name: Cache uv packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-${{ hashFiles('backend/pyproject.toml') }}
+          restore-keys: uv-${{ runner.os }}-
+
       - name: Install dependencies
         working-directory: ./backend
         run: |
           uv pip install --system -r pyproject.toml
-          uv pip install --system ruff pytest pytest-asyncio pytest-cov httpx
+          uv pip install --system ".[dev]"
 
-      - name: Run linter
-        working-directory: ./backend
-        run: |
-          ruff check .
-
-      - name: Run tests
+      - name: Run integration tests
         working-directory: ./backend
         env:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test_db
@@ -73,13 +141,7 @@ jobs:
           REDDIT_USER_AGENT: test_agent
           RESEND_API_KEY: ""
         run: |
-          pytest tests/ -v --cov=app --cov-report=xml
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          file: ./backend/coverage.xml
-          flags: backend
+          pytest tests/integration -v --reruns 2 --reruns-delay 1
 
   # Frontend Tests
   frontend-test:
@@ -163,7 +225,7 @@ jobs:
   migrate-staging:
     name: Migrate Staging DB
     runs-on: ubuntu-latest
-    needs: [backend-test]
+    needs: [backend-test-fast, backend-test-integration]
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
     environment: staging
 
@@ -193,7 +255,7 @@ jobs:
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    needs: [backend-test, frontend-test, security-scan, migrate-staging]
+    needs: [backend-test-fast, backend-test-integration, frontend-test, security-scan, migrate-staging]
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
     environment: staging
 
@@ -244,7 +306,7 @@ jobs:
   migrate-production:
     name: Migrate Production DB
     runs-on: ubuntu-latest
-    needs: [backend-test]
+    needs: [backend-test-fast, backend-test-integration]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: production
 
@@ -274,7 +336,7 @@ jobs:
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [backend-test, frontend-test, migrate-production]
+    needs: [backend-test-fast, backend-test-integration, frontend-test, security-scan, migrate-production]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: production
 
@@ -295,9 +357,9 @@ jobs:
 
       - name: Deploy Frontend to Vercel (Production)
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_STAGING }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |

@@ -4,7 +4,7 @@
 **Read When:** After completing tasks (for logging), before starting work (to avoid duplication)
 **Dependencies:** Read active-context.md to know what phase you're in before logging
 **Purpose:** Completion log (Phase 1-10 complete + Production Readiness), recent changes, upcoming tasks
-**Last Updated:** 2026-02-20
+**Last Updated:** 2026-03-20
 ---
 
 # StartInsight - Progress Log
@@ -12,6 +12,43 @@
 This file tracks all significant changes made to the project. Each entry follows the format defined in CLAUDE.md Workflows section.
 
 ---
+
+## Recent Progress (2026-03-20)
+
+- [2026-03-20] [QA-FIX]: Code quality fixes + CI credential bug
+  - Files: test_routes_health.py, ci-cd.yml, sentry_autofix.py
+  - Tech: datetime.utcnow()→now(UTC), production deploy used staging secrets (VERCEL_TOKEN_STAGING→VERCEL_TOKEN)
+  - Status: [✓ Complete]
+
+- [2026-03-20] [CI-CD]: CI/CD pipeline hardening — split jobs, coverage gate, reruns
+  - Files: ci-cd.yml, pyproject.toml, sentry-daily-triage.yml, sentry-autofix.yml
+  - Tech: Parallel fast+integration test jobs, 35% coverage gate, pytest-rerunfailures, PR coverage comments
+  - Status: [✓ Complete]
+
+- [2026-03-20] [SENTRY-AUTO]: Sentry daily triage + auto-fix workflows
+  - Files: sentry-daily-triage.yml, sentry-autofix.yml, sentry_autofix.py, sentry-error.yml
+  - Tech: Cron triage Mon-Fri 9am UTC, pattern-matched auto-fix for 4 known errors, GitHub issue templates
+  - Status: [✓ Complete]
+
+- [2026-03-20] [TEST-ANALYZER]: Enhanced analyzer + scraper pipeline test suites
+  - Files: tests/unit/test_enhanced_analyzer.py, tests/feature/__init__.py, tests/feature/test_scraper_pipeline.py, tests/feature/test_analysis_pipeline.py
+  - Tech: 46 new tests — Pydantic V2 constraint coverage, mock-Redis circuit breaker, dedup pipeline, credibility weights
+  - Status: [✓ Complete]
+
+- [2026-03-20] [TEST-ROUTES]: Route unit tests for health + insights endpoints
+  - Files: tests/unit/test_routes_health.py, tests/unit/test_routes_insights.py
+  - Tech: 36 tests — Redis/DB mocking, cache-hit path, slug lookup, Accept-Language parser
+  - Status: [✓ Complete]
+
+- [2026-03-20] [PHASE-6]: Data pipeline resilience & intelligence — complete
+  - Files: constants.py, signal_correlation.py, anomaly_detection.py, spike_detection.py, health.py, cache.py, base_scraper.py, enhanced_analyzer.py, worker.py, source_health.py
+  - Tech: Circuit breakers, source health table, 3-tier caching (L1 TTLCache + Redis + stale fallback), Welford anomaly detection, TF-IDF cross-source correlation with union-find, AI fallback chain
+  - Status: [✓ Complete]
+
+- [2026-03-20] [PHASE-6-QA]: Code quality fixes + unit tests
+  - Files: signal_correlation.py (union-find bug), health.py (GROUP BY filter), anomaly_detection.py (FOR UPDATE lock), constants.py (threshold consolidation), test_phase6_services.py (16 tests)
+  - Tech: Union-find transitive closure fix, 24h date filter on health query, row-level locking, centralized constants
+  - Status: [✓ Complete]
 
 ## Recent Progress (2026-03-06)
 

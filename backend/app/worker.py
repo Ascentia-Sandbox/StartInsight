@@ -404,6 +404,9 @@ async def _run_scraper(source_name: str, scraper: BaseScraper) -> dict[str, Any]
     """
     Run a scraper and return a standardized result dict.
 
+    Phase 6.1A: Circuit breaker check before execution.
+    Phase 6.5C: Redis distributed lock to prevent duplicate runs.
+
     Args:
         source_name: Identifier for the data source (e.g., "reddit")
         scraper: Configured scraper instance to execute
@@ -411,12 +414,16 @@ async def _run_scraper(source_name: str, scraper: BaseScraper) -> dict[str, Any]
     Returns:
         Task result with status and count of signals saved
     """
+    import time as _time
+
+    import redis.asyncio as aioredis
+
+    from app.scrapers.base_scraper import CircuitBreaker
+
     logger.info(f"Starting {source_name} scraping task")
 
     # Check if scraper is paused via Redis flag
     try:
-        import redis.asyncio as aioredis
-
         r = aioredis.from_url(settings.redis_url)
         paused = await r.get(f"scraper:paused:{source_name}")
         await r.aclose()
@@ -430,10 +437,59 @@ async def _run_scraper(source_name: str, scraper: BaseScraper) -> dict[str, Any]
     except Exception as e:
         logger.debug(f"Could not check pause flag for {source_name}: {e}")
 
+    # Phase 6.1A: Circuit breaker check
+    circuit = CircuitBreaker(source_name)
+    if not await circuit.can_execute():
+        return {
+            "status": "skipped",
+            "source": source_name,
+            "reason": "circuit_open",
+        }
+
+    # Phase 6.5C: Distributed lock to prevent duplicate scrape runs
+    lock_key = f"scraper:lock:{source_name}"
+    lock_ttl = 1800  # 30 minutes
+    lock_acquired = False
+    try:
+        r = aioredis.from_url(settings.redis_url)
+        lock_acquired = await r.set(lock_key, "1", nx=True, ex=lock_ttl)
+        await r.aclose()
+    except Exception as e:
+        logger.debug(f"Could not acquire lock for {source_name}: {e}")
+        lock_acquired = True  # Fail open — allow if Redis is down
+
+    if not lock_acquired:
+        logger.info(f"{source_name} scraper: another instance already running, skipping")
+        return {
+            "status": "skipped",
+            "source": source_name,
+            "reason": "lock_held",
+        }
+
+    start_time = _time.time()
     try:
         async with AsyncSessionLocal() as session:
             signals = await scraper.run(session)
             await session.commit()
+
+        elapsed_ms = (_time.time() - start_time) * 1000
+
+        # Phase 6.1A: Record success
+        await circuit.record_success()
+
+        # Phase 6.2A: Update source health (if table exists)
+        await _update_source_health(
+            source_name, success=True, signals_count=len(signals), latency_ms=elapsed_ms
+        )
+
+        # Phase 6.4A: Update baseline and check for anomalies
+        try:
+            from app.services.anomaly_detection import update_source_baseline
+            anomaly = await update_source_baseline(source_name, len(signals))
+            if anomaly:
+                logger.warning(f"{source_name}: anomaly detected — {anomaly}")
+        except Exception as e:
+            logger.debug(f"Anomaly detection error for {source_name}: {e}")
 
         logger.info(f"{source_name} scraping complete: {len(signals)} signals saved")
         return {
@@ -443,12 +499,109 @@ async def _run_scraper(source_name: str, scraper: BaseScraper) -> dict[str, Any]
         }
 
     except Exception as e:
+        elapsed_ms = (_time.time() - start_time) * 1000
         logger.error(f"{source_name} scraping failed: {type(e).__name__} - {e}")
+
+        # Phase 6.1A: Record failure
+        await circuit.record_failure()
+
+        # Phase 6.2A: Update source health
+        await _update_source_health(
+            source_name, success=False, signals_count=0, latency_ms=elapsed_ms, error=str(e)
+        )
+
+        # Phase 6.4A: Update baseline and check for anomalies (signals_count=0 on failure)
+        try:
+            from app.services.anomaly_detection import update_source_baseline
+            anomaly = await update_source_baseline(source_name, 0)
+            if anomaly:
+                logger.warning(f"{source_name}: anomaly detected — {anomaly}")
+        except Exception as e:
+            logger.debug(f"Anomaly detection error for {source_name}: {e}")
+
         return {
             "status": "error",
             "source": source_name,
             "error": str(e),
         }
+
+    finally:
+        # Release distributed lock
+        try:
+            r = aioredis.from_url(settings.redis_url)
+            await r.delete(lock_key)
+            await r.aclose()
+        except Exception:
+            pass
+
+
+async def _update_source_health(
+    source_name: str,
+    success: bool,
+    signals_count: int,
+    latency_ms: float,
+    error: str | None = None,
+) -> None:
+    """Phase 6.2A: Update source_health table after each scraper run (UPSERT).
+
+    Fails silently if table doesn't exist yet (migration not applied).
+    """
+    from datetime import UTC, datetime
+
+    from sqlalchemy import text
+
+    try:
+        async with AsyncSessionLocal() as session:
+            now = datetime.now(UTC).isoformat()
+            if success:
+                await session.execute(
+                    text("""
+                        INSERT INTO source_health (
+                            source_name, status, last_success_at, consecutive_failures,
+                            avg_latency_ms, avg_signals_per_run, total_runs, updated_at
+                        ) VALUES (
+                            :name, 'fresh', :now, 0,
+                            :latency, :signals, 1, :now
+                        )
+                        ON CONFLICT (source_name) DO UPDATE SET
+                            status = 'fresh',
+                            last_success_at = :now,
+                            consecutive_failures = 0,
+                            avg_latency_ms = (source_health.avg_latency_ms * source_health.total_runs + :latency) / (source_health.total_runs + 1),
+                            avg_signals_per_run = (source_health.avg_signals_per_run * source_health.total_runs + :signals) / (source_health.total_runs + 1),
+                            total_runs = source_health.total_runs + 1,
+                            updated_at = :now
+                    """),
+                    {"name": source_name, "now": now, "latency": latency_ms, "signals": signals_count},
+                )
+            else:
+                await session.execute(
+                    text("""
+                        INSERT INTO source_health (
+                            source_name, status, last_failure_at, last_error_message,
+                            consecutive_failures, total_runs, total_failures, updated_at
+                        ) VALUES (
+                            :name, 'error', :now, :error,
+                            1, 1, 1, :now
+                        )
+                        ON CONFLICT (source_name) DO UPDATE SET
+                            status = CASE
+                                WHEN source_health.consecutive_failures + 1 >= 2 THEN 'error'
+                                ELSE 'degraded'
+                            END,
+                            last_failure_at = :now,
+                            last_error_message = :error,
+                            consecutive_failures = source_health.consecutive_failures + 1,
+                            total_runs = source_health.total_runs + 1,
+                            total_failures = source_health.total_failures + 1,
+                            updated_at = :now
+                    """),
+                    {"name": source_name, "now": now, "error": error},
+                )
+            await session.commit()
+    except Exception as e:
+        # Silently fail — source_health table may not exist yet
+        logger.debug(f"Could not update source_health for {source_name}: {e}")
 
 
 async def scrape_reddit_task(ctx: dict[str, Any]) -> dict[str, Any]:
@@ -648,6 +801,15 @@ async def hourly_trends_update_task(ctx: dict[str, Any]) -> dict[str, Any]:
             f"{failed_count} failed out of {len(insights)} insights"
         )
 
+        # Phase 6.4C: Run keyword spike detection after trends update
+        try:
+            from app.services.spike_detection import detect_keyword_spikes
+            spikes = await detect_keyword_spikes()
+            if spikes:
+                logger.info(f"Keyword spikes detected: {len(spikes)} spikes")
+        except Exception as e:
+            logger.debug(f"Spike detection error (non-fatal): {e}")
+
         return {
             "status": "success",
             "updated": updated_count,
@@ -726,7 +888,7 @@ async def analyze_signals_task(ctx: dict[str, Any]) -> dict[str, Any]:
     """
     from sqlalchemy import select, text, update
 
-    from app.agents.enhanced_analyzer import analyze_signal_enhanced_with_retry
+    from app.agents.enhanced_analyzer import analyze_signal_enhanced_with_fallback
     from app.models.raw_signal import RawSignal
 
     logger.info("Starting signal analysis task")
@@ -793,7 +955,7 @@ async def analyze_signals_task(ctx: dict[str, Any]) -> dict[str, Any]:
                     continue  # Already processed by concurrent task
 
                 # 2b: call Gemini (no DB session open)
-                insight = await analyze_signal_enhanced_with_retry(signal)
+                insight = await analyze_signal_enhanced_with_fallback(signal)
 
                 # 2c: insert insight (short session, just an INSERT)
                 # Reset statement_timeout in case a pooled connection inherited one.
@@ -831,6 +993,16 @@ async def analyze_signals_task(ctx: dict[str, Any]) -> dict[str, Any]:
             f"{failed_count} failed out of {len(signal_ids)} signals"
         )
 
+        # Phase 6.4B: Run cross-source signal correlation after analysis
+        if analyzed_count > 0:
+            try:
+                from app.services.signal_correlation import correlate_recent_insights
+                correlation_groups = await correlate_recent_insights()
+                if correlation_groups:
+                    logger.info(f"Found {len(correlation_groups)} correlation groups")
+            except Exception as e:
+                logger.debug(f"Signal correlation error (non-fatal): {e}")
+
         result = {
             "status": "success",
             "analyzed": analyzed_count,
@@ -858,8 +1030,17 @@ async def startup(ctx: dict[str, Any]) -> None:
     Startup hook for Arq worker.
 
     Runs when the worker starts up.
+    Phase 6.3B: Pre-warm cache with most-accessed data.
     """
     logger.info("Arq worker starting up")
+
+    # Phase 6.3B: Bootstrap cache hydration
+    try:
+        from app.core.cache import hydrate_cache
+        result = await hydrate_cache()
+        logger.info(f"Cache hydration on startup: {result}")
+    except Exception as e:
+        logger.warning(f"Cache hydration failed (non-fatal): {e}")
 
 
 async def shutdown(ctx: dict[str, Any]) -> None:

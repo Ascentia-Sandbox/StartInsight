@@ -89,3 +89,25 @@ RATE_LIMITS: dict[str, dict[str, int]] = {
         "analyses_per_hour": 999999,  # Effectively unlimited
     },
 }
+
+# Phase 6.4: Data pipeline thresholds
+SPIKE_MULTIPLIER: float = 3.0
+SPIKE_COOLDOWN_SECONDS: int = 1800
+MIN_SPIKE_BASELINE_POINTS: int = 4
+SIMILARITY_THRESHOLD: float = 0.3
+CORRELATION_WINDOW_HOURS: int = 24
+MAX_INSIGHTS_TO_SCAN: int = 200
+
+# Phase 6.2: Expected scraper sources
+EXPECTED_SOURCES: list[str] = [
+    "reddit", "product_hunt", "google_trends", "twitter", "hacker_news"
+]
+
+# Phase 6.5B: Source credibility weights (multiplied against relevance_score)
+SOURCE_CREDIBILITY_WEIGHTS: dict[str, float] = {
+    "hacker_news": 1.2,    # Curated, technical audience
+    "product_hunt": 1.1,   # Curated launches
+    "reddit": 1.0,         # Baseline
+    "google_trends": 0.9,  # Volume signal, not quality
+    "twitter": 0.8,        # Noisy, short-form
+}

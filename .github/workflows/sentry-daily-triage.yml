@@ -1,0 +1,81 @@
+name: Sentry Daily Triage
+
+on:
+  schedule:
+    # Mon-Fri 9am UTC
+    - cron: '0 9 * * 1-5'
+  workflow_dispatch: {}
+
+jobs:
+  triage:
+    name: Create Triage Issue
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Fetch unresolved Sentry issues
+        id: sentry
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          BACKEND_ISSUES=$(curl -s -H "Authorization: Bearer $SENTRY_AUTH_TOKEN" \
+            "https://sentry.io/api/0/projects/ascentia-km/backend/issues/?query=is:unresolved&statsPeriod=24h&sort=freq&limit=25")
+
+          FRONTEND_ISSUES=$(curl -s -H "Authorization: Bearer $SENTRY_AUTH_TOKEN" \
+            "https://sentry.io/api/0/projects/ascentia-km/frontend/issues/?query=is:unresolved&statsPeriod=24h&sort=freq&limit=25")
+
+          BACKEND_COUNT=$(echo "$BACKEND_ISSUES" | jq 'length')
+          FRONTEND_COUNT=$(echo "$FRONTEND_ISSUES" | jq 'length')
+          TOTAL=$((BACKEND_COUNT + FRONTEND_COUNT))
+
+          echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
+          echo "backend_count=$BACKEND_COUNT" >> "$GITHUB_OUTPUT"
+          echo "frontend_count=$FRONTEND_COUNT" >> "$GITHUB_OUTPUT"
+
+          # Build issue body
+          BODY="## Sentry Daily Triage — $(date -u +%Y-%m-%d)\n\n"
+          BODY+="**Total unresolved (24h):** $TOTAL ($BACKEND_COUNT backend, $FRONTEND_COUNT frontend)\n\n"
+
+          if [ "$BACKEND_COUNT" -gt 0 ]; then
+            BODY+="### Backend Issues\n\n"
+            BODY+="| # | Title | Events | First Seen | Link |\n"
+            BODY+="|---|-------|--------|------------|------|\n"
+            BODY+=$(echo "$BACKEND_ISSUES" | jq -r 'to_entries[] | "| \(.key + 1) | \(.value.title | .[0:80]) | \(.value.count) | \(.value.firstSeen | .[0:10]) | [View](\(.value.permalink)) |"')
+            BODY+="\n\n"
+          fi
+
+          if [ "$FRONTEND_COUNT" -gt 0 ]; then
+            BODY+="### Frontend Issues\n\n"
+            BODY+="| # | Title | Events | First Seen | Link |\n"
+            BODY+="|---|-------|--------|------------|------|\n"
+            BODY+=$(echo "$FRONTEND_ISSUES" | jq -r 'to_entries[] | "| \(.key + 1) | \(.value.title | .[0:80]) | \(.value.count) | \(.value.firstSeen | .[0:10]) | [View](\(.value.permalink)) |"')
+            BODY+="\n\n"
+          fi
+
+          if [ "$TOTAL" -eq 0 ]; then
+            BODY+="No unresolved issues in the last 24 hours.\n"
+          fi
+
+          # Write body to file for multiline output
+          echo "$BODY" > /tmp/triage_body.md
+
+      - name: Ensure labels exist
+        if: steps.sentry.outputs.total != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create sentry --repo "$GITHUB_REPOSITORY" --color "e11d48" --description "Sentry error tracking" 2>/dev/null || true
+          gh label create triage --repo "$GITHUB_REPOSITORY" --color "f59e0b" --description "Needs triage" 2>/dev/null || true
+
+      - name: Create triage GitHub issue
+        if: steps.sentry.outputs.total != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          TOTAL=${{ steps.sentry.outputs.total }}
+
+          gh issue create \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "[Sentry Triage] $DATE — $TOTAL unresolved issues" \
+            --body-file /tmp/triage_body.md \
+            --label "sentry,triage"

@@ -1,4 +1,7 @@
-"""Health check endpoints for production monitoring."""
+"""Health check endpoints for production monitoring.
+
+Phase 6.2A: Source health dashboard endpoint.
+"""
 
 import logging
 from datetime import UTC, datetime, timedelta
@@ -103,6 +106,7 @@ async def scraper_health_check(
             RawSignal.source,
             func.max(RawSignal.created_at).label('last_run')
         )
+        .where(RawSignal.created_at >= twenty_four_hours_ago)
         .group_by(RawSignal.source)
     )
     last_runs = {row.source: row.last_run for row in last_runs_query.all()}
@@ -131,7 +135,9 @@ async def scraper_health_check(
 
     # Determine overall status
     # Healthy if all sources ran in last 7 hours (allowing 1 hour buffer)
-    expected_sources = ["reddit", "product_hunt", "google_trends", "twitter"]
+    from app.core.constants import EXPECTED_SOURCES
+
+    expected_sources = EXPECTED_SOURCES
     all_sources_recent = all(
         last_runs.get(source) and (now - last_runs[source]) < timedelta(hours=7)
         for source in expected_sources
@@ -165,3 +171,51 @@ async def scraper_health_check(
         "error_rate": f"{(error_count / signals_24h * 100):.1f}%" if signals_24h > 0 else "0%",
         "checked_at": now.isoformat(),
     }
+
+
+@router.get("/health/sources")
+async def source_health_check(db: AsyncSession = Depends(get_db)):
+    """
+    Phase 6.2A: Source health dashboard.
+
+    Returns real-time health status for all data sources from the source_health table.
+    No auth required — used by monitoring dashboards.
+    """
+    try:
+        result = await db.execute(
+            text("SELECT source_name, status, last_success_at, last_failure_at, "
+                 "last_error_message, consecutive_failures, avg_latency_ms, "
+                 "avg_signals_per_run, total_runs, total_failures, circuit_state, "
+                 "baseline_mean, baseline_variance, baseline_count, updated_at "
+                 "FROM source_health ORDER BY source_name")
+        )
+        rows = result.mappings().all()
+
+        sources = []
+        for row in rows:
+            sources.append({
+                "name": row["source_name"],
+                "status": row["status"],
+                "last_success": row["last_success_at"].isoformat() if row["last_success_at"] else None,
+                "last_failure": row["last_failure_at"].isoformat() if row["last_failure_at"] else None,
+                "error": row["last_error_message"],
+                "consecutive_failures": row["consecutive_failures"],
+                "avg_latency_ms": round(row["avg_latency_ms"], 1),
+                "signals_per_run": round(row["avg_signals_per_run"], 1),
+                "total_runs": row["total_runs"],
+                "total_failures": row["total_failures"],
+                "circuit": row["circuit_state"],
+                "baseline": {
+                    "mean": round(row["baseline_mean"], 2),
+                    "variance": round(row["baseline_variance"], 2),
+                    "count": row["baseline_count"],
+                },
+                "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None,
+            })
+
+        return {"sources": sources}
+
+    except Exception as e:
+        # Table may not exist yet (migration not applied)
+        logger.debug(f"Source health query failed: {e}")
+        return {"sources": [], "note": "source_health table not yet available"}

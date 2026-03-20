@@ -1854,3 +1854,88 @@ async def trigger_test_digest(
         )
 
     return {"status": "sent", "to": body.email, "insights_included": len(insight_list)}
+
+
+# ============================================
+# PHASE 6.2B: INTELLIGENCE GAP DASHBOARD
+# ============================================
+
+
+@router.get("/intelligence-gaps")
+@limiter.limit("20/minute")
+async def get_intelligence_gaps(
+    request: Request,
+    admin: AdminUser,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Phase 6.2B: Intelligence gap analysis.
+
+    Shows source freshness grid with green/yellow/red status.
+    Alerts when data gaps exceed expected scrape window (7h for 6h cycle).
+    """
+    now = datetime.now(UTC)
+    expected_window = timedelta(hours=7)  # 6h cycle + 1h buffer
+    stale_window = timedelta(hours=13)  # 2 missed cycles
+
+    # Expected sources
+    expected_sources = ["reddit", "product_hunt", "google_trends", "twitter", "hacker_news"]
+
+    gaps = []
+    try:
+        result = await db.execute(
+            text("SELECT source_name, status, last_success_at, last_failure_at, "
+                 "consecutive_failures, circuit_state "
+                 "FROM source_health ORDER BY source_name")
+        )
+        health_rows = {row["source_name"]: row for row in result.mappings().all()}
+    except Exception:
+        health_rows = {}
+
+    for source in expected_sources:
+        row = health_rows.get(source)
+        if not row or not row["last_success_at"]:
+            gaps.append({
+                "source": source,
+                "severity": "red",
+                "status": "no_data",
+                "message": f"No successful scrape recorded for {source}",
+                "circuit": row["circuit_state"] if row else "unknown",
+            })
+            continue
+
+        age = now - row["last_success_at"]
+        if age > stale_window:
+            severity = "red"
+            gap_status = "very_stale"
+        elif age > expected_window:
+            severity = "yellow"
+            gap_status = "stale"
+        else:
+            severity = "green"
+            gap_status = "fresh"
+
+        gaps.append({
+            "source": source,
+            "severity": severity,
+            "status": gap_status,
+            "last_success": row["last_success_at"].isoformat(),
+            "age_hours": round(age.total_seconds() / 3600, 1),
+            "consecutive_failures": row["consecutive_failures"],
+            "circuit": row["circuit_state"],
+        })
+
+    # Summary
+    red_count = sum(1 for g in gaps if g["severity"] == "red")
+    yellow_count = sum(1 for g in gaps if g["severity"] == "yellow")
+
+    return {
+        "checked_at": now.isoformat(),
+        "summary": {
+            "total_sources": len(expected_sources),
+            "healthy": len(expected_sources) - red_count - yellow_count,
+            "warning": yellow_count,
+            "critical": red_count,
+        },
+        "gaps": gaps,
+    }

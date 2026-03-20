@@ -9,7 +9,7 @@ Provides:
 
 import asyncio
 from collections.abc import AsyncGenerator, Generator
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
@@ -295,7 +295,7 @@ async def test_analysis(db_session: AsyncSession, test_user: User) -> CustomAnal
         execution_readiness=0.68,
         tokens_used=15000,
         analysis_cost_usd=1.25,
-        completed_at=datetime.utcnow(),
+        completed_at=datetime.now(UTC),
     )
     db_session.add(analysis)
     await db_session.commit()

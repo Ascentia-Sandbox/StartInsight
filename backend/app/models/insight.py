@@ -315,6 +315,31 @@ class Insight(Base):
         doc="When this insight was last edited by admin",
     )
 
+    # ============================================
+    # Phase 6.4B: Cross-Source Correlation
+    # ============================================
+
+    correlation_group_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        nullable=True,
+        index=True,
+        doc="Groups correlated insights from different sources",
+    )
+
+    correlation_score: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
+        default=0,
+        doc="Similarity score with correlation group (0.0-1.0)",
+    )
+
+    source_count: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        default=1,
+        doc="Number of sources discussing similar topic",
+    )
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

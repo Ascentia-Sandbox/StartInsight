@@ -98,6 +98,14 @@ Unlike traditional brainstorming tools, StartInsight relies on **real-time marke
 - **Gemini 429 Retry**: `quality_reviewer.py` uses `tenacity` with 4-attempt exponential backoff (5s → 10s → 20s → 40s) + 2s inter-call sleep — eliminates RESOURCE_EXHAUSTED cascades in 10/20-insight audit batches
 - **All AI Agents Protected**: `enhanced_analyzer.py` and `research_agent.py` also use tenacity retry — consistent pattern across all LLM-calling agents
 
+**Data Pipeline Resilience (Phase 6)**
+- **Circuit Breakers**: Per-scraper circuit breakers (2 failures → 15min cooldown) with stale-on-error fallback
+- **3-Tier Caching**: L1 in-memory (cachetools TTLCache, 30s) → L2 Redis (60-300s) → stale fallback with negative caching
+- **Source Health**: Real-time health dashboard (`source_health` table, GET /health/sources) with intelligence gap detection
+- **Anomaly Detection**: Welford's online algorithm for temporal baselines, z-score spike/drought detection
+- **Cross-Source Correlation**: TF-IDF + cosine similarity with union-find grouping across 5 sources
+- **AI Fallback Chain**: Gemini → Claude → rule-based extraction with source credibility weighting
+
 **Security & Observability**
 - **Security Headers**: HSTS (`max-age=31536000`), CSP, X-Frame-Options, X-Content-Type-Options via middleware
 - **JWT Authentication**: ES256 (ECDSA P-256) via Supabase JWKS endpoint — no shared secret needed
@@ -108,12 +116,13 @@ Unlike traditional brainstorming tools, StartInsight relies on **real-time marke
 - **Session Replay**: Sentry Session Replay (maskAllText, blockAllMedia) on frontend errors
 
 **Developer Features**
-- **Public API**: 232+ REST endpoints with Swagger/OpenAPI documentation
+- **Public API**: 235+ REST endpoints with Swagger/OpenAPI documentation
 - **API Key Management**: Scoped keys with usage tracking, rate limiting
 - **Export Tools**: CSV/JSON exports with brand customization
 - **Row-Level Security**: Supabase RLS policies on all 69 tables
-- **Comprehensive Testing**: 291 backend tests passing, 47 E2E tests (8 suites, 5 browsers)
-- **CI/CD Pipeline**: GitHub Actions — Security Scan → Tests → Migrate → Build → Deploy
+- **Comprehensive Testing**: 398 backend tests (47% coverage), 47 E2E tests (8 suites, 5 browsers)
+- **CI/CD Pipeline**: GitHub Actions — Security Scan → Tests (fast + integration parallel) → Migrate → Build → Deploy
+- **Sentry Automation**: Daily triage workflow (Mon-Fri), auto-fix for 4 known error patterns
 
 ---
 
@@ -199,7 +208,8 @@ graph LR
 - **Package Managers**: `uv` (Python), `npm` (Node.js)
 - **Migrations**: Alembic + Supabase migrations (25+ total)
 - **Linting**: Ruff (Python), ESLint + Prettier (TypeScript)
-- **Testing**: pytest (backend), Playwright (E2E, 5 browsers)
+- **Testing**: pytest (398 tests, 47% coverage), Playwright (E2E, 5 browsers), pytest-rerunfailures
+- **Monitoring**: Sentry (errors + traces + AI spans), daily triage + auto-fix GitHub Actions
 
 ---
 
@@ -677,6 +687,7 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 - ✅ Phase R: Redis + Scheduler (Railway Redis provisioned, scheduler running clean)
 - ✅ QA Bug Fixes: 11 P0/P1/P2 bugs fixed (terms/privacy 404, CORS, Deep Research, `$$`, Google OAuth signup, context-aware CTAs, skeleton loaders)
 - ✅ 429 Rate-Limit Fix: tenacity retry + inter-call sleep in quality_reviewer.py (Gemini RESOURCE_EXHAUSTED eliminated)
+- ✅ Phase 6: Data Pipeline Resilience (circuit breakers, source health, 3-tier caching, anomaly detection, cross-source correlation, AI fallback)
 - ✅ API Fixes: `/api/validate` 500 fixed (invalid `RawSignal` kwarg); `research.py` FastAPI deprecation warning cleared
 
 **Business Metrics (Targets)**:
