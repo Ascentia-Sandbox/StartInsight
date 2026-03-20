@@ -91,16 +91,24 @@ async def scraper_health_check(
 
     Used for production monitoring and alerting.
     """
-    now = datetime.now(UTC).replace(tzinfo=None)
+    now = datetime.now(UTC)
     twenty_four_hours_ago = now - timedelta(hours=24)
+    # Use naive datetimes for SQL queries (column is TIMESTAMP WITHOUT TIME ZONE)
+    twenty_four_hours_ago_naive = twenty_four_hours_ago.replace(tzinfo=None)
 
     # Check last successful run per source
     last_runs_query = await db.execute(
         select(RawSignal.source, func.max(RawSignal.created_at).label("last_run"))
-        .where(RawSignal.created_at >= twenty_four_hours_ago)
+        .where(RawSignal.created_at >= twenty_four_hours_ago_naive)
         .group_by(RawSignal.source)
     )
-    last_runs = {row.source: row.last_run for row in last_runs_query.all()}
+    last_runs = {}
+    for row in last_runs_query.all():
+        lr = row.last_run
+        # Ensure timezone-aware for Python comparisons (asyncpg may return naive or aware)
+        if lr and lr.tzinfo is None:
+            lr = lr.replace(tzinfo=UTC)
+        last_runs[row.source] = lr
 
     # Check pending signals (unprocessed)
     pending_count_query = await db.execute(
@@ -110,7 +118,7 @@ async def scraper_health_check(
 
     # Calculate signals collected in last 24 hours
     signals_24h_query = await db.execute(
-        select(func.count(RawSignal.id)).where(RawSignal.created_at >= twenty_four_hours_ago)
+        select(func.count(RawSignal.id)).where(RawSignal.created_at >= twenty_four_hours_ago_naive)
     )
     signals_24h = signals_24h_query.scalar() or 0
 
