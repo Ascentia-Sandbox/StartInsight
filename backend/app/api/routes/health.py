@@ -91,7 +91,7 @@ async def scraper_health_check(
 
     Used for production monitoring and alerting.
     """
-    now = datetime.now(UTC)
+    now = datetime.now(UTC).replace(tzinfo=None)
     twenty_four_hours_ago = now - timedelta(hours=24)
 
     # Check last successful run per source
