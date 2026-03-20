@@ -37,7 +37,7 @@ dependencies = [
     "httpx>=0.26.0",
     "apscheduler>=3.11.2",
     # Authentication — PyJWT replaces python-jose to eliminate ecdsa Minerva-attack dep (#8)
-    "PyJWT[crypto]>=2.10.1",
+    "PyJWT[crypto]>=2.12.1",  # unknown crit header bypass fix (#26)
     # SSE (Server-Sent Events) for admin real-time updates
     "sse-starlette>=1.6.5",
     # Phase 6: Payments & Email
@@ -57,6 +57,10 @@ dependencies = [
     "pillow>=12.1.1",            # PSD OOB write fix (#16)
     "protobuf>=6.33.5",          # JSON recursion bypass fix (#10)
     "python-multipart>=0.0.22",  # Arbitrary file write fix (#9)
+    "authlib>=1.6.9",            # JWS/JWE/OIDC/alg:none bypass fixes (#24,#28-30)
+    "pyasn1>=0.6.3",             # DoS fix (#33)
+    "pyopenssl>=26.0.0",         # Buffer overflow + TLS bypass fixes (#31,#32)
+    "nltk>=3.9.3",               # Path traversal, remote shutdown, XSS, DoS fixes (#42-45)
 ]
 
 [project.optional-dependencies]

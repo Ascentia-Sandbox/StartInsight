@@ -32,13 +32,15 @@ export async function middleware(request: NextRequest) {
   const isAdminPath = pathname.startsWith('/admin');
 
   // Step 1: Handle i18n routing (skip for admin pages)
+  // The intl middleware returns a response with rewrites (e.g. /founder-fits -> /en/founder-fits)
+  // or redirects that we MUST preserve — not discard.
   const intlResponse = isAdminPath ? null : intlMiddleware(request);
 
-  // Step 2: Create Supabase client for auth
-  let response = NextResponse.next({
-    request,
-  });
+  // Step 2: Use the intl response as the base (preserves rewrites/redirects),
+  // or fall back to NextResponse.next() for admin routes.
+  let response = intlResponse ?? NextResponse.next({ request });
 
+  // Step 3: Create Supabase client for auth (writes cookies onto the response)
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -49,9 +51,15 @@ export async function middleware(request: NextRequest) {
         },
         setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({
-            request,
-          });
+          // When Supabase needs to update cookies, rebuild the response while
+          // preserving the intl middleware's rewrite/redirect behaviour.
+          if (intlResponse) {
+            // Re-run intl middleware to get a fresh response with the same rewrite
+            const freshIntl = intlMiddleware(request);
+            response = freshIntl;
+          } else {
+            response = NextResponse.next({ request });
+          }
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
           );
@@ -97,14 +105,6 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);
-  }
-
-  // Merge i18n response with auth response
-  // Copy headers from intl response to auth response
-  if (intlResponse) {
-    intlResponse.headers.forEach((value, key) => {
-      response.headers.set(key, value);
-    });
   }
 
   return response;
