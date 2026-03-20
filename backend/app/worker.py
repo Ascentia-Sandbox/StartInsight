@@ -312,8 +312,7 @@ async def send_weekly_digest_task(ctx: dict[str, Any]) -> dict[str, Any]:
                     "market_size": i.market_size_estimate or "Unknown",
                     # Absolute insight URL with UTM params (utm_content = insight id)
                     "insight_url": (
-                        f"https://startinsight.co/insights/{i.id}"
-                        f"?{_utm}&utm_content={i.id}"
+                        f"https://startinsight.co/insights/{i.id}?{_utm}&utm_content={i.id}"
                     ),
                 }
                 for i in insights
@@ -369,9 +368,7 @@ async def send_weekly_digest_task(ctx: dict[str, Any]) -> dict[str, Any]:
                         digest_date=digest_date,
                         email_type="weekly_digest",
                     )
-                    tracking_pixel_url = (
-                        f"{api_base_url}/api/email/track/open/{tracking_token}"
-                    )
+                    tracking_pixel_url = f"{api_base_url}/api/email/track/open/{tracking_token}"
 
                     await send_weekly_digest(
                         email=user.email,
@@ -382,11 +379,13 @@ async def send_weekly_digest_task(ctx: dict[str, Any]) -> dict[str, Any]:
                         tracking_pixel_url=tracking_pixel_url,
                     )
 
-                    session.add(EmailSend(
-                        user_id=user.id,
-                        email_type="weekly_digest",
-                        content_hash=content_hash,
-                    ))
+                    session.add(
+                        EmailSend(
+                            user_id=user.id,
+                            email_type="weekly_digest",
+                            content_hash=content_hash,
+                        )
+                    )
                     sent += 1
                 except Exception:
                     logger.exception(f"Failed to send weekly digest to user {user.id}")
@@ -485,6 +484,7 @@ async def _run_scraper(source_name: str, scraper: BaseScraper) -> dict[str, Any]
         # Phase 6.4A: Update baseline and check for anomalies
         try:
             from app.services.anomaly_detection import update_source_baseline
+
             anomaly = await update_source_baseline(source_name, len(signals))
             if anomaly:
                 logger.warning(f"{source_name}: anomaly detected — {anomaly}")
@@ -513,6 +513,7 @@ async def _run_scraper(source_name: str, scraper: BaseScraper) -> dict[str, Any]
         # Phase 6.4A: Update baseline and check for anomalies (signals_count=0 on failure)
         try:
             from app.services.anomaly_detection import update_source_baseline
+
             anomaly = await update_source_baseline(source_name, 0)
             if anomaly:
                 logger.warning(f"{source_name}: anomaly detected — {anomaly}")
@@ -572,7 +573,12 @@ async def _update_source_health(
                             total_runs = source_health.total_runs + 1,
                             updated_at = :now
                     """),
-                    {"name": source_name, "now": now, "latency": latency_ms, "signals": signals_count},
+                    {
+                        "name": source_name,
+                        "now": now,
+                        "latency": latency_ms,
+                        "signals": signals_count,
+                    },
                 )
             else:
                 await session.execute(
@@ -697,11 +703,7 @@ async def hourly_trends_update_task(ctx: dict[str, Any]) -> dict[str, Any]:
 
         async with AsyncSessionLocal() as session:
             # Get top 100 insights by relevance score
-            stmt = (
-                select(Insight)
-                .order_by(desc(Insight.relevance_score))
-                .limit(100)
-            )
+            stmt = select(Insight).order_by(desc(Insight.relevance_score)).limit(100)
             result = await session.execute(stmt)
             insights = result.scalars().all()
 
@@ -746,7 +748,7 @@ async def hourly_trends_update_task(ctx: dict[str, Any]) -> dict[str, Any]:
                     if "trend_data_realtime" not in signal.extra_metadata:
                         signal.extra_metadata["trend_data_realtime"] = {
                             "timestamps": [],
-                            "values": []
+                            "values": [],
                         }
 
                     # Add new data point
@@ -754,9 +756,7 @@ async def hourly_trends_update_task(ctx: dict[str, Any]) -> dict[str, Any]:
                     signal.extra_metadata["trend_data_realtime"]["timestamps"].append(
                         now.isoformat()
                     )
-                    signal.extra_metadata["trend_data_realtime"]["values"].append(
-                        current_interest
-                    )
+                    signal.extra_metadata["trend_data_realtime"]["values"].append(current_interest)
 
                     # Implement 90-day retention policy
                     cutoff_date = now - timedelta(days=90)
@@ -804,6 +804,7 @@ async def hourly_trends_update_task(ctx: dict[str, Any]) -> dict[str, Any]:
         # Phase 6.4C: Run keyword spike detection after trends update
         try:
             from app.services.spike_detection import detect_keyword_spikes
+
             spikes = await detect_keyword_spikes()
             if spikes:
                 logger.info(f"Keyword spikes detected: {len(spikes)} spikes")
@@ -848,14 +849,10 @@ async def scrape_all_sources_task(ctx: dict[str, Any]) -> dict[str, Any]:
     }
 
     total_signals = sum(
-        r.get("signals_saved", 0)
-        for r in results.values()
-        if r.get("status") == "success"
+        r.get("signals_saved", 0) for r in results.values() if r.get("status") == "success"
     )
 
-    logger.info(
-        f"scrape_all_sources task complete: {total_signals} total signals saved"
-    )
+    logger.info(f"scrape_all_sources task complete: {total_signals} total signals saved")
 
     return {
         "status": "success",
@@ -943,8 +940,9 @@ async def analyze_signals_task(ctx: dict[str, Any]) -> dict[str, Any]:
                 signal = None
                 async with AsyncSessionLocal() as session:
                     result = await session.execute(
-                        select(RawSignal)
-                        .where(RawSignal.id == signal_id, RawSignal.processed == False)  # noqa: E712
+                        select(RawSignal).where(
+                            RawSignal.id == signal_id, RawSignal.processed == False
+                        )  # noqa: E712
                     )
                     signal = result.scalar_one_or_none()
                     if signal is not None:
@@ -970,9 +968,7 @@ async def analyze_signals_task(ctx: dict[str, Any]) -> dict[str, Any]:
                 async with AsyncSessionLocal() as session:
                     await session.execute(text("SET LOCAL statement_timeout = 0"))
                     await session.execute(
-                        update(RawSignal)
-                        .where(RawSignal.id == signal_id)
-                        .values(processed=True)
+                        update(RawSignal).where(RawSignal.id == signal_id).values(processed=True)
                     )
                     await session.commit()
 
@@ -980,9 +976,7 @@ async def analyze_signals_task(ctx: dict[str, Any]) -> dict[str, Any]:
 
             except Exception as e:
                 failed_count += 1
-                logger.error(
-                    f"Failed to analyze signal {signal_id}: {type(e).__name__} - {e}"
-                )
+                logger.error(f"Failed to analyze signal {signal_id}: {type(e).__name__} - {e}")
                 # Signal remains unprocessed for retry on next run
 
             # Brief pause between signals to avoid saturating Gemini rate limits.
@@ -997,6 +991,7 @@ async def analyze_signals_task(ctx: dict[str, Any]) -> dict[str, Any]:
         if analyzed_count > 0:
             try:
                 from app.services.signal_correlation import correlate_recent_insights
+
                 correlation_groups = await correlate_recent_insights()
                 if correlation_groups:
                     logger.info(f"Found {len(correlation_groups)} correlation groups")
@@ -1037,6 +1032,7 @@ async def startup(ctx: dict[str, Any]) -> None:
     # Phase 6.3B: Bootstrap cache hydration
     try:
         from app.core.cache import hydrate_cache
+
         result = await hydrate_cache()
         logger.info(f"Cache hydration on startup: {result}")
     except Exception as e:

@@ -77,17 +77,19 @@ async def detect_keyword_spikes() -> list[dict]:
                 latest = recent_values[-1]
 
                 if baseline > 0 and latest >= baseline * SPIKE_MULTIPLIER:
-                    spikes.append({
-                        "keyword": keyword,
-                        "current_value": latest,
-                        "baseline": round(baseline, 2),
-                        "multiplier": round(latest / baseline, 2),
-                        "source": signal.source,
-                        "detected_at": datetime.now(UTC).isoformat(),
-                    })
+                    spikes.append(
+                        {
+                            "keyword": keyword,
+                            "current_value": latest,
+                            "baseline": round(baseline, 2),
+                            "multiplier": round(latest / baseline, 2),
+                            "source": signal.source,
+                            "detected_at": datetime.now(UTC).isoformat(),
+                        }
+                    )
                     logger.info(
                         f"Keyword spike detected: '{keyword}' at {latest} "
-                        f"(baseline {baseline:.1f}, {latest/baseline:.1f}×)"
+                        f"(baseline {baseline:.1f}, {latest / baseline:.1f}×)"
                     )
 
     except Exception as e:

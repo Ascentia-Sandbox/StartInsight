@@ -117,7 +117,11 @@ def _build_payload(insight: Insight, service_type: str) -> dict:
                     "fields": [
                         {"name": "Viability", "value": f"{score_pct}%", "inline": True},
                         {"name": "Market Size", "value": market, "inline": True},
-                        {"name": "Revenue", "value": insight.revenue_potential or "N/A", "inline": True},
+                        {
+                            "name": "Revenue",
+                            "value": insight.revenue_potential or "N/A",
+                            "inline": True,
+                        },
                     ],
                 }
             ]

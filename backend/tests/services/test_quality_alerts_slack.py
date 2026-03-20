@@ -66,6 +66,7 @@ class TestAlertServiceWithSlack:
 
     def test_alert_handler_error_does_not_crash(self):
         """A failing handler should not crash the service."""
+
         def failing_handler(alert):
             raise ValueError("Handler failed!")
 

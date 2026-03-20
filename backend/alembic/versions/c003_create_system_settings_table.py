@@ -18,8 +18,8 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = 'c003'
-down_revision = 'b010_add_production_indexes'
+revision = "c003"
+down_revision = "b010_add_production_indexes"
 branch_labels = None
 depends_on = None
 
@@ -126,15 +126,24 @@ DEFAULT_SETTINGS = [
 def upgrade() -> None:
     # Create system_settings table
     op.create_table(
-        'system_settings',
-        sa.Column('id', UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
-        sa.Column('key', sa.String(255), unique=True, index=True, nullable=False),
-        sa.Column('value', JSONB, nullable=False),
-        sa.Column('category', sa.String(100), index=True, nullable=False),
-        sa.Column('description', sa.Text, nullable=True),
-        sa.Column('updated_by', UUID(as_uuid=True), sa.ForeignKey('users.id', ondelete='SET NULL'), nullable=True),
-        sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        "system_settings",
+        sa.Column("id", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
+        sa.Column("key", sa.String(255), unique=True, index=True, nullable=False),
+        sa.Column("value", JSONB, nullable=False),
+        sa.Column("category", sa.String(100), index=True, nullable=False),
+        sa.Column("description", sa.Text, nullable=True),
+        sa.Column(
+            "updated_by",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
 
     # Seed default settings
@@ -159,4 +168,4 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_table('system_settings')
+    op.drop_table("system_settings")

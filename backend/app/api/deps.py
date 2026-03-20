@@ -54,6 +54,7 @@ async def _get_jwks_key(kid: str) -> dict:
 
     raise ValueError(f"No JWKS key found for kid: {kid}")
 
+
 # Redis client - use shared pool from cache.py
 from app.core.cache import get_redis as _get_cache_redis
 
@@ -61,6 +62,7 @@ from app.core.cache import get_redis as _get_cache_redis
 async def get_redis() -> aioredis.Redis:
     """Get Redis client for caching (shared pool from cache.py)."""
     return await _get_cache_redis()
+
 
 # HTTP Bearer token scheme
 security = HTTPBearer(auto_error=False)
@@ -273,20 +275,25 @@ async def _verify_and_get_user(token: str, db: AsyncSession) -> User:
         raise credentials_exception
 
     # Find or create user (JIT provisioning) - atomic UPSERT prevents race conditions
-    stmt = insert(User).values(
-        supabase_user_id=supabase_user_id,
-        email=email or f"{supabase_user_id}@supabase.auth",
-        display_name=payload.get("user_metadata", {}).get("full_name"),
-        avatar_url=payload.get("user_metadata", {}).get("avatar_url"),
-        preferences={},
-    ).on_conflict_do_update(
-        index_elements=['supabase_user_id'],
-        set_={
-            'email': email or f"{supabase_user_id}@supabase.auth",
-            'display_name': payload.get("user_metadata", {}).get("full_name"),
-            'avatar_url': payload.get("user_metadata", {}).get("avatar_url"),
-        }
-    ).returning(User)
+    stmt = (
+        insert(User)
+        .values(
+            supabase_user_id=supabase_user_id,
+            email=email or f"{supabase_user_id}@supabase.auth",
+            display_name=payload.get("user_metadata", {}).get("full_name"),
+            avatar_url=payload.get("user_metadata", {}).get("avatar_url"),
+            preferences={},
+        )
+        .on_conflict_do_update(
+            index_elements=["supabase_user_id"],
+            set_={
+                "email": email or f"{supabase_user_id}@supabase.auth",
+                "display_name": payload.get("user_metadata", {}).get("full_name"),
+                "avatar_url": payload.get("user_metadata", {}).get("avatar_url"),
+            },
+        )
+        .returning(User)
+    )
 
     result = await db.execute(stmt)
     user = result.scalar_one()
@@ -300,6 +307,7 @@ async def _verify_and_get_user(token: str, db: AsyncSession) -> User:
     # Set Sentry user context for this request (no-op if Sentry not initialised)
     try:
         import sentry_sdk
+
         sentry_sdk.set_user({"id": str(user.id), "email": user.email})
     except ImportError:
         pass

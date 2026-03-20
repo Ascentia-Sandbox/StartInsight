@@ -155,9 +155,7 @@ async def _require_membership(
 
 async def _get_member_count(team_id: UUID, db: AsyncSession) -> int:
     """Get member count for a team."""
-    count = await db.scalar(
-        select(func.count(TeamMember.id)).where(TeamMember.team_id == team_id)
-    )
+    count = await db.scalar(select(func.count(TeamMember.id)).where(TeamMember.team_id == team_id))
     return count or 0
 
 
@@ -342,9 +340,9 @@ async def list_team_members(
     """
     await _require_membership(team_id, current_user.id, db)
 
-    total = await db.scalar(
-        select(func.count(TeamMember.id)).where(TeamMember.team_id == team_id)
-    ) or 0
+    total = (
+        await db.scalar(select(func.count(TeamMember.id)).where(TeamMember.team_id == team_id)) or 0
+    )
 
     query = (
         select(TeamMember)
@@ -776,9 +774,12 @@ async def list_shared_insights(
     await _require_membership(team_id, current_user.id, db)
 
     # Count total
-    total = await db.scalar(
-        select(func.count(SharedInsight.id)).where(SharedInsight.team_id == team_id)
-    ) or 0
+    total = (
+        await db.scalar(
+            select(func.count(SharedInsight.id)).where(SharedInsight.team_id == team_id)
+        )
+        or 0
+    )
 
     # Fetch paginated
     query = (

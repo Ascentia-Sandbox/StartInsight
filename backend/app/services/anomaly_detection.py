@@ -100,9 +100,11 @@ async def update_source_baseline(source_name: str, signals_count: int) -> str | 
     try:
         async with AsyncSessionLocal() as session:
             result = await session.execute(
-                text("SELECT baseline_mean, baseline_variance, baseline_count "
-                     "FROM source_health WHERE source_name = :name "
-                     "FOR UPDATE"),
+                text(
+                    "SELECT baseline_mean, baseline_variance, baseline_count "
+                    "FROM source_health WHERE source_name = :name "
+                    "FOR UPDATE"
+                ),
                 {"name": source_name},
             )
             row = result.mappings().first()
@@ -124,11 +126,13 @@ async def update_source_baseline(source_name: str, signals_count: int) -> str | 
 
             # Write back
             await session.execute(
-                text("UPDATE source_health SET "
-                     "baseline_mean = :mean, "
-                     "baseline_variance = :variance, "
-                     "baseline_count = :count "
-                     "WHERE source_name = :name"),
+                text(
+                    "UPDATE source_health SET "
+                    "baseline_mean = :mean, "
+                    "baseline_variance = :variance, "
+                    "baseline_count = :count "
+                    "WHERE source_name = :name"
+                ),
                 {
                     "mean": baseline.mean,
                     "variance": baseline.variance,

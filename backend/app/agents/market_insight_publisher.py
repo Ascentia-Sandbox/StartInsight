@@ -51,12 +51,9 @@ class MarketInsightArticle(BaseModel):
         "## Market Trends (3-5 trends with evidence), ## Opportunities for Founders, "
         "## What This Means for You. Use tables, bullet points, and bold for readability."
     )
-    category: str = Field(
-        description="One of: Trends, Analysis, Guides, Case Studies"
-    )
+    category: str = Field(description="One of: Trends, Analysis, Guides, Case Studies")
     reading_time_minutes: int = Field(
-        ge=3, le=15,
-        description="Estimated reading time based on content length"
+        ge=3, le=15, description="Estimated reading time based on content length"
     )
 
 
@@ -100,18 +97,16 @@ Content quality standards:
 def _slugify(title: str) -> str:
     """Convert title to URL-friendly slug."""
     slug = title.lower().strip()
-    slug = re.sub(r'[^\w\s-]', '', slug)
-    slug = re.sub(r'[\s_]+', '-', slug)
-    slug = re.sub(r'-+', '-', slug)
+    slug = re.sub(r"[^\w\s-]", "", slug)
+    slug = re.sub(r"[\s_]+", "-", slug)
+    slug = re.sub(r"-+", "-", slug)
     return slug[:200]
 
 
 async def _is_agent_enabled(session: AsyncSession) -> bool:
     """Check if this agent is enabled in AgentConfiguration."""
     result = await session.execute(
-        select(AgentConfiguration).where(
-            AgentConfiguration.agent_name == AGENT_NAME
-        )
+        select(AgentConfiguration).where(AgentConfiguration.agent_name == AGENT_NAME)
     )
     config = result.scalar_one_or_none()
     if config is None:
@@ -123,9 +118,7 @@ async def _gather_market_context(session: AsyncSession) -> str:
     """Gather current market data from insights and trends for article generation."""
     # Top trending keywords by growth
     trends_result = await session.execute(
-        select(Trend)
-        .order_by(Trend.growth_percentage.desc().nulls_last())
-        .limit(15)
+        select(Trend).order_by(Trend.growth_percentage.desc().nulls_last()).limit(15)
     )
     trends = trends_result.scalars().all()
 
@@ -177,15 +170,12 @@ async def _gather_market_context(session: AsyncSession) -> str:
         if i.why_now_score:
             scores.append(f"Timing:{i.why_now_score}")
         context_parts.append(
-            f"- **{i.proposed_solution}** ({', '.join(scores)}) "
-            f"— Market: {i.market_size_estimate}"
+            f"- **{i.proposed_solution}** ({', '.join(scores)}) — Market: {i.market_size_estimate}"
         )
 
     # Recent articles to avoid duplication
     recent_articles = await session.execute(
-        select(MarketInsight.title)
-        .order_by(MarketInsight.created_at.desc())
-        .limit(5)
+        select(MarketInsight.title).order_by(MarketInsight.created_at.desc()).limit(5)
     )
     recent_titles = [r[0] for r in recent_articles]
     if recent_titles:
@@ -235,9 +225,7 @@ async def generate_market_insight_article(session: AsyncSession) -> MarketInsigh
     # Create the article
     slug = _slugify(article_data.title)
     # Ensure unique slug
-    existing = await session.execute(
-        select(MarketInsight).where(MarketInsight.slug == slug)
-    )
+    existing = await session.execute(select(MarketInsight).where(MarketInsight.slug == slug))
     if existing.scalar_one_or_none():
         slug = f"{slug}-{datetime.now(UTC).strftime('%Y%m%d')}"
 

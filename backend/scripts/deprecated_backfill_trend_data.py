@@ -71,14 +71,14 @@ async def backfill():
         for i, insight in enumerate(insights):
             # Skip if no raw signal
             if not insight.raw_signal:
-                logger.warning(f"[{i+1}/{len(insights)}] No raw signal for {insight.id}")
+                logger.warning(f"[{i + 1}/{len(insights)}] No raw signal for {insight.id}")
                 skipped += 1
                 continue
 
             # Skip if trend data already exists
             extra = insight.raw_signal.extra_metadata or {}
             if extra.get("trend_data") and extra["trend_data"].get("dates"):
-                logger.info(f"[{i+1}/{len(insights)}] Already has trend data: {insight.id}")
+                logger.info(f"[{i + 1}/{len(insights)}] Already has trend data: {insight.id}")
                 skipped += 1
                 continue
 
@@ -95,11 +95,13 @@ async def backfill():
                 keyword = " ".join(words) if words else None
 
             if not keyword:
-                logger.warning(f"[{i+1}/{len(insights)}] No keyword for {insight.id}")
+                logger.warning(f"[{i + 1}/{len(insights)}] No keyword for {insight.id}")
                 skipped += 1
                 continue
 
-            logger.info(f"[{i+1}/{len(insights)}] Fetching trends for '{keyword}' (insight {insight.id})")
+            logger.info(
+                f"[{i + 1}/{len(insights)}] Fetching trends for '{keyword}' (insight {insight.id})"
+            )
 
             # Rate limit
             time.sleep(REQUEST_DELAY)

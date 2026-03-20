@@ -143,7 +143,9 @@ async def run_analysis() -> int:
                     continue
 
                 content_preview = (signal.content or "")[:50]
-                logger.info(f"Processing signal {i}/{len(signal_ids)}: {signal.source} - {content_preview}...")
+                logger.info(
+                    f"Processing signal {i}/{len(signal_ids)}: {signal.source} - {content_preview}..."
+                )
 
                 insight = await analyze_signal_enhanced_with_retry(signal)
                 session.add(insight)
@@ -152,9 +154,7 @@ async def run_analysis() -> int:
                 # Mark signal as processed
                 async with AsyncSessionLocal() as update_session:
                     await update_session.execute(
-                        update(RawSignal)
-                        .where(RawSignal.id == signal_id)
-                        .values(processed=True)
+                        update(RawSignal).where(RawSignal.id == signal_id).values(processed=True)
                     )
                     await update_session.commit()
 
@@ -172,10 +172,7 @@ async def run_analysis() -> int:
 
 async def check_reddit_scraper() -> int:
     """Check if Reddit scraper can be used."""
-    if (
-        not settings.reddit_client_id
-        or settings.reddit_client_id == "your_reddit_client_id_here"
-    ):
+    if not settings.reddit_client_id or settings.reddit_client_id == "your_reddit_client_id_here":
         logger.warning("Reddit API not configured - skipping Reddit scraper")
         return 0
 

@@ -92,18 +92,14 @@ async def backfill() -> None:
                 except Exception as e:
                     await session.rollback()
                     failed += 1
-                    logger.error(
-                        f"  [{success + failed}/{total}] Failed insight {insight.id}: {e}"
-                    )
+                    logger.error(f"  [{success + failed}/{total}] Failed insight {insight.id}: {e}")
 
             # Rate limit between batches
             if i + BATCH_SIZE < total:
                 logger.info(f"  Waiting {DELAY_BETWEEN_BATCHES}s before next batch...")
                 await asyncio.sleep(DELAY_BETWEEN_BATCHES)
 
-        logger.info(
-            f"Backfill complete: {success} upgraded, {failed} failed out of {total}"
-        )
+        logger.info(f"Backfill complete: {success} upgraded, {failed} failed out of {total}")
 
 
 if __name__ == "__main__":

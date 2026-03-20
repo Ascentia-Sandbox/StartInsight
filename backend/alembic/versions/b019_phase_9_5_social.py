@@ -27,8 +27,16 @@ def upgrade() -> None:
     # Founder profiles table
     op.create_table(
         "founder_profiles",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
+        sa.Column(
+            "user_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            unique=True,
+            nullable=False,
+        ),
         sa.Column("username", sa.String(50), unique=True, nullable=False),
         sa.Column("display_name", sa.String(100), nullable=True),
         sa.Column("bio", sa.Text(), nullable=True),
@@ -38,10 +46,16 @@ def upgrade() -> None:
         sa.Column("interests", JSONB, nullable=True),  # ["ai", "fintech"]
         sa.Column("social_links", JSONB, nullable=True),  # {twitter, linkedin, github}
         sa.Column("is_public", sa.Boolean(), server_default=sa.text("false"), nullable=False),
-        sa.Column("accepting_connections", sa.Boolean(), server_default=sa.text("true"), nullable=False),
+        sa.Column(
+            "accepting_connections", sa.Boolean(), server_default=sa.text("true"), nullable=False
+        ),
         sa.Column("connection_count", sa.Integer(), server_default="0", nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
     op.create_index("idx_founder_profiles_username", "founder_profiles", ["username"])
     op.create_index("idx_founder_profiles_public", "founder_profiles", ["is_public"])
@@ -49,21 +63,43 @@ def upgrade() -> None:
     # Founder connections table
     op.create_table(
         "founder_connections",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("requester_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("recipient_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("status", sa.String(20), server_default="pending", nullable=False),  # pending, accepted, rejected
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
+        sa.Column(
+            "requester_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "recipient_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "status", sa.String(20), server_default="pending", nullable=False
+        ),  # pending, accepted, rejected
         sa.Column("message", sa.Text(), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.Column("responded_at", sa.DateTime(timezone=True), nullable=True),
     )
-    op.create_unique_constraint("uq_founder_connections", "founder_connections", ["requester_id", "recipient_id"])
-    op.create_index("idx_founder_connections_recipient", "founder_connections", ["recipient_id", "status"])
+    op.create_unique_constraint(
+        "uq_founder_connections", "founder_connections", ["requester_id", "recipient_id"]
+    )
+    op.create_index(
+        "idx_founder_connections_recipient", "founder_connections", ["recipient_id", "status"]
+    )
 
     # Idea clubs table
     op.create_table(
         "idea_clubs",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
         sa.Column("name", sa.String(100), unique=True, nullable=False),
         sa.Column("slug", sa.String(100), unique=True, nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
@@ -73,8 +109,15 @@ def upgrade() -> None:
         sa.Column("post_count", sa.Integer(), server_default="0", nullable=False),
         sa.Column("is_public", sa.Boolean(), server_default=sa.text("true"), nullable=False),
         sa.Column("is_official", sa.Boolean(), server_default=sa.text("false"), nullable=False),
-        sa.Column("created_by", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_by",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
     op.create_index("idx_idea_clubs_slug", "idea_clubs", ["slug"])
     op.create_index("idx_idea_clubs_category", "idea_clubs", ["category"])
@@ -82,11 +125,27 @@ def upgrade() -> None:
     # Club members table
     op.create_table(
         "club_members",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("club_id", UUID(as_uuid=True), sa.ForeignKey("idea_clubs.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("role", sa.String(20), server_default="member", nullable=False),  # admin, moderator, member
-        sa.Column("joined_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
+        sa.Column(
+            "club_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("idea_clubs.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "user_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "role", sa.String(20), server_default="member", nullable=False
+        ),  # admin, moderator, member
+        sa.Column(
+            "joined_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
     op.create_unique_constraint("uq_club_members", "club_members", ["club_id", "user_id"])
     op.create_index("idx_club_members_user", "club_members", ["user_id"])
@@ -94,19 +153,42 @@ def upgrade() -> None:
     # Club posts table
     op.create_table(
         "club_posts",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("club_id", UUID(as_uuid=True), sa.ForeignKey("idea_clubs.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
+        sa.Column(
+            "club_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("idea_clubs.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "user_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("title", sa.String(255), nullable=True),
         sa.Column("content", sa.Text(), nullable=False),
-        sa.Column("post_type", sa.String(20), server_default="discussion", nullable=False),  # discussion, idea_share, question
-        sa.Column("insight_id", UUID(as_uuid=True), sa.ForeignKey("insights.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "post_type", sa.String(20), server_default="discussion", nullable=False
+        ),  # discussion, idea_share, question
+        sa.Column(
+            "insight_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("insights.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("upvotes", sa.Integer(), server_default="0", nullable=False),
         sa.Column("comment_count", sa.Integer(), server_default="0", nullable=False),
         sa.Column("is_pinned", sa.Boolean(), server_default=sa.text("false"), nullable=False),
         sa.Column("is_deleted", sa.Boolean(), server_default=sa.text("false"), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
     op.create_index("idx_club_posts_club", "club_posts", ["club_id", sa.text("created_at DESC")])
     op.create_index("idx_club_posts_user", "club_posts", ["user_id"])

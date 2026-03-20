@@ -183,9 +183,7 @@ async def review_content(
     - **reject**: Mark content as rejected with reason
     - **flag**: Flag for additional review
     """
-    result = await db.execute(
-        select(ContentReviewQueue).where(ContentReviewQueue.id == item_id)
-    )
+    result = await db.execute(select(ContentReviewQueue).where(ContentReviewQueue.id == item_id))
     item = result.scalar_one_or_none()
 
     if not item:
@@ -281,9 +279,7 @@ async def get_queue_stats(
     )
 
     # Average quality score
-    avg_score = await db.execute(
-        select(func.avg(ContentReviewQueue.quality_score))
-    )
+    avg_score = await db.execute(select(func.avg(ContentReviewQueue.quality_score)))
     avg_quality = avg_score.scalar()
 
     # Average review time (for reviewed items)
@@ -320,9 +316,7 @@ async def list_duplicates(
     - **resolved**: Filter by resolution status
     - **similarity_type**: Filter by type (exact, near, thematic)
     """
-    query = select(ContentSimilarity).order_by(
-        ContentSimilarity.similarity_score.desc()
-    )
+    query = select(ContentSimilarity).order_by(ContentSimilarity.similarity_score.desc())
 
     if resolved is not None:
         query = query.where(ContentSimilarity.resolved == resolved)
@@ -385,9 +379,7 @@ async def resolve_duplicate(
     await db.commit()
     await db.refresh(similarity)
 
-    logger.info(
-        f"Duplicate {similarity_id} resolved as {action.resolution} by admin {admin.id}"
-    )
+    logger.info(f"Duplicate {similarity_id} resolved as {action.resolution} by admin {admin.id}")
 
     return SimilarityItem.model_validate(similarity)
 
@@ -401,12 +393,8 @@ async def get_duplicate_stats(
     Get duplicate detection statistics.
     """
     total = await db.execute(select(func.count(ContentSimilarity.id)))
-    unresolved = await db.execute(
-        select(func.count()).where(ContentSimilarity.resolved == False)
-    )
-    avg_score = await db.execute(
-        select(func.avg(ContentSimilarity.similarity_score))
-    )
+    unresolved = await db.execute(select(func.count()).where(ContentSimilarity.resolved == False))
+    avg_score = await db.execute(select(func.avg(ContentSimilarity.similarity_score)))
 
     # Count by type
     by_type = await db.execute(

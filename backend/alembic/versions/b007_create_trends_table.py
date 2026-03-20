@@ -33,17 +33,44 @@ def upgrade() -> None:
         sa.Column("search_volume", sa.Integer(), nullable=False, index=True),
         sa.Column("growth_percentage", sa.Float(), nullable=False, index=True),
         sa.Column("business_implications", sa.Text(), nullable=False),
-        sa.Column("trend_data", postgresql.JSONB(astext_type=sa.Text()), nullable=True, server_default=sa.text("'{}'::jsonb")),
-        sa.Column("source", sa.String(length=100), nullable=False, server_default=sa.text("'Google Trends'")),
-        sa.Column("is_featured", sa.Boolean(), nullable=False, server_default=sa.text("false"), index=True),
-        sa.Column("is_published", sa.Boolean(), nullable=False, server_default=sa.text("true"), index=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()"), index=True),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column(
+            "trend_data",
+            postgresql.JSONB(astext_type=sa.Text()),
+            nullable=True,
+            server_default=sa.text("'{}'::jsonb"),
+        ),
+        sa.Column(
+            "source",
+            sa.String(length=100),
+            nullable=False,
+            server_default=sa.text("'Google Trends'"),
+        ),
+        sa.Column(
+            "is_featured", sa.Boolean(), nullable=False, server_default=sa.text("false"), index=True
+        ),
+        sa.Column(
+            "is_published", sa.Boolean(), nullable=False, server_default=sa.text("true"), index=True
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+            index=True,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
     )
 
     # Create indexes for sorting
     op.create_index("ix_trends_search_volume_desc", "trends", [sa.text("search_volume DESC")])
-    op.create_index("ix_trends_growth_percentage_desc", "trends", [sa.text("growth_percentage DESC")])
+    op.create_index(
+        "ix_trends_growth_percentage_desc", "trends", [sa.text("growth_percentage DESC")]
+    )
     op.create_index("ix_trends_created_at_desc", "trends", [sa.text("created_at DESC")])
 
     # Enable RLS

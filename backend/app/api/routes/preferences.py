@@ -32,6 +32,7 @@ router = APIRouter(prefix="/api/preferences", tags=["User Preferences"])
 # Schemas
 # ============================================
 
+
 class UserPreferencesResponse(BaseModel):
     id: UUID
     user_id: UUID
@@ -60,6 +61,7 @@ class UserPreferencesUpdate(BaseModel):
 
 class QuizSubmission(BaseModel):
     """One-click idea match quiz submission."""
+
     background: str = Field(..., pattern="^(tech|business|creative|other)$")
     budget_range: str = Field(..., pattern="^(0-1k|1k-10k|10k\\+)$")
     time_commitment: str = Field(..., pattern="^(nights_weekends|part_time|full_time)$")
@@ -96,6 +98,7 @@ class EmailPreferencesUpdate(BaseModel):
 # ============================================
 # User Preferences Endpoints
 # ============================================
+
 
 @router.get("/user", response_model=UserPreferencesResponse)
 async def get_user_preferences(
@@ -182,6 +185,7 @@ async def submit_quiz(
 # Email Preferences Endpoints
 # ============================================
 
+
 @router.get("/email", response_model=EmailPreferencesResponse)
 async def get_email_preferences(
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -256,7 +260,10 @@ async def unsubscribe_from_emails(
     await db.commit()
 
     logger.info(f"User {current_user.id} unsubscribed from emails")
-    return {"status": "unsubscribed", "message": "You have been unsubscribed from all email communications"}
+    return {
+        "status": "unsubscribed",
+        "message": "You have been unsubscribed from all email communications",
+    }
 
 
 @router.post("/email/resubscribe")
@@ -282,7 +289,10 @@ async def resubscribe_to_emails(
     await db.commit()
 
     logger.info(f"User {current_user.id} resubscribed to emails")
-    return {"status": "resubscribed", "message": "You have been resubscribed to email communications"}
+    return {
+        "status": "resubscribed",
+        "message": "You have been resubscribed to email communications",
+    }
 
 
 # ============================================

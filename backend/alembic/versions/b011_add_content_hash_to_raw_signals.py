@@ -13,8 +13,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = 'b011_content_hash'
-down_revision = 'b010_add_production_indexes'
+revision = "b011_content_hash"
+down_revision = "b010_add_production_indexes"
 branch_labels = None
 depends_on = None
 
@@ -23,22 +23,22 @@ def upgrade() -> None:
     """Add content_hash column to raw_signals table."""
     # Add content_hash column (nullable for backward compatibility)
     op.add_column(
-        'raw_signals',
+        "raw_signals",
         sa.Column(
-            'content_hash',
+            "content_hash",
             sa.String(64),
             nullable=True,
-            comment='SHA-256 hash of content for deduplication'
-        )
+            comment="SHA-256 hash of content for deduplication",
+        ),
     )
 
     # Create index for fast hash lookups
     op.create_index(
-        'ix_raw_signals_content_hash',
-        'raw_signals',
-        ['content_hash'],
+        "ix_raw_signals_content_hash",
+        "raw_signals",
+        ["content_hash"],
         unique=True,
-        postgresql_where=sa.text('content_hash IS NOT NULL')
+        postgresql_where=sa.text("content_hash IS NOT NULL"),
     )
 
     # Backfill existing records with content hash
@@ -48,5 +48,5 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Remove content_hash column."""
-    op.drop_index('ix_raw_signals_content_hash', table_name='raw_signals')
-    op.drop_column('raw_signals', 'content_hash')
+    op.drop_index("ix_raw_signals_content_hash", table_name="raw_signals")
+    op.drop_column("raw_signals", "content_hash")

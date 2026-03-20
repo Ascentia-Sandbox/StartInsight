@@ -33,7 +33,7 @@ class TestEmailTemplates:
     def test_templates_have_subject(self):
         """Test that all templates have subjects."""
         for name, template in TEMPLATES.items():
-            assert hasattr(template, 'subject')
+            assert hasattr(template, "subject")
             assert len(template.subject) > 0
 
 

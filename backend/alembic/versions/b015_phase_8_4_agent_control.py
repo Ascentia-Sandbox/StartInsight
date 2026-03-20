@@ -24,33 +24,55 @@ def upgrade() -> None:
     # Agent configurations table
     op.create_table(
         "agent_configurations",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
         sa.Column("agent_name", sa.String(50), unique=True, nullable=False),
         sa.Column("is_enabled", sa.Boolean(), server_default=sa.text("true"), nullable=False),
         sa.Column("model_name", sa.String(100), server_default="gemini-1.5-flash", nullable=False),
         sa.Column("temperature", sa.Numeric(3, 2), server_default="0.7", nullable=False),
         sa.Column("max_tokens", sa.Integer(), server_default="4096", nullable=False),
         sa.Column("rate_limit_per_hour", sa.Integer(), server_default="100", nullable=False),
-        sa.Column("cost_limit_daily_usd", sa.Numeric(10, 2), server_default="50.00", nullable=False),
+        sa.Column(
+            "cost_limit_daily_usd", sa.Numeric(10, 2), server_default="50.00", nullable=False
+        ),
         sa.Column("custom_prompts", JSONB, nullable=True),
-        sa.Column("updated_by", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "updated_by",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
 
     # Audit logs table
     op.create_table(
         "audit_logs",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
+        sa.Column(
+            "user_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("action", sa.String(100), nullable=False),
         sa.Column("resource_type", sa.String(50), nullable=False),
         sa.Column("resource_id", UUID(as_uuid=True), nullable=True),
         sa.Column("details", JSONB, nullable=True),
         sa.Column("ip_address", sa.String(45), nullable=True),
         sa.Column("user_agent", sa.String(500), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
-    op.create_index("idx_audit_logs_user_time", "audit_logs", ["user_id", sa.text("created_at DESC")])
+    op.create_index(
+        "idx_audit_logs_user_time", "audit_logs", ["user_id", sa.text("created_at DESC")]
+    )
     op.create_index("idx_audit_logs_action", "audit_logs", ["action", sa.text("created_at DESC")])
     op.create_index("idx_audit_logs_resource", "audit_logs", ["resource_type", "resource_id"])
 

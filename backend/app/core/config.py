@@ -30,7 +30,9 @@ class Settings(BaseSettings):
     api_reload: bool = False
 
     # CORS
-    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3002,http://127.0.0.1:3002"
+    cors_origins: str = (
+        "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3002,http://127.0.0.1:3002"
+    )
 
     # AI & LLM APIs
     google_api_key: str | None = None  # Primary: Gemini API
@@ -114,8 +116,8 @@ class Settings(BaseSettings):
     ai_fallback_enabled: bool = True  # Phase 6.5A: Enable Claude/rule-based fallback chain
 
     # Database Connection Pool (Supabase session-mode pooler safe ceiling)
-    db_pool_size: int = 3       # session-mode pooler: ~7 per process, ~14 total with worker
-    db_max_overflow: int = 4    # total per process: 7 — well under Supabase pool_size limit
+    db_pool_size: int = 3  # session-mode pooler: ~7 per process, ~14 total with worker
+    db_max_overflow: int = 4  # total per process: 7 — well under Supabase pool_size limit
     db_pool_timeout: int = 30
     db_pool_recycle: int = 3600
     db_ssl: bool = True  # Supabase requires SSL
@@ -152,7 +154,9 @@ class Settings(BaseSettings):
     jwks_cache_ttl: int = 3600
     cors_allowed_methods: str = "GET,POST,PUT,PATCH,DELETE,OPTIONS"
     cors_allowed_headers: str = "*"
-    cors_origin_regex: str = ""  # Optional regex for dynamic origins (e.g. Vercel preview deployments)
+    cors_origin_regex: str = (
+        ""  # Optional regex for dynamic origins (e.g. Vercel preview deployments)
+    )
     csp_connect_src: str = "'self' https://generativelanguage.googleapis.com https://*.supabase.co"
     cors_allowed_production_origins: str = "https://startinsight.co,https://www.startinsight.co"
 
@@ -163,7 +167,7 @@ class Settings(BaseSettings):
     default_max_teams: int = 3
     default_max_api_keys: int = 2
 
-    @field_validator('jwt_secret')
+    @field_validator("jwt_secret")
     @classmethod
     def validate_jwt_secret_strength(cls, v: str | None) -> str | None:
         """Ensure JWT secret is cryptographically strong."""
@@ -183,8 +187,8 @@ class Settings(BaseSettings):
 
         return v
 
-    @model_validator(mode='after')
-    def check_production_config(self) -> 'Settings':
+    @model_validator(mode="after")
+    def check_production_config(self) -> "Settings":
         """Validate critical settings in production environment."""
         if self.environment == "production":
             # Phase 4+: Authentication is CRITICAL in production
@@ -231,9 +235,7 @@ class Settings(BaseSettings):
 
                 # Enforce HTTPS
                 if not origin.startswith("https://"):
-                    raise ValueError(
-                        f"Production CORS origins must use HTTPS: {origin}"
-                    )
+                    raise ValueError(f"Production CORS origins must use HTTPS: {origin}")
 
                 # Enforce whitelist
                 if origin not in allowed_origins:

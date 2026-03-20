@@ -33,6 +33,7 @@ router = APIRouter(prefix="/admin/agents", tags=["Agent Control"])
 # Schemas
 # ============================================
 
+
 class AgentConfigResponse(BaseModel):
     id: UUID
     agent_name: str
@@ -53,6 +54,7 @@ class AgentConfigResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class AgentConfigCreate(BaseModel):
     agent_name: str = Field(..., min_length=1, max_length=50)
     is_enabled: bool = True
@@ -63,6 +65,7 @@ class AgentConfigCreate(BaseModel):
     cost_limit_daily_usd: float = Field(50.0, ge=1, le=1000)
     custom_prompts: dict[str, Any] | None = None
 
+
 class AgentConfigUpdate(BaseModel):
     is_enabled: bool | None = None
     model_name: str | None = None
@@ -72,11 +75,17 @@ class AgentConfigUpdate(BaseModel):
     cost_limit_daily_usd: float | None = Field(None, ge=1, le=1000)
     custom_prompts: dict[str, Any] | None = None
 
+
 class AgentScheduleUpdate(BaseModel):
     """Phase 16.2: Dynamic schedule management."""
+
     schedule_type: str = Field(..., pattern="^(cron|interval|manual)$")
-    schedule_cron: str | None = Field(None, max_length=100, description="Cron expression (e.g., '0 8 * * *')")
-    schedule_interval_hours: int | None = Field(None, ge=1, le=168, description="Interval in hours (1-168)")
+    schedule_cron: str | None = Field(
+        None, max_length=100, description="Cron expression (e.g., '0 8 * * *')"
+    )
+    schedule_interval_hours: int | None = Field(
+        None, ge=1, le=168, description="Interval in hours (1-168)"
+    )
 
     def model_post_init(self, __context):
         """Validate that the correct fields are provided based on schedule_type."""
@@ -84,6 +93,7 @@ class AgentScheduleUpdate(BaseModel):
             raise ValueError("schedule_cron is required when schedule_type is 'cron'")
         if self.schedule_type == "interval" and not self.schedule_interval_hours:
             raise ValueError("schedule_interval_hours is required when schedule_type is 'interval'")
+
 
 class AgentScheduleResponse(BaseModel):
     agent_name: str
@@ -96,6 +106,7 @@ class AgentScheduleResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class AgentStatsResponse(BaseModel):
     agent_name: str
     executions_24h: int
@@ -103,6 +114,7 @@ class AgentStatsResponse(BaseModel):
     avg_duration_ms: float
     tokens_used_24h: int
     cost_24h_usd: float
+
 
 class AuditLogResponse(BaseModel):
     id: UUID
@@ -120,6 +132,7 @@ class AuditLogResponse(BaseModel):
 # ============================================
 # Agent Configuration Endpoints
 # ============================================
+
 
 @router.get("/configurations", response_model=list[AgentConfigResponse])
 async def list_agent_configurations(
@@ -310,7 +323,9 @@ async def toggle_agent(
 
     await db.commit()
 
-    logger.info(f"Agent {agent_name} {'enabled' if config.is_enabled else 'disabled'} by admin {admin.id}")
+    logger.info(
+        f"Agent {agent_name} {'enabled' if config.is_enabled else 'disabled'} by admin {admin.id}"
+    )
     return {"agent_name": agent_name, "is_enabled": config.is_enabled}
 
 
@@ -338,12 +353,10 @@ async def get_agent_stats(
     token_cost_query = await db.execute(
         select(
             AgentExecutionLog.agent_type,
-            func.coalesce(
-                func.sum(text("(extra_metadata->>'tokens_used')::int")), 0
-            ).label("tokens"),
-            func.coalesce(
-                func.sum(text("(extra_metadata->>'cost_usd')::float")), 0
-            ).label("cost"),
+            func.coalesce(func.sum(text("(extra_metadata->>'tokens_used')::int")), 0).label(
+                "tokens"
+            ),
+            func.coalesce(func.sum(text("(extra_metadata->>'cost_usd')::float")), 0).label("cost"),
         )
         .where(AgentExecutionLog.started_at >= day_ago)
         .group_by(AgentExecutionLog.agent_type)
@@ -362,21 +375,23 @@ async def get_agent_stats(
             select(func.count()).where(
                 AgentExecutionLog.agent_type == agent_name,
                 AgentExecutionLog.started_at >= day_ago,
-                AgentExecutionLog.error_message.is_(None)
+                AgentExecutionLog.error_message.is_(None),
             )
         )
         success_rate = (success_count.scalar() or 0) / count if count > 0 else 0
 
         tc = token_cost_map.get(agent_name, {"tokens": 0, "cost": 0.0})
 
-        results.append(AgentStatsResponse(
-            agent_name=agent_name,
-            executions_24h=count,
-            success_rate=round(success_rate, 2),
-            avg_duration_ms=float(avg_duration or 0),
-            tokens_used_24h=tc["tokens"],
-            cost_24h_usd=round(tc["cost"], 4),
-        ))
+        results.append(
+            AgentStatsResponse(
+                agent_name=agent_name,
+                executions_24h=count,
+                success_rate=round(success_rate, 2),
+                avg_duration_ms=float(avg_duration or 0),
+                tokens_used_24h=tc["tokens"],
+                cost_24h_usd=round(tc["cost"], 4),
+            )
+        )
 
     return results
 
@@ -384,6 +399,7 @@ async def get_agent_stats(
 # ============================================
 # Phase 16.2: Dynamic Schedule Management
 # ============================================
+
 
 @router.patch("/configurations/{agent_name}/schedule", response_model=AgentScheduleResponse)
 async def update_agent_schedule(
@@ -447,7 +463,9 @@ async def update_agent_schedule(
     await db.commit()
     await db.refresh(config)
 
-    logger.info(f"Agent {agent_name} schedule updated to {schedule.schedule_type} by admin {admin.id}")
+    logger.info(
+        f"Agent {agent_name} schedule updated to {schedule.schedule_type} by admin {admin.id}"
+    )
 
     # TODO: Restart APScheduler job with new schedule
     # This would require importing scheduler and calling _schedule_agent_from_config
@@ -493,22 +511,27 @@ async def get_agent_schedule(
 # Phase 16.2: Cost Analytics
 # ============================================
 
+
 class CostBreakdownResponse(BaseModel):
     """Daily cost breakdown per agent."""
+
     date: str
     agent_name: str
     executions: int
     tokens_used: int
     cost_usd: float
 
+
 class CostAnalyticsResponse(BaseModel):
     """Cost analytics for a time period."""
+
     period: str
     start_date: str
     end_date: str
     total_cost_usd: float
     daily_breakdown: list[CostBreakdownResponse]
     agent_totals: dict[str, float]
+
 
 @router.get("/stats/costs", response_model=CostAnalyticsResponse)
 async def get_agent_cost_analytics(
@@ -561,13 +584,15 @@ async def get_agent_cost_analytics(
         tokens_used = row.tokens_used
         cost_usd = round(row.cost_usd, 4)
 
-        daily_breakdown.append(CostBreakdownResponse(
-            date=date_str,
-            agent_name=agent_name,
-            executions=executions,
-            tokens_used=tokens_used,
-            cost_usd=cost_usd,
-        ))
+        daily_breakdown.append(
+            CostBreakdownResponse(
+                date=date_str,
+                agent_name=agent_name,
+                executions=executions,
+                tokens_used=tokens_used,
+                cost_usd=cost_usd,
+            )
+        )
 
         # Accumulate agent totals
         if agent_name not in agent_totals:
@@ -590,6 +615,7 @@ async def get_agent_cost_analytics(
 # ============================================
 # Audit Log Endpoints
 # ============================================
+
 
 @router.get("/audit-logs", response_model=list[AuditLogResponse])
 async def list_audit_logs(
@@ -642,9 +668,7 @@ async def get_audit_stats(
     """Get audit log statistics."""
     since = datetime.now(UTC) - timedelta(days=days)
 
-    total = await db.execute(
-        select(func.count(AuditLog.id)).where(AuditLog.created_at >= since)
-    )
+    total = await db.execute(select(func.count(AuditLog.id)).where(AuditLog.created_at >= since))
 
     by_action = await db.execute(
         select(AuditLog.action, func.count(AuditLog.id))
@@ -662,13 +686,14 @@ async def get_audit_stats(
         "total_events": total.scalar() or 0,
         "by_action": {row[0]: row[1] for row in by_action.fetchall()},
         "by_resource": {row[0]: row[1] for row in by_resource.fetchall()},
-        "period_days": days
+        "period_days": days,
     }
 
 
 # ============================================
 # Real-time Agent Logs SSE (Phase 20.4)
 # ============================================
+
 
 @router.get("/{agent_name}/logs/stream")
 async def stream_agent_logs(
@@ -711,17 +736,24 @@ async def stream_agent_logs(
                         for log in reversed(logs):
                             yield {
                                 "event": "log_entry",
-                                "data": json.dumps({
-                                    "id": str(log.id),
-                                    "agent_type": log.agent_type,
-                                    "source": log.source,
-                                    "status": log.status,
-                                    "started_at": log.started_at.isoformat() if log.started_at else None,
-                                    "completed_at": log.completed_at.isoformat() if log.completed_at else None,
-                                    "duration_ms": log.duration_ms,
-                                    "items_processed": log.items_processed,
-                                    "error_message": log.error_message,
-                                }, default=str),
+                                "data": json.dumps(
+                                    {
+                                        "id": str(log.id),
+                                        "agent_type": log.agent_type,
+                                        "source": log.source,
+                                        "status": log.status,
+                                        "started_at": log.started_at.isoformat()
+                                        if log.started_at
+                                        else None,
+                                        "completed_at": log.completed_at.isoformat()
+                                        if log.completed_at
+                                        else None,
+                                        "duration_ms": log.duration_ms,
+                                        "items_processed": log.items_processed,
+                                        "error_message": log.error_message,
+                                    },
+                                    default=str,
+                                ),
                             }
                     else:
                         yield {"event": "heartbeat", "data": ""}

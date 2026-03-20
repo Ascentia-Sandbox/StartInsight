@@ -58,8 +58,7 @@ class FirecrawlClient:
         self.api_key = api_key or settings.firecrawl_api_key
         if not self.api_key:
             raise ValueError(
-                "Firecrawl API key not found. "
-                "Set FIRECRAWL_API_KEY environment variable."
+                "Firecrawl API key not found. Set FIRECRAWL_API_KEY environment variable."
             )
 
         self.client = FirecrawlApp(api_key=self.api_key)
@@ -98,9 +97,7 @@ class FirecrawlClient:
             logger.info(f"Scraping URL: {url}")
 
             # Request markdown format (optimal for LLM processing)
-            response = self.client.scrape_url(
-                url=url, params={"formats": ["markdown"]}
-            )
+            response = self.client.scrape_url(url=url, params={"formats": ["markdown"]})
 
             # Extract metadata safely
             metadata = response.get("metadata", {})
@@ -118,8 +115,7 @@ class FirecrawlClient:
             )
 
             logger.info(
-                f"Successfully scraped {url} "
-                f"({len(markdown_content)} chars, title: {title})"
+                f"Successfully scraped {url} ({len(markdown_content)} chars, title: {title})"
             )
             return result
 
@@ -142,9 +138,7 @@ class FirecrawlClient:
         try:
             logger.info(f"Scraping URL (sync): {url}")
 
-            response = self.client.scrape_url(
-                url=url, params={"formats": ["markdown"]}
-            )
+            response = self.client.scrape_url(url=url, params={"formats": ["markdown"]})
 
             metadata = response.get("metadata", {})
             title = metadata.get("title", "")

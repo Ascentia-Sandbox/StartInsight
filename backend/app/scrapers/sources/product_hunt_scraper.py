@@ -107,13 +107,10 @@ class ProductHuntScraper(BaseScraper):
             try:
                 results = await self._scrape_daily_products(date_str)
                 all_results.extend(results)
-                logger.info(
-                    f"Scraped {len(results)} products from Product Hunt ({date_str})"
-                )
+                logger.info(f"Scraped {len(results)} products from Product Hunt ({date_str})")
             except Exception as e:
                 logger.error(
-                    f"Error scraping Product Hunt for {date_str}: "
-                    f"{type(e).__name__} - {e}"
+                    f"Error scraping Product Hunt for {date_str}: {type(e).__name__} - {e}"
                 )
                 continue
 
@@ -149,16 +146,12 @@ class ProductHuntScraper(BaseScraper):
 
             if html_content:
                 # Parse with BeautifulSoup
-                products = self._extract_products_from_html(
-                    html_content, date_str, url
-                )
+                products = self._extract_products_from_html(html_content, date_str, url)
             else:
                 # Fallback to markdown parsing with improved heuristics
-                products = self._extract_products_from_markdown(
-                    result.content, date_str, url
-                )
+                products = self._extract_products_from_markdown(result.content, date_str, url)
 
-            return products[:self.limit]
+            return products[: self.limit]
 
         except Exception as e:
             logger.error(f"Error scraping daily page {date_str}: {e}")
@@ -189,8 +182,7 @@ class ProductHuntScraper(BaseScraper):
 
         if not product_cards:
             logger.warning(
-                f"No product cards found in HTML for {date_str}. "
-                f"Selectors may need updating."
+                f"No product cards found in HTML for {date_str}. Selectors may need updating."
             )
             return results
 
@@ -281,10 +273,7 @@ class ProductHuntScraper(BaseScraper):
 
         # Extract tagline
         tagline = ""
-        tagline_elem = (
-            card.select_one(self.SELECTORS["tagline"])
-            or card.select_one("p")
-        )
+        tagline_elem = card.select_one(self.SELECTORS["tagline"]) or card.select_one("p")
         if tagline_elem:
             tagline = tagline_elem.get_text(strip=True)
 
@@ -361,7 +350,7 @@ class ProductHuntScraper(BaseScraper):
         results: list[ScrapeResult] = []
 
         # Split content into sections by headers or dividers
-        sections = re.split(r'\n(?=#{1,3}\s|\*{3,}|\-{3,})', markdown_content)
+        sections = re.split(r"\n(?=#{1,3}\s|\*{3,}|\-{3,})", markdown_content)
 
         for section in sections:
             if len(section.strip()) < 50:  # Skip short sections
@@ -369,28 +358,30 @@ class ProductHuntScraper(BaseScraper):
 
             # Look for product patterns
             # Pattern 1: Header followed by description
-            header_match = re.match(r'^#{1,3}\s+(.+?)(?:\n|$)', section)
+            header_match = re.match(r"^#{1,3}\s+(.+?)(?:\n|$)", section)
             if header_match:
                 name = header_match.group(1).strip()
 
                 # Clean up common suffixes
-                name = re.sub(r'\s*[-|]\s*Product Hunt.*$', '', name, flags=re.IGNORECASE)
+                name = re.sub(r"\s*[-|]\s*Product Hunt.*$", "", name, flags=re.IGNORECASE)
                 name = name.strip()
 
                 if len(name) < 3 or len(name) > 100:
                     continue
 
                 # Extract tagline (first paragraph after header)
-                lines = section.split('\n')
+                lines = section.split("\n")
                 tagline = ""
                 for line in lines[1:]:
                     line = line.strip()
-                    if line and not line.startswith('#') and not line.startswith('*'):
+                    if line and not line.startswith("#") and not line.startswith("*"):
                         tagline = line[:200]
                         break
 
                 # Extract upvotes if present
-                upvote_match = re.search(r'(\d+(?:,\d+)*)\s*(?:upvotes?|votes?)', section, re.IGNORECASE)
+                upvote_match = re.search(
+                    r"(\d+(?:,\d+)*)\s*(?:upvotes?|votes?)", section, re.IGNORECASE
+                )
                 upvotes = self._parse_number(upvote_match.group(1)) if upvote_match else 0
 
                 # Generate URL
@@ -405,25 +396,26 @@ class ProductHuntScraper(BaseScraper):
                     url=product_url,
                 )
 
-                results.append(ScrapeResult(
-                    url=HttpUrl(product_url),
-                    title=name,
-                    content=content,
-                    metadata={
-                        "source": "product_hunt",
-                        "date": date_str,
-                        "source_page": source_url,
-                        "name": name,
-                        "tagline": tagline,
-                        "upvotes": upvotes,
-                        "scraped_at": datetime.now(UTC).isoformat(),
-                        "extraction_method": "markdown_fallback",
-                    },
-                ))
+                results.append(
+                    ScrapeResult(
+                        url=HttpUrl(product_url),
+                        title=name,
+                        content=content,
+                        metadata={
+                            "source": "product_hunt",
+                            "date": date_str,
+                            "source_page": source_url,
+                            "name": name,
+                            "tagline": tagline,
+                            "upvotes": upvotes,
+                            "scraped_at": datetime.now(UTC).isoformat(),
+                            "extraction_method": "markdown_fallback",
+                        },
+                    )
+                )
 
         logger.info(
-            f"Extracted {len(results)} products from markdown for {date_str} "
-            f"(fallback method)"
+            f"Extracted {len(results)} products from markdown for {date_str} (fallback method)"
         )
         return results
 
@@ -460,14 +452,16 @@ class ProductHuntScraper(BaseScraper):
         if maker:
             content_parts.append(f"**Maker:** {maker}")
 
-        content_parts.extend([
-            f"**URL:** {url}",
-            "",
-            "## Analysis Context",
-            "",
-            "This product was launched on Product Hunt and received "
-            f"{upvotes:,} upvotes, indicating market interest and validation.",
-        ])
+        content_parts.extend(
+            [
+                f"**URL:** {url}",
+                "",
+                "## Analysis Context",
+                "",
+                "This product was launched on Product Hunt and received "
+                f"{upvotes:,} upvotes, indicating market interest and validation.",
+            ]
+        )
 
         return "\n".join(content_parts)
 
@@ -488,13 +482,13 @@ class ProductHuntScraper(BaseScraper):
         text = text.strip().upper()
 
         # Remove non-numeric characters except K, M, and decimal point
-        text = re.sub(r'[^\d.KM]', '', text)
+        text = re.sub(r"[^\d.KM]", "", text)
 
         try:
-            if 'K' in text:
-                return int(float(text.replace('K', '')) * 1000)
-            elif 'M' in text:
-                return int(float(text.replace('M', '')) * 1000000)
+            if "K" in text:
+                return int(float(text.replace("K", "")) * 1000)
+            elif "M" in text:
+                return int(float(text.replace("M", "")) * 1000000)
             else:
                 return int(float(text)) if text else 0
         except (ValueError, TypeError):
@@ -514,10 +508,10 @@ class ProductHuntScraper(BaseScraper):
         # Convert to lowercase
         slug = text.lower()
         # Replace spaces and special chars with hyphens
-        slug = re.sub(r'[^\w\s-]', '', slug)
-        slug = re.sub(r'[-\s]+', '-', slug)
+        slug = re.sub(r"[^\w\s-]", "", slug)
+        slug = re.sub(r"[-\s]+", "-", slug)
         # Remove leading/trailing hyphens
-        slug = slug.strip('-')
+        slug = slug.strip("-")
         return slug[:50]  # Limit length
 
     async def scrape_single_product(self, product_url: str) -> ScrapeResult:

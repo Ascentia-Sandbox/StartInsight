@@ -4,7 +4,6 @@ Tests the TrendVerifier class which validates LLM-generated
 trend keywords against Google Trends data.
 """
 
-
 import pytest
 
 from app.services.trend_verification import (

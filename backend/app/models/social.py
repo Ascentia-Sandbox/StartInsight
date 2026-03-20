@@ -30,7 +30,12 @@ class FounderProfile(Base):
     __tablename__ = "founder_profiles"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
 
     # Profile info
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
@@ -42,7 +47,9 @@ class FounderProfile(Base):
     # Skills and interests
     skills: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
     interests: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
-    social_links: Mapped[dict[str, str] | None] = mapped_column(JSONB, nullable=True)  # {twitter, linkedin, github}
+    social_links: Mapped[dict[str, str] | None] = mapped_column(
+        JSONB, nullable=True
+    )  # {twitter, linkedin, github}
 
     # Visibility settings
     is_public: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
@@ -52,8 +59,12 @@ class FounderProfile(Base):
     connection_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relationships
     user: Mapped["User"] = relationship("User", foreign_keys=[user_id], lazy="selectin")
@@ -68,15 +79,23 @@ class FounderConnection(Base):
     __tablename__ = "founder_connections"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    requester_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    recipient_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    requester_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    recipient_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
 
     # Connection state
-    status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)  # pending, accepted, rejected
+    status: Mapped[str] = mapped_column(
+        String(20), default="pending", nullable=False
+    )  # pending, accepted, rejected
     message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships
@@ -115,13 +134,23 @@ class IdeaClub(Base):
     is_official: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # Ownership
-    created_by: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_by: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relationships
-    creator: Mapped["User | None"] = relationship("User", foreign_keys=[created_by], lazy="selectin")
-    members: Mapped[list["ClubMember"]] = relationship("ClubMember", back_populates="club", cascade="all, delete-orphan", lazy="selectin")
-    posts: Mapped[list["ClubPost"]] = relationship("ClubPost", back_populates="club", cascade="all, delete-orphan", lazy="selectin")
+    creator: Mapped["User | None"] = relationship(
+        "User", foreign_keys=[created_by], lazy="selectin"
+    )
+    members: Mapped[list["ClubMember"]] = relationship(
+        "ClubMember", back_populates="club", cascade="all, delete-orphan", lazy="selectin"
+    )
+    posts: Mapped[list["ClubPost"]] = relationship(
+        "ClubPost", back_populates="club", cascade="all, delete-orphan", lazy="selectin"
+    )
 
     def __repr__(self) -> str:
         return f"<IdeaClub(name={self.name}, members={self.member_count})>"
@@ -133,14 +162,22 @@ class ClubMember(Base):
     __tablename__ = "club_members"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    club_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("idea_clubs.id", ondelete="CASCADE"), nullable=False)
-    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    club_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("idea_clubs.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
 
     # Role
-    role: Mapped[str] = mapped_column(String(20), default="member", nullable=False)  # admin, moderator, member
+    role: Mapped[str] = mapped_column(
+        String(20), default="member", nullable=False
+    )  # admin, moderator, member
 
     # Timestamp
-    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    joined_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relationships
     club: Mapped["IdeaClub"] = relationship("IdeaClub", back_populates="members")
@@ -161,16 +198,24 @@ class ClubPost(Base):
     __tablename__ = "club_posts"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    club_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("idea_clubs.id", ondelete="CASCADE"), nullable=False)
-    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    club_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("idea_clubs.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
 
     # Post content
     title: Mapped[str | None] = mapped_column(String(255), nullable=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    post_type: Mapped[str] = mapped_column(String(20), default="discussion", nullable=False)  # discussion, idea_share, question
+    post_type: Mapped[str] = mapped_column(
+        String(20), default="discussion", nullable=False
+    )  # discussion, idea_share, question
 
     # Linked idea (if sharing)
-    insight_id: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("insights.id", ondelete="SET NULL"), nullable=True)
+    insight_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("insights.id", ondelete="SET NULL"), nullable=True
+    )
 
     # Stats
     upvotes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -181,13 +226,19 @@ class ClubPost(Base):
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relationships
     club: Mapped["IdeaClub"] = relationship("IdeaClub", back_populates="posts")
     user: Mapped["User"] = relationship("User", foreign_keys=[user_id], lazy="selectin")
-    insight: Mapped["Insight | None"] = relationship("Insight", foreign_keys=[insight_id], lazy="selectin")
+    insight: Mapped["Insight | None"] = relationship(
+        "Insight", foreign_keys=[insight_id], lazy="selectin"
+    )
 
     # Post type constants
     TYPE_DISCUSSION = "discussion"

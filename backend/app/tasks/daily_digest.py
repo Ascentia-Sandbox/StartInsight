@@ -76,9 +76,7 @@ async def send_daily_digests_task(ctx: dict) -> dict:
         sent = 0
         skipped = 0
         for prefs, user in subscribers:
-            content_hash = hashlib.sha256(
-                f"{date.today()}{user.id}".encode()
-            ).hexdigest()
+            content_hash = hashlib.sha256(f"{date.today()}{user.id}".encode()).hexdigest()
 
             # Check if already sent today
             existing = await db.execute(

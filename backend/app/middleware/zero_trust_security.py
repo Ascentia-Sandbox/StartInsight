@@ -7,6 +7,7 @@ from starlette.requests import Request
 
 logger = logging.getLogger(__name__)
 
+
 class ZeroTrustSecurityMiddleware(BaseHTTPMiddleware):
     """
     Zero-trust security middleware implementing security-by-design principles.

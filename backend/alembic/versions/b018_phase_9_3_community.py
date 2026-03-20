@@ -26,29 +26,66 @@ def upgrade() -> None:
     # Idea votes table
     op.create_table(
         "idea_votes",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("insight_id", UUID(as_uuid=True), sa.ForeignKey("insights.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
+        sa.Column(
+            "user_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "insight_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("insights.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("vote_type", sa.String(10), nullable=False),  # up, down
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
     op.create_index("idx_idea_votes_insight", "idea_votes", ["insight_id"])
-    op.create_unique_constraint("uq_idea_votes_user_insight", "idea_votes", ["user_id", "insight_id"])
+    op.create_unique_constraint(
+        "uq_idea_votes_user_insight", "idea_votes", ["user_id", "insight_id"]
+    )
 
     # Idea comments table
     op.create_table(
         "idea_comments",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("insight_id", UUID(as_uuid=True), sa.ForeignKey("insights.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("parent_id", UUID(as_uuid=True), sa.ForeignKey("idea_comments.id", ondelete="CASCADE"), nullable=True),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
+        sa.Column(
+            "user_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "insight_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("insights.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "parent_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("idea_comments.id", ondelete="CASCADE"),
+            nullable=True,
+        ),
         sa.Column("content", sa.Text(), nullable=False),
         sa.Column("upvotes", sa.Integer(), server_default="0", nullable=False),
         sa.Column("is_expert", sa.Boolean(), server_default=sa.text("false"), nullable=False),
         sa.Column("is_pinned", sa.Boolean(), server_default=sa.text("false"), nullable=False),
         sa.Column("is_deleted", sa.Boolean(), server_default=sa.text("false"), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
     op.create_index("idx_idea_comments_insight", "idea_comments", ["insight_id"])
     op.create_index("idx_idea_comments_parent", "idea_comments", ["parent_id"])
@@ -57,38 +94,86 @@ def upgrade() -> None:
     # Comment upvotes (separate from idea votes)
     op.create_table(
         "comment_upvotes",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("comment_id", UUID(as_uuid=True), sa.ForeignKey("idea_comments.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
+        sa.Column(
+            "user_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "comment_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("idea_comments.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
-    op.create_unique_constraint("uq_comment_upvotes_user_comment", "comment_upvotes", ["user_id", "comment_id"])
+    op.create_unique_constraint(
+        "uq_comment_upvotes_user_comment", "comment_upvotes", ["user_id", "comment_id"]
+    )
 
     # Idea polls table
     op.create_table(
         "idea_polls",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("insight_id", UUID(as_uuid=True), sa.ForeignKey("insights.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("created_by", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
+        sa.Column(
+            "insight_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("insights.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "created_by",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("question", sa.String(255), nullable=False),
-        sa.Column("poll_type", sa.String(20), server_default="yes_no", nullable=False),  # yes_no, scale, multiple
+        sa.Column(
+            "poll_type", sa.String(20), server_default="yes_no", nullable=False
+        ),  # yes_no, scale, multiple
         sa.Column("options", JSONB, nullable=True),
         sa.Column("is_active", sa.Boolean(), server_default=sa.text("true"), nullable=False),
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
     op.create_index("idx_idea_polls_insight", "idea_polls", ["insight_id"])
 
     # Poll responses table
     op.create_table(
         "poll_responses",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("poll_id", UUID(as_uuid=True), sa.ForeignKey("idea_polls.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
+        sa.Column(
+            "poll_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("idea_polls.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "user_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("response", sa.String(100), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
-    op.create_unique_constraint("uq_poll_responses_user_poll", "poll_responses", ["poll_id", "user_id"])
+    op.create_unique_constraint(
+        "uq_poll_responses_user_poll", "poll_responses", ["poll_id", "user_id"]
+    )
     op.create_index("idx_poll_responses_poll", "poll_responses", ["poll_id"])
 
     # Enable RLS

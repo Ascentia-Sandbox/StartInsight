@@ -54,6 +54,7 @@ class DirectBuildRequest(BaseModel):
 # LOVABLE.DEV ENDPOINTS
 # ============================================================================
 
+
 @router.get("/lovable/auth")
 async def lovable_oauth_start(
     insight_id: UUID,
@@ -67,11 +68,14 @@ async def lovable_oauth_start(
     """
     # Generate CSRF state token
     state = secrets.token_urlsafe(32)
-    await _store_oauth_state(state, {
-        "platform": "lovable",
-        "insight_id": str(insight_id),
-        "redirect_uri": redirect_uri,
-    })
+    await _store_oauth_state(
+        state,
+        {
+            "platform": "lovable",
+            "insight_id": str(insight_id),
+            "redirect_uri": redirect_uri,
+        },
+    )
 
     # Generate OAuth URL
     lovable = LovableIntegration()
@@ -113,7 +117,9 @@ async def lovable_oauth_callback(
         token = await lovable.exchange_code_for_token(code=code, redirect_uri=redirect_uri)
     except Exception as e:
         logger.error(f"Lovable OAuth token exchange failed: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail="OAuth token exchange failed. Please try again.")
+        raise HTTPException(
+            status_code=400, detail="OAuth token exchange failed. Please try again."
+        )
 
     # Create Lovable project
     try:
@@ -165,6 +171,7 @@ async def create_lovable_project_direct(
 # REPLIT ENDPOINTS
 # ============================================================================
 
+
 @router.get("/replit/auth")
 async def replit_oauth_start(
     insight_id: UUID,
@@ -178,11 +185,14 @@ async def replit_oauth_start(
     """
     # Generate CSRF state token
     state = secrets.token_urlsafe(32)
-    await _store_oauth_state(state, {
-        "platform": "replit",
-        "insight_id": str(insight_id),
-        "redirect_uri": redirect_uri,
-    })
+    await _store_oauth_state(
+        state,
+        {
+            "platform": "replit",
+            "insight_id": str(insight_id),
+            "redirect_uri": redirect_uri,
+        },
+    )
 
     # Generate OAuth URL
     replit = ReplitIntegration()
@@ -224,7 +234,9 @@ async def replit_oauth_callback(
         token = await replit.exchange_code_for_token(code=code, redirect_uri=redirect_uri)
     except Exception as e:
         logger.error(f"Replit OAuth token exchange failed: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail="OAuth token exchange failed. Please try again.")
+        raise HTTPException(
+            status_code=400, detail="OAuth token exchange failed. Please try again."
+        )
 
     # Create Replit Repl
     try:
@@ -276,6 +288,7 @@ async def create_replit_project_direct(
 # V0.DEV ENDPOINTS
 # ============================================================================
 
+
 @router.post("/v0")
 async def create_v0_design(
     insight_id: UUID,
@@ -315,6 +328,7 @@ async def create_v0_design(
 # ============================================================================
 # UNIFIED ENDPOINT (FOR FRONTEND)
 # ============================================================================
+
 
 @router.get("/platforms")
 async def list_builder_platforms() -> dict:

@@ -36,10 +36,7 @@ async def readiness_check(db: AsyncSession = Depends(get_db)):
 
     Returns 503 if any dependency is unhealthy.
     """
-    checks = {
-        "database": "unknown",
-        "redis": "unknown"
-    }
+    checks = {"database": "unknown", "redis": "unknown"}
 
     # Check database
     try:
@@ -65,10 +62,7 @@ async def readiness_check(db: AsyncSession = Depends(get_db)):
 
     return JSONResponse(
         status_code=response_status,
-        content={
-            "status": "ready" if all_healthy else "not_ready",
-            "checks": checks
-        }
+        content={"status": "ready" if all_healthy else "not_ready", "checks": checks},
     )
 
 
@@ -102,10 +96,7 @@ async def scraper_health_check(
 
     # Check last successful run per source
     last_runs_query = await db.execute(
-        select(
-            RawSignal.source,
-            func.max(RawSignal.created_at).label('last_run')
-        )
+        select(RawSignal.source, func.max(RawSignal.created_at).label("last_run"))
         .where(RawSignal.created_at >= twenty_four_hours_ago)
         .group_by(RawSignal.source)
     )
@@ -113,15 +104,13 @@ async def scraper_health_check(
 
     # Check pending signals (unprocessed)
     pending_count_query = await db.execute(
-        select(func.count(RawSignal.id))
-        .where(RawSignal.processed.is_(False))
+        select(func.count(RawSignal.id)).where(RawSignal.processed.is_(False))
     )
     pending_count = pending_count_query.scalar() or 0
 
     # Calculate signals collected in last 24 hours
     signals_24h_query = await db.execute(
-        select(func.count(RawSignal.id))
-        .where(RawSignal.created_at >= twenty_four_hours_ago)
+        select(func.count(RawSignal.id)).where(RawSignal.created_at >= twenty_four_hours_ago)
     )
     signals_24h = signals_24h_query.scalar() or 0
 
@@ -148,10 +137,8 @@ async def scraper_health_check(
 
     # Calculate error rate (signals with no content or failed processing)
     error_count_query = await db.execute(
-        select(func.count(RawSignal.id))
-        .where(
-            RawSignal.created_at >= twenty_four_hours_ago,
-            RawSignal.content.is_(None)
+        select(func.count(RawSignal.id)).where(
+            RawSignal.created_at >= twenty_four_hours_ago, RawSignal.content.is_(None)
         )
     )
     error_count = error_count_query.scalar() or 0
@@ -183,35 +170,43 @@ async def source_health_check(db: AsyncSession = Depends(get_db)):
     """
     try:
         result = await db.execute(
-            text("SELECT source_name, status, last_success_at, last_failure_at, "
-                 "last_error_message, consecutive_failures, avg_latency_ms, "
-                 "avg_signals_per_run, total_runs, total_failures, circuit_state, "
-                 "baseline_mean, baseline_variance, baseline_count, updated_at "
-                 "FROM source_health ORDER BY source_name")
+            text(
+                "SELECT source_name, status, last_success_at, last_failure_at, "
+                "last_error_message, consecutive_failures, avg_latency_ms, "
+                "avg_signals_per_run, total_runs, total_failures, circuit_state, "
+                "baseline_mean, baseline_variance, baseline_count, updated_at "
+                "FROM source_health ORDER BY source_name"
+            )
         )
         rows = result.mappings().all()
 
         sources = []
         for row in rows:
-            sources.append({
-                "name": row["source_name"],
-                "status": row["status"],
-                "last_success": row["last_success_at"].isoformat() if row["last_success_at"] else None,
-                "last_failure": row["last_failure_at"].isoformat() if row["last_failure_at"] else None,
-                "error": row["last_error_message"],
-                "consecutive_failures": row["consecutive_failures"],
-                "avg_latency_ms": round(row["avg_latency_ms"], 1),
-                "signals_per_run": round(row["avg_signals_per_run"], 1),
-                "total_runs": row["total_runs"],
-                "total_failures": row["total_failures"],
-                "circuit": row["circuit_state"],
-                "baseline": {
-                    "mean": round(row["baseline_mean"], 2),
-                    "variance": round(row["baseline_variance"], 2),
-                    "count": row["baseline_count"],
-                },
-                "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None,
-            })
+            sources.append(
+                {
+                    "name": row["source_name"],
+                    "status": row["status"],
+                    "last_success": row["last_success_at"].isoformat()
+                    if row["last_success_at"]
+                    else None,
+                    "last_failure": row["last_failure_at"].isoformat()
+                    if row["last_failure_at"]
+                    else None,
+                    "error": row["last_error_message"],
+                    "consecutive_failures": row["consecutive_failures"],
+                    "avg_latency_ms": round(row["avg_latency_ms"], 1),
+                    "signals_per_run": round(row["avg_signals_per_run"], 1),
+                    "total_runs": row["total_runs"],
+                    "total_failures": row["total_failures"],
+                    "circuit": row["circuit_state"],
+                    "baseline": {
+                        "mean": round(row["baseline_mean"], 2),
+                        "variance": round(row["baseline_variance"], 2),
+                        "count": row["baseline_count"],
+                    },
+                    "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None,
+                }
+            )
 
         return {"sources": sources}
 

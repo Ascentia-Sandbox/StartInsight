@@ -30,6 +30,7 @@ def background_task_with_error_handling(func: Callable) -> Callable:
             # ... processing logic
             pass
     """
+
     @functools.wraps(func)
     async def wrapper(*args: Any, **kwargs: Any) -> Any:
         try:

@@ -5,6 +5,7 @@ Create regular user in Supabase (via REST API).
 Uses httpx for Supabase Auth Admin API.
 NO Supabase SDK per CLAUDE.md rules.
 """
+
 import asyncio
 import os
 import sys
@@ -18,9 +19,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
 
-async def supabase_admin_request(
-    method: str, path: str, json: dict | None = None
-) -> dict:
+async def supabase_admin_request(method: str, path: str, json: dict | None = None) -> dict:
     """Make an authenticated request to Supabase Auth Admin API."""
     async with httpx.AsyncClient() as client:
         response = await client.request(
@@ -49,9 +48,7 @@ async def create_user(email: str, password: str, full_name: str | None = None):
                 "email": email,
                 "password": password,
                 "email_confirm": True,
-                "user_metadata": {
-                    "full_name": full_name or email.split("@")[0]
-                },
+                "user_metadata": {"full_name": full_name or email.split("@")[0]},
             },
         )
 

@@ -38,9 +38,7 @@ async def submit_contact_form(
     Rate limited to 5 per hour per IP to prevent spam.
     Logs the message and optionally sends email notification.
     """
-    logger.info(
-        f"Contact form submission from {data.name} ({data.email}): {data.subject}"
-    )
+    logger.info(f"Contact form submission from {data.name} ({data.email}): {data.subject}")
 
     # Store in database for tracking (optional - log for now)
     # In production, this would send via email_service

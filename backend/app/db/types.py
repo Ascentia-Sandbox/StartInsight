@@ -56,6 +56,7 @@ class PortableArray(TypeDecorator):
     def load_dialect_impl(self, dialect):
         if dialect.name == "postgresql":
             from sqlalchemy import String
+
             item_type = self.item_type or String(50)
             return dialect.type_descriptor(ARRAY(item_type))
         else:

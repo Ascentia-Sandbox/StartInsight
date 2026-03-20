@@ -34,12 +34,8 @@ async def list_market_insights(
     category: Annotated[
         str | None, Query(description="Filter by category (Trends, Analysis, Guides)")
     ] = None,
-    featured: Annotated[
-        bool | None, Query(description="Filter by featured status")
-    ] = None,
-    search: Annotated[
-        str | None, Query(description="Search by title or summary")
-    ] = None,
+    featured: Annotated[bool | None, Query(description="Filter by featured status")] = None,
+    search: Annotated[str | None, Query(description="Search by title or summary")] = None,
     limit: Annotated[int, Query(ge=1, le=50, description="Number of results")] = 10,
     offset: Annotated[int, Query(ge=0, description="Pagination offset")] = 0,
     db: AsyncSession = Depends(get_db),
@@ -81,9 +77,7 @@ async def list_market_insights(
     articles = result.scalars().all()
 
     # Get total count
-    count_query = select(func.count(MarketInsight.id)).where(
-        MarketInsight.is_published == True
-    )
+    count_query = select(func.count(MarketInsight.id)).where(MarketInsight.is_published == True)
     if category:
         count_query = count_query.where(MarketInsight.category == category)
     if featured is not None:
@@ -224,9 +218,7 @@ async def create_market_insight(
     existing_query = select(MarketInsight).where(MarketInsight.slug == slug)
     existing = await db.execute(existing_query)
     if existing.scalar_one_or_none():
-        raise HTTPException(
-            status_code=400, detail=f"Article with slug '{slug}' already exists"
-        )
+        raise HTTPException(status_code=400, detail=f"Article with slug '{slug}' already exists")
 
     # Prepare data
     data = article_data.model_dump()
@@ -267,9 +259,7 @@ async def feature_market_insight(
 
     # Unfeature all currently featured articles
     await db.execute(
-        update(MarketInsight)
-        .where(MarketInsight.is_featured == True)
-        .values(is_featured=False)
+        update(MarketInsight).where(MarketInsight.is_featured == True).values(is_featured=False)
     )
 
     # Feature the target article
@@ -307,9 +297,7 @@ async def update_market_insight(
 
     # Check for duplicate slug if updating
     if "slug" in update_data and update_data["slug"] != article.slug:
-        existing_query = select(MarketInsight).where(
-            MarketInsight.slug == update_data["slug"]
-        )
+        existing_query = select(MarketInsight).where(MarketInsight.slug == update_data["slug"])
         existing = await db.execute(existing_query)
         if existing.scalar_one_or_none():
             raise HTTPException(
@@ -318,11 +306,7 @@ async def update_market_insight(
             )
 
     # Set published_at when first published
-    if (
-        "is_published" in update_data
-        and update_data["is_published"]
-        and not article.is_published
-    ):
+    if "is_published" in update_data and update_data["is_published"] and not article.is_published:
         update_data["published_at"] = datetime.now(UTC)
 
     for field, value in update_data.items():

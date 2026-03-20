@@ -31,29 +31,22 @@ class RawSignal(Base):
     __tablename__ = "raw_signals"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4,
-        index=True
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
     )
 
     source: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
         index=True,
-        comment="Data source: reddit, product_hunt, google_trends"
+        comment="Data source: reddit, product_hunt, google_trends",
     )
 
     url: Mapped[str] = mapped_column(
-        Text,
-        nullable=False,
-        comment="Source URL where data was scraped"
+        Text, nullable=False, comment="Source URL where data was scraped"
     )
 
     content: Mapped[str] = mapped_column(
-        Text,
-        nullable=False,
-        comment="Scraped content in markdown format"
+        Text, nullable=False, comment="Scraped content in markdown format"
     )
 
     content_hash: Mapped[str | None] = mapped_column(
@@ -61,21 +54,21 @@ class RawSignal(Base):
         nullable=True,  # Nullable for backward compatibility
         index=True,
         unique=True,
-        comment="SHA-256 hash of content for deduplication"
+        comment="SHA-256 hash of content for deduplication",
     )
 
     extra_metadata: Mapped[dict[str, Any]] = mapped_column(
         JSON,
         nullable=False,
         default=dict,
-        comment="Additional structured data (upvotes, comments, etc.)"
+        comment="Additional structured data (upvotes, comments, etc.)",
     )
 
     created_at: Mapped[datetime] = mapped_column(
         nullable=False,
         server_default=func.now(),
         index=True,
-        comment="Timestamp when signal was created"
+        comment="Timestamp when signal was created",
     )
 
     processed: Mapped[bool] = mapped_column(
@@ -83,7 +76,7 @@ class RawSignal(Base):
         nullable=False,
         default=False,
         index=True,
-        comment="Flag indicating if signal has been analyzed"
+        comment="Flag indicating if signal has been analyzed",
     )
 
     # Relationships

@@ -5,6 +5,7 @@ Revises: c006
 Create Date: 2026-02-16 14:00:00.000000
 
 """
+
 import re
 from collections.abc import Sequence
 
@@ -52,7 +53,22 @@ def _extract_title(proposed_solution: str, max_chars: int = 80) -> str:
     text_val = text_val.strip().rstrip(".,;:-")
     # Capitalize first letter of each major word
     words = text_val.split()
-    minor_words = {"a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by"}
+    minor_words = {
+        "a",
+        "an",
+        "the",
+        "and",
+        "or",
+        "but",
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
+        "of",
+        "with",
+        "by",
+    }
     result = []
     for i, word in enumerate(words):
         if i == 0 or word.lower() not in minor_words:

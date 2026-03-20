@@ -36,18 +36,43 @@ def upgrade() -> None:
         sa.Column("author_name", sa.String(length=200), nullable=False),
         sa.Column("author_avatar_url", sa.String(length=500), nullable=True),
         sa.Column("cover_image_url", sa.String(length=500), nullable=True),
-        sa.Column("reading_time_minutes", sa.Integer(), nullable=False, server_default=sa.text("5")),
+        sa.Column(
+            "reading_time_minutes", sa.Integer(), nullable=False, server_default=sa.text("5")
+        ),
         sa.Column("view_count", sa.Integer(), nullable=False, server_default=sa.text("0")),
-        sa.Column("is_featured", sa.Boolean(), nullable=False, server_default=sa.text("false"), index=True),
-        sa.Column("is_published", sa.Boolean(), nullable=False, server_default=sa.text("false"), index=True),
+        sa.Column(
+            "is_featured", sa.Boolean(), nullable=False, server_default=sa.text("false"), index=True
+        ),
+        sa.Column(
+            "is_published",
+            sa.Boolean(),
+            nullable=False,
+            server_default=sa.text("false"),
+            index=True,
+        ),
         sa.Column("published_at", sa.DateTime(timezone=True), nullable=True, index=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()"), index=True),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+            index=True,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
     )
 
     # Create indexes for sorting
-    op.create_index("ix_market_insights_published_at_desc", "market_insights", [sa.text("published_at DESC")])
-    op.create_index("ix_market_insights_created_at_desc", "market_insights", [sa.text("created_at DESC")])
+    op.create_index(
+        "ix_market_insights_published_at_desc", "market_insights", [sa.text("published_at DESC")]
+    )
+    op.create_index(
+        "ix_market_insights_created_at_desc", "market_insights", [sa.text("created_at DESC")]
+    )
 
     # Enable RLS
     op.execute("ALTER TABLE market_insights ENABLE ROW LEVEL SECURITY;")

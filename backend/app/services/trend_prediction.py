@@ -74,15 +74,11 @@ class TrendPredictionService:
 
             if len(dates) < 7:
                 raise ValueError(
-                    f"Insufficient data for prediction: {len(dates)} days "
-                    "(minimum 7 required)"
+                    f"Insufficient data for prediction: {len(dates)} days (minimum 7 required)"
                 )
 
             # Prepare data for Prophet (requires 'ds' and 'y' columns)
-            df = pd.DataFrame({
-                "ds": pd.to_datetime(dates),
-                "y": values
-            })
+            df = pd.DataFrame({"ds": pd.to_datetime(dates), "y": values})
 
             # Initialize Prophet model
             # interval_width=0.80 provides 80% confidence intervals
@@ -92,7 +88,7 @@ class TrendPredictionService:
             self.model = Prophet(
                 interval_width=0.80,
                 daily_seasonality=False,
-                weekly_seasonality='auto',
+                weekly_seasonality="auto",
                 yearly_seasonality=False,
                 changepoint_prior_scale=0.05,  # Flexibility of trend changes
             )
@@ -126,7 +122,7 @@ class TrendPredictionService:
                     "forecast_date": datetime.now(UTC).isoformat(),
                     "training_data_points": len(df),
                     "prediction_horizon": periods,
-                }
+                },
             }
 
             self.logger.info(
@@ -141,9 +137,7 @@ class TrendPredictionService:
             raise
 
     def _calculate_accuracy(
-        self,
-        historical_df: pd.DataFrame,
-        forecast_df: pd.DataFrame
+        self, historical_df: pd.DataFrame, forecast_df: pd.DataFrame
     ) -> dict[str, float]:
         """
         Calculate model accuracy metrics on historical data.
@@ -157,18 +151,15 @@ class TrendPredictionService:
         """
         try:
             # Match historical dates with forecast
-            merged = historical_df.merge(forecast_df[['ds', 'yhat']], on='ds')
+            merged = historical_df.merge(forecast_df[["ds", "yhat"]], on="ds")
 
             # Calculate MAPE (Mean Absolute Percentage Error)
-            actual = merged['y']
-            predicted = merged['yhat']
+            actual = merged["y"]
+            predicted = merged["yhat"]
 
             # Avoid division by zero
             non_zero = actual != 0
-            mape = (
-                ((actual[non_zero] - predicted[non_zero]).abs() / actual[non_zero].abs())
-                .mean()
-            )
+            mape = ((actual[non_zero] - predicted[non_zero]).abs() / actual[non_zero].abs()).mean()
 
             # Calculate RMSE (Root Mean Squared Error)
             rmse = ((actual - predicted) ** 2).mean() ** 0.5

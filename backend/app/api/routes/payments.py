@@ -68,7 +68,9 @@ class SubscriptionUsage(BaseModel):
     """Current usage metrics for the authenticated user."""
 
     insights_today: int = Field(default=0, description="Insights viewed/accessed today")
-    analyses_this_month: int = Field(default=0, description="Research analyses submitted this month")
+    analyses_this_month: int = Field(
+        default=0, description="Research analyses submitted this month"
+    )
     team_members: int = Field(default=0, description="Total team members across all teams")
 
 
@@ -219,7 +221,9 @@ async def _get_subscription_usage(user_id: UUID, db: AsyncSession) -> Subscripti
 
     # Count insights created today by this user
     insights_today_result = await db.execute(
-        select(func.count()).select_from(Insight).where(
+        select(func.count())
+        .select_from(Insight)
+        .where(
             Insight.created_at >= today_midnight,
         )
     )
@@ -227,7 +231,9 @@ async def _get_subscription_usage(user_id: UUID, db: AsyncSession) -> Subscripti
 
     # Count research analyses submitted this month
     analyses_result = await db.execute(
-        select(func.count()).select_from(CustomAnalysis).where(
+        select(func.count())
+        .select_from(CustomAnalysis)
+        .where(
             CustomAnalysis.user_id == user_id,
             CustomAnalysis.created_at >= first_of_month,
         )
@@ -236,7 +242,9 @@ async def _get_subscription_usage(user_id: UUID, db: AsyncSession) -> Subscripti
 
     # Count team members across all teams the user belongs to
     team_members_result = await db.execute(
-        select(func.count()).select_from(TeamMember).where(
+        select(func.count())
+        .select_from(TeamMember)
+        .where(
             TeamMember.user_id == user_id,
         )
     )

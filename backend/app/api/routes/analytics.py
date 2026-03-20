@@ -38,6 +38,7 @@ router = APIRouter(prefix="/admin/analytics", tags=["Analytics"])
 # Schemas
 # ============================================
 
+
 class UserOverview(BaseModel):
     total_users: int
     active_users_7d: int
@@ -45,17 +46,20 @@ class UserOverview(BaseModel):
     new_users_7d: int
     churn_rate_30d: float
 
+
 class TierStats(BaseModel):
     tier: str
     count: int
     active_rate: float
     mrr: float
 
+
 class EngagementStats(BaseModel):
     avg_session_duration: float
     avg_insights_viewed: float
     avg_insights_saved: float
     feature_usage: dict[str, int]
+
 
 class CohortData(BaseModel):
     signup_week: str
@@ -64,10 +68,12 @@ class CohortData(BaseModel):
     retention_week_4: float
     conversion_to_paid: float
 
+
 class UserAnalyticsResponse(BaseModel):
     overview: UserOverview
     by_tier: list[TierStats]
     engagement: EngagementStats
+
 
 class RevenueMetrics(BaseModel):
     mrr: float
@@ -75,6 +81,7 @@ class RevenueMetrics(BaseModel):
     active_subscriptions: int
     mrr_growth_mom: float
     churn_rate: float
+
 
 class UserListItem(BaseModel):
     id: UUID
@@ -89,6 +96,7 @@ class UserListItem(BaseModel):
     last_login_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class UserDetail(BaseModel):
     id: UUID
@@ -105,11 +113,13 @@ class UserDetail(BaseModel):
     language: str = "en"
     last_login_at: datetime | None = None
 
+
 class UserCreateRequest(BaseModel):
     email: EmailStr
     display_name: str | None = None
     subscription_tier: str = "free"
     language: str = "en"
+
 
 class UserUpdateRequest(BaseModel):
     subscription_tier: str | None = None
@@ -117,8 +127,10 @@ class UserUpdateRequest(BaseModel):
     display_name: str | None = None
     language: str | None = None
 
+
 class UserDeleteRequest(BaseModel):
     reason: str = ""
+
 
 class BulkUserActionRequest(BaseModel):
     user_ids: list[UUID]
@@ -130,6 +142,7 @@ class BulkUserActionRequest(BaseModel):
 # ============================================
 # User Analytics Endpoints
 # ============================================
+
 
 @router.get("/users", response_model=UserAnalyticsResponse)
 async def get_user_analytics(
@@ -146,23 +159,22 @@ async def get_user_analytics(
 
     # Active users (have sessions in period)
     active_7d = await db.execute(
-        select(func.count(func.distinct(UserSession.user_id)))
-        .where(UserSession.started_at >= week_ago)
+        select(func.count(func.distinct(UserSession.user_id))).where(
+            UserSession.started_at >= week_ago
+        )
     )
     active_30d = await db.execute(
-        select(func.count(func.distinct(UserSession.user_id)))
-        .where(UserSession.started_at >= month_ago)
+        select(func.count(func.distinct(UserSession.user_id))).where(
+            UserSession.started_at >= month_ago
+        )
     )
 
     # New users this week
-    new_7d = await db.execute(
-        select(func.count(User.id)).where(User.created_at >= week_ago)
-    )
+    new_7d = await db.execute(select(func.count(User.id)).where(User.created_at >= week_ago))
 
     # By tier stats
     tier_counts = await db.execute(
-        select(User.subscription_tier, func.count(User.id))
-        .group_by(User.subscription_tier)
+        select(User.subscription_tier, func.count(User.id)).group_by(User.subscription_tier)
     )
     tier_stats = []
     for tier, count in tier_counts.fetchall():
@@ -184,12 +196,17 @@ async def get_user_analytics(
         elif tier == "enterprise":
             mrr = count * 199.0
 
-        tier_stats.append(TierStats(tier=tier, count=count, active_rate=round(active_rate, 2), mrr=mrr))
+        tier_stats.append(
+            TierStats(tier=tier, count=count, active_rate=round(active_rate, 2), mrr=mrr)
+        )
 
     # Engagement stats
     avg_duration = await db.execute(select(func.avg(UserSession.duration_seconds)))
     avg_saved = await db.execute(
-        select(func.count(SavedInsight.id) / func.nullif(func.count(func.distinct(SavedInsight.user_id)), 0))
+        select(
+            func.count(SavedInsight.id)
+            / func.nullif(func.count(func.distinct(SavedInsight.user_id)), 0)
+        )
     )
 
     # Feature usage
@@ -217,8 +234,7 @@ async def get_user_analytics(
         select(
             func.count(InsightInteraction.id)
             / func.nullif(func.count(func.distinct(InsightInteraction.user_id)), 0)
-        )
-        .where(
+        ).where(
             InsightInteraction.interaction_type == "view",
             InsightInteraction.created_at >= month_ago,
         )
@@ -237,8 +253,8 @@ async def get_user_analytics(
             avg_session_duration=float(avg_duration.scalar() or 0),
             avg_insights_viewed=float(avg_viewed.scalar() or 0),
             avg_insights_saved=float(avg_saved.scalar() or 0),
-            feature_usage=features
-        )
+            feature_usage=features,
+        ),
     )
 
 
@@ -253,14 +269,13 @@ async def get_cohort_analysis(
     now = datetime.now(UTC)
 
     for i in range(weeks):
-        week_start = now - timedelta(weeks=i+1)
+        week_start = now - timedelta(weeks=i + 1)
         week_end = now - timedelta(weeks=i)
 
         # Users who signed up in this week
         users_in_cohort = await db.execute(
             select(func.count(User.id)).where(
-                User.created_at >= week_start,
-                User.created_at < week_end
+                User.created_at >= week_start, User.created_at < week_end
             )
         )
         total = users_in_cohort.scalar() or 0
@@ -276,7 +291,7 @@ async def get_cohort_analysis(
                 User.created_at >= week_start,
                 User.created_at < week_end,
                 UserSession.started_at >= week_end,
-                UserSession.started_at < week1_end
+                UserSession.started_at < week1_end,
             )
         )
 
@@ -289,7 +304,7 @@ async def get_cohort_analysis(
                 User.created_at >= week_start,
                 User.created_at < week_end,
                 UserSession.started_at >= week_end + timedelta(weeks=3),
-                UserSession.started_at < week4_end
+                UserSession.started_at < week4_end,
             )
         )
 
@@ -298,17 +313,19 @@ async def get_cohort_analysis(
             select(func.count(User.id)).where(
                 User.created_at >= week_start,
                 User.created_at < week_end,
-                User.subscription_tier != "free"
+                User.subscription_tier != "free",
             )
         )
 
-        cohorts.append(CohortData(
-            signup_week=week_start.strftime("%Y-%W"),
-            total_users=total,
-            retention_week_1=round((retained_week1.scalar() or 0) / total, 2),
-            retention_week_4=round((retained_week4.scalar() or 0) / total, 2),
-            conversion_to_paid=round((paid_count.scalar() or 0) / total, 2)
-        ))
+        cohorts.append(
+            CohortData(
+                signup_week=week_start.strftime("%Y-%W"),
+                total_users=total,
+                retention_week_1=round((retained_week1.scalar() or 0) / total, 2),
+                retention_week_4=round((retained_week4.scalar() or 0) / total, 2),
+                conversion_to_paid=round((paid_count.scalar() or 0) / total, 2),
+            )
+        )
 
     return cohorts
 
@@ -347,8 +364,7 @@ async def get_revenue_metrics(
         .group_by(User.subscription_tier)
     )
     new_paid_mrr = sum(
-        count * TIER_PRICES.get(tier, 0)
-        for tier, count in new_paid_result.fetchall()
+        count * TIER_PRICES.get(tier, 0) for tier, count in new_paid_result.fetchall()
     )
 
     # Churned subscriptions this month (lost from MRR)
@@ -361,10 +377,7 @@ async def get_revenue_metrics(
         )
         .group_by(Subscription.tier)
     )
-    churned_mrr = sum(
-        count * TIER_PRICES.get(tier, 0)
-        for tier, count in churned_result.fetchall()
-    )
+    churned_mrr = sum(count * TIER_PRICES.get(tier, 0) for tier, count in churned_result.fetchall())
 
     # Estimate previous month MRR = current - new + churned
     prev_mrr = mrr - new_paid_mrr + churned_mrr
@@ -380,9 +393,7 @@ async def get_revenue_metrics(
     )
     churned_count = churned_count_result.scalar_one() or 0
     total_at_start = active_subs + churned_count
-    churn_rate = round(
-        (churned_count / total_at_start * 100) if total_at_start > 0 else 0, 1
-    )
+    churn_rate = round((churned_count / total_at_start * 100) if total_at_start > 0 else 0, 1)
 
     return RevenueMetrics(
         mrr=mrr,
@@ -396,6 +407,7 @@ async def get_revenue_metrics(
 # ============================================
 # User Management Endpoints
 # ============================================
+
 
 @router.get("/users/list", response_model=list[UserListItem])
 async def list_users(
@@ -416,10 +428,7 @@ async def list_users(
     if search:
         safe_search = escape_like(search)
         query = query.where(
-            or_(
-                User.email.ilike(f"%{safe_search}%"),
-                User.display_name.ilike(f"%{safe_search}%")
-            )
+            or_(User.email.ilike(f"%{safe_search}%"), User.display_name.ilike(f"%{safe_search}%"))
         )
 
     if tier:
@@ -472,6 +481,7 @@ async def get_user_detail(
 
     # Get research count
     from app.models.custom_analysis import CustomAnalysis
+
     research_count = await db.execute(
         select(func.count(CustomAnalysis.id)).where(CustomAnalysis.user_id == user_id)
     )
@@ -516,7 +526,10 @@ async def update_user(
     changes: dict[str, Any] = {}
 
     if updates.subscription_tier is not None:
-        changes["subscription_tier"] = {"old": user.subscription_tier, "new": updates.subscription_tier}
+        changes["subscription_tier"] = {
+            "old": user.subscription_tier,
+            "new": updates.subscription_tier,
+        }
         user.subscription_tier = updates.subscription_tier
 
     if updates.display_name is not None:
@@ -714,10 +727,10 @@ async def export_users(
                 "email": u.email,
                 "display_name": u.display_name,
                 "tier": u.subscription_tier,
-                "created_at": u.created_at.isoformat()
+                "created_at": u.created_at.isoformat(),
             }
             for u in users
-        ]
+        ],
     }
 
 
@@ -766,15 +779,17 @@ async def get_engagement_metrics(
 
     # DAU: unique users with sessions today
     dau_result = await db.execute(
-        select(func.count(func.distinct(UserSession.user_id)))
-        .where(UserSession.started_at >= day_ago)
+        select(func.count(func.distinct(UserSession.user_id))).where(
+            UserSession.started_at >= day_ago
+        )
     )
     dau = dau_result.scalar_one() or 0
 
     # MAU: unique users with sessions in last 30 days
     mau_result = await db.execute(
-        select(func.count(func.distinct(UserSession.user_id)))
-        .where(UserSession.started_at >= month_ago)
+        select(func.count(func.distinct(UserSession.user_id))).where(
+            UserSession.started_at >= month_ago
+        )
     )
     mau = mau_result.scalar_one() or 0
 
@@ -823,10 +838,13 @@ async def get_content_performance(
             Insight.relevance_score,
             func.count(InsightInteraction.id).label("interactions"),
         )
-        .outerjoin(InsightInteraction, and_(
-            InsightInteraction.insight_id == Insight.id,
-            InsightInteraction.created_at >= period_start,
-        ))
+        .outerjoin(
+            InsightInteraction,
+            and_(
+                InsightInteraction.insight_id == Insight.id,
+                InsightInteraction.created_at >= period_start,
+            ),
+        )
         .group_by(Insight.id)
         .order_by(func.count(InsightInteraction.id).desc())
         .limit(10)
@@ -857,12 +875,18 @@ async def get_content_performance(
     total_views = await db.execute(
         select(func.count())
         .select_from(InsightInteraction)
-        .where(InsightInteraction.interaction_type == "view", InsightInteraction.created_at >= period_start)
+        .where(
+            InsightInteraction.interaction_type == "view",
+            InsightInteraction.created_at >= period_start,
+        )
     )
     total_saves = await db.execute(
         select(func.count())
         .select_from(InsightInteraction)
-        .where(InsightInteraction.interaction_type == "save", InsightInteraction.created_at >= period_start)
+        .where(
+            InsightInteraction.interaction_type == "save",
+            InsightInteraction.created_at >= period_start,
+        )
     )
     total_article_views = await db.execute(
         select(func.coalesce(func.sum(MarketInsight.view_count), 0))

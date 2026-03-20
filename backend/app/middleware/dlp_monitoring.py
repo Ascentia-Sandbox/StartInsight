@@ -11,14 +11,17 @@ from starlette.responses import Response
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class SecurityEvent:
     """Represents a security event for monitoring."""
+
     timestamp: datetime
     event_type: str
     user_id: str | None
     ip_address: str
     details: dict[str, str]
+
 
 class DLPMonitoringMiddleware(BaseHTTPMiddleware):
     """
@@ -84,7 +87,9 @@ class DLPMonitoringMiddleware(BaseHTTPMiddleware):
 
                     # Check if threshold exceeded
                     if self._exceeds_suspicious_threshold(client_ip):
-                        logger.error(f"ALERT: Suspicious activity threshold exceeded for IP: {client_ip}")
+                        logger.error(
+                            f"ALERT: Suspicious activity threshold exceeded for IP: {client_ip}"
+                        )
                         # In production, you might want to trigger additional security measures
                         # such as blocking the IP, sending alerts, or requiring additional verification
 
@@ -133,9 +138,7 @@ class DLPMonitoringMiddleware(BaseHTTPMiddleware):
     def _is_suspicious_user_agent(self, user_agent: str) -> bool:
         """Check if user agent is suspicious."""
         # Common suspicious user agents
-        suspicious_patterns = [
-            "sqlmap", "nikto", "burpsuite", "owasp", "metasploit"
-        ]
+        suspicious_patterns = ["sqlmap", "nikto", "burpsuite", "owasp", "metasploit"]
 
         user_agent_lower = user_agent.lower()
         return any(pattern in user_agent_lower for pattern in suspicious_patterns)
@@ -156,7 +159,7 @@ class DLPMonitoringMiddleware(BaseHTTPMiddleware):
             "create",
             "alter",
             "exec",
-            "execute"
+            "execute",
         ]
 
         path_lower = path.lower()
@@ -173,7 +176,7 @@ class DLPMonitoringMiddleware(BaseHTTPMiddleware):
                 event_type=event,
                 user_id=None,
                 ip_address=ip_address,
-                details={}
+                details={},
             )
         )
 
@@ -187,7 +190,8 @@ class DLPMonitoringMiddleware(BaseHTTPMiddleware):
 
         # Keep only recent events
         self.suspicious_activities[ip_address]["events"] = [
-            event for event in self.suspicious_activities[ip_address]["events"]
+            event
+            for event in self.suspicious_activities[ip_address]["events"]
             if current_time - event.timestamp <= time_window
         ]
 
@@ -198,7 +202,8 @@ class DLPMonitoringMiddleware(BaseHTTPMiddleware):
 
         # Count recent suspicious events
         recent_events = [
-            event for event in self.suspicious_activities[ip_address]["events"]
+            event
+            for event in self.suspicious_activities[ip_address]["events"]
             if current_time - event.timestamp <= time_window
         ]
 

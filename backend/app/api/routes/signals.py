@@ -91,7 +91,9 @@ _trigger_cooldown_minutes = 5
 
 @router.get("/signals", response_model=RawSignalListResponse)
 async def list_signals(
-    source: str | None = Query(None, description="Filter by source (reddit, product_hunt, google_trends)"),
+    source: str | None = Query(
+        None, description="Filter by source (reddit, product_hunt, google_trends)"
+    ),
     processed: bool | None = Query(None, description="Filter by processed status"),
     limit: int = Query(20, ge=1, le=100, description="Number of signals to return"),
     offset: int = Query(0, ge=0, description="Number of signals to skip"),
@@ -140,9 +142,7 @@ async def list_signals(
         signals = result.scalars().all()
 
         # Convert to response models
-        signal_responses = [
-            RawSignalResponse.model_validate(signal) for signal in signals
-        ]
+        signal_responses = [RawSignalResponse.model_validate(signal) for signal in signals]
 
         return RawSignalListResponse(
             signals=signal_responses,
@@ -202,15 +202,19 @@ async def get_signal_stats(
         total_signals = total_result.scalar() or 0
 
         # Get counts by source
-        source_query = select(
-            RawSignal.source, func.count(RawSignal.id).label("count")
-        ).group_by(RawSignal.source)
+        source_query = select(RawSignal.source, func.count(RawSignal.id).label("count")).group_by(
+            RawSignal.source
+        )
         source_result = await db.execute(source_query)
         signals_by_source = {row[0]: row[1] for row in source_result.all()}
 
         # Get processed counts
-        processed_query = select(func.count()).select_from(RawSignal).where(
-            RawSignal.processed == True  # noqa: E712
+        processed_query = (
+            select(func.count())
+            .select_from(RawSignal)
+            .where(
+                RawSignal.processed == True  # noqa: E712
+            )
         )
         processed_result = await db.execute(processed_query)
         processed_count = processed_result.scalar() or 0
@@ -265,9 +269,7 @@ async def trigger_scraping(
     if _last_trigger_time:
         cooldown_end = _last_trigger_time + timedelta(minutes=_trigger_cooldown_minutes)
         if datetime.now(UTC) < cooldown_end:
-            logger.warning(
-                f"Scraping trigger rate limited. User: {current_user.email}"
-            )
+            logger.warning(f"Scraping trigger rate limited. User: {current_user.email}")
             return TriggerScrapingResponse(
                 status="rate_limited",
                 message=f"Rate limit: Can only trigger scraping once every {_trigger_cooldown_minutes} minutes",

@@ -82,18 +82,16 @@ async def get_current_user_profile(
         for _ in range(5):
             candidate = _generate_referral_code()
             existing = await db.scalar(
-                select(current_user.__class__).where(
-                    current_user.__class__.referral_code == candidate
-                ).limit(1)
+                select(current_user.__class__)
+                .where(current_user.__class__.referral_code == candidate)
+                .limit(1)
             )
             if not existing:
                 current_user.referral_code = candidate
                 current_user.updated_at = datetime.now(UTC)
                 await db.commit()
                 await db.refresh(current_user)
-                logger.info(
-                    f"Back-filled referral code {candidate} for user {current_user.email}"
-                )
+                logger.info(f"Back-filled referral code {candidate} for user {current_user.email}")
                 break
 
     logger.info(f"User profile accessed: {current_user.email}")
@@ -148,15 +146,23 @@ async def get_workspace_status(
     saved_count = await count_by_field(db, SavedInsight, "user_id", current_user.id)
 
     # Count by status - Note: count_by_field only supports single field, so we keep compound WHERE for now
-    interested_query = select(func.count()).select_from(SavedInsight).where(
-        SavedInsight.user_id == current_user.id,
-        SavedInsight.status == "interested",
+    interested_query = (
+        select(func.count())
+        .select_from(SavedInsight)
+        .where(
+            SavedInsight.user_id == current_user.id,
+            SavedInsight.status == "interested",
+        )
     )
     interested_count = await db.scalar(interested_query) or 0
 
-    building_query = select(func.count()).select_from(SavedInsight).where(
-        SavedInsight.user_id == current_user.id,
-        SavedInsight.status == "building",
+    building_query = (
+        select(func.count())
+        .select_from(SavedInsight)
+        .where(
+            SavedInsight.user_id == current_user.id,
+            SavedInsight.status == "building",
+        )
     )
     building_count = await db.scalar(building_query) or 0
 
@@ -211,9 +217,13 @@ async def list_saved_insights(
         total = await count_by_field(db, SavedInsight, "user_id", current_user.id)
     else:
         # Complex case: count with status filter (keep manual query)
-        count_query = select(func.count()).select_from(SavedInsight).where(
-            SavedInsight.user_id == current_user.id,
-            SavedInsight.status == status,
+        count_query = (
+            select(func.count())
+            .select_from(SavedInsight)
+            .where(
+                SavedInsight.user_id == current_user.id,
+                SavedInsight.status == status,
+            )
         )
         total = await db.scalar(count_query) or 0
 
@@ -222,9 +232,7 @@ async def list_saved_insights(
     result = await db.execute(query)
     saved_insights = result.scalars().all()
 
-    logger.info(
-        f"Listed {len(saved_insights)} saved insights for user {current_user.email}"
-    )
+    logger.info(f"Listed {len(saved_insights)} saved insights for user {current_user.email}")
 
     return SavedInsightListResponse(
         items=[SavedInsightWithDetails.model_validate(s) for s in saved_insights],
@@ -530,9 +538,7 @@ async def rate_insight(
         await db.commit()
         await db.refresh(rating)
 
-    logger.info(
-        f"User {current_user.email} rated insight {insight_id}: {rating_data.rating}/5"
-    )
+    logger.info(f"User {current_user.email} rated insight {insight_id}: {rating_data.rating}/5")
     return RatingResponse.model_validate(rating)
 
 
@@ -561,9 +567,7 @@ async def get_my_rating(
     return RatingResponse.model_validate(rating)
 
 
-@router.delete(
-    "/insights/{insight_id}/rate", status_code=status.HTTP_204_NO_CONTENT
-)
+@router.delete("/insights/{insight_id}/rate", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_rating(
     insight_id: UUID,
     current_user: CurrentUser,

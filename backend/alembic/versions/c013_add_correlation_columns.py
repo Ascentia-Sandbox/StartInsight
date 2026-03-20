@@ -18,8 +18,12 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     op.add_column("insights", sa.Column("correlation_group_id", sa.UUID(), nullable=True))
-    op.add_column("insights", sa.Column("correlation_score", sa.Float(), nullable=True, server_default="0"))
-    op.add_column("insights", sa.Column("source_count", sa.Integer(), nullable=True, server_default="1"))
+    op.add_column(
+        "insights", sa.Column("correlation_score", sa.Float(), nullable=True, server_default="0")
+    )
+    op.add_column(
+        "insights", sa.Column("source_count", sa.Integer(), nullable=True, server_default="1")
+    )
     op.create_index("ix_insights_correlation_group_id", "insights", ["correlation_group_id"])
 
 

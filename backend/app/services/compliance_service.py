@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class DataRetentionService:
     """Service for managing data retention policies."""
 
@@ -28,11 +29,13 @@ class DataRetentionService:
             # Delete old webhook events
             result = await db.execute(
                 text("DELETE FROM webhook_events WHERE created_at < :cutoff_date"),
-                {"cutoff_date": cutoff_date}
+                {"cutoff_date": cutoff_date},
             )
 
             deleted_count = result.rowcount
-            logger.info(f"Deleted {deleted_count} old webhook events (older than {days_to_keep} days)")
+            logger.info(
+                f"Deleted {deleted_count} old webhook events (older than {days_to_keep} days)"
+            )
 
             await db.commit()
             return deleted_count
@@ -58,11 +61,13 @@ class DataRetentionService:
             # Delete old payment history
             result = await db.execute(
                 text("DELETE FROM payment_history WHERE created_at < :cutoff_date"),
-                {"cutoff_date": cutoff_date}
+                {"cutoff_date": cutoff_date},
             )
 
             deleted_count = result.rowcount
-            logger.info(f"Deleted {deleted_count} old payment history records (older than {days_to_keep} days)")
+            logger.info(
+                f"Deleted {deleted_count} old payment history records (older than {days_to_keep} days)"
+            )
 
             await db.commit()
             return deleted_count
@@ -96,11 +101,13 @@ class DataRetentionService:
                     AND updated_at < :cutoff_date
                     AND subscription_tier = 'free'
                 """),
-                {"cutoff_date": cutoff_date}
+                {"cutoff_date": cutoff_date},
             )
 
             deleted_count = result.rowcount
-            logger.info(f"Soft-deleted {deleted_count} old free users (older than {days_to_keep} days)")
+            logger.info(
+                f"Soft-deleted {deleted_count} old free users (older than {days_to_keep} days)"
+            )
 
             await db.commit()
             return deleted_count
@@ -121,7 +128,7 @@ class AuditLoggingService:
         operation: str,
         details: dict,
         success: bool = True,
-        request_id: str | None = None
+        request_id: str | None = None,
     ):
         """
         Log a payment-related operation for audit purposes.
@@ -159,7 +166,7 @@ class AuditLoggingService:
         event_type: str,
         status: str,
         user_id: str | None = None,
-        request_id: str | None = None
+        request_id: str | None = None,
     ):
         """
         Log webhook processing for audit purposes.
@@ -192,7 +199,7 @@ class AuditLoggingService:
         event_type: str,
         user_id: str | None = None,
         details: dict[str, Any] | None = None,
-        severity: str = "INFO"
+        severity: str = "INFO",
     ):
         """
         Log security-related events for audit and monitoring.

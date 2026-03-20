@@ -16,7 +16,9 @@ class RawSignalResponse(BaseModel):
     source: str = Field(..., description="Data source (reddit, product_hunt, google_trends)")
     url: str = Field(..., description="Source URL where data was scraped")
     content: str = Field(..., description="Scraped content in markdown format")
-    extra_metadata: dict[str, Any] = Field(..., description="Additional metadata (upvotes, comments, etc.)")
+    extra_metadata: dict[str, Any] = Field(
+        ..., description="Additional metadata (upvotes, comments, etc.)"
+    )
     created_at: datetime = Field(..., description="Timestamp when signal was created")
     processed: bool = Field(..., description="Whether signal has been analyzed")
 

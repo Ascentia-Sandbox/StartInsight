@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 # PYDANTIC SCHEMAS
 # ============================================================================
 
+
 class BuilderProject(BaseModel):
     """Builder project response"""
 
@@ -46,6 +47,7 @@ class OAuthToken(BaseModel):
 # ============================================================================
 # LOVABLE.DEV INTEGRATION
 # ============================================================================
+
 
 class LovableIntegration:
     """
@@ -192,7 +194,7 @@ class LovableIntegration:
 - User authentication
 - Dashboard with analytics
 - Mobile-responsive design
-- {insight.problem_statement.split('.')[0]}
+- {insight.problem_statement.split(".")[0]}
 
 **Tech Stack:**
 - Frontend: React with Tailwind CSS
@@ -207,6 +209,7 @@ Please create a functional MVP with these core features implemented.
 # ============================================================================
 # REPLIT INTEGRATION
 # ============================================================================
+
 
 class ReplitIntegration:
     """
@@ -328,6 +331,7 @@ class ReplitIntegration:
 # V0.DEV INTEGRATION (EXPERIMENTAL)
 # ============================================================================
 
+
 class V0DevIntegration:
     """
     v0.dev integration (experimental).
@@ -376,6 +380,7 @@ class V0DevIntegration:
 # ============================================================================
 # UNIFIED BUILDER SERVICE
 # ============================================================================
+
 
 async def create_builder_project(
     platform: str,

@@ -171,7 +171,9 @@ async def admin_event_stream(
         finally:
             # ✅ CLEANUP - Always remove from active connections
             _active_sse_connections.discard(connection_id)
-            logger.info(f"Admin SSE cleanup: {admin.email} (remaining: {len(_active_sse_connections)})")
+            logger.info(
+                f"Admin SSE cleanup: {admin.email} (remaining: {len(_active_sse_connections)})"
+            )
 
     return EventSourceResponse(event_generator())
 
@@ -196,10 +198,7 @@ async def _gather_admin_metrics(db: AsyncSession) -> dict:
         ORDER BY agent_type, created_at DESC
     """)
     agent_states_result = await db.execute(agent_states_query)
-    agent_states = {
-        row.agent_type: row.status
-        for row in agent_states_result.fetchall()
-    }
+    agent_states = {row.agent_type: row.status for row in agent_states_result.fetchall()}
 
     # Ensure all agents have a state (even if no logs)
     for agent in ["reddit_scraper", "product_hunt_scraper", "trends_scraper", "analyzer"]:
@@ -208,13 +207,10 @@ async def _gather_admin_metrics(db: AsyncSession) -> dict:
 
     # ✅ OPTIMIZATION #2: Get recent logs (unchanged - already optimized)
     logs_result = await db.execute(
-        select(AgentExecutionLog)
-        .order_by(AgentExecutionLog.created_at.desc())
-        .limit(10)
+        select(AgentExecutionLog).order_by(AgentExecutionLog.created_at.desc()).limit(10)
     )
     recent_logs = [
-        ExecutionLogResponse.model_validate(log).model_dump()
-        for log in logs_result.scalars().all()
+        ExecutionLogResponse.model_validate(log).model_dump() for log in logs_result.scalars().all()
     ]
 
     # ✅ OPTIMIZATION #3: Combined metrics query (was 4 separate queries)
@@ -286,7 +282,9 @@ async def list_agents(
 
         # Count errors today (multiple WHERE conditions, keep manual)
         errors_result = await db.execute(
-            select(func.count()).select_from(AgentExecutionLog).where(
+            select(func.count())
+            .select_from(AgentExecutionLog)
+            .where(
                 AgentExecutionLog.agent_type == agent_type,
                 AgentExecutionLog.status == "failed",
                 AgentExecutionLog.created_at >= today_start,
@@ -481,22 +479,28 @@ async def trigger_agent(
             from arq.connections import RedisSettings as ArqRedisSettings
 
             _parsed = _urlparse(settings.redis_url)
-            pool: ArqRedis = await create_pool(ArqRedisSettings(
-                host=_parsed.hostname or "localhost",
-                port=_parsed.port or 6379,
-                password=_parsed.password,
-                database=int((_parsed.path or "/0").lstrip("/") or "0"),
-                ssl=settings.redis_url.startswith("rediss://"),
-                conn_timeout=3,
-                conn_retries=0,
-            ))
+            pool: ArqRedis = await create_pool(
+                ArqRedisSettings(
+                    host=_parsed.hostname or "localhost",
+                    port=_parsed.port or 6379,
+                    password=_parsed.password,
+                    database=int((_parsed.path or "/0").lstrip("/") or "0"),
+                    ssl=settings.redis_url.startswith("rediss://"),
+                    conn_timeout=3,
+                    conn_retries=0,
+                )
+            )
             job = await pool.enqueue_job(task_name)
             await pool.aclose()
-            logger.info(f"Enqueued Arq job '{task_name}' (job_id={job.job_id}) for agent {agent_type}")
+            logger.info(
+                f"Enqueued Arq job '{task_name}' (job_id={job.job_id}) for agent {agent_type}"
+            )
         except Exception as e:
             logger.warning(f"Failed to enqueue Arq job for {agent_type}: {e}")
     else:
-        logger.warning(f"No task mapping found for agent_type '{agent_type}', log created but job not enqueued")
+        logger.warning(
+            f"No task mapping found for agent_type '{agent_type}', log created but job not enqueued"
+        )
 
     logger.info(f"Agent {agent_type} triggered by admin {admin.email}")
 
@@ -917,11 +921,23 @@ async def export_insights(
 
     # Define export columns
     export_columns = [
-        "id", "title", "problem_statement", "proposed_solution",
-        "market_size_estimate", "relevance_score", "admin_status",
-        "opportunity_score", "problem_score", "feasibility_score",
-        "why_now_score", "execution_difficulty", "go_to_market_score",
-        "founder_fit_score", "revenue_potential", "language", "created_at",
+        "id",
+        "title",
+        "problem_statement",
+        "proposed_solution",
+        "market_size_estimate",
+        "relevance_score",
+        "admin_status",
+        "opportunity_score",
+        "problem_score",
+        "feasibility_score",
+        "why_now_score",
+        "execution_difficulty",
+        "go_to_market_score",
+        "founder_fit_score",
+        "revenue_potential",
+        "language",
+        "created_at",
     ]
 
     if format == "json":
@@ -1015,9 +1031,7 @@ async def bulk_delete_insights(
             detail="Maximum 100 insights per bulk operation",
         )
 
-    result = await db.execute(
-        select(Insight).where(Insight.id.in_(ids))
-    )
+    result = await db.execute(select(Insight).where(Insight.id.in_(ids)))
     insights = result.scalars().all()
 
     deleted_count = 0
@@ -1136,7 +1150,9 @@ async def get_error_summary(
 
     # Get total errors (multiple WHERE conditions, keep manual)
     total_result = await db.execute(
-        select(func.count()).select_from(SystemMetric).where(
+        select(func.count())
+        .select_from(SystemMetric)
+        .where(
             SystemMetric.metric_type == "error_rate",
             SystemMetric.recorded_at >= start_time,
         )
@@ -1145,10 +1161,13 @@ async def get_error_summary(
 
     # Get errors by type (from dimensions)
     errors_result = await db.execute(
-        select(SystemMetric).where(
+        select(SystemMetric)
+        .where(
             SystemMetric.metric_type == "error_rate",
             SystemMetric.recorded_at >= start_time,
-        ).order_by(SystemMetric.recorded_at.desc()).limit(50)
+        )
+        .order_by(SystemMetric.recorded_at.desc())
+        .limit(50)
     )
     errors = errors_result.scalars().all()
 
@@ -1348,7 +1367,9 @@ async def import_content(
                     # Parse datetime fields if present
                     for field in ["published_at"]:
                         if field in record_data and record_data[field]:
-                            record_data[field] = datetime.fromisoformat(record_data[field].replace("Z", "+00:00"))
+                            record_data[field] = datetime.fromisoformat(
+                                record_data[field].replace("Z", "+00:00")
+                            )
 
                     # Parse JSONB fields if they're strings
                     for field in ["translations", "metrics", "timeline", "trend_data"]:
@@ -1382,7 +1403,9 @@ async def import_content(
                     # Parse datetime fields
                     for field in ["published_at"]:
                         if field in record_data and record_data[field]:
-                            record_data[field] = datetime.fromisoformat(record_data[field].replace("Z", "+00:00"))
+                            record_data[field] = datetime.fromisoformat(
+                                record_data[field].replace("Z", "+00:00")
+                            )
 
                     # Parse JSONB fields from JSON strings
                     for field in ["translations", "metrics", "timeline", "trend_data"]:
@@ -1395,7 +1418,12 @@ async def import_content(
                             record_data[field] = record_data[field].lower() in ["true", "1", "yes"]
 
                     # Parse numeric fields
-                    for field in ["reading_time_minutes", "view_count", "search_volume", "sort_order"]:
+                    for field in [
+                        "reading_time_minutes",
+                        "view_count",
+                        "search_volume",
+                        "sort_order",
+                    ]:
                         if field in record_data and record_data[field]:
                             record_data[field] = int(record_data[field])
 
@@ -1456,9 +1484,7 @@ async def list_admin_users(
 
     Returns admin records with email, display_name, role, and created_at.
     """
-    result = await db.execute(
-        select(AdminUserModel).order_by(AdminUserModel.created_at.desc())
-    )
+    result = await db.execute(select(AdminUserModel).order_by(AdminUserModel.created_at.desc()))
     admin_users = result.scalars().all()
 
     items = []
@@ -1493,9 +1519,7 @@ async def promote_user_to_admin(
     with the specified role (superadmin, admin, moderator, or viewer).
     """
     # Find user by email
-    user_result = await db.execute(
-        select(UserModel).where(UserModel.email == payload.email)
-    )
+    user_result = await db.execute(select(UserModel).where(UserModel.email == payload.email))
     target_user = user_result.scalar_one_or_none()
 
     if not target_user:
@@ -1540,9 +1564,7 @@ async def promote_user_to_admin(
     await db.commit()
     await db.refresh(new_admin)
 
-    logger.info(
-        f"Admin {admin.email} promoted {payload.email} to {payload.role.value}"
-    )
+    logger.info(f"Admin {admin.email} promoted {payload.email} to {payload.role.value}")
 
     return AdminUserResponse(
         id=new_admin.id,
@@ -1599,6 +1621,7 @@ async def update_admin_role(
     cache_key = f"admin_role:{admin_record.user_id}"
     try:
         from app.api.deps import get_redis
+
         redis = await get_redis()
         await redis.delete(cache_key)
     except Exception as e:
@@ -1671,6 +1694,7 @@ async def remove_admin_access(
     cache_key = f"admin_role:{target_user_id}"
     try:
         from app.api.deps import get_redis
+
         redis = await get_redis()
         await redis.delete(cache_key)
     except Exception as e:
@@ -1716,7 +1740,7 @@ async def upload_image(
     if len(contents) > MAX_FILE_SIZE:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File too large. Max size: {MAX_FILE_SIZE // (1024*1024)}MB",
+            detail=f"File too large. Max size: {MAX_FILE_SIZE // (1024 * 1024)}MB",
         )
 
     # Generate unique filename from content hash
@@ -1804,9 +1828,7 @@ async def trigger_test_digest(
         # Fall back to overall top 10 if nothing was published this week
         if not insights:
             result = await session.execute(
-                sa_select(Insight)
-                .order_by(desc(Insight.relevance_score))
-                .limit(10)
+                sa_select(Insight).order_by(desc(Insight.relevance_score)).limit(10)
             )
             insights = result.scalars().all()
 
@@ -1816,9 +1838,7 @@ async def trigger_test_digest(
             "problem_statement": (i.problem_statement or "")[:150],
             "relevance_score": f"{(i.relevance_score or 0) * 100:.0f}%",
             "market_size": i.market_size_estimate or "Unknown",
-            "insight_url": (
-                f"https://startinsight.co/insights/{i.id}?{_utm}"
-            ),
+            "insight_url": (f"https://startinsight.co/insights/{i.id}?{_utm}"),
         }
         for i in insights
     ]
@@ -1884,9 +1904,11 @@ async def get_intelligence_gaps(
     gaps = []
     try:
         result = await db.execute(
-            text("SELECT source_name, status, last_success_at, last_failure_at, "
-                 "consecutive_failures, circuit_state "
-                 "FROM source_health ORDER BY source_name")
+            text(
+                "SELECT source_name, status, last_success_at, last_failure_at, "
+                "consecutive_failures, circuit_state "
+                "FROM source_health ORDER BY source_name"
+            )
         )
         health_rows = {row["source_name"]: row for row in result.mappings().all()}
     except Exception:
@@ -1895,13 +1917,15 @@ async def get_intelligence_gaps(
     for source in expected_sources:
         row = health_rows.get(source)
         if not row or not row["last_success_at"]:
-            gaps.append({
-                "source": source,
-                "severity": "red",
-                "status": "no_data",
-                "message": f"No successful scrape recorded for {source}",
-                "circuit": row["circuit_state"] if row else "unknown",
-            })
+            gaps.append(
+                {
+                    "source": source,
+                    "severity": "red",
+                    "status": "no_data",
+                    "message": f"No successful scrape recorded for {source}",
+                    "circuit": row["circuit_state"] if row else "unknown",
+                }
+            )
             continue
 
         age = now - row["last_success_at"]
@@ -1915,15 +1939,17 @@ async def get_intelligence_gaps(
             severity = "green"
             gap_status = "fresh"
 
-        gaps.append({
-            "source": source,
-            "severity": severity,
-            "status": gap_status,
-            "last_success": row["last_success_at"].isoformat(),
-            "age_hours": round(age.total_seconds() / 3600, 1),
-            "consecutive_failures": row["consecutive_failures"],
-            "circuit": row["circuit_state"],
-        })
+        gaps.append(
+            {
+                "source": source,
+                "severity": severity,
+                "status": gap_status,
+                "last_success": row["last_success_at"].isoformat(),
+                "age_hours": round(age.total_seconds() / 3600, 1),
+                "consecutive_failures": row["consecutive_failures"],
+                "circuit": row["circuit_state"],
+            }
+        )
 
     # Summary
     red_count = sum(1 for g in gaps if g["severity"] == "red")

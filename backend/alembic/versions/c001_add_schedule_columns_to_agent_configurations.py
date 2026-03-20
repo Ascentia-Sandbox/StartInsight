@@ -26,23 +26,39 @@ def upgrade() -> None:
     # Add schedule management columns to agent_configurations
     op.add_column(
         "agent_configurations",
-        sa.Column("schedule_type", sa.String(20), nullable=True, comment="cron | interval | manual")
+        sa.Column(
+            "schedule_type", sa.String(20), nullable=True, comment="cron | interval | manual"
+        ),
     )
     op.add_column(
         "agent_configurations",
-        sa.Column("schedule_cron", sa.String(100), nullable=True, comment="cron expression (e.g., '0 8 * * *')")
+        sa.Column(
+            "schedule_cron",
+            sa.String(100),
+            nullable=True,
+            comment="cron expression (e.g., '0 8 * * *')",
+        ),
     )
     op.add_column(
         "agent_configurations",
-        sa.Column("schedule_interval_hours", sa.Integer(), nullable=True, comment="interval in hours")
+        sa.Column(
+            "schedule_interval_hours", sa.Integer(), nullable=True, comment="interval in hours"
+        ),
     )
     op.add_column(
         "agent_configurations",
-        sa.Column("next_run_at", sa.DateTime(timezone=True), nullable=True, comment="next scheduled run time")
+        sa.Column(
+            "next_run_at",
+            sa.DateTime(timezone=True),
+            nullable=True,
+            comment="next scheduled run time",
+        ),
     )
     op.add_column(
         "agent_configurations",
-        sa.Column("last_run_at", sa.DateTime(timezone=True), nullable=True, comment="last execution time")
+        sa.Column(
+            "last_run_at", sa.DateTime(timezone=True), nullable=True, comment="last execution time"
+        ),
     )
 
     # Add index for scheduling queries
@@ -50,7 +66,7 @@ def upgrade() -> None:
         "idx_agent_config_next_run",
         "agent_configurations",
         ["is_enabled", "next_run_at"],
-        postgresql_where=sa.text("next_run_at IS NOT NULL")
+        postgresql_where=sa.text("next_run_at IS NOT NULL"),
     )
 
     # Set default schedules for existing agents

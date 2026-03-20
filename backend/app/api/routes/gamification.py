@@ -36,6 +36,7 @@ router = APIRouter(prefix="/gamification", tags=["Gamification"])
 # Schemas
 # ============================================
 
+
 class AchievementResponse(BaseModel):
     id: UUID
     name: str
@@ -103,6 +104,7 @@ class LeaderboardEntry(BaseModel):
 # Achievements Endpoints
 # ============================================
 
+
 @router.get("/achievements", response_model=list[AchievementResponse])
 async def list_achievements(
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -136,15 +138,14 @@ async def get_my_achievements(
 # Points & Levels Endpoints
 # ============================================
 
+
 @router.get("/points", response_model=UserPointsResponse)
 async def get_my_points(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Get current user's points and level."""
-    result = await db.execute(
-        select(UserPoints).where(UserPoints.user_id == current_user.id)
-    )
+    result = await db.execute(select(UserPoints).where(UserPoints.user_id == current_user.id))
     points = result.scalar_one_or_none()
 
     if not points:
@@ -166,9 +167,7 @@ async def daily_check_in(
     today = date.today()
 
     # Get or create points record
-    result = await db.execute(
-        select(UserPoints).where(UserPoints.user_id == current_user.id)
-    )
+    result = await db.execute(select(UserPoints).where(UserPoints.user_id == current_user.id))
     points = result.scalar_one_or_none()
 
     if not points:
@@ -193,9 +192,7 @@ async def daily_check_in(
     points.updated_at = datetime.now(UTC)
 
     # Award daily credits
-    result = await db.execute(
-        select(UserCredits).where(UserCredits.user_id == current_user.id)
-    )
+    result = await db.execute(select(UserCredits).where(UserCredits.user_id == current_user.id))
     credits = result.scalar_one_or_none()
 
     if not credits:
@@ -230,15 +227,14 @@ async def daily_check_in(
 # Credits Endpoints
 # ============================================
 
+
 @router.get("/credits", response_model=UserCreditsResponse)
 async def get_my_credits(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Get current user's credit balance."""
-    result = await db.execute(
-        select(UserCredits).where(UserCredits.user_id == current_user.id)
-    )
+    result = await db.execute(select(UserCredits).where(UserCredits.user_id == current_user.id))
     credits = result.scalar_one_or_none()
 
     if not credits:
@@ -272,6 +268,7 @@ async def get_credit_transactions(
 # Leaderboard Endpoints
 # ============================================
 
+
 @router.get("/leaderboard/points", response_model=list[LeaderboardEntry])
 async def get_points_leaderboard(
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -287,13 +284,15 @@ async def get_points_leaderboard(
 
     entries = []
     for i, (points, user) in enumerate(result.all(), 1):
-        entries.append(LeaderboardEntry(
-            user_id=points.user_id,
-            display_name=user.full_name or user.email.split("@")[0],
-            total_points=points.total_points,
-            level=points.level,
-            rank=i,
-        ))
+        entries.append(
+            LeaderboardEntry(
+                user_id=points.user_id,
+                display_name=user.full_name or user.email.split("@")[0],
+                total_points=points.total_points,
+                level=points.level,
+                rank=i,
+            )
+        )
 
     return entries
 
@@ -313,13 +312,15 @@ async def get_streak_leaderboard(
 
     entries = []
     for i, (points, user) in enumerate(result.all(), 1):
-        entries.append(LeaderboardEntry(
-            user_id=points.user_id,
-            display_name=user.full_name or user.email.split("@")[0],
-            total_points=points.current_streak,  # Using points field for streak
-            level=points.level,
-            rank=i,
-        ))
+        entries.append(
+            LeaderboardEntry(
+                user_id=points.user_id,
+                display_name=user.full_name or user.email.split("@")[0],
+                total_points=points.current_streak,  # Using points field for streak
+                level=points.level,
+                rank=i,
+            )
+        )
 
     return entries
 
@@ -327,6 +328,7 @@ async def get_streak_leaderboard(
 # ============================================
 # Admin Endpoints
 # ============================================
+
 
 @router.post("/admin/grant-credits/{user_id}")
 async def admin_grant_credits(
@@ -341,9 +343,7 @@ async def admin_grant_credits(
         raise HTTPException(status_code=400, detail="Amount must be positive")
 
     # Get or create credits
-    result = await db.execute(
-        select(UserCredits).where(UserCredits.user_id == user_id)
-    )
+    result = await db.execute(select(UserCredits).where(UserCredits.user_id == user_id))
     credits = result.scalar_one_or_none()
 
     if not credits:
@@ -401,9 +401,7 @@ async def admin_grant_achievement(
     db.add(user_achievement)
 
     # Update user points
-    result = await db.execute(
-        select(UserPoints).where(UserPoints.user_id == user_id)
-    )
+    result = await db.execute(select(UserPoints).where(UserPoints.user_id == user_id))
     points = result.scalar_one_or_none()
 
     if not points:
@@ -418,4 +416,8 @@ async def admin_grant_achievement(
     await db.commit()
 
     logger.info(f"Admin {admin.id} granted achievement {achievement_id} to user {user_id}")
-    return {"status": "granted", "achievement": achievement.name, "points_earned": achievement.points}
+    return {
+        "status": "granted",
+        "achievement": achievement.name,
+        "points_earned": achievement.points,
+    }

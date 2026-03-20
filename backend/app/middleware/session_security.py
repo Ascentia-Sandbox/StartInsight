@@ -10,6 +10,7 @@ from starlette.responses import Response
 
 logger = logging.getLogger(__name__)
 
+
 class SessionSecurityMiddleware(BaseHTTPMiddleware):
     """
     Enhanced session security middleware.

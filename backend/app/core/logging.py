@@ -120,12 +120,14 @@ def set_request_context(
     client_ip: str | None = None,
 ) -> None:
     """Set request context for logging."""
-    request_context_var.set({
-        "method": method,
-        "path": path,
-        "user_id": user_id,
-        "client_ip": client_ip,
-    })
+    request_context_var.set(
+        {
+            "method": method,
+            "path": path,
+            "user_id": user_id,
+            "client_ip": client_ip,
+        }
+    )
 
 
 def clear_request_context() -> None:
@@ -164,6 +166,7 @@ def timed(operation: str | None = None):
         async def fetch_insights():
             ...
     """
+
     def decorator(func):
         op_name = operation or func.__name__
 
@@ -218,6 +221,7 @@ def timed(operation: str | None = None):
                 raise
 
         import asyncio
+
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         return sync_wrapper
@@ -249,9 +253,7 @@ def setup_logging():
     if settings.environment == "production":
         handler.setFormatter(JSONFormatter())
     else:
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         handler.setFormatter(formatter)
 
     root_logger.addHandler(handler)

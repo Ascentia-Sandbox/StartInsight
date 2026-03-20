@@ -158,8 +158,8 @@ class TrendVerifier:
             # Calculate actual growth (last 3 days vs first 3 days)
             actual_growth: float | None = None
             if len(values) >= 6:
-                first_half = values[:len(values)//2].mean()
-                second_half = values[len(values)//2:].mean()
+                first_half = values[: len(values) // 2].mean()
+                second_half = values[len(values) // 2 :].mean()
                 if first_half > 0:
                     actual_growth = ((second_half - first_half) / first_half) * 100
                 else:
@@ -182,7 +182,9 @@ class TrendVerifier:
                 keyword=keyword,
                 verified=True,
                 actual_volume=avg_volume,
-                actual_growth_percent=round(actual_growth, 1) if actual_growth is not None else None,
+                actual_growth_percent=round(actual_growth, 1)
+                if actual_growth is not None
+                else None,
                 llm_claimed_volume=llm_claimed_volume,
                 llm_claimed_growth=llm_claimed_growth,
                 error=None,
@@ -191,7 +193,9 @@ class TrendVerifier:
 
             logger.info(
                 f"Verified trend keyword '{keyword}': "
-                f"volume={avg_volume}, growth={actual_growth:.1f}%" if actual_growth else f"volume={avg_volume}"
+                f"volume={avg_volume}, growth={actual_growth:.1f}%"
+                if actual_growth
+                else f"volume={avg_volume}"
             )
 
             self._cache[cache_key] = result
@@ -304,17 +308,17 @@ class TrendVerifier:
 
             if result.verified:
                 # Update with real data
-                verified.append({
-                    "keyword": kw.keyword,
-                    "volume": self._format_volume(result.actual_volume or 0),
-                    "growth": self._format_growth(result.actual_growth_percent),
-                })
+                verified.append(
+                    {
+                        "keyword": kw.keyword,
+                        "volume": self._format_volume(result.actual_volume or 0),
+                        "growth": self._format_growth(result.actual_growth_percent),
+                    }
+                )
                 verified_count += 1
             else:
                 # Keep original but mark as unverified
-                logger.warning(
-                    f"Trend keyword unverifiable: {kw.keyword} ({result.error})"
-                )
+                logger.warning(f"Trend keyword unverifiable: {kw.keyword} ({result.error})")
                 unverified_count += 1
 
         logger.info(
@@ -407,7 +411,7 @@ def compare_growth_claims(
     else:
         return (
             False,
-            f"Growth claim inaccurate: claimed {llm_claimed}, actual {actual_growth:.1f}%"
+            f"Growth claim inaccurate: claimed {llm_claimed}, actual {actual_growth:.1f}%",
         )
 
 

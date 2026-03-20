@@ -121,11 +121,13 @@ async def get_market_pulse(
                     keyword = kw.get("keyword", "") if isinstance(kw, dict) else ""
                     if keyword and keyword not in seen:
                         seen.add(keyword)
-                        trending_keywords.append(TrendingKeyword(
-                            keyword=keyword,
-                            volume=kw.get("volume"),
-                            growth=kw.get("growth"),
-                        ))
+                        trending_keywords.append(
+                            TrendingKeyword(
+                                keyword=keyword,
+                                volume=kw.get("volume"),
+                                growth=kw.get("growth"),
+                            )
+                        )
                     if len(trending_keywords) >= 10:
                         break
                 if len(trending_keywords) >= 10:

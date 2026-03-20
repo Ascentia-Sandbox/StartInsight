@@ -30,9 +30,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         # HTTPS enforcement (HSTS) - only for HTTPS connections
         if request.url.scheme == "https":
-            response.headers["Strict-Transport-Security"] = (
-                "max-age=31536000; includeSubDomains"
-            )
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
 
         # XSS protection (legacy but harmless)
         response.headers["X-XSS-Protection"] = "1; mode=block"

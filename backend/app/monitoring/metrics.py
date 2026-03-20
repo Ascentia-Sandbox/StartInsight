@@ -81,9 +81,7 @@ class InsightMetrics:
         successful_calls = [call for call in self.llm_calls if call.success]
         if not successful_calls:
             return 0.0
-        return sum(call.latency_ms for call in successful_calls) / len(
-            successful_calls
-        )
+        return sum(call.latency_ms for call in successful_calls) / len(successful_calls)
 
     @property
     def success_rate(self) -> float:

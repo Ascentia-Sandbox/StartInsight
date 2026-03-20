@@ -30,7 +30,9 @@ class ExternalIntegration(Base):
     __tablename__ = "external_integrations"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
 
     # Service info
     service_type: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -39,7 +41,9 @@ class ExternalIntegration(Base):
     # OAuth tokens (encrypted in practice)
     access_token: Mapped[str | None] = mapped_column(Text, nullable=True)
     refresh_token: Mapped[str | None] = mapped_column(Text, nullable=True)
-    token_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    token_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     # Workspace info
     workspace_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -54,14 +58,33 @@ class ExternalIntegration(Base):
     sync_error: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relationships
     user: Mapped["User"] = relationship("User", foreign_keys=[user_id], lazy="selectin")
-    webhooks: Mapped[list["IntegrationWebhook"]] = relationship("IntegrationWebhook", back_populates="integration", cascade="all, delete-orphan", lazy="selectin")
-    syncs: Mapped[list["IntegrationSync"]] = relationship("IntegrationSync", back_populates="integration", cascade="all, delete-orphan", lazy="selectin")
-    subscriptions: Mapped[list["BotSubscription"]] = relationship("BotSubscription", back_populates="integration", cascade="all, delete-orphan", lazy="selectin")
+    webhooks: Mapped[list["IntegrationWebhook"]] = relationship(
+        "IntegrationWebhook",
+        back_populates="integration",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    syncs: Mapped[list["IntegrationSync"]] = relationship(
+        "IntegrationSync",
+        back_populates="integration",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    subscriptions: Mapped[list["BotSubscription"]] = relationship(
+        "BotSubscription",
+        back_populates="integration",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
 
     # Service type constants
     SERVICE_NOTION = "notion"
@@ -81,7 +104,11 @@ class IntegrationWebhook(Base):
     __tablename__ = "integration_webhooks"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    integration_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("external_integrations.id", ondelete="CASCADE"), nullable=False)
+    integration_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("external_integrations.id", ondelete="CASCADE"),
+        nullable=False,
+    )
 
     # Webhook config
     webhook_type: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -90,14 +117,20 @@ class IntegrationWebhook(Base):
 
     # Status
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    last_triggered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_triggered_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     failure_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Timestamp
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relationships
-    integration: Mapped["ExternalIntegration"] = relationship("ExternalIntegration", back_populates="webhooks")
+    integration: Mapped["ExternalIntegration"] = relationship(
+        "ExternalIntegration", back_populates="webhooks"
+    )
 
     # Webhook type constants
     TYPE_NEW_INSIGHT = "new_insight"
@@ -115,7 +148,11 @@ class IntegrationSync(Base):
     __tablename__ = "integration_syncs"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    integration_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("external_integrations.id", ondelete="CASCADE"), nullable=False)
+    integration_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("external_integrations.id", ondelete="CASCADE"),
+        nullable=False,
+    )
 
     # Sync details
     sync_type: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -125,11 +162,15 @@ class IntegrationSync(Base):
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Timestamps
-    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    integration: Mapped["ExternalIntegration"] = relationship("ExternalIntegration", back_populates="syncs")
+    integration: Mapped["ExternalIntegration"] = relationship(
+        "ExternalIntegration", back_populates="syncs"
+    )
 
     # Sync type constants
     TYPE_FULL = "full"
@@ -151,7 +192,9 @@ class BrowserExtensionToken(Base):
     __tablename__ = "browser_extension_tokens"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
 
     # Token info
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
@@ -164,7 +207,9 @@ class BrowserExtensionToken(Base):
 
     # Status
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships
@@ -186,7 +231,11 @@ class BotSubscription(Base):
     __tablename__ = "bot_subscriptions"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    integration_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("external_integrations.id", ondelete="CASCADE"), nullable=False)
+    integration_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("external_integrations.id", ondelete="CASCADE"),
+        nullable=False,
+    )
 
     # Channel info
     channel_id: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -200,13 +249,19 @@ class BotSubscription(Base):
 
     # Status
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    last_notified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_notified_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     # Timestamp
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relationships
-    integration: Mapped["ExternalIntegration"] = relationship("ExternalIntegration", back_populates="subscriptions")
+    integration: Mapped["ExternalIntegration"] = relationship(
+        "ExternalIntegration", back_populates="subscriptions"
+    )
 
     # Subscription type constants
     TYPE_KEYWORD = "keyword"

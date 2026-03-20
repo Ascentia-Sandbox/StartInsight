@@ -64,7 +64,7 @@ ADMIN_JWT_TOKEN: str = os.environ.get("ADMIN_JWT_TOKEN", "")
 _PAGE_SIZE = 50
 
 # Symbol helpers
-OK = "\u2713"   # ✓
+OK = "\u2713"  # ✓
 FAIL = "\u2717"  # ✗
 WAIT = "\u23f3"  # ⏳
 
@@ -162,9 +162,7 @@ async def cmd_status() -> None:
                     f"{FAIL}  Dashboard fetch failed: HTTP {resp.status_code} - {resp.text[:200]}"
                 )
         else:
-            print(
-                "  (Skipping dashboard metrics - ADMIN_JWT_TOKEN not set)"
-            )
+            print("  (Skipping dashboard metrics - ADMIN_JWT_TOKEN not set)")
 
         # Signal stats (public endpoint)
         signal_data: dict[str, Any] = {}
@@ -172,9 +170,7 @@ async def cmd_status() -> None:
         if resp.status_code == 200:
             signal_data = resp.json()
         else:
-            print(
-                f"{FAIL}  Signal stats fetch failed: HTTP {resp.status_code} - {resp.text[:200]}"
-            )
+            print(f"{FAIL}  Signal stats fetch failed: HTTP {resp.status_code} - {resp.text[:200]}")
 
     print()
     print("=" * 55)
@@ -248,10 +244,7 @@ async def cmd_scrape() -> None:
             "  Check Railway logs for progress: railway logs --filter=scrape"
         )
     else:
-        print(
-            f"{FAIL}  Failed to trigger scrape: HTTP {resp.status_code}\n"
-            f"    {resp.text[:400]}"
-        )
+        print(f"{FAIL}  Failed to trigger scrape: HTTP {resp.status_code}\n    {resp.text[:400]}")
         _print_auth_hint(resp.status_code)
 
     print()
@@ -291,10 +284,7 @@ async def cmd_analyze() -> None:
             "  Check Railway logs: railway logs --filter=analyz"
         )
     else:
-        print(
-            f"{FAIL}  Failed to trigger analysis: HTTP {resp.status_code}\n"
-            f"    {resp.text[:400]}"
-        )
+        print(f"{FAIL}  Failed to trigger analysis: HTTP {resp.status_code}\n    {resp.text[:400]}")
         _print_auth_hint(resp.status_code)
 
     print()
@@ -345,9 +335,7 @@ async def cmd_pipeline(scrape_wait: int = 30, analyze_wait: int = 60) -> None:
     await cmd_analyze()
 
     # Wait for analysis to produce insights
-    print(
-        f"{WAIT}  Waiting {analyze_wait}s for analysis to produce insights..."
-    )
+    print(f"{WAIT}  Waiting {analyze_wait}s for analysis to produce insights...")
     _countdown(analyze_wait)
 
     # Step 4 - results
@@ -420,8 +408,7 @@ async def cmd_approve_pending(min_score: float = 0.75) -> None:
 
     # Filter by score
     eligible = [
-        insight for insight in all_pending
-        if (insight.get("relevance_score") or 0.0) >= min_score
+        insight for insight in all_pending if (insight.get("relevance_score") or 0.0) >= min_score
     ]
     skipped = len(all_pending) - len(eligible)
 
@@ -451,17 +438,11 @@ async def cmd_approve_pending(min_score: float = 0.75) -> None:
 
             if resp.status_code == 200:
                 approved += 1
-                print(
-                    f"  {OK}  {insight_id[:8]}...  score={score:.2f}  "
-                    f"approved"
-                )
+                print(f"  {OK}  {insight_id[:8]}...  score={score:.2f}  approved")
             else:
                 failed += 1
                 failed_ids.append(insight_id)
-                print(
-                    f"  {FAIL}  {insight_id[:8]}...  score={score:.2f}  "
-                    f"HTTP {resp.status_code}"
-                )
+                print(f"  {FAIL}  {insight_id[:8]}...  score={score:.2f}  HTTP {resp.status_code}")
 
     print()
     print(f"  Approved: {approved}")

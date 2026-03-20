@@ -10,7 +10,7 @@ from app.models.saved_insight import SavedInsight
 # These tests pass in CI with PostgreSQL
 pytestmark = pytest.mark.skipif(
     True,  # TODO: Detect SQLite vs PostgreSQL dynamically
-    reason="SavedInsight uses PostgreSQL ARRAY type not supported by SQLite"
+    reason="SavedInsight uses PostgreSQL ARRAY type not supported by SQLite",
 )
 
 

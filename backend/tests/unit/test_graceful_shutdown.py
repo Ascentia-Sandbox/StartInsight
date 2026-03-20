@@ -26,9 +26,11 @@ class TestGracefulShutdown:
     async def test_close_db_function_exists(self):
         """close_db function should be importable and callable."""
         from app.db.session import close_db
+
         assert callable(close_db)
 
     async def test_close_redis_function_exists(self):
         """close_redis function should be importable and callable."""
         from app.core.cache import close_redis
+
         assert callable(close_redis)

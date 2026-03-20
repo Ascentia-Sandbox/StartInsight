@@ -145,7 +145,9 @@ class TestAuthenticatedUserEndpoints:
             test_app.dependency_overrides.clear()
 
     @pytest.mark.asyncio
-    async def test_update_profile(self, test_app, client: AsyncClient, test_user: User, auth_override):
+    async def test_update_profile(
+        self, test_app, client: AsyncClient, test_user: User, auth_override
+    ):
         """Test updating user profile."""
         test_app.dependency_overrides.update(auth_override)
         try:
@@ -160,7 +162,9 @@ class TestAuthenticatedUserEndpoints:
             test_app.dependency_overrides.clear()
 
     @pytest.mark.asyncio
-    async def test_get_workspace_status(self, test_app, client: AsyncClient, test_user: User, auth_override):
+    async def test_get_workspace_status(
+        self, test_app, client: AsyncClient, test_user: User, auth_override
+    ):
         """Test getting workspace status."""
         test_app.dependency_overrides.update(auth_override)
         try:
@@ -227,7 +231,9 @@ class TestResearchEndpoints:
             test_app.dependency_overrides.clear()
 
     @pytest.mark.asyncio
-    async def test_list_analyses(self, test_app, client: AsyncClient, test_user: User, auth_override):
+    async def test_list_analyses(
+        self, test_app, client: AsyncClient, test_user: User, auth_override
+    ):
         """Test listing analyses."""
         test_app.dependency_overrides.update(auth_override)
         try:

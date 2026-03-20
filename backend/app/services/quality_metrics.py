@@ -89,16 +89,12 @@ class QualityMetrics:
             },
             "scores": {
                 "average_relevance": round(self.average_relevance_score, 4),
-                "dimension_averages": {
-                    k: round(v, 2) for k, v in self.dimension_averages.items()
-                },
+                "dimension_averages": {k: round(v, 2) for k, v in self.dimension_averages.items()},
                 "distribution": self.score_distribution,
             },
             "errors": {
                 "scraper_counts": self.scraper_error_counts,
-                "scraper_rates": {
-                    k: round(v, 4) for k, v in self.scraper_error_rates.items()
-                },
+                "scraper_rates": {k: round(v, 4) for k, v in self.scraper_error_rates.items()},
                 "llm_error_count": self.llm_error_count,
                 "llm_error_rate": round(self.llm_error_rate, 4),
             },
@@ -141,14 +137,16 @@ class QualityMetricsCollector:
             warnings: List of validation warnings
             quality_score: Quality score (0-100)
         """
-        self._validation_results.append({
-            "signal_id": signal_id,
-            "passed": passed,
-            "errors": errors or [],
-            "warnings": warnings or [],
-            "quality_score": quality_score,
-            "timestamp": datetime.now(UTC),
-        })
+        self._validation_results.append(
+            {
+                "signal_id": signal_id,
+                "passed": passed,
+                "errors": errors or [],
+                "warnings": warnings or [],
+                "quality_score": quality_score,
+                "timestamp": datetime.now(UTC),
+            }
+        )
 
         # Keep only recent results (last 1000)
         if len(self._validation_results) > 1000:
@@ -225,8 +223,7 @@ class QualityMetricsCollector:
 
         # Pending signals (unprocessed)
         pending_query = (
-            select(func.count(RawSignal.id))
-            .where(RawSignal.processed == False)  # noqa: E712
+            select(func.count(RawSignal.id)).where(RawSignal.processed == False)  # noqa: E712
         )
         result = await session.execute(pending_query)
         metrics.signals_pending = result.scalar() or 0
@@ -331,10 +328,7 @@ class QualityMetricsCollector:
         metrics: QualityMetrics,
     ) -> None:
         """Collect validation metrics from local tracking."""
-        recent_results = [
-            r for r in self._validation_results
-            if start <= r["timestamp"] < end
-        ]
+        recent_results = [r for r in self._validation_results if start <= r["timestamp"] < end]
 
         if not recent_results:
             return
@@ -353,22 +347,19 @@ class QualityMetricsCollector:
             if "scraper" in key.lower():
                 component = key.split(":")[0]
                 metrics.scraper_error_counts[component] = count
-                source_signals = metrics.signals_by_source.get(
-                    component.replace("_scraper", ""), 0
-                )
+                source_signals = metrics.signals_by_source.get(component.replace("_scraper", ""), 0)
                 if source_signals > 0:
                     metrics.scraper_error_rates[component] = count / source_signals
 
         # Calculate LLM error rate
         llm_errors = sum(
-            v for k, v in self._error_counts.items()
+            v
+            for k, v in self._error_counts.items()
             if "llm" in k.lower() or "analysis" in k.lower()
         )
         metrics.llm_error_count = llm_errors
         if metrics.total_insights_generated > 0:
-            metrics.llm_error_rate = llm_errors / (
-                metrics.total_insights_generated + llm_errors
-            )
+            metrics.llm_error_rate = llm_errors / (metrics.total_insights_generated + llm_errors)
 
     async def collect_daily_metrics(
         self,
@@ -421,9 +412,9 @@ class QualityMetricsCollector:
         score += metrics.average_relevance_score * 20
 
         # Low error rate (20 points)
-        error_rate = metrics.llm_error_rate + sum(
-            metrics.scraper_error_rates.values()
-        ) / max(len(metrics.scraper_error_rates), 1)
+        error_rate = metrics.llm_error_rate + sum(metrics.scraper_error_rates.values()) / max(
+            len(metrics.scraper_error_rates), 1
+        )
         error_score = max(0, 1 - error_rate) * 20
         score += error_score
 

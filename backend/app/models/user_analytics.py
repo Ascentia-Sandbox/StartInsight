@@ -26,11 +26,17 @@ class UserActivityEvent(Base):
     __tablename__ = "user_activity_events"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    event_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True, comment="page_view, feature_use, insight_save, etc.")
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    event_type: Mapped[str] = mapped_column(
+        String(50), nullable=False, index=True, comment="page_view, feature_use, insight_save, etc."
+    )
     event_data: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     session_id: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relationships
     user: Mapped["User"] = relationship("User", lazy="selectin")
@@ -54,9 +60,13 @@ class UserSession(Base):
     __tablename__ = "user_sessions"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     session_id: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
-    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     duration_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
     page_views: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

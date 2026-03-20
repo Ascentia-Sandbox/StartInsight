@@ -102,28 +102,23 @@ class GoogleTrendsScraper(BaseScraper):
                 try:
                     results = await self._scrape_keyword_batch(batch)
                     all_results.extend(results)
-                    logger.info(
-                        f"Scraped trends for batch: {', '.join(batch)}"
-                    )
+                    logger.info(f"Scraped trends for batch: {', '.join(batch)}")
                     break  # Success, exit retry loop
                 except Exception as e:
                     error_str = str(e).lower()
                     if "429" in error_str or "too many" in error_str:
                         # Rate limited - exponential backoff with jitter
-                        delay = BACKOFF_BASE * (2 ** retry) + random.uniform(0, 1)
+                        delay = BACKOFF_BASE * (2**retry) + random.uniform(0, 1)
                         logger.warning(
                             f"Rate limited (attempt {retry + 1}/{MAX_RETRIES}), "
                             f"waiting {delay:.1f}s before retry"
                         )
                         await asyncio.sleep(delay)
                         if retry == MAX_RETRIES - 1:
-                            logger.error(
-                                f"Max retries exceeded for batch {batch}: {e}"
-                            )
+                            logger.error(f"Max retries exceeded for batch {batch}: {e}")
                     else:
                         logger.error(
-                            f"Error scraping trends for batch {batch}: "
-                            f"{type(e).__name__} - {e}"
+                            f"Error scraping trends for batch {batch}: {type(e).__name__} - {e}"
                         )
                         break  # Non-retryable error
 
@@ -160,9 +155,7 @@ class GoogleTrendsScraper(BaseScraper):
 
         try:
             # Build payload for pytrends
-            self.pytrends.build_payload(
-                keywords, cat=0, timeframe=self.timeframe, geo=self.geo
-            )
+            self.pytrends.build_payload(keywords, cat=0, timeframe=self.timeframe, geo=self.geo)
 
             # Get interest over time
             interest_df = self.pytrends.interest_over_time()
@@ -208,7 +201,9 @@ class GoogleTrendsScraper(BaseScraper):
                 }
 
                 result = ScrapeResult(
-                    url=HttpUrl(f"https://trends.google.com/trends/explore?q={keyword.replace(' ', '+')}"),
+                    url=HttpUrl(
+                        f"https://trends.google.com/trends/explore?q={keyword.replace(' ', '+')}"
+                    ),
                     title=f"Google Trends: {keyword}",
                     content=content,
                     metadata=metadata,
@@ -270,7 +265,9 @@ class GoogleTrendsScraper(BaseScraper):
                 }
 
                 result = ScrapeResult(
-                    url=HttpUrl(f"https://trends.google.com/trends/explore?q={keyword.replace(' ', '+')}"),
+                    url=HttpUrl(
+                        f"https://trends.google.com/trends/explore?q={keyword.replace(' ', '+')}"
+                    ),
                     title=f"Rising Queries for: {keyword}",
                     content=content,
                     metadata=metadata,
@@ -336,13 +333,9 @@ class GoogleTrendsScraper(BaseScraper):
                 "indicating growing market interest."
             )
         elif trend_direction == "falling":
-            content.append(
-                f"⚠️ **Falling Trend**: '{keyword}' search volume is decreasing."
-            )
+            content.append(f"⚠️ **Falling Trend**: '{keyword}' search volume is decreasing.")
         else:
-            content.append(
-                f"📊 **Stable Trend**: '{keyword}' search volume is relatively stable."
-            )
+            content.append(f"📊 **Stable Trend**: '{keyword}' search volume is relatively stable.")
 
         return "\n\n".join(content)
 

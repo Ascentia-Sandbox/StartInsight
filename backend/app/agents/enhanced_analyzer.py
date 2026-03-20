@@ -54,9 +54,7 @@ class Competitor(BaseModel):
 
     name: str = Field(description="Competitor company/product name")
     url: HttpUrl = Field(description="Competitor website URL")
-    description: str = Field(
-        description="Brief description of what they do (max 100 chars)"
-    )
+    description: str = Field(description="Brief description of what they do (max 100 chars)")
     market_position: Literal["Small", "Medium", "Large"] | None = Field(
         None, description="Estimated market presence"
     )
@@ -65,12 +63,8 @@ class Competitor(BaseModel):
 class ValueLadderTier(BaseModel):
     """Single tier in the value ladder (4 tiers total)."""
 
-    tier: Literal["lead_magnet", "frontend", "core", "backend"] = Field(
-        description="Tier name"
-    )
-    price: str = Field(
-        description="Price range: Free, $9-$29/mo, $49-$99/mo, $299+/mo"
-    )
+    tier: Literal["lead_magnet", "frontend", "core", "backend"] = Field(description="Tier name")
+    price: str = Field(description="Price range: Free, $9-$29/mo, $49-$99/mo, $299+/mo")
     name: str = Field(description="Product name for this tier")
     description: str = Field(description="What this tier offers")
     features: list[str] = Field(
@@ -87,9 +81,7 @@ class ProofSignal(BaseModel):
     ] = Field(description="Type of proof signal")
     description: str = Field(description="Evidence description (max 200 chars)")
     source: str = Field(description="Where found (URL or platform name)")
-    confidence: Literal["Low", "Medium", "High"] = Field(
-        description="Confidence level"
-    )
+    confidence: Literal["Low", "Medium", "High"] = Field(description="Confidence level")
 
 
 class ExecutionStep(BaseModel):
@@ -99,23 +91,15 @@ class ExecutionStep(BaseModel):
     title: str = Field(description="Step title")
     description: str = Field(description="What to do")
     estimated_time: str = Field(description="e.g., '1 week', '2-3 days'")
-    resources_needed: list[str] = Field(
-        default_factory=list, description="Required resources"
-    )
+    resources_needed: list[str] = Field(default_factory=list, description="Required resources")
 
 
 class CommunitySignal(BaseModel):
     """Community validation signal (Reddit, Facebook, YouTube, etc.)."""
 
-    platform: Literal["Reddit", "Facebook", "YouTube", "Other"] = Field(
-        description="Platform name"
-    )
-    communities: str = Field(
-        description="e.g., '4 subreddits' or '3 groups'"
-    )
-    members: str = Field(
-        description="e.g., '2.5M+ members' or '150K+ members'"
-    )
+    platform: Literal["Reddit", "Facebook", "YouTube", "Other"] = Field(description="Platform name")
+    communities: str = Field(description="e.g., '4 subreddits' or '3 groups'")
+    members: str = Field(description="e.g., '2.5M+ members' or '150K+ members'")
     score: int = Field(ge=1, le=10, description="Community engagement score 1-10")
     top_community: str = Field(description="Most relevant community name")
 
@@ -141,9 +125,7 @@ class EnhancedInsightSchema(BaseModel):
     """Enhanced structured LLM output with 8-dimension scoring."""
 
     # Basic insight fields
-    title: str = Field(
-        description="Concise insight title"
-    )
+    title: str = Field(description="Concise insight title")
     problem_statement: str = Field(
         description="IdeaBrowser-style narrative problem statement (450+ words). "
         "Start with a vivid real-world scenario showing the pain point in action. "
@@ -539,7 +521,9 @@ async def analyze_signal_enhanced(raw_signal: RawSignal, language: str = "en") -
 
         # Call PydanticAI agent with enhanced schema
         async with trace_agent_run("enhanced_analyzer"):
-            result = await asyncio.wait_for(agent.run(raw_signal.content), timeout=settings.llm_call_timeout)
+            result = await asyncio.wait_for(
+                agent.run(raw_signal.content), timeout=settings.llm_call_timeout
+            )
 
         # Calculate latency
         latency_ms = (time.time() - start_time) * 1000
@@ -576,9 +560,7 @@ async def analyze_signal_enhanced(raw_signal: RawSignal, language: str = "en") -
 
         if not validation_result.is_valid:
             error_msg = "; ".join(validation_result.errors)
-            logger.warning(
-                f"Quality validation failed for signal {raw_signal.id}: {error_msg}"
-            )
+            logger.warning(f"Quality validation failed for signal {raw_signal.id}: {error_msg}")
             raise QualityValidationError(
                 f"Quality validation failed: {error_msg}",
                 field="multiple",
@@ -605,13 +587,13 @@ async def analyze_signal_enhanced(raw_signal: RawSignal, language: str = "en") -
         community_signals = [c.model_dump() for c in insight_data.community_signals]
         try:
             community_validator = get_community_validator()
-            validated_communities, valid_count, invalid_count = (
-                await community_validator.validate_community_signals(community_signals)
-            )
+            (
+                validated_communities,
+                valid_count,
+                invalid_count,
+            ) = await community_validator.validate_community_signals(community_signals)
             if invalid_count > 0:
-                logger.info(
-                    f"Community validation: {valid_count} valid, {invalid_count} invalid"
-                )
+                logger.info(f"Community validation: {valid_count} valid, {invalid_count} invalid")
             # Use validated communities (with real member counts)
             community_signals = validated_communities
         except Exception as e:
@@ -621,9 +603,11 @@ async def analyze_signal_enhanced(raw_signal: RawSignal, language: str = "en") -
         trend_keywords = [t.model_dump() for t in insight_data.trend_keywords]
         try:
             trend_verifier = get_trend_verifier()
-            verified_trends, verified_count, unverified_count = (
-                await trend_verifier.verify_trend_keywords(trend_keywords)
-            )
+            (
+                verified_trends,
+                verified_count,
+                unverified_count,
+            ) = await trend_verifier.verify_trend_keywords(trend_keywords)
             if unverified_count > 0:
                 logger.info(
                     f"Trend verification: {verified_count} verified, {unverified_count} unverified"
@@ -638,13 +622,13 @@ async def analyze_signal_enhanced(raw_signal: RawSignal, language: str = "en") -
         competitors = [c.model_dump() for c in insight_data.competitor_analysis]
         try:
             url_validator = get_url_validator()
-            valid_competitors, valid_url_count, invalid_url_count = (
-                await url_validator.validate_competitors(competitors)
-            )
+            (
+                valid_competitors,
+                valid_url_count,
+                invalid_url_count,
+            ) = await url_validator.validate_competitors(competitors)
             if invalid_url_count > 0:
-                logger.info(
-                    f"URL validation: {valid_url_count} valid, {invalid_url_count} invalid"
-                )
+                logger.info(f"URL validation: {valid_url_count} valid, {invalid_url_count} invalid")
             # Use only competitors with valid URLs
             competitors = valid_competitors
         except Exception as e:
@@ -774,13 +758,9 @@ async def analyze_signal_enhanced_with_retry(raw_signal: RawSignal) -> Insight:
         return await analyze_signal_enhanced(raw_signal)
     except Exception as e:
         if "429" in str(e) or "Resource exhausted" in str(e):
-            logger.warning(
-                f"Gemini rate limit for signal {raw_signal.id} after retries: {e}"
-            )
+            logger.warning(f"Gemini rate limit for signal {raw_signal.id} after retries: {e}")
         else:
-            logger.error(
-                f"Enhanced analysis failed for signal {raw_signal.id} after retries: {e}"
-            )
+            logger.error(f"Enhanced analysis failed for signal {raw_signal.id} after retries: {e}")
         raise
 
 
@@ -822,7 +802,9 @@ def _rule_based_extraction(signal: RawSignal) -> Insight:
         problem_statement = "Content unavailable for rule-based extraction."
 
     # Derive a minimal proposed solution from title (remove common noise words)
-    proposed_solution = re.sub(r"\b(the|a|an|is|are|was|were)\b", "", title, flags=re.IGNORECASE).strip()
+    proposed_solution = re.sub(
+        r"\b(the|a|an|is|are|was|were)\b", "", title, flags=re.IGNORECASE
+    ).strip()
     proposed_solution = proposed_solution[:50] or "Solution TBD"
 
     logger.warning(
@@ -988,9 +970,7 @@ def _apply_credibility_weight(insight: Insight, source: str | None) -> None:
 # ============================================================
 
 
-async def upgrade_insight_scoring(
-    raw_signal: RawSignal, existing_insight: Insight
-) -> Insight:
+async def upgrade_insight_scoring(raw_signal: RawSignal, existing_insight: Insight) -> Insight:
     """
     Upgrade an existing insight with enhanced 8-dimension scoring.
 
@@ -1028,32 +1008,23 @@ async def upgrade_insight_scoring(
         existing_insight.execution_difficulty = insight_data.execution_difficulty
         existing_insight.go_to_market_score = insight_data.go_to_market_score
         existing_insight.founder_fit_score = insight_data.founder_fit_score
-        existing_insight.value_ladder = [
-            t.model_dump() for t in insight_data.value_ladder
-        ]
+        existing_insight.value_ladder = [t.model_dump() for t in insight_data.value_ladder]
         existing_insight.market_gap_analysis = insight_data.market_gap_analysis
         existing_insight.why_now_analysis = insight_data.why_now_analysis
-        existing_insight.proof_signals = [
-            p.model_dump() for p in insight_data.proof_signals
-        ]
-        existing_insight.execution_plan = [
-            s.model_dump() for s in insight_data.execution_plan
-        ]
+        existing_insight.proof_signals = [p.model_dump() for p in insight_data.proof_signals]
+        existing_insight.execution_plan = [s.model_dump() for s in insight_data.execution_plan]
         # Phase 5.2: IdeaBrowser parity
         existing_insight.community_signals_chart = [
             c.model_dump() for c in insight_data.community_signals
         ]
-        existing_insight.trend_keywords = [
-            t.model_dump() for t in insight_data.trend_keywords
-        ]
+        existing_insight.trend_keywords = [t.model_dump() for t in insight_data.trend_keywords]
         # Market sizing
         existing_insight.market_sizing = insight_data.market_sizing.model_dump()
 
         # Track metrics
         input_tokens = len(raw_signal.content) // 4
         output_tokens = (
-            len(insight_data.market_gap_analysis)
-            + len(insight_data.why_now_analysis)
+            len(insight_data.market_gap_analysis) + len(insight_data.why_now_analysis)
         ) // 4
 
         metrics_tracker.track_llm_call(
@@ -1103,15 +1074,17 @@ def calculate_aggregate_score(insight: Insight) -> float | None:
     Returns:
         float: Aggregate score (0.0-10.0) or None if scores missing
     """
-    if not all([
-        insight.opportunity_score,
-        insight.problem_score,
-        insight.feasibility_score,
-        insight.why_now_score,
-        insight.execution_difficulty,
-        insight.go_to_market_score,
-        insight.founder_fit_score,
-    ]):
+    if not all(
+        [
+            insight.opportunity_score,
+            insight.problem_score,
+            insight.feasibility_score,
+            insight.why_now_score,
+            insight.execution_difficulty,
+            insight.go_to_market_score,
+            insight.founder_fit_score,
+        ]
+    ):
         return None
 
     # Weights for each dimension

@@ -45,9 +45,7 @@ async def _ensure_referral_code(user: User, db: AsyncSession) -> str:
     # Generate a unique code with retry in case of collision
     for _ in range(5):
         candidate = generate_referral_code()
-        existing = await db.scalar(
-            select(User).where(User.referral_code == candidate).limit(1)
-        )
+        existing = await db.scalar(select(User).where(User.referral_code == candidate).limit(1))
         if not existing:
             user.referral_code = candidate
             user.updated_at = datetime.now(UTC)
@@ -87,17 +85,14 @@ async def get_referral_stats(
     code = await _ensure_referral_code(current_user, db)
 
     # Count how many users were referred by this code
-    referrals_count: int = await db.scalar(
-        select(func.count()).select_from(User).where(
-            User.referred_by == code
-        )
-    ) or 0
+    referrals_count: int = (
+        await db.scalar(select(func.count()).select_from(User).where(User.referred_by == code)) or 0
+    )
 
     reward_status = "earned" if referrals_count >= 1 else "pending"
 
     logger.info(
-        f"Referral stats fetched for {current_user.email}: "
-        f"code={code}, referrals={referrals_count}"
+        f"Referral stats fetched for {current_user.email}: code={code}, referrals={referrals_count}"
     )
 
     return ReferralStatsResponse(

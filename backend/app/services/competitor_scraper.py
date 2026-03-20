@@ -270,7 +270,9 @@ class CompetitorScraperService:
             if stripped.startswith(("- ", "* ", "• ")) and len(stripped) > 5:
                 feature = stripped[2:].strip()
                 # Filter out navigation items and short text
-                if len(feature) > 10 and not feature.lower().startswith(("home", "about", "contact", "blog", "pricing")):
+                if len(feature) > 10 and not feature.lower().startswith(
+                    ("home", "about", "contact", "blog", "pricing")
+                ):
                     features.append(feature)
 
         # Limit to top 10 features
@@ -341,31 +343,37 @@ class CompetitorScraperService:
         changes = []
 
         if profile.description != data.description:
-            changes.append({
-                "field": "description",
-                "old_value": profile.description,
-                "new_value": data.description,
-                "change_type": "description_updated",
-            })
+            changes.append(
+                {
+                    "field": "description",
+                    "old_value": profile.description,
+                    "new_value": data.description,
+                    "change_type": "description_updated",
+                }
+            )
 
         if profile.value_proposition != data.value_proposition:
-            changes.append({
-                "field": "value_proposition",
-                "old_value": profile.value_proposition,
-                "new_value": data.value_proposition,
-                "change_type": "messaging_updated",
-            })
+            changes.append(
+                {
+                    "field": "value_proposition",
+                    "old_value": profile.value_proposition,
+                    "new_value": data.value_proposition,
+                    "change_type": "messaging_updated",
+                }
+            )
 
         # Check pricing changes
         old_pricing = profile.metrics.get("pricing", {}) if profile.metrics else {}
         new_pricing = data.pricing or {}
         if old_pricing != new_pricing:
-            changes.append({
-                "field": "pricing",
-                "old_value": old_pricing,
-                "new_value": new_pricing,
-                "change_type": "pricing_updated",
-            })
+            changes.append(
+                {
+                    "field": "pricing",
+                    "old_value": old_pricing,
+                    "new_value": new_pricing,
+                    "change_type": "pricing_updated",
+                }
+            )
 
         # Update profile
         profile.description = data.description

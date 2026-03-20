@@ -249,6 +249,7 @@ def get_resend_client():
     """Get Resend client instance."""
     try:
         import resend
+
         resend.api_key = settings.resend_api_key
         return resend
     except ImportError:
@@ -318,6 +319,7 @@ async def send_email(
             params["bcc"] = bcc
 
         import asyncio
+
         response = await asyncio.to_thread(resend_client.Emails.send, params)
 
         logger.info(f"Email sent: {template} to {to}, id={response.get('id')}")
@@ -467,7 +469,9 @@ async def send_weekly_digest(
     ]
     for item in insights[:10]:
         text_lines.append(f"- {item.get('title', 'Untitled')}")
-        text_lines.append(f"  Score: {item.get('relevance_score', 'N/A')}  |  {item.get('market_size', '')}")
+        text_lines.append(
+            f"  Score: {item.get('relevance_score', 'N/A')}  |  {item.get('market_size', '')}"
+        )
         insight_url = item.get("insight_url", "")
         if insight_url:
             text_lines.append(f"  {insight_url}")
@@ -532,9 +536,7 @@ def _render_template(template: str, variables: dict[str, Any]) -> str:
                 rendered_item = inner_template
                 if isinstance(item, dict):
                     for k, v in item.items():
-                        rendered_item = rendered_item.replace(
-                            "{{" + k + "}}", str(v) if v else ""
-                        )
+                        rendered_item = rendered_item.replace("{{" + k + "}}", str(v) if v else "")
                 rendered_items.append(rendered_item)
             result = result[: match.start()] + "".join(rendered_items) + result[match.end() :]
 

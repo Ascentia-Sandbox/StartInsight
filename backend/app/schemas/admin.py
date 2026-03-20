@@ -161,19 +161,13 @@ class MetricSummaryResponse(BaseModel):
 class DashboardMetricsResponse(BaseModel):
     """Real-time dashboard metrics."""
 
-    agent_states: dict[str, str] = Field(
-        description="Agent states: {reddit_scraper: running, ...}"
-    )
+    agent_states: dict[str, str] = Field(description="Agent states: {reddit_scraper: running, ...}")
     recent_logs: list[ExecutionLogResponse] = Field(
         default_factory=list, description="Last 10 execution logs"
     )
     llm_cost_today: float = Field(default=0.0, description="LLM cost in USD today")
-    pending_insights: int = Field(
-        default=0, description="Insights pending admin review"
-    )
-    total_insights_today: int = Field(
-        default=0, description="Total insights generated today"
-    )
+    pending_insights: int = Field(default=0, description="Insights pending admin review")
+    total_insights_today: int = Field(default=0, description="Total insights generated today")
     errors_today: int = Field(default=0, description="Total errors today")
     timestamp: datetime
 

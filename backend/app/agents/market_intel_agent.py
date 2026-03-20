@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 # PYDANTIC SCHEMAS
 # ============================================================================
 
+
 class MarketSizing(BaseModel):
     """TAM/SAM/SOM market sizing analysis"""
 
@@ -225,6 +226,7 @@ market_intel_agent = Agent(
 # AGENT DEPENDENCY INJECTION
 # ============================================================================
 
+
 @market_intel_agent.system_prompt
 async def add_market_context(ctx: RunContext[dict[str, Any]]) -> str:
     """
@@ -240,11 +242,11 @@ async def add_market_context(ctx: RunContext[dict[str, Any]]) -> str:
 **Report Type:** {report_type}
 
 **Startup Idea:**
-- Problem: {insight.get('problem_statement', 'N/A')[:500]}
-- Solution: {insight.get('proposed_solution', 'N/A')[:500]}
-- Market Size: {insight.get('market_size', 'N/A')[:300]}
-- Target Audience: {insight.get('target_audience', 'N/A')[:300]}
-- Revenue Model: {insight.get('revenue_model', 'N/A')[:300]}
+- Problem: {insight.get("problem_statement", "N/A")[:500]}
+- Solution: {insight.get("proposed_solution", "N/A")[:500]}
+- Market Size: {insight.get("market_size", "N/A")[:300]}
+- Target Audience: {insight.get("target_audience", "N/A")[:300]}
+- Revenue Model: {insight.get("revenue_model", "N/A")[:300]}
 
 """
 
@@ -255,10 +257,10 @@ async def add_market_context(ctx: RunContext[dict[str, Any]]) -> str:
 """
         for i, trend in enumerate(trends[:10], start=1):
             context += f"""
-{i}. **{trend['keyword']}** (Category: {trend['category']})
-   - Search Volume: {trend['search_volume']:,}/month
-   - Growth: {trend['growth_percentage']}%
-   - Business Implications: {trend.get('business_implications', 'N/A')[:200]}
+{i}. **{trend["keyword"]}** (Category: {trend["category"]})
+   - Search Volume: {trend["search_volume"]:,}/month
+   - Growth: {trend["growth_percentage"]}%
+   - Business Implications: {trend.get("business_implications", "N/A")[:200]}
 
 """
 
@@ -274,6 +276,7 @@ Include market sizing (TAM/SAM/SOM), industry benchmarks, and trend-to-opportuni
 # ============================================================================
 # SERVICE FUNCTIONS
 # ============================================================================
+
 
 async def generate_market_report(
     insight_id: UUID,
@@ -305,9 +308,12 @@ async def generate_market_report(
         raise ValueError(f"Insight {insight_id} not found")
 
     # Fetch relevant trends (top 10 by volume)
-    trends_stmt = select(Trend).where(
-        Trend.is_published == True
-    ).order_by(Trend.search_volume.desc()).limit(10)
+    trends_stmt = (
+        select(Trend)
+        .where(Trend.is_published == True)
+        .order_by(Trend.search_volume.desc())
+        .limit(10)
+    )
     trends_result = await session.execute(trends_stmt)
     trends = trends_result.scalars().all()
 
@@ -355,7 +361,9 @@ async def generate_market_report(
             "model": "gemini-2.0-flash",
         }
 
-        logger.info(f"Generated market report {report.report_id} with {len(report.key_insights)} insights")
+        logger.info(
+            f"Generated market report {report.report_id} with {len(report.key_insights)} insights"
+        )
         return report
 
     except Exception as e:
@@ -380,9 +388,12 @@ async def generate_weekly_digest(
     logger.info("Generating weekly market digest")
 
     # Get trending keywords (top 20 by growth)
-    trends_stmt = select(Trend).where(
-        Trend.is_published == True
-    ).order_by(Trend.growth_percentage.desc()).limit(20)
+    trends_stmt = (
+        select(Trend)
+        .where(Trend.is_published == True)
+        .order_by(Trend.growth_percentage.desc())
+        .limit(20)
+    )
     result = await session.execute(trends_stmt)
     trends = result.scalars().all()
 
@@ -407,8 +418,9 @@ async def generate_weekly_digest(
 
     # Generate digest via AI agent
     try:
-        result = await asyncio.wait_for(market_intel_agent.run(
-            user_prompt=f"""Generate a weekly market digest summarizing the top {len(trends)} trending topics.
+        result = await asyncio.wait_for(
+            market_intel_agent.run(
+                user_prompt=f"""Generate a weekly market digest summarizing the top {len(trends)} trending topics.
 
 This is a general market overview for entrepreneurs, not specific to any single startup idea.
 Focus on:
@@ -419,18 +431,20 @@ Focus on:
 
 Total insights in database: {insights_count}
 """,
-            deps={
-                "insight": {
-                    "problem_statement": "General market analysis for entrepreneurs",
-                    "proposed_solution": "Market intelligence digest",
-                    "market_size": "Global startup ecosystem",
-                    "target_audience": "Entrepreneurs and startup founders",
-                    "revenue_model": "N/A - general digest",
+                deps={
+                    "insight": {
+                        "problem_statement": "General market analysis for entrepreneurs",
+                        "proposed_solution": "Market intelligence digest",
+                        "market_size": "Global startup ecosystem",
+                        "target_audience": "Entrepreneurs and startup founders",
+                        "revenue_model": "N/A - general digest",
+                    },
+                    "trends": trend_data,
+                    "report_type": "weekly_digest",
                 },
-                "trends": trend_data,
-                "report_type": "weekly_digest",
-            },
-        ), timeout=settings.llm_call_timeout)
+            ),
+            timeout=settings.llm_call_timeout,
+        )
 
         report = result.output
         report.report_id = f"WD-{datetime.now(UTC).strftime('%Y%m%d-%H%M')}"

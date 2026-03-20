@@ -69,12 +69,8 @@ class CompetitorProfile(BaseModel):
     funding: str = Field(description="Funding stage (e.g., '$5M Series A')")
     unique_value_prop: str = Field(description="Their unique value proposition")
     weakness: str = Field(description="Key weakness or gap")
-    market_share_estimate: float = Field(
-        ge=0, le=100, description="Estimated market share %"
-    )
-    threat_level: Literal["low", "medium", "high"] = Field(
-        description="Competitive threat level"
-    )
+    market_share_estimate: float = Field(ge=0, le=100, description="Estimated market share %")
+    threat_level: Literal["low", "medium", "high"] = Field(description="Competitive threat level")
 
 
 class ValueEquation(BaseModel):
@@ -92,9 +88,7 @@ class ValueEquation(BaseModel):
     effort_sacrifice_score: int = Field(
         ge=1, le=10, description="How much effort required? Lower is better (1-10)"
     )
-    value_score: float = Field(
-        description="Calculated: (Dream * Likelihood) / (Time * Effort)"
-    )
+    value_score: float = Field(description="Calculated: (Dream * Likelihood) / (Time * Effort)")
     analysis: str = Field(description="200-word value proposition analysis")
 
 
@@ -126,12 +120,8 @@ class ValidationSignal(BaseModel):
     signal_type: str = Field(description="Type: discussion, launch, trend, review")
     description: str = Field(description="Signal description")
     url: str | None = Field(None, description="Source URL if available")
-    sentiment: Literal["positive", "neutral", "negative"] = Field(
-        description="Overall sentiment"
-    )
-    strength: Literal["weak", "moderate", "strong"] = Field(
-        description="Signal strength"
-    )
+    sentiment: Literal["positive", "neutral", "negative"] = Field(description="Overall sentiment")
+    strength: Literal["weak", "moderate", "strong"] = Field(description="Signal strength")
 
 
 class ExecutionPhase(BaseModel):
@@ -153,9 +143,7 @@ class RiskAssessment(BaseModel):
     team_risk: int = Field(ge=1, le=10, description="Team/execution risk (1-10)")
     financial_risk: int = Field(ge=1, le=10, description="Financial risk score (1-10)")
     overall_risk: float = Field(description="Weighted overall risk (0-1)")
-    mitigation_strategies: list[str] = Field(
-        description="Top 3 risk mitigation strategies"
-    )
+    mitigation_strategies: list[str] = Field(description="Top 3 risk mitigation strategies")
 
 
 # ============================================

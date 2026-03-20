@@ -31,6 +31,7 @@ def _get_redis_settings() -> RedisSettings:
         conn_retries=0,
     )
 
+
 # Global scheduler instance
 scheduler = AsyncIOScheduler()
 
@@ -52,9 +53,7 @@ async def schedule_scraping_tasks() -> None:
 
     # Phase 16.2: Load agent schedules from database
     async with AsyncSessionLocal() as db:
-        result = await db.execute(
-            select(AgentConfiguration).where(AgentConfiguration.is_enabled)
-        )
+        result = await db.execute(select(AgentConfiguration).where(AgentConfiguration.is_enabled))
         agent_configs = result.scalars().all()
 
         # Schedule agents based on their configuration
@@ -269,11 +268,7 @@ async def _schedule_agent_from_config(redis, config: AgentConfiguration, db) -> 
                 func=redis.enqueue_job,
                 args=(task_name,),
                 trigger=CronTrigger(
-                    minute=minute,
-                    hour=hour,
-                    day=day,
-                    month=month,
-                    day_of_week=day_of_week
+                    minute=minute, hour=hour, day=day, month=month, day_of_week=day_of_week
                 ),
                 id=job_id,
                 replace_existing=True,
@@ -285,7 +280,9 @@ async def _schedule_agent_from_config(redis, config: AgentConfiguration, db) -> 
             config.next_run_at = next_run
             await db.commit()
 
-            logger.info(f"Scheduled {config.agent_name} with cron: {config.schedule_cron} (next: {next_run})")
+            logger.info(
+                f"Scheduled {config.agent_name} with cron: {config.schedule_cron} (next: {next_run})"
+            )
 
     elif config.schedule_type == "interval" and config.schedule_interval_hours:
         scheduler.add_job(
@@ -302,7 +299,9 @@ async def _schedule_agent_from_config(redis, config: AgentConfiguration, db) -> 
         config.next_run_at = next_run
         await db.commit()
 
-        logger.info(f"Scheduled {config.agent_name} with interval: {config.schedule_interval_hours}h (next: {next_run})")
+        logger.info(
+            f"Scheduled {config.agent_name} with interval: {config.schedule_interval_hours}h (next: {next_run})"
+        )
 
     elif config.schedule_type == "manual":
         logger.info(f"Agent {config.agent_name} is set to manual execution only")

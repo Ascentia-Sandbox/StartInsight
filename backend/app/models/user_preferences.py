@@ -28,14 +28,29 @@ class UserPreferences(Base):
     __tablename__ = "user_preferences"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
 
     # Idea match quiz fields
-    background: Mapped[str | None] = mapped_column(String(50), nullable=True)  # tech, business, creative, other
-    budget_range: Mapped[str | None] = mapped_column(String(20), nullable=True)  # 0-1k, 1k-10k, 10k+
-    time_commitment: Mapped[str | None] = mapped_column(String(20), nullable=True)  # nights_weekends, part_time, full_time
-    market_preference: Mapped[str | None] = mapped_column(String(10), nullable=True)  # b2b, b2c, both
-    risk_tolerance: Mapped[str | None] = mapped_column(String(10), nullable=True)  # low, medium, high
+    background: Mapped[str | None] = mapped_column(
+        String(50), nullable=True
+    )  # tech, business, creative, other
+    budget_range: Mapped[str | None] = mapped_column(
+        String(20), nullable=True
+    )  # 0-1k, 1k-10k, 10k+
+    time_commitment: Mapped[str | None] = mapped_column(
+        String(20), nullable=True
+    )  # nights_weekends, part_time, full_time
+    market_preference: Mapped[str | None] = mapped_column(
+        String(10), nullable=True
+    )  # b2b, b2c, both
+    risk_tolerance: Mapped[str | None] = mapped_column(
+        String(10), nullable=True
+    )  # low, medium, high
 
     # Extended profile
     skills: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
@@ -45,8 +60,12 @@ class UserPreferences(Base):
     completed_quiz: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relationships
     user: Mapped["User"] = relationship("User", foreign_keys=[user_id], lazy="selectin")
@@ -87,7 +106,12 @@ class EmailPreferences(Base):
     __tablename__ = "email_preferences"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
 
     # Digest settings
     daily_digest: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -96,7 +120,9 @@ class EmailPreferences(Base):
 
     # Alert configuration
     tracked_keywords: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
-    min_score_alert: Mapped[Decimal] = mapped_column(Numeric(3, 2), default=Decimal("0.85"), nullable=False)
+    min_score_alert: Mapped[Decimal] = mapped_column(
+        Numeric(3, 2), default=Decimal("0.85"), nullable=False
+    )
 
     # Timing preferences
     digest_time_utc: Mapped[str] = mapped_column(String(5), default="09:00", nullable=False)
@@ -106,8 +132,12 @@ class EmailPreferences(Base):
     unsubscribed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relationships
     user: Mapped["User"] = relationship("User", foreign_keys=[user_id], lazy="selectin")
@@ -122,15 +152,23 @@ class EmailSend(Base):
     __tablename__ = "email_sends"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
 
     # Email details
-    email_type: Mapped[str] = mapped_column(String(50), nullable=False)  # daily_digest, weekly_digest, instant_alert
+    email_type: Mapped[str] = mapped_column(
+        String(50), nullable=False
+    )  # daily_digest, weekly_digest, instant_alert
     subject: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    content_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)  # Prevent duplicate sends
+    content_hash: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )  # Prevent duplicate sends
 
     # Tracking
-    sent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    sent_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     opened_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     clicked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

@@ -43,15 +43,11 @@ class RedditScraper(BaseScraper):
     ):
         super().__init__(source_name="reddit")
 
-        self.subreddits = subreddits or [
-            s.strip() for s in settings.reddit_subreddits.split(",")
-        ]
+        self.subreddits = subreddits or [s.strip() for s in settings.reddit_subreddits.split(",")]
         self.limit = limit
         self.time_filter = time_filter
         self.rate_limit = settings.reddit_json_rate_limit
-        self.search_queries = [
-            q.strip() for q in settings.reddit_search_queries.split(",")
-        ]
+        self.search_queries = [q.strip() for q in settings.reddit_search_queries.split(",")]
         self.scrape_comments = settings.reddit_scrape_comments
         self.comment_limit = settings.reddit_comment_scrape_limit
 
@@ -143,7 +139,12 @@ class RedditScraper(BaseScraper):
             # Cross-subreddit search queries
             for query in self.search_queries:
                 url = "https://www.reddit.com/search.json"
-                params = {"q": query, "t": self.time_filter, "limit": self.limit, "sort": "relevance"}
+                params = {
+                    "q": query,
+                    "t": self.time_filter,
+                    "limit": self.limit,
+                    "sort": "relevance",
+                }
                 posts = await self._fetch_json_listing(client, url, params)
                 results.extend(posts)
                 await asyncio.sleep(self.rate_limit)
@@ -173,7 +174,9 @@ class RedditScraper(BaseScraper):
                 # Skip posts older than 7 days
                 created_utc = post.get("created_utc", 0)
                 if created_utc:
-                    age_days = (datetime.now(UTC) - datetime.fromtimestamp(created_utc, tz=UTC)).days
+                    age_days = (
+                        datetime.now(UTC) - datetime.fromtimestamp(created_utc, tz=UTC)
+                    ).days
                     if age_days > 7:
                         continue
 
@@ -234,9 +237,7 @@ class RedditScraper(BaseScraper):
 
     # ── Phase 2: Comment Thread Deep-Dives ────────────────────────────
 
-    async def _scrape_comment_threads(
-        self, posts: list[ScrapeResult]
-    ) -> list[ScrapeResult]:
+    async def _scrape_comment_threads(self, posts: list[ScrapeResult]) -> list[ScrapeResult]:
         """Scrape full comment threads for top N posts using Crawl4AI/Firecrawl."""
         # Sort by score descending and pick top N
         scored_posts = sorted(
@@ -258,21 +259,22 @@ class RedditScraper(BaseScraper):
 
                 # Enrich metadata to mark this as a comment-thread scrape
                 post_id = self._extract_post_id(permalink)
-                scrape_result.metadata.update({
-                    "subreddit": post.metadata.get("subreddit", ""),
-                    "upvotes": post.metadata.get("upvotes", 0),
-                    "num_comments": post.metadata.get("num_comments", 0),
-                    "post_id": post_id or "",
-                    "source_method": "comment_thread",
-                })
+                scrape_result.metadata.update(
+                    {
+                        "subreddit": post.metadata.get("subreddit", ""),
+                        "upvotes": post.metadata.get("upvotes", 0),
+                        "num_comments": post.metadata.get("num_comments", 0),
+                        "post_id": post_id or "",
+                        "source_method": "comment_thread",
+                    }
+                )
 
                 results.append(scrape_result)
                 logger.debug(f"Scraped comment thread: {post.title}")
 
             except Exception as e:
                 logger.warning(
-                    f"Comment thread scrape failed for {post.title}: "
-                    f"{type(e).__name__} - {e}"
+                    f"Comment thread scrape failed for {post.title}: {type(e).__name__} - {e}"
                 )
                 continue
 
@@ -301,13 +303,10 @@ class RedditScraper(BaseScraper):
             try:
                 subreddit = self._reddit.subreddit(sub_name)
 
-                for submission in subreddit.top(
-                    time_filter=self.time_filter, limit=self.limit
-                ):
+                for submission in subreddit.top(time_filter=self.time_filter, limit=self.limit):
                     # Skip old posts
                     age_days = (
-                        datetime.now(UTC)
-                        - datetime.fromtimestamp(submission.created_utc, tz=UTC)
+                        datetime.now(UTC) - datetime.fromtimestamp(submission.created_utc, tz=UTC)
                     ).days
                     if age_days > 7:
                         continue
@@ -421,9 +420,7 @@ class RedditScraper(BaseScraper):
                 existing_priority = METHOD_PRIORITY.get(
                     existing.metadata.get("source_method", ""), 0
                 )
-                new_priority = METHOD_PRIORITY.get(
-                    result.metadata.get("source_method", ""), 0
-                )
+                new_priority = METHOD_PRIORITY.get(result.metadata.get("source_method", ""), 0)
                 if new_priority > existing_priority:
                     seen[post_id] = result
 

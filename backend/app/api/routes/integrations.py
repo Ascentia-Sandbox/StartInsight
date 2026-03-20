@@ -38,6 +38,7 @@ router = APIRouter(prefix="/integrations", tags=["Integrations"])
 # Schemas
 # ============================================
 
+
 class IntegrationCreate(BaseModel):
     service_type: str = Field(..., pattern="^(notion|airtable|slack|discord|linear|jira)$")
     service_name: str | None = Field(None, max_length=100)
@@ -69,7 +70,9 @@ class IntegrationUpdate(BaseModel):
 
 
 class WebhookCreate(BaseModel):
-    webhook_type: str = Field(..., pattern="^(new_insight|insight_update|research_complete|trending_alert)$")
+    webhook_type: str = Field(
+        ..., pattern="^(new_insight|insight_update|research_complete|trending_alert)$"
+    )
     webhook_url: str = Field(..., max_length=500)
 
 
@@ -149,6 +152,7 @@ class SyncHistoryResponse(BaseModel):
 # ============================================
 # Integration Endpoints
 # ============================================
+
 
 @router.get("", response_model=list[IntegrationResponse])
 async def list_integrations(
@@ -270,6 +274,7 @@ async def delete_integration(
 # Webhook Endpoints
 # ============================================
 
+
 @router.post("/{integration_id}/webhooks", response_model=WebhookResponse)
 async def create_webhook(
     integration_id: UUID,
@@ -357,6 +362,7 @@ async def delete_webhook(
 # Browser Extension Endpoints
 # ============================================
 
+
 @router.post("/extension/token", response_model=ExtensionTokenResponse)
 async def create_extension_token(
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -382,7 +388,9 @@ async def create_extension_token(
     await db.commit()
     await db.refresh(new_token)
 
-    logger.info(f"User {current_user.id} created extension token for {browser or 'unknown browser'}")
+    logger.info(
+        f"User {current_user.id} created extension token for {browser or 'unknown browser'}"
+    )
 
     return ExtensionTokenResponse(
         id=new_token.id,
@@ -439,6 +447,7 @@ async def revoke_extension_token(
 # Bot Subscription Endpoints
 # ============================================
 
+
 @router.post("/{integration_id}/subscriptions", response_model=BotSubscriptionResponse)
 async def create_bot_subscription(
     integration_id: UUID,
@@ -459,9 +468,12 @@ async def create_bot_subscription(
     if not integration:
         raise HTTPException(status_code=404, detail="Integration not found")
     if integration.service_type not in ("slack", "discord"):
-        raise HTTPException(status_code=400, detail="Subscriptions only supported for Slack/Discord")
+        raise HTTPException(
+            status_code=400, detail="Subscriptions only supported for Slack/Discord"
+        )
 
     from decimal import Decimal
+
     new_subscription = BotSubscription(
         integration_id=integration_id,
         channel_id=subscription.channel_id,
@@ -531,6 +543,7 @@ async def delete_bot_subscription(
 # Sync History Endpoints
 # ============================================
 
+
 @router.get("/{integration_id}/syncs", response_model=list[SyncHistoryResponse])
 async def list_sync_history(
     integration_id: UUID,
@@ -589,6 +602,8 @@ async def trigger_sync(
     await db.refresh(sync)
 
     # TODO: Queue actual sync job via Arq
-    logger.info(f"User {current_user.id} triggered {sync_type} sync for integration {integration_id}")
+    logger.info(
+        f"User {current_user.id} triggered {sync_type} sync for integration {integration_id}"
+    )
 
     return {"status": "started", "sync_id": str(sync.id)}

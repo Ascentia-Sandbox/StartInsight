@@ -85,13 +85,32 @@ def validate_subdomain(subdomain: str) -> tuple[bool, str | None]:
 
     # Check format (alphanumeric and hyphens only)
     if not re.match(r"^[a-z0-9][a-z0-9-]*[a-z0-9]$", subdomain):
-        return False, "Subdomain must start and end with alphanumeric, contain only lowercase letters, numbers, and hyphens"
+        return (
+            False,
+            "Subdomain must start and end with alphanumeric, contain only lowercase letters, numbers, and hyphens",
+        )
 
     # Reserved subdomains
     reserved = [
-        "www", "api", "admin", "app", "dashboard", "mail", "email",
-        "blog", "help", "support", "docs", "status", "cdn", "static",
-        "auth", "login", "signup", "register", "account",
+        "www",
+        "api",
+        "admin",
+        "app",
+        "dashboard",
+        "mail",
+        "email",
+        "blog",
+        "help",
+        "support",
+        "docs",
+        "status",
+        "cdn",
+        "static",
+        "auth",
+        "login",
+        "signup",
+        "register",
+        "account",
     ]
     if subdomain in reserved:
         return False, f"'{subdomain}' is a reserved subdomain"
@@ -189,7 +208,9 @@ async def configure_custom_domain(
         raise ValueError("Invalid domain format")
 
     # Generate verification token
-    verification_token = f"{settings.tenant_base_domain.split('.')[0]}-verify={secrets.token_hex(16)}"
+    verification_token = (
+        f"{settings.tenant_base_domain.split('.')[0]}-verify={secrets.token_hex(16)}"
+    )
 
     domain_config = {
         "custom_domain": domain.lower(),
@@ -296,7 +317,7 @@ def get_tenant_css_variables(tenant: dict[str, Any]) -> str:
   --tenant-primary: {primary};
   --tenant-secondary: {secondary};
   --tenant-accent: {accent};
-  --tenant-name: "{tenant.get('app_name', 'StartInsight')}";
+  --tenant-name: "{tenant.get("app_name", "StartInsight")}";
 }}"""
 
 

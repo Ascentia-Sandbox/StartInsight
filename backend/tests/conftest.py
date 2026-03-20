@@ -217,7 +217,12 @@ async def test_signal(db_session: AsyncSession) -> RawSignal:
         url="https://reddit.com/r/startups/test",
         content="Looking for a tool to automate my startup research process. "
         "Currently spending 20+ hours per week manually analyzing markets.",
-        extra_metadata={"subreddit": "startups", "upvotes": 150, "title": "Need help with market research automation", "author": "test_author"},
+        extra_metadata={
+            "subreddit": "startups",
+            "upvotes": 150,
+            "title": "Need help with market research automation",
+            "author": "test_author",
+        },
     )
     db_session.add(signal)
     await db_session.commit()
@@ -237,7 +242,11 @@ async def test_insight(db_session: AsyncSession, test_signal: RawSignal) -> Insi
         market_size_estimate="Large",
         relevance_score=0.85,
         competitor_analysis=[
-            {"name": "CB Insights", "url": "https://cbinsights.com", "description": "Market intelligence"}
+            {
+                "name": "CB Insights",
+                "url": "https://cbinsights.com",
+                "description": "Market intelligence",
+            }
         ],
         # Enhanced scores (Phase 4.3)
         opportunity_score=8,

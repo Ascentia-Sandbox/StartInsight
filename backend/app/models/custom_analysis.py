@@ -276,9 +276,7 @@ class CustomAnalysis(Base):
     def __repr__(self) -> str:
         """String representation of CustomAnalysis."""
         return (
-            f"<CustomAnalysis(id={self.id}, "
-            f"status={self.status}, "
-            f"score={self.opportunity_score})>"
+            f"<CustomAnalysis(id={self.id}, status={self.status}, score={self.opportunity_score})>"
         )
 
     def __str__(self) -> str:

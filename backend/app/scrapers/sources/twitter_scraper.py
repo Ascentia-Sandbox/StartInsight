@@ -172,7 +172,7 @@ class TwitterScraper(BaseScraper):
             '"startup idea" OR "side project" OR "building in public"',
             '"looking for" AND ("saas" OR "app" OR "tool")',
             '"i wish there was" OR "someone should build"',
-            '#buildinpublic OR #indiehacker OR #startups',
+            "#buildinpublic OR #indiehacker OR #startups",
         ]
 
         all_tweets = []
@@ -403,13 +403,15 @@ class TwitterScraper(BaseScraper):
             content_parts.append(f"- **Name:** {tweet.author_name}")
         content_parts.append(f"- **Followers:** {tweet.author_followers:,}")
 
-        content_parts.extend([
-            "",
-            "## Analysis",
-            "",
-            f"- **Sentiment:** {sentiment}",
-            f"- **Posted:** {tweet.created_at}",
-        ])
+        content_parts.extend(
+            [
+                "",
+                "## Analysis",
+                "",
+                f"- **Sentiment:** {sentiment}",
+                f"- **Posted:** {tweet.created_at}",
+            ]
+        )
 
         if tweet.hashtags:
             content_parts.append(f"- **Hashtags:** {', '.join(f'#{h}' for h in tweet.hashtags)}")
@@ -440,15 +442,39 @@ def analyze_tweet_sentiment(text: str) -> str:
     text_lower = text.lower()
 
     positive_keywords = [
-        "love", "great", "awesome", "amazing", "excited",
-        "successful", "growth", "launched", "shipped", "milestone",
-        "profit", "revenue", "customers", "users", "growing",
+        "love",
+        "great",
+        "awesome",
+        "amazing",
+        "excited",
+        "successful",
+        "growth",
+        "launched",
+        "shipped",
+        "milestone",
+        "profit",
+        "revenue",
+        "customers",
+        "users",
+        "growing",
     ]
 
     negative_keywords = [
-        "hate", "terrible", "awful", "struggling", "failed",
-        "shutdown", "pivot", "layoff", "burned", "lost",
-        "problem", "issue", "bug", "broken", "frustrated",
+        "hate",
+        "terrible",
+        "awful",
+        "struggling",
+        "failed",
+        "shutdown",
+        "pivot",
+        "layoff",
+        "burned",
+        "lost",
+        "problem",
+        "issue",
+        "bug",
+        "broken",
+        "frustrated",
     ]
 
     positive_count = sum(1 for word in positive_keywords if word in text_lower)

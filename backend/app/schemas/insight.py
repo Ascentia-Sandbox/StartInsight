@@ -80,7 +80,9 @@ class CommunitySignal(BaseModel):
     community: str | None = Field(default=None, description="Community name (e.g., Sales Hacker)")
     score: int = Field(ge=0, le=10, description="Engagement score from 0-10")
     members: str | int = Field(description="Community members (e.g., '150K+ members' or 5000)")
-    engagement_rate: float | None = Field(default=None, ge=0.0, le=1.0, description="Engagement rate as decimal (0-1)")
+    engagement_rate: float | None = Field(
+        default=None, ge=0.0, le=1.0, description="Engagement rate as decimal (0-1)"
+    )
     top_url: str | None = Field(default=None, description="URL to top post/discussion")
 
 
@@ -137,22 +139,18 @@ class InsightResponse(BaseModel):
 
     # Enhanced visualizations (Phase 5+)
     community_signals_chart: list[CommunitySignal] | None = Field(
-        default=None,
-        description="Community engagement visualization data"
+        default=None, description="Community engagement visualization data"
     )
     enhanced_scores: list[EnhancedScore] | None = Field(
-        default=None,
-        description="8-dimension scoring breakdown"
+        default=None, description="8-dimension scoring breakdown"
     )
     trend_keywords: list[TrendKeyword] | None = Field(
-        default=None,
-        description="Trending keywords with search volume and growth percentage"
+        default=None, description="Trending keywords with search volume and growth percentage"
     )
 
     # Trend data for line chart (extracted from raw_signal.extra_metadata)
     trend_data: TrendData | None = Field(
-        default=None,
-        description="Timeseries trend data (dates + values) for chart visualization"
+        default=None, description="Timeseries trend data (dates + values) for chart visualization"
     )
 
     # Market sizing (TAM/SAM/SOM)
@@ -175,9 +173,7 @@ class InsightResponse(BaseModel):
     execution_difficulty_score: int | None = Field(
         default=None, ge=1, le=10, validation_alias="execution_difficulty"
     )
-    revenue_potential_score: str | None = Field(
-        default=None, validation_alias="revenue_potential"
-    )
+    revenue_potential_score: str | None = Field(default=None, validation_alias="revenue_potential")
 
     @field_validator("value_ladder", mode="before")
     @classmethod
@@ -198,8 +194,10 @@ class InsightResponse(BaseModel):
             if "tiers" in v:
                 return v["tiers"]
             # Named tier format: {'core': {...}, 'frontend': {...}, ...}
-            return [{"tier_name": k, **val} if isinstance(val, dict) else {"tier_name": k, "value": val}
-                    for k, val in v.items()]
+            return [
+                {"tier_name": k, **val} if isinstance(val, dict) else {"tier_name": k, "value": val}
+                for k, val in v.items()
+            ]
         return v
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)

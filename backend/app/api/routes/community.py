@@ -37,6 +37,7 @@ router = APIRouter(prefix="/community", tags=["Community"])
 # Schemas
 # ============================================
 
+
 class VoteCreate(BaseModel):
     vote_type: str = Field(..., pattern="^(up|down)$")
 
@@ -112,6 +113,7 @@ class PollVote(BaseModel):
 # ============================================
 # Voting Endpoints
 # ============================================
+
 
 @router.post("/insights/{insight_id}/vote", response_model=VoteResponse)
 async def vote_on_insight(
@@ -219,6 +221,7 @@ async def get_vote_summary(
 # Comments Endpoints
 # ============================================
 
+
 @router.post("/insights/{insight_id}/comments", response_model=CommentResponse)
 async def create_comment(
     insight_id: UUID,
@@ -311,19 +314,21 @@ async def list_comments(
         )
         reply_count = reply_count_result.scalar() or 0
 
-        responses.append(CommentResponse(
-            id=c.id,
-            user_id=c.user_id,
-            insight_id=c.insight_id,
-            parent_id=c.parent_id,
-            content=c.content,
-            upvotes=c.upvotes,
-            is_expert=c.is_expert,
-            is_pinned=c.is_pinned,
-            created_at=c.created_at,
-            updated_at=c.updated_at,
-            reply_count=reply_count,
-        ))
+        responses.append(
+            CommentResponse(
+                id=c.id,
+                user_id=c.user_id,
+                insight_id=c.insight_id,
+                parent_id=c.parent_id,
+                content=c.content,
+                upvotes=c.upvotes,
+                is_expert=c.is_expert,
+                is_pinned=c.is_pinned,
+                created_at=c.created_at,
+                updated_at=c.updated_at,
+                reply_count=reply_count,
+            )
+        )
 
     return responses
 
@@ -336,9 +341,7 @@ async def update_comment(
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Update own comment."""
-    result = await db.execute(
-        select(IdeaComment).where(IdeaComment.id == comment_id)
-    )
+    result = await db.execute(select(IdeaComment).where(IdeaComment.id == comment_id))
     comment = result.scalar_one_or_none()
 
     if not comment:
@@ -361,9 +364,7 @@ async def delete_comment(
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Soft delete own comment."""
-    result = await db.execute(
-        select(IdeaComment).where(IdeaComment.id == comment_id)
-    )
+    result = await db.execute(select(IdeaComment).where(IdeaComment.id == comment_id))
     comment = result.scalar_one_or_none()
 
     if not comment:
@@ -386,9 +387,7 @@ async def upvote_comment(
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Upvote a comment. Toggle off if already upvoted."""
-    result = await db.execute(
-        select(IdeaComment).where(IdeaComment.id == comment_id)
-    )
+    result = await db.execute(select(IdeaComment).where(IdeaComment.id == comment_id))
     comment = result.scalar_one_or_none()
 
     if not comment:
@@ -422,6 +421,7 @@ async def upvote_comment(
 # ============================================
 # Polls Endpoints
 # ============================================
+
 
 @router.post("/insights/{insight_id}/polls", response_model=PollResponse)
 async def create_poll(
@@ -480,9 +480,7 @@ async def list_polls(
     responses = []
     for p in polls:
         # Count responses
-        count_result = await db.execute(
-            select(func.count()).where(PollResponse.poll_id == p.id)
-        )
+        count_result = await db.execute(select(func.count()).where(PollResponse.poll_id == p.id))
         response_count = count_result.scalar() or 0
 
         # Get results
@@ -493,18 +491,20 @@ async def list_polls(
         )
         results = {row[0]: row[1] for row in results_query.fetchall()}
 
-        responses.append(PollResponse(
-            id=p.id,
-            insight_id=p.insight_id,
-            question=p.question,
-            poll_type=p.poll_type,
-            options=p.options,
-            is_active=p.is_active,
-            expires_at=p.expires_at,
-            created_at=p.created_at,
-            response_count=response_count,
-            results=results,
-        ))
+        responses.append(
+            PollResponse(
+                id=p.id,
+                insight_id=p.insight_id,
+                question=p.question,
+                poll_type=p.poll_type,
+                options=p.options,
+                is_active=p.is_active,
+                expires_at=p.expires_at,
+                created_at=p.created_at,
+                response_count=response_count,
+                results=results,
+            )
+        )
 
     return responses
 

@@ -20,12 +20,8 @@ class SourceHealth(Base):
 
     __tablename__ = "source_health"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
-    source_name: Mapped[str] = mapped_column(
-        String(50), unique=True, nullable=False, index=True
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    source_name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
     status: Mapped[str] = mapped_column(
         String(20), nullable=False, default="unknown"
     )  # fresh/stale/error/disabled/unknown
@@ -45,6 +41,4 @@ class SourceHealth(Base):
     baseline_variance: Mapped[float] = mapped_column(Float, default=0)
     baseline_count: Mapped[int] = mapped_column(Integer, default=0)
 
-    updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(), onupdate=func.now()
-    )
+    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())

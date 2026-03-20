@@ -26,67 +26,124 @@ def upgrade() -> None:
     # Achievements definition table
     op.create_table(
         "achievements",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
         sa.Column("name", sa.String(100), unique=True, nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("badge_icon", sa.String(500), nullable=True),
         sa.Column("points", sa.Integer(), nullable=False),
-        sa.Column("criteria", JSONB, nullable=False),  # {"type": "count", "metric": "ideas_saved", "threshold": 10}
+        sa.Column(
+            "criteria", JSONB, nullable=False
+        ),  # {"type": "count", "metric": "ideas_saved", "threshold": 10}
         sa.Column("category", sa.String(50), nullable=True),  # explorer, curator, networker, etc.
         sa.Column("is_active", sa.Boolean(), server_default=sa.text("true"), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
     op.create_index("idx_achievements_category", "achievements", ["category"])
 
     # User achievements table
     op.create_table(
         "user_achievements",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("achievement_id", UUID(as_uuid=True), sa.ForeignKey("achievements.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("earned_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
+        sa.Column(
+            "user_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "achievement_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("achievements.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "earned_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
-    op.create_unique_constraint("uq_user_achievements", "user_achievements", ["user_id", "achievement_id"])
+    op.create_unique_constraint(
+        "uq_user_achievements", "user_achievements", ["user_id", "achievement_id"]
+    )
     op.create_index("idx_user_achievements_user", "user_achievements", ["user_id"])
 
     # User points table
     op.create_table(
         "user_points",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
+        sa.Column(
+            "user_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            unique=True,
+            nullable=False,
+        ),
         sa.Column("total_points", sa.Integer(), server_default="0", nullable=False),
         sa.Column("level", sa.Integer(), server_default="1", nullable=False),
         sa.Column("achievements_count", sa.Integer(), server_default="0", nullable=False),
         sa.Column("current_streak", sa.Integer(), server_default="0", nullable=False),
         sa.Column("longest_streak", sa.Integer(), server_default="0", nullable=False),
         sa.Column("last_activity_date", sa.Date(), nullable=True),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
 
     # User credits table (for premium features)
     op.create_table(
         "user_credits",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
+        sa.Column(
+            "user_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            unique=True,
+            nullable=False,
+        ),
         sa.Column("balance", sa.Integer(), server_default="0", nullable=False),
         sa.Column("lifetime_earned", sa.Integer(), server_default="0", nullable=False),
         sa.Column("lifetime_spent", sa.Integer(), server_default="0", nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
 
     # Credit transactions table
     op.create_table(
         "credit_transactions",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
+        sa.Column(
+            "user_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("amount", sa.Integer(), nullable=False),  # positive = earn, negative = spend
-        sa.Column("transaction_type", sa.String(50), nullable=False),  # earn_daily_login, spend_chat, etc.
+        sa.Column(
+            "transaction_type", sa.String(50), nullable=False
+        ),  # earn_daily_login, spend_chat, etc.
         sa.Column("description", sa.String(255), nullable=True),
         sa.Column("reference_id", UUID(as_uuid=True), nullable=True),  # linked entity ID
         sa.Column("reference_type", sa.String(50), nullable=True),  # insight, chat, research, etc.
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
-    op.create_index("idx_credit_transactions_user", "credit_transactions", ["user_id", sa.text("created_at DESC")])
+    op.create_index(
+        "idx_credit_transactions_user",
+        "credit_transactions",
+        ["user_id", sa.text("created_at DESC")],
+    )
 
     # Enable RLS
     op.execute("ALTER TABLE achievements ENABLE ROW LEVEL SECURITY")

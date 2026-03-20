@@ -176,9 +176,7 @@ class ValidatedInsightSchema(BaseModel):
     def validate_relevance_range(cls, v: float) -> float:
         """Ensure relevance score is within valid range."""
         if not 0.0 <= v <= 1.0:
-            raise ValueError(
-                f"Relevance score out of range: {v} (must be 0.0-1.0)"
-            )
+            raise ValueError(f"Relevance score out of range: {v} (must be 0.0-1.0)")
         return round(v, 3)  # Normalize precision
 
     # Quality Gate 3: Dimension scores range validation
@@ -195,9 +193,7 @@ class ValidatedInsightSchema(BaseModel):
     def validate_dimension_scores(cls, v: int) -> int:
         """Ensure dimension scores are within valid range."""
         if not 1 <= v <= 10:
-            raise ValueError(
-                f"Dimension score out of range: {v} (must be 1-10)"
-            )
+            raise ValueError(f"Dimension score out of range: {v} (must be 1-10)")
         return v
 
     # Quality Gate 4: Cross-field consistency validation
@@ -240,8 +236,7 @@ class ValidatedInsightSchema(BaseModel):
         """Ensure minimum number of community signals."""
         if len(self.community_signals) < 2:
             logger.warning(
-                f"Low community signal count: {len(self.community_signals)} "
-                f"(recommended: 3-4)"
+                f"Low community signal count: {len(self.community_signals)} (recommended: 3-4)"
             )
             # Don't raise error, just warn - allow some flexibility
         return self
@@ -252,8 +247,7 @@ class ValidatedInsightSchema(BaseModel):
         """Ensure minimum number of trend keywords."""
         if len(self.trend_keywords) < 2:
             logger.warning(
-                f"Low trend keyword count: {len(self.trend_keywords)} "
-                f"(recommended: 2-5)"
+                f"Low trend keyword count: {len(self.trend_keywords)} (recommended: 2-5)"
             )
             # Don't raise error, just warn - allow some flexibility
         return self
@@ -309,13 +303,9 @@ def validate_insight_data(
     # Validate problem statement length
     word_count = len(problem_statement.split())
     if word_count < 300:
-        errors.append(
-            f"Problem statement too short: {word_count} words (minimum 300)"
-        )
+        errors.append(f"Problem statement too short: {word_count} words (minimum 300)")
     elif word_count < 400:
-        warnings.append(
-            f"Problem statement could be longer: {word_count} words (ideal: 450+)"
-        )
+        warnings.append(f"Problem statement could be longer: {word_count} words (ideal: 450+)")
 
     # Validate relevance score range
     if not 0.0 <= relevance_score <= 1.0:

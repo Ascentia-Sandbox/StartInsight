@@ -34,11 +34,15 @@ from app.services.trend_prediction import generate_trend_predictions
 # PREDICTION SCHEMAS
 # ============================================================================
 
+
 class TrendPredictionResponse(BaseModel):
     """Response schema for trend predictions"""
+
     keyword: str = Field(..., description="Trend keyword")
     current_volume: int = Field(..., description="Current search volume")
-    predictions: dict[str, Any] = Field(..., description="Prediction data with dates, values, confidence intervals")
+    predictions: dict[str, Any] = Field(
+        ..., description="Prediction data with dates, values, confidence intervals"
+    )
     velocity_alert: bool = Field(default=False, description="Whether trend velocity spike detected")
     velocity_change: float = Field(default=0.0, description="7-day velocity change percentage")
 
@@ -47,10 +51,14 @@ class TrendPredictionResponse(BaseModel):
 
 class TrendComparisonResponse(BaseModel):
     """Response schema for comparing multiple trends"""
+
     keywords: list[str] = Field(..., description="Compared keywords")
-    comparison_data: list[dict[str, Any]] = Field(..., description="Comparison data for each keyword")
+    comparison_data: list[dict[str, Any]] = Field(
+        ..., description="Comparison data for each keyword"
+    )
     winner: str | None = Field(None, description="Keyword with highest predicted growth")
     analysis_summary: str = Field(..., description="Brief comparison analysis")
+
 
 logger = logging.getLogger(__name__)
 
@@ -61,19 +69,13 @@ router = APIRouter(prefix="/api/trends", tags=["trends"])
 @limiter.limit("30/minute")
 async def list_trends(
     request: Request,
-    category: Annotated[
-        str | None, Query(description="Filter by category")
-    ] = None,
+    category: Annotated[str | None, Query(description="Filter by category")] = None,
     sort: Annotated[
         Literal["recent", "volume", "growth"] | None,
         Query(description="Sort by: recent, volume, or growth"),
     ] = "recent",
-    featured: Annotated[
-        bool | None, Query(description="Filter by featured status")
-    ] = None,
-    search: Annotated[
-        str | None, Query(description="Search by keyword")
-    ] = None,
+    featured: Annotated[bool | None, Query(description="Filter by featured status")] = None,
+    search: Annotated[str | None, Query(description="Search by keyword")] = None,
     limit: Annotated[int, Query(ge=1, le=100, description="Number of results")] = 12,
     offset: Annotated[int, Query(ge=0, description="Pagination offset")] = 0,
     db: AsyncSession = Depends(get_db),
@@ -161,10 +163,7 @@ async def get_trend_categories(
     Useful for building filter dropdowns.
     """
     query = (
-        select(Trend.category)
-        .where(Trend.is_published == True)
-        .distinct()
-        .order_by(Trend.category)
+        select(Trend.category).where(Trend.is_published == True).distinct().order_by(Trend.category)
     )
 
     result = await db.execute(query)
@@ -277,9 +276,7 @@ async def update_trend(
     return TrendResponse.model_validate(trend)
 
 
-def _get_historical_data(
-    trend: Trend, days: int = 30
-) -> tuple[list[str], list[int]]:
+def _get_historical_data(trend: Trend, days: int = 30) -> tuple[list[str], list[int]]:
     """Get historical dates and values from trend, generating synthetic data if needed."""
     trend_data = trend.trend_data or {}
     historical_dates = trend_data.get("dates", [])
@@ -289,8 +286,7 @@ def _get_historical_data(
         return historical_dates, historical_values
 
     historical_dates = [
-        (datetime.now(UTC) - timedelta(days=i)).strftime("%Y-%m-%d")
-        for i in range(days, 0, -1)
+        (datetime.now(UTC) - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(days, 0, -1)
     ]
 
     # Normalize to 0-100 scale (matching Google Trends format)
@@ -320,6 +316,7 @@ def _calculate_velocity(historical_values: list[int], fallback: float) -> tuple[
 # ============================================================================
 # PREDICTION ENDPOINTS (Sprint 3.1)
 # ============================================================================
+
 
 @router.get("/predictions", response_model=list[TrendPredictionResponse])
 async def get_trend_predictions(
@@ -362,29 +359,33 @@ async def get_trend_predictions(
                 historical_values, trend.growth_percentage or 0
             )
 
-            predictions.append(TrendPredictionResponse(
-                keyword=trend.keyword,
-                current_volume=trend.search_volume or 0,
-                predictions=prediction_result,
-                velocity_alert=velocity_alert,
-                velocity_change=velocity_change,
-            ))
+            predictions.append(
+                TrendPredictionResponse(
+                    keyword=trend.keyword,
+                    current_volume=trend.search_volume or 0,
+                    predictions=prediction_result,
+                    velocity_alert=velocity_alert,
+                    velocity_change=velocity_change,
+                )
+            )
 
         except Exception as e:
             logger.warning(f"Failed to generate prediction for {trend.keyword}: {e}")
-            predictions.append(TrendPredictionResponse(
-                keyword=trend.keyword,
-                current_volume=trend.search_volume or 0,
-                predictions={
-                    "dates": [],
-                    "values": [],
-                    "confidence_intervals": {"lower": [], "upper": []},
-                    "model_accuracy": {"mape": 0, "rmse": 0},
-                    "error": str(e),
-                },
-                velocity_alert=False,
-                velocity_change=0.0,
-            ))
+            predictions.append(
+                TrendPredictionResponse(
+                    keyword=trend.keyword,
+                    current_volume=trend.search_volume or 0,
+                    predictions={
+                        "dates": [],
+                        "values": [],
+                        "confidence_intervals": {"lower": [], "upper": []},
+                        "model_accuracy": {"mape": 0, "rmse": 0},
+                        "error": str(e),
+                    },
+                    velocity_alert=False,
+                    velocity_change=0.0,
+                )
+            )
 
     logger.info(f"Generated predictions for {len(predictions)} trends (category={category})")
     return predictions
@@ -443,7 +444,9 @@ async def get_trend_prediction_by_keyword(
 
 @router.post("/compare", response_model=TrendComparisonResponse)
 async def compare_trends(
-    keywords: Annotated[list[str], Query(description="Keywords to compare", min_length=2, max_length=5)],
+    keywords: Annotated[
+        list[str], Query(description="Keywords to compare", min_length=2, max_length=5)
+    ],
     db: AsyncSession = Depends(get_db),
 ) -> TrendComparisonResponse:
     """
@@ -475,7 +478,7 @@ async def compare_trends(
         logger.warning(f"Some keywords not found: {missing}")
 
     comparison_data = []
-    max_growth = -float('inf')
+    max_growth = -float("inf")
     winner = None
 
     for trend in trends:
@@ -488,7 +491,8 @@ async def compare_trends(
             )
             predicted_growth = (
                 (prediction_result["values"][-1] - trend.search_volume)
-                / max(trend.search_volume, 1) * 100
+                / max(trend.search_volume, 1)
+                * 100
                 if prediction_result["values"]
                 else 0
             )
@@ -501,14 +505,16 @@ async def compare_trends(
             max_growth = predicted_growth
             winner = trend.keyword
 
-        comparison_data.append({
-            "keyword": trend.keyword,
-            "category": trend.category,
-            "current_volume": trend.search_volume,
-            "growth_percentage": trend.growth_percentage,
-            "predicted_growth": round(predicted_growth, 2),
-            "predictions": prediction_result,
-        })
+        comparison_data.append(
+            {
+                "keyword": trend.keyword,
+                "category": trend.category,
+                "current_volume": trend.search_volume,
+                "growth_percentage": trend.growth_percentage,
+                "predicted_growth": round(predicted_growth, 2),
+                "predictions": prediction_result,
+            }
+        )
 
     # Generate analysis summary
     summary_parts = [f"Compared {len(trends)} trends."]

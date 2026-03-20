@@ -71,8 +71,7 @@ class CommunityValidator:
         """Initialize Reddit client if credentials are available."""
         if not settings.reddit_client_id or not settings.reddit_client_secret:
             logger.warning(
-                "Reddit credentials not configured. "
-                "Subreddit validation will be skipped."
+                "Reddit credentials not configured. Subreddit validation will be skipped."
             )
             return
 
@@ -101,7 +100,7 @@ class CommunityValidator:
         # Remove various prefixes
         for prefix in ["r/", "/r/", "reddit.com/r/", "www.reddit.com/r/"]:
             if name.lower().startswith(prefix):
-                name = name[len(prefix):]
+                name = name[len(prefix) :]
         return name.strip("/")
 
     def validate_subreddit_sync(self, subreddit_name: str) -> SubredditValidationResult:
@@ -221,9 +220,7 @@ class CommunityValidator:
         self._cache[normalized_name] = result
         return result
 
-    async def validate_subreddit(
-        self, subreddit_name: str
-    ) -> SubredditValidationResult:
+    async def validate_subreddit(self, subreddit_name: str) -> SubredditValidationResult:
         """
         Async wrapper for subreddit validation.
 
@@ -236,9 +233,7 @@ class CommunityValidator:
             SubredditValidationResult with validation status
         """
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None, self.validate_subreddit_sync, subreddit_name
-        )
+        return await loop.run_in_executor(None, self.validate_subreddit_sync, subreddit_name)
 
     async def validate_community_signal(
         self, signal: CommunitySignalData
@@ -268,10 +263,7 @@ class CommunityValidator:
 
         # For non-Reddit platforms, accept as-is for now
         # TODO: Add Facebook, YouTube validation
-        logger.debug(
-            f"Skipping validation for {signal.platform} platform "
-            f"(not yet supported)"
-        )
+        logger.debug(f"Skipping validation for {signal.platform} platform (not yet supported)")
         return (signal, True)
 
     async def validate_community_signals(
@@ -308,13 +300,15 @@ class CommunityValidator:
             updated_signal, is_valid = await self.validate_community_signal(signal)
 
             if is_valid:
-                validated.append({
-                    "platform": updated_signal.platform,
-                    "communities": updated_signal.communities,
-                    "members": updated_signal.members,
-                    "score": updated_signal.score,
-                    "top_community": updated_signal.top_community,
-                })
+                validated.append(
+                    {
+                        "platform": updated_signal.platform,
+                        "communities": updated_signal.communities,
+                        "members": updated_signal.members,
+                        "score": updated_signal.score,
+                        "top_community": updated_signal.top_community,
+                    }
+                )
                 valid_count += 1
             else:
                 invalid_count += 1

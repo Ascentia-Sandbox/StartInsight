@@ -113,9 +113,7 @@ class TeamMember(Base):
     """Team membership with role-based permissions."""
 
     __tablename__ = "team_members"
-    __table_args__ = (
-        UniqueConstraint("team_id", "user_id", name="uq_team_member"),
-    )
+    __table_args__ = (UniqueConstraint("team_id", "user_id", name="uq_team_member"),)
 
     id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -171,9 +169,7 @@ class TeamInvitation(Base):
     """Team invitation for adding new members."""
 
     __tablename__ = "team_invitations"
-    __table_args__ = (
-        UniqueConstraint("team_id", "email", name="uq_team_invitation"),
-    )
+    __table_args__ = (UniqueConstraint("team_id", "email", name="uq_team_invitation"),)
 
     id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -251,9 +247,7 @@ class SharedInsight(Base):
     """Insights shared with a team."""
 
     __tablename__ = "shared_insights"
-    __table_args__ = (
-        UniqueConstraint("team_id", "insight_id", name="uq_shared_insight"),
-    )
+    __table_args__ = (UniqueConstraint("team_id", "insight_id", name="uq_shared_insight"),)
 
     id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),

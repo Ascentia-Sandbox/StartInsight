@@ -5,6 +5,7 @@ Revises: c005
 Create Date: 2026-02-16 10:00:00.000000
 
 """
+
 import re
 from collections.abc import Sequence
 
@@ -14,8 +15,8 @@ from sqlalchemy import text
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = 'c006'
-down_revision: str | None = 'c005'
+revision: str = "c006"
+down_revision: str | None = "c005"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
@@ -31,7 +32,7 @@ def generate_slug(title: str, max_length: int = 250) -> str:
 
 def upgrade() -> None:
     # Add nullable slug column
-    op.add_column('insights', sa.Column('slug', sa.String(250), nullable=True))
+    op.add_column("insights", sa.Column("slug", sa.String(250), nullable=True))
 
     # Populate slugs from proposed_solution
     conn = op.get_bind()
@@ -52,7 +53,7 @@ def upgrade() -> None:
         counter = 2
         while slug in seen_slugs:
             suffix = f"-{counter}"
-            slug = base_slug[:250 - len(suffix)] + suffix
+            slug = base_slug[: 250 - len(suffix)] + suffix
             counter += 1
         seen_slugs.add(slug)
 
@@ -62,9 +63,9 @@ def upgrade() -> None:
         )
 
     # Add unique index
-    op.create_index('ix_insights_slug', 'insights', ['slug'], unique=True)
+    op.create_index("ix_insights_slug", "insights", ["slug"], unique=True)
 
 
 def downgrade() -> None:
-    op.drop_index('ix_insights_slug', table_name='insights')
-    op.drop_column('insights', 'slug')
+    op.drop_index("ix_insights_slug", table_name="insights")
+    op.drop_column("insights", "slug")

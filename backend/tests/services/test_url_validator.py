@@ -4,7 +4,6 @@ Tests the URLValidator class which validates that competitor
 URLs are reachable and resolve correctly.
 """
 
-
 import pytest
 
 from app.services.url_validator import (

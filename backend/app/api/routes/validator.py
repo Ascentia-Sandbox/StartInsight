@@ -37,15 +37,18 @@ class IdeaValidationRequest(BaseModel):
     """Input for idea validation."""
 
     idea_description: str = Field(
-        min_length=20, max_length=5000,
+        min_length=20,
+        max_length=5000,
         description="Description of the startup idea",
     )
     target_market: str | None = Field(
-        None, max_length=100,
+        None,
+        max_length=100,
         description="Target market segment",
     )
     budget: str | None = Field(
-        None, max_length=50,
+        None,
+        max_length=50,
         description="Estimated budget range",
     )
 
@@ -98,7 +101,8 @@ class IdeaValidationResponse(BaseModel):
     # Similar ideas
     similar_ideas: list[SimilarIdea] = Field(default_factory=list)
     competition_overlap: int = Field(
-        0, description="Number of similar existing ideas",
+        0,
+        description="Number of similar existing ideas",
     )
 
 
@@ -192,14 +196,16 @@ async def validate_idea(
         )
         overlap = len(idea_words & existing_words)
         if overlap >= 3:
-            similar_ideas.append(SimilarIdea(
-                id=str(existing.id),
-                title=existing.title,
-                proposed_solution=existing.proposed_solution,
-                relevance_score=existing.relevance_score,
-                opportunity_score=existing.opportunity_score,
-                market_size_estimate=existing.market_size_estimate,
-            ))
+            similar_ideas.append(
+                SimilarIdea(
+                    id=str(existing.id),
+                    title=existing.title,
+                    proposed_solution=existing.proposed_solution,
+                    relevance_score=existing.relevance_score,
+                    opportunity_score=existing.opportunity_score,
+                    market_size_estimate=existing.market_size_estimate,
+                )
+            )
         if len(similar_ideas) >= 5:
             break
 
@@ -215,11 +221,13 @@ async def validate_idea(
         ("founder_fit_score", "Founder Fit"),
     ]:
         val = getattr(insight, dim, None)
-        radar_data.append({
-            "dimension": label,
-            "value": val or 0,
-            "max": 10,
-        })
+        radar_data.append(
+            {
+                "dimension": label,
+                "value": val or 0,
+                "max": 10,
+            }
+        )
 
     return IdeaValidationResponse(
         insight_id=insight_id,

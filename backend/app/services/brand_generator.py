@@ -64,9 +64,7 @@ class BrandVoice(BaseModel):
     words_to_use: list[str] = Field(
         min_length=5, max_length=10, description="Words that embody the brand"
     )
-    words_to_avoid: list[str] = Field(
-        min_length=3, max_length=5, description="Words to avoid"
-    )
+    words_to_avoid: list[str] = Field(min_length=3, max_length=5, description="Words to avoid")
 
 
 class BrandPackage(BaseModel):

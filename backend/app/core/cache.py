@@ -52,6 +52,7 @@ class _Encoder(json.JSONEncoder):
             return float(obj)
         return super().default(obj)
 
+
 # Cache TTL configuration (in seconds)
 CACHE_TTL = {
     "tools": 3600,  # 1 hour
@@ -335,6 +336,7 @@ def cached(cache_key: str, ttl_key: str | None = None, ttl: int | None = None):
         ttl_key: Key for CACHE_TTL lookup (e.g., "tools", "insights")
         ttl: Explicit TTL in seconds (overrides ttl_key)
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @wraps(func)
         async def wrapper(*args, **kwargs) -> T:
@@ -359,7 +361,9 @@ def cached(cache_key: str, ttl_key: str | None = None, ttl: int | None = None):
             await cache_set(key, result, cache_ttl)
 
             return result
+
         return wrapper
+
     return decorator
 
 
@@ -471,7 +475,9 @@ async def hydrate_cache() -> dict:
             # 2. Total insights count (used by pulse/stats)
             count_result = await session.execute(select(func.count(Insight.id)))
             total = count_result.scalar() or 0
-            await cache_set_with_stale("insights:total_count", total, CACHE_TTL.get("insights", 300))
+            await cache_set_with_stale(
+                "insights:total_count", total, CACHE_TTL.get("insights", 300)
+            )
             results["insights_total"] = total
 
         logger.info(f"Bootstrap cache hydration complete: {results}")

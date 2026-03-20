@@ -31,9 +31,7 @@ class SavedInsight(Base):
     __tablename__ = "saved_insights"
 
     # Composite unique constraint
-    __table_args__ = (
-        UniqueConstraint("user_id", "insight_id", name="uq_user_insight"),
-    )
+    __table_args__ = (UniqueConstraint("user_id", "insight_id", name="uq_user_insight"),)
 
     # Primary key
     id: Mapped[UUID] = mapped_column(

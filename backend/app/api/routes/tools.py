@@ -32,18 +32,12 @@ router = APIRouter(prefix="/api/tools", tags=["tools"])
 @limiter.limit("30/minute")
 async def list_tools(
     request: Request,
-    category: Annotated[
-        str | None, Query(description="Filter by category")
-    ] = None,
+    category: Annotated[str | None, Query(description="Filter by category")] = None,
     pricing: Annotated[
         str | None, Query(description="Filter by pricing (Free, Freemium, Paid)")
     ] = None,
-    featured: Annotated[
-        bool | None, Query(description="Filter by featured status")
-    ] = None,
-    search: Annotated[
-        str | None, Query(description="Search by name or tagline")
-    ] = None,
+    featured: Annotated[bool | None, Query(description="Filter by featured status")] = None,
+    search: Annotated[str | None, Query(description="Search by name or tagline")] = None,
     limit: Annotated[int, Query(ge=1, le=100, description="Number of results")] = 12,
     offset: Annotated[int, Query(ge=0, description="Pagination offset")] = 0,
     db: AsyncSession = Depends(get_db),
@@ -123,10 +117,7 @@ async def get_featured_tools(
     Returns tools marked as featured, sorted by sort_order.
     """
     query = (
-        select(Tool)
-        .where(Tool.is_featured == True)
-        .order_by(Tool.sort_order.asc())
-        .limit(limit)
+        select(Tool).where(Tool.is_featured == True).order_by(Tool.sort_order.asc()).limit(limit)
     )
 
     result = await db.execute(query)
@@ -146,9 +137,7 @@ async def list_tool_categories(
 
     Returns a sorted list of unique category strings.
     """
-    result = await db.execute(
-        select(Tool.category).distinct().order_by(Tool.category)
-    )
+    result = await db.execute(select(Tool.category).distinct().order_by(Tool.category))
     categories = [row[0] for row in result.fetchall() if row[0]]
     logger.info(f"Listed {len(categories)} tool categories")
     return categories

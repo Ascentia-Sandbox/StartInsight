@@ -196,6 +196,7 @@ class URLValidator:
                 verify=self._verify_ssl,
             ) as client:
                 import time
+
                 start_time = time.perf_counter()
 
                 # Use HEAD request for efficiency
@@ -313,9 +314,7 @@ class URLValidator:
             competitor["url"] = result.final_url or url
             return (competitor, True)
         else:
-            logger.warning(
-                f"Invalid competitor URL: {url} ({result.error})"
-            )
+            logger.warning(f"Invalid competitor URL: {url} ({result.error})")
             return (competitor, False)
 
     async def validate_competitors(
@@ -400,15 +399,17 @@ class URLValidator:
         processed_results = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
-                processed_results.append(URLValidationResult(
-                    url=urls[i],
-                    valid=False,
-                    final_url=None,
-                    status_code=None,
-                    redirect_count=0,
-                    response_time_ms=None,
-                    error=f"Validation exception: {type(result).__name__}",
-                ))
+                processed_results.append(
+                    URLValidationResult(
+                        url=urls[i],
+                        valid=False,
+                        final_url=None,
+                        status_code=None,
+                        redirect_count=0,
+                        response_time_ms=None,
+                        error=f"Validation exception: {type(result).__name__}",
+                    )
+                )
             else:
                 processed_results.append(result)
 

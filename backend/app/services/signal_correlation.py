@@ -26,21 +26,122 @@ from app.models.insight import Insight
 logger = logging.getLogger(__name__)
 
 # Common English stop words (kept minimal for startup context)
-_STOP_WORDS = frozenset({
-    "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
-    "have", "has", "had", "do", "does", "did", "will", "would", "could",
-    "should", "may", "might", "can", "shall", "must", "need", "to", "of",
-    "in", "for", "on", "with", "at", "by", "from", "as", "into", "through",
-    "during", "before", "after", "above", "below", "between", "out", "off",
-    "over", "under", "again", "further", "then", "once", "here", "there",
-    "when", "where", "why", "how", "all", "each", "every", "both", "few",
-    "more", "most", "other", "some", "such", "no", "nor", "not", "only",
-    "own", "same", "so", "than", "too", "very", "just", "because", "but",
-    "and", "or", "if", "while", "about", "up", "it", "its", "this", "that",
-    "these", "those", "i", "me", "my", "we", "our", "you", "your", "he",
-    "him", "his", "she", "her", "they", "them", "their", "what", "which",
-    "who", "whom",
-})
+_STOP_WORDS = frozenset(
+    {
+        "the",
+        "a",
+        "an",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "have",
+        "has",
+        "had",
+        "do",
+        "does",
+        "did",
+        "will",
+        "would",
+        "could",
+        "should",
+        "may",
+        "might",
+        "can",
+        "shall",
+        "must",
+        "need",
+        "to",
+        "of",
+        "in",
+        "for",
+        "on",
+        "with",
+        "at",
+        "by",
+        "from",
+        "as",
+        "into",
+        "through",
+        "during",
+        "before",
+        "after",
+        "above",
+        "below",
+        "between",
+        "out",
+        "off",
+        "over",
+        "under",
+        "again",
+        "further",
+        "then",
+        "once",
+        "here",
+        "there",
+        "when",
+        "where",
+        "why",
+        "how",
+        "all",
+        "each",
+        "every",
+        "both",
+        "few",
+        "more",
+        "most",
+        "other",
+        "some",
+        "such",
+        "no",
+        "nor",
+        "not",
+        "only",
+        "own",
+        "same",
+        "so",
+        "than",
+        "too",
+        "very",
+        "just",
+        "because",
+        "but",
+        "and",
+        "or",
+        "if",
+        "while",
+        "about",
+        "up",
+        "it",
+        "its",
+        "this",
+        "that",
+        "these",
+        "those",
+        "i",
+        "me",
+        "my",
+        "we",
+        "our",
+        "you",
+        "your",
+        "he",
+        "him",
+        "his",
+        "she",
+        "her",
+        "they",
+        "them",
+        "their",
+        "what",
+        "which",
+        "who",
+        "whom",
+    }
+)
 
 
 def _tokenize(text: str) -> list[str]:
@@ -225,16 +326,24 @@ async def correlate_recent_insights() -> list[dict]:
                         )
                     )
 
-                groups_found.append({
-                    "group_id": str(group_id),
-                    "insights": [str(insights[idx].id) for idx in member_indices],
-                    "sources": list(sources_in_group),
-                    "source_count": source_count,
-                    "max_similarity": round(max(
-                        sim for i, j, sim in correlation_pairs
-                        if i in member_indices or j in member_indices
-                    ), 4) if correlation_pairs else 0,
-                })
+                groups_found.append(
+                    {
+                        "group_id": str(group_id),
+                        "insights": [str(insights[idx].id) for idx in member_indices],
+                        "sources": list(sources_in_group),
+                        "source_count": source_count,
+                        "max_similarity": round(
+                            max(
+                                sim
+                                for i, j, sim in correlation_pairs
+                                if i in member_indices or j in member_indices
+                            ),
+                            4,
+                        )
+                        if correlation_pairs
+                        else 0,
+                    }
+                )
 
             await session.commit()
 

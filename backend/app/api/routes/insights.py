@@ -163,11 +163,12 @@ async def list_insights(
         str | None, Query(description="Filter by source (reddit, product_hunt, etc.)")
     ] = None,
     sort: Annotated[
-        str, Query(description="Sort by: relevance, founder_fit, opportunity, problem, feasibility, why_now, go_to_market")
+        str,
+        Query(
+            description="Sort by: relevance, founder_fit, opportunity, problem, feasibility, why_now, go_to_market"
+        ),
     ] = "relevance",
-    search: Annotated[
-        str | None, Query(description="Search by title or keyword")
-    ] = None,
+    search: Annotated[str | None, Query(description="Search by title or keyword")] = None,
     featured: Annotated[
         bool, Query(description="Filter only featured/high-quality insights (score >= 0.85)")
     ] = False,
@@ -175,7 +176,8 @@ async def list_insights(
     offset: Annotated[int, Query(ge=0, description="Pagination offset")] = 0,
     accept_language: Annotated[str | None, Header()] = None,
     language: Annotated[
-        str | None, Query(description="Explicit language override (en, zh-CN, id-ID, vi-VN, th-TH, tl-PH)")
+        str | None,
+        Query(description="Explicit language override (en, zh-CN, id-ID, vi-VN, th-TH, tl-PH)"),
     ] = None,
     db: AsyncSession = Depends(get_db),
 ) -> InsightListResponse:
@@ -198,7 +200,9 @@ async def list_insights(
 
     # --- Cache lookup (TTL: 60s) ---
     # Key encodes all params that affect the result, including language.
-    _cache_raw = f"{min_score}:{source}:{sort}:{search}:{featured}:{limit}:{offset}:{target_language}"
+    _cache_raw = (
+        f"{min_score}:{source}:{sort}:{search}:{featured}:{limit}:{offset}:{target_language}"
+    )
     cache_key = f"insights:list:{hashlib.md5(_cache_raw.encode()).hexdigest()}"
     cached_response = await cache_get(cache_key)
     if cached_response is not None:
@@ -260,9 +264,7 @@ async def list_insights(
     if featured:
         count_query = count_query.where(Insight.relevance_score >= 0.85)
     if source:
-        count_query = count_query.join(Insight.raw_signal).where(
-            RawSignal.source == source
-        )
+        count_query = count_query.join(Insight.raw_signal).where(RawSignal.source == source)
     if search:
         search_term = f"%{search}%"
         count_query = count_query.where(
@@ -300,9 +302,7 @@ async def list_insights(
 
 @router.get("/daily-top", response_model=list[InsightResponse])
 async def get_daily_top(
-    limit: Annotated[
-        int, Query(ge=1, le=20, description="Number of top insights")
-    ] = 5,
+    limit: Annotated[int, Query(ge=1, le=20, description="Number of top insights")] = 5,
     db: AsyncSession = Depends(get_db),
 ) -> list[InsightResponse]:
     """
@@ -388,9 +388,7 @@ async def get_founder_fit_picks(
     limit: Annotated[
         int, Query(ge=1, le=20, description="Number of top founder-fit insights")
     ] = 10,
-    min_fit_score: Annotated[
-        int, Query(ge=1, le=10, description="Minimum founder fit score")
-    ] = 7,
+    min_fit_score: Annotated[int, Query(ge=1, le=10, description="Minimum founder fit score")] = 7,
     db: AsyncSession = Depends(get_db),
 ) -> list[InsightResponse]:
     """
@@ -413,10 +411,7 @@ async def get_founder_fit_picks(
         .options(selectinload(Insight.raw_signal))
         .where(Insight.founder_fit_score >= min_fit_score)
         .where(Insight.relevance_score >= 0.7)
-        .order_by(
-            Insight.founder_fit_score.desc().nulls_last(),
-            Insight.relevance_score.desc()
-        )
+        .order_by(Insight.founder_fit_score.desc().nulls_last(), Insight.relevance_score.desc())
         .limit(limit)
     )
 
@@ -430,9 +425,7 @@ async def get_founder_fit_picks(
 
 @router.get("/featured-picks", response_model=list[InsightResponse])
 async def get_featured_picks(
-    limit: Annotated[
-        int, Query(ge=1, le=20, description="Number of featured insights")
-    ] = 6,
+    limit: Annotated[int, Query(ge=1, le=20, description="Number of featured insights")] = 6,
     db: AsyncSession = Depends(get_db),
 ) -> list[InsightResponse]:
     """
@@ -468,6 +461,7 @@ async def get_featured_picks(
 # PHASE K.4: PUBLIC STATISTICS ENDPOINT
 # ============================================================================
 
+
 @router.get("/stats/public")
 async def get_public_stats(
     db: AsyncSession = Depends(get_db),
@@ -479,31 +473,27 @@ async def get_public_stats(
     for social proof display on the homepage.
     """
     # Total insights
-    insight_count = await db.scalar(
-        select(func.count()).select_from(Insight)
-    ) or 0
+    insight_count = await db.scalar(select(func.count()).select_from(Insight)) or 0
 
     # Total raw signals
-    signal_count = await db.scalar(
-        select(func.count()).select_from(RawSignal)
-    ) or 0
+    signal_count = await db.scalar(select(func.count()).select_from(RawSignal)) or 0
 
     # Average relevance score
-    avg_score = await db.scalar(
-        select(func.avg(Insight.relevance_score)).select_from(Insight)
-    )
+    avg_score = await db.scalar(select(func.avg(Insight.relevance_score)).select_from(Insight))
 
     # Count distinct sources
-    source_count_result = await db.scalar(
-        select(func.count(func.distinct(RawSignal.source))).select_from(RawSignal)
-    ) or 0
+    source_count_result = (
+        await db.scalar(select(func.count(func.distinct(RawSignal.source))).select_from(RawSignal))
+        or 0
+    )
 
     # Count insights with enhanced scoring (8-dimension)
-    scored_count = await db.scalar(
-        select(func.count()).select_from(Insight).where(
-            Insight.opportunity_score.isnot(None)
+    scored_count = (
+        await db.scalar(
+            select(func.count()).select_from(Insight).where(Insight.opportunity_score.isnot(None))
         )
-    ) or 0
+        or 0
+    )
 
     return {
         "total_insights": insight_count,
@@ -523,7 +513,8 @@ async def get_insight_by_slug(
     slug: str,
     accept_language: Annotated[str | None, Header()] = None,
     language: Annotated[
-        str | None, Query(description="Explicit language override (en, zh-CN, id-ID, vi-VN, th-TH, tl-PH)")
+        str | None,
+        Query(description="Explicit language override (en, zh-CN, id-ID, vi-VN, th-TH, tl-PH)"),
     ] = None,
     db: AsyncSession = Depends(get_db),
 ) -> InsightResponse:
@@ -538,11 +529,7 @@ async def get_insight_by_slug(
     """
     target_language = language or parse_accept_language(accept_language)
 
-    query = (
-        select(Insight)
-        .options(selectinload(Insight.raw_signal))
-        .where(Insight.slug == slug)
-    )
+    query = select(Insight).options(selectinload(Insight.raw_signal)).where(Insight.slug == slug)
 
     result = await db.execute(query)
     insight = result.scalar_one_or_none()
@@ -565,7 +552,8 @@ async def get_insight(
     insight_id: UUID,
     accept_language: Annotated[str | None, Header()] = None,
     language: Annotated[
-        str | None, Query(description="Explicit language override (en, zh-CN, id-ID, vi-VN, th-TH, tl-PH)")
+        str | None,
+        Query(description="Explicit language override (en, zh-CN, id-ID, vi-VN, th-TH, tl-PH)"),
     ] = None,
     db: AsyncSession = Depends(get_db),
 ) -> InsightResponse:
@@ -585,9 +573,7 @@ async def get_insight(
 
     # Build query with eager loading
     query = (
-        select(Insight)
-        .options(selectinload(Insight.raw_signal))
-        .where(Insight.id == insight_id)
+        select(Insight).options(selectinload(Insight.raw_signal)).where(Insight.id == insight_id)
     )
 
     # Execute
@@ -619,9 +605,7 @@ async def get_insight_trend_data(
     """
     # Build query to get insight
     query = (
-        select(Insight)
-        .options(selectinload(Insight.raw_signal))
-        .where(Insight.id == insight_id)
+        select(Insight).options(selectinload(Insight.raw_signal)).where(Insight.id == insight_id)
     )
 
     # Execute
@@ -635,20 +619,14 @@ async def get_insight_trend_data(
     # Extract trend data from raw signal's extra_metadata
     trend_data = None
     if insight.raw_signal and insight.raw_signal.extra_metadata:
-        trend_data = insight.raw_signal.extra_metadata.get('trend_data')
+        trend_data = insight.raw_signal.extra_metadata.get("trend_data")
 
     # If trend data is not available, return empty array
     if not trend_data:
-        return {
-            "dates": [],
-            "values": []
-        }
+        return {"dates": [], "values": []}
 
     # Return the trend data
-    return {
-        "dates": trend_data.get("dates", []),
-        "values": trend_data.get("values", [])
-    }
+    return {"dates": trend_data.get("dates", []), "values": trend_data.get("values", [])}
 
 
 @router.get("/{insight_id}/trend-stream")
@@ -698,7 +676,7 @@ async def stream_trend_data(
                 # Check max duration
                 if time.time() - start_time > max_duration:
                     logger.info(f"SSE stream max duration reached: insight {insight_id}")
-                    yield "event: close\ndata: {\"message\": \"Maximum stream duration reached. Please reconnect.\"}\n\n"
+                    yield 'event: close\ndata: {"message": "Maximum stream duration reached. Please reconnect."}\n\n'
                     break
 
                 # Create NEW session for each iteration (don't hold connection)
@@ -714,7 +692,7 @@ async def stream_trend_data(
                     insight = result.scalar_one_or_none()
 
                     if not insight or not insight.raw_signal:
-                        yield "event: error\ndata: {\"error\": \"Insight not found\"}\n\n"
+                        yield 'event: error\ndata: {"error": "Insight not found"}\n\n'
                         break
 
                     # Extract realtime trend data
@@ -725,7 +703,7 @@ async def stream_trend_data(
 
                     if not timestamps or not values:
                         # Send initial message that realtime data is not available yet
-                        yield "event: info\ndata: {\"message\": \"Waiting for real-time data...\"}\n\n"
+                        yield 'event: info\ndata: {"message": "Waiting for real-time data..."}\n\n'
                         await asyncio.sleep(60)
                         continue
 
@@ -749,7 +727,7 @@ async def stream_trend_data(
 
                     # Send heartbeat to keep connection alive
                     else:
-                        yield f"event: heartbeat\ndata: {{\"timestamp\": \"{datetime.now(UTC).isoformat()}\"}}\n\n"
+                        yield f'event: heartbeat\ndata: {{"timestamp": "{datetime.now(UTC).isoformat()}"}}\n\n'
 
                 # Session auto-closed here (connection returned to pool)
 
@@ -758,10 +736,10 @@ async def stream_trend_data(
 
         except asyncio.CancelledError:
             logger.info(f"SSE stream cancelled for insight {insight_id}")
-            yield "event: close\ndata: {\"message\": \"Stream closed\"}\n\n"
+            yield 'event: close\ndata: {"message": "Stream closed"}\n\n'
         except Exception as e:
             logger.error(f"Error in SSE stream for insight {insight_id}: {e}", exc_info=True)
-            yield "event: error\ndata: {\"error\": \"Internal server error\"}\n\n"
+            yield 'event: error\ndata: {"error": "Internal server error"}\n\n'
         finally:
             logger.info(f"SSE stream ended for insight {insight_id}")
 
@@ -806,9 +784,7 @@ async def get_trend_predictions(
     """
     # Fetch insight with raw signal
     query = (
-        select(Insight)
-        .options(selectinload(Insight.raw_signal))
-        .where(Insight.id == insight_id)
+        select(Insight).options(selectinload(Insight.raw_signal)).where(Insight.id == insight_id)
     )
 
     result = await db.execute(query)
@@ -840,8 +816,7 @@ async def get_trend_predictions(
 
     if not trend_data or not trend_data.get("dates") or not trend_data.get("values"):
         raise HTTPException(
-            status_code=400,
-            detail="No historical trend data available for this insight"
+            status_code=400, detail="No historical trend data available for this insight"
         )
 
     # Convert timestamp format to date format if needed (for realtime data)
@@ -849,10 +824,9 @@ async def get_trend_predictions(
         # Realtime data uses timestamps, convert to dates
         trend_data = {
             "dates": [
-                datetime.fromisoformat(ts).strftime("%Y-%m-%d")
-                for ts in trend_data["timestamps"]
+                datetime.fromisoformat(ts).strftime("%Y-%m-%d") for ts in trend_data["timestamps"]
             ],
-            "values": trend_data["values"]
+            "values": trend_data["values"],
         }
 
     # Generate predictions using Prophet
@@ -873,20 +847,21 @@ async def get_trend_predictions(
     except ValueError as e:
         logger.warning(f"Prediction failed for insight {insight_id}: {e}")
         raise HTTPException(
-            status_code=400,
-            detail="Invalid prediction parameters. Please check your input."
+            status_code=400, detail="Invalid prediction parameters. Please check your input."
         )
     except Exception as e:
-        logger.error(f"Unexpected error generating predictions: {type(e).__name__} - {e}", exc_info=True)
+        logger.error(
+            f"Unexpected error generating predictions: {type(e).__name__} - {e}", exc_info=True
+        )
         raise HTTPException(
-            status_code=500,
-            detail="Failed to generate predictions. Please try again later."
+            status_code=500, detail="Failed to generate predictions. Please try again later."
         )
 
 
 # ============================================================================
 # PHASE 9.2: COMPETITIVE INTELLIGENCE ENDPOINTS
 # ============================================================================
+
 
 @router.post("/{insight_id}/competitors/scrape")
 async def scrape_competitors(
@@ -960,8 +935,7 @@ async def scrape_competitors(
     except Exception as e:
         logger.error(f"Competitor scraping failed: {type(e).__name__} - {e}", exc_info=True)
         raise HTTPException(
-            status_code=500,
-            detail="Failed to scrape competitors. Please try again."
+            status_code=500, detail="Failed to scrape competitors. Please try again."
         )
 
 
@@ -989,11 +963,14 @@ async def list_competitors(
         raise HTTPException(status_code=404, detail="Insight not found")
 
     # Count total
-    total = await db.scalar(
-        select(func.count(CompetitorProfile.id)).where(
-            CompetitorProfile.insight_id == insight_id
+    total = (
+        await db.scalar(
+            select(func.count(CompetitorProfile.id)).where(
+                CompetitorProfile.insight_id == insight_id
+            )
         )
-    ) or 0
+        or 0
+    )
 
     # Get competitors with pagination
     stmt = (
@@ -1187,19 +1164,24 @@ async def analyze_competitors_ai(
 
     except ValueError as e:
         logger.warning(f"Competitive analysis failed: {e}")
-        raise HTTPException(status_code=400, detail="Invalid analysis parameters. Please check your input.")
+        raise HTTPException(
+            status_code=400, detail="Invalid analysis parameters. Please check your input."
+        )
 
     except Exception as e:
-        logger.error(f"Unexpected error during competitive analysis: {type(e).__name__} - {e}", exc_info=True)
+        logger.error(
+            f"Unexpected error during competitive analysis: {type(e).__name__} - {e}", exc_info=True
+        )
         raise HTTPException(
             status_code=500,
-            detail="Failed to generate competitive analysis. Please try again later."
+            detail="Failed to generate competitive analysis. Please try again later.",
         )
 
 
 # ============================================================================
 # PHASE K.2: SOCIAL PROOF / ENGAGEMENT METRICS
 # ============================================================================
+
 
 @router.get("/{insight_id}/engagement")
 async def get_insight_engagement(
@@ -1237,11 +1219,12 @@ async def get_insight_engagement(
     interaction_counts = {row.interaction_type: row.count for row in result.all()}
 
     # Count saves from SavedInsight table
-    save_count = await db.scalar(
-        select(func.count(SavedInsight.id)).where(
-            SavedInsight.insight_id == insight_id
+    save_count = (
+        await db.scalar(
+            select(func.count(SavedInsight.id)).where(SavedInsight.insight_id == insight_id)
         )
-    ) or 0
+        or 0
+    )
 
     # Count proof signals if available (evidence data points)
     evidence_count = 0
@@ -1291,23 +1274,23 @@ async def get_correlated_insights(
         gid = str(ins.correlation_group_id)
         if gid not in groups:
             groups[gid] = []
-        groups[gid].append({
-            "id": str(ins.id),
-            "title": ins.title,
-            "problem_statement": ins.problem_statement[:200] if ins.problem_statement else None,
-            "relevance_score": ins.relevance_score,
-            "correlation_score": ins.correlation_score,
-            "source": ins.raw_signal.source if ins.raw_signal else None,
-            "created_at": ins.created_at.isoformat() if ins.created_at else None,
-        })
+        groups[gid].append(
+            {
+                "id": str(ins.id),
+                "title": ins.title,
+                "problem_statement": ins.problem_statement[:200] if ins.problem_statement else None,
+                "relevance_score": ins.relevance_score,
+                "correlation_score": ins.correlation_score,
+                "source": ins.raw_signal.source if ins.raw_signal else None,
+                "created_at": ins.created_at.isoformat() if ins.created_at else None,
+            }
+        )
 
     return {
         "groups": [
             {
                 "group_id": gid,
-                "source_count": len(set(
-                    i["source"] for i in members if i["source"]
-                )),
+                "source_count": len(set(i["source"] for i in members if i["source"])),
                 "insights": members,
             }
             for gid, members in groups.items()

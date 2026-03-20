@@ -126,8 +126,7 @@ class QualityAlertService:
             severity=AlertSeverity.ERROR,
             title="Excessive Duplicate Rate",
             message_template=(
-                "Duplicate rate reached {actual:.1%}. "
-                "Significant data quality issue."
+                "Duplicate rate reached {actual:.1%}. Significant data quality issue."
             ),
         ),
         # LLM error rate
@@ -150,8 +149,7 @@ class QualityAlertService:
             severity=AlertSeverity.CRITICAL,
             title="Critical LLM Error Rate",
             message_template=(
-                "CRITICAL: LLM error rate at {actual:.1%}. "
-                "Analysis pipeline may be degraded."
+                "CRITICAL: LLM error rate at {actual:.1%}. Analysis pipeline may be degraded."
             ),
         ),
         # Average relevance score
@@ -187,8 +185,7 @@ class QualityAlertService:
             severity=AlertSeverity.ERROR,
             title="Critical Processing Backlog",
             message_template=(
-                "Processing backlog reached {actual:.0f} signals. "
-                "Worker scaling required."
+                "Processing backlog reached {actual:.0f} signals. Worker scaling required."
             ),
         ),
     ]
@@ -218,10 +215,7 @@ class QualityAlertService:
         # Alert history (for deduplication and tracking)
         self._recent_alerts: list[Alert] = []
 
-        logger.info(
-            f"Quality alert service initialized with "
-            f"{len(self._thresholds)} thresholds"
-        )
+        logger.info(f"Quality alert service initialized with {len(self._thresholds)} thresholds")
 
     def add_threshold(self, threshold: AlertThreshold) -> None:
         """Add a custom threshold."""
@@ -250,9 +244,8 @@ class QualityAlertService:
                 continue
 
             # Check threshold
-            is_breached = (
-                (threshold.operator == "lt" and value < threshold.threshold) or
-                (threshold.operator == "gt" and value > threshold.threshold)
+            is_breached = (threshold.operator == "lt" and value < threshold.threshold) or (
+                threshold.operator == "gt" and value > threshold.threshold
             )
 
             if is_breached:
@@ -318,9 +311,9 @@ class QualityAlertService:
 
         for recent in self._recent_alerts:
             if (
-                recent.metric_name == alert.metric_name and
-                recent.severity == alert.severity and
-                recent.timestamp >= one_hour_ago
+                recent.metric_name == alert.metric_name
+                and recent.severity == alert.severity
+                and recent.timestamp >= one_hour_ago
             ):
                 return True
         return False
@@ -354,10 +347,7 @@ class QualityAlertService:
         cutoff = datetime.now(UTC).replace(microsecond=0)
         cutoff = cutoff.replace(day=cutoff.day - 1 if cutoff.day > 1 else 1)
 
-        self._recent_alerts = [
-            a for a in self._recent_alerts
-            if a.timestamp >= cutoff
-        ]
+        self._recent_alerts = [a for a in self._recent_alerts if a.timestamp >= cutoff]
 
     def get_recent_alerts(
         self,

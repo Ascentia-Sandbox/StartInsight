@@ -44,10 +44,17 @@ class Achievement(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     # Timestamp
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relationships
-    user_achievements: Mapped[list["UserAchievement"]] = relationship("UserAchievement", back_populates="achievement", cascade="all, delete-orphan", lazy="selectin")
+    user_achievements: Mapped[list["UserAchievement"]] = relationship(
+        "UserAchievement",
+        back_populates="achievement",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
 
     # Category constants
     CATEGORY_EXPLORER = "explorer"
@@ -68,13 +75,21 @@ class UserAchievement(Base):
     __tablename__ = "user_achievements"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    achievement_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("achievements.id", ondelete="CASCADE"), nullable=False)
-    earned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    achievement_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("achievements.id", ondelete="CASCADE"), nullable=False
+    )
+    earned_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relationships
     user: Mapped["User"] = relationship("User", foreign_keys=[user_id], lazy="selectin")
-    achievement: Mapped["Achievement"] = relationship("Achievement", back_populates="user_achievements")
+    achievement: Mapped["Achievement"] = relationship(
+        "Achievement", back_populates="user_achievements"
+    )
 
     def __repr__(self) -> str:
         return f"<UserAchievement(user={self.user_id}, achievement={self.achievement_id})>"
@@ -86,7 +101,12 @@ class UserPoints(Base):
     __tablename__ = "user_points"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
 
     # Points and level
     total_points: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -99,7 +119,9 @@ class UserPoints(Base):
     last_activity_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     # Timestamp
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relationships
     user: Mapped["User"] = relationship("User", foreign_keys=[user_id], lazy="selectin")
@@ -126,7 +148,12 @@ class UserCredits(Base):
     __tablename__ = "user_credits"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
 
     # Balance
     balance: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -134,7 +161,9 @@ class UserCredits(Base):
     lifetime_spent: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Timestamp
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relationships
     user: Mapped["User"] = relationship("User", foreign_keys=[user_id], lazy="selectin")
@@ -149,10 +178,14 @@ class CreditTransaction(Base):
     __tablename__ = "credit_transactions"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
 
     # Transaction details
-    amount: Mapped[int] = mapped_column(Integer, nullable=False)  # positive = earn, negative = spend
+    amount: Mapped[int] = mapped_column(
+        Integer, nullable=False
+    )  # positive = earn, negative = spend
     transaction_type: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
@@ -161,7 +194,9 @@ class CreditTransaction(Base):
     reference_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     # Timestamp
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relationships
     user: Mapped["User"] = relationship("User", foreign_keys=[user_id], lazy="selectin")

@@ -75,9 +75,7 @@ class HackerNewsScraper(BaseScraper):
         Raises:
             httpx.HTTPStatusError: On non-2xx responses
         """
-        cutoff_timestamp = int(
-            (datetime.now(UTC) - timedelta(hours=self.hours_back)).timestamp()
-        )
+        cutoff_timestamp = int((datetime.now(UTC) - timedelta(hours=self.hours_back)).timestamp())
 
         params = {
             "query": query,
@@ -160,8 +158,7 @@ class HackerNewsScraper(BaseScraper):
                     results.append(result)
             except Exception as e:
                 logger.error(
-                    f"Error converting HN hit {hit.get('objectID', '?')}: "
-                    f"{type(e).__name__} - {e}"
+                    f"Error converting HN hit {hit.get('objectID', '?')}: {type(e).__name__} - {e}"
                 )
 
         logger.info(f"Hacker News scraper found {len(results)} signals")
@@ -281,11 +278,13 @@ class HackerNewsScraper(BaseScraper):
             content_parts.append(f"- **External Link:** {story_url}")
 
         if story_text:
-            content_parts.extend([
-                "",
-                "## Description",
-                "",
-                story_text,
-            ])
+            content_parts.extend(
+                [
+                    "",
+                    "## Description",
+                    "",
+                    story_text,
+                ]
+            )
 
         return "\n".join(content_parts)

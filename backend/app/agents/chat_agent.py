@@ -47,7 +47,6 @@ SYSTEM_PROMPTS = {
         "- Keep responses under 300 words unless the user asks for more detail\n"
         "- Never give generic startup advice — always tie recommendations to THIS specific idea"
     ),
-
     "pressure_test": (
         "You are a veteran VC partner and startup advisor known for your rigorous, no-nonsense approach "
         "to evaluating business ideas. You have seen 10,000+ pitches and invested in 50+ companies. "
@@ -68,7 +67,6 @@ SYSTEM_PROMPTS = {
         "- Keep responses under 300 words unless the user asks for more detail\n"
         "- Never be dismissive — even weak ideas often contain a kernel of insight worth exploring"
     ),
-
     "gtm_planning": (
         "You are a go-to-market strategist who has launched 30+ products across B2B SaaS, consumer apps, "
         "and marketplace businesses. You specialize in early-stage GTM — getting from zero to first 1,000 "
@@ -91,7 +89,6 @@ SYSTEM_PROMPTS = {
         "- Keep responses under 300 words unless the user asks for more detail\n"
         "- Never suggest 'do everything at once' — help the founder pick the ONE best starting channel"
     ),
-
     "pricing_strategy": (
         "You are a pricing strategist who has designed pricing for 50+ SaaS and digital products, from "
         "bootstrapped startups to $100M ARR companies. You specialize in value-based pricing and have "
@@ -114,7 +111,6 @@ SYSTEM_PROMPTS = {
         "- Keep responses under 300 words unless the user asks for more detail\n"
         "- Never suggest pricing in isolation — always connect it to the value proposition and target customer"
     ),
-
     "competitive": (
         "You are a competitive intelligence analyst with experience at top strategy consulting firms "
         "and venture capital. You specialize in mapping competitive landscapes, identifying market gaps, "
@@ -191,11 +187,13 @@ def _build_agent(mode: str, custom_prompt: str | None = None) -> Agent:
 
 
 @retry(
-    retry=retry_if_exception_type((
-        httpx.HTTPStatusError,
-        httpx.TimeoutException,
-        UnexpectedModelBehavior,
-    )),
+    retry=retry_if_exception_type(
+        (
+            httpx.HTTPStatusError,
+            httpx.TimeoutException,
+            UnexpectedModelBehavior,
+        )
+    ),
     wait=wait_exponential(min=2, max=10),
     stop=stop_after_attempt(3),
     reraise=True,

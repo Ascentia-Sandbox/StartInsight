@@ -229,9 +229,7 @@ async def create_new_tenant(
             )
 
     # Check subdomain uniqueness
-    existing = await db.execute(
-        select(Tenant).where(Tenant.subdomain == subdomain)
-    )
+    existing = await db.execute(select(Tenant).where(Tenant.subdomain == subdomain))
     if existing.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -529,12 +527,7 @@ async def list_all_tenants(
     """
     total = await db.scalar(select(func.count(Tenant.id))) or 0
 
-    query = (
-        select(Tenant)
-        .order_by(Tenant.created_at.desc())
-        .limit(limit)
-        .offset(offset)
-    )
+    query = select(Tenant).order_by(Tenant.created_at.desc()).limit(limit).offset(offset)
     result = await db.execute(query)
     tenants = result.scalars().all()
 

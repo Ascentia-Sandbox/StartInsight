@@ -229,8 +229,7 @@ def export_insight_pdf(insight: dict[str, Any]) -> str:
     competitors = insight.get("competitors", [])
     if competitors:
         competitor_list = [
-            f"{c.get('name', 'Unknown')} - {c.get('weakness', 'N/A')}"
-            for c in competitors
+            f"{c.get('name', 'Unknown')} - {c.get('weakness', 'N/A')}" for c in competitors
         ]
         sections.append({"heading": "Competitor Analysis", "content": competitor_list})
 
@@ -333,32 +332,36 @@ def export_analysis_pdf(analysis: dict[str, Any]) -> str:
     # Market Analysis
     market = analysis.get("market_analysis", {})
     if market:
-        sections.append({
-            "heading": "Market Analysis",
-            "content": {
-                "TAM": market.get("tam", "N/A"),
-                "SAM": market.get("sam", "N/A"),
-                "SOM": market.get("som", "N/A"),
-                "Growth Rate": f"{market.get('growth_rate', 0) * 100:.1f}%",
-                "Maturity": market.get("market_maturity", "N/A"),
-                "Key Trends": ", ".join(market.get("key_trends", [])),
-            },
-        })
+        sections.append(
+            {
+                "heading": "Market Analysis",
+                "content": {
+                    "TAM": market.get("tam", "N/A"),
+                    "SAM": market.get("sam", "N/A"),
+                    "SOM": market.get("som", "N/A"),
+                    "Growth Rate": f"{market.get('growth_rate', 0) * 100:.1f}%",
+                    "Maturity": market.get("market_maturity", "N/A"),
+                    "Key Trends": ", ".join(market.get("key_trends", [])),
+                },
+            }
+        )
 
     # Value Equation
     value = analysis.get("value_equation", {})
     if value:
-        sections.append({
-            "heading": "Value Equation (Hormozi Framework)",
-            "content": {
-                "Dream Outcome": f"{value.get('dream_outcome_score', 0)}/10",
-                "Perceived Likelihood": f"{value.get('perceived_likelihood_score', 0)}/10",
-                "Time Delay": f"{value.get('time_delay_score', 0)}/10",
-                "Effort/Sacrifice": f"{value.get('effort_sacrifice_score', 0)}/10",
-                "Value Score": f"{value.get('value_score', 0):.2f}",
-                "Analysis": value.get("analysis", "N/A"),
-            },
-        })
+        sections.append(
+            {
+                "heading": "Value Equation (Hormozi Framework)",
+                "content": {
+                    "Dream Outcome": f"{value.get('dream_outcome_score', 0)}/10",
+                    "Perceived Likelihood": f"{value.get('perceived_likelihood_score', 0)}/10",
+                    "Time Delay": f"{value.get('time_delay_score', 0)}/10",
+                    "Effort/Sacrifice": f"{value.get('effort_sacrifice_score', 0)}/10",
+                    "Value Score": f"{value.get('value_score', 0):.2f}",
+                    "Analysis": value.get("analysis", "N/A"),
+                },
+            }
+        )
 
     # Competitor Landscape
     competitors = analysis.get("competitor_landscape", [])
@@ -368,10 +371,12 @@ def export_analysis_pdf(analysis: dict[str, Any]) -> str:
             f"(Threat: {c.get('threat_level', 'N/A')})"
             for c in competitors[:5]
         ]
-        sections.append({
-            "heading": "Competitor Landscape",
-            "content": competitor_list,
-        })
+        sections.append(
+            {
+                "heading": "Competitor Landscape",
+                "content": competitor_list,
+            }
+        )
 
     # Execution Roadmap
     roadmap = analysis.get("execution_roadmap", [])
@@ -380,34 +385,40 @@ def export_analysis_pdf(analysis: dict[str, Any]) -> str:
             f"Phase {p.get('phase_number', 0)}: {p.get('name', 'N/A')} - {p.get('duration', 'N/A')}"
             for p in roadmap
         ]
-        sections.append({
-            "heading": "Execution Roadmap",
-            "content": phases,
-        })
+        sections.append(
+            {
+                "heading": "Execution Roadmap",
+                "content": phases,
+            }
+        )
 
     # Risk Assessment
     risk = analysis.get("risk_assessment", {})
     if risk:
-        sections.append({
-            "heading": "Risk Assessment",
-            "content": {
-                "Technical Risk": f"{risk.get('technical_risk', 0)}/10",
-                "Market Risk": f"{risk.get('market_risk', 0)}/10",
-                "Team Risk": f"{risk.get('team_risk', 0)}/10",
-                "Financial Risk": f"{risk.get('financial_risk', 0)}/10",
-                "Overall Risk": f"{risk.get('overall_risk', 0) * 100:.0f}%",
-            },
-        })
+        sections.append(
+            {
+                "heading": "Risk Assessment",
+                "content": {
+                    "Technical Risk": f"{risk.get('technical_risk', 0)}/10",
+                    "Market Risk": f"{risk.get('market_risk', 0)}/10",
+                    "Team Risk": f"{risk.get('team_risk', 0)}/10",
+                    "Financial Risk": f"{risk.get('financial_risk', 0)}/10",
+                    "Overall Risk": f"{risk.get('overall_risk', 0) * 100:.0f}%",
+                },
+            }
+        )
 
     # Summary Scores
-    sections.append({
-        "heading": "Summary Scores",
-        "content": {
-            "Opportunity Score": f"{analysis.get('opportunity_score', 0) * 100:.0f}%",
-            "Market Fit Score": f"{analysis.get('market_fit_score', 0) * 100:.0f}%",
-            "Execution Readiness": f"{analysis.get('execution_readiness', 0) * 100:.0f}%",
-        },
-    })
+    sections.append(
+        {
+            "heading": "Summary Scores",
+            "content": {
+                "Opportunity Score": f"{analysis.get('opportunity_score', 0) * 100:.0f}%",
+                "Market Fit Score": f"{analysis.get('market_fit_score', 0) * 100:.0f}%",
+                "Execution Readiness": f"{analysis.get('execution_readiness', 0) * 100:.0f}%",
+            },
+        }
+    )
 
     return generate_pdf_content(
         title="Research Analysis Report",

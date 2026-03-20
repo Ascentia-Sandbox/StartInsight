@@ -59,9 +59,7 @@ async def export_insight_as_pdf(
     Requires authentication.
     """
     # Fetch insight
-    result = await db.execute(
-        select(Insight).where(Insight.id == insight_id)
-    )
+    result = await db.execute(select(Insight).where(Insight.id == insight_id))
     insight = result.scalar_one_or_none()
 
     if not insight:

@@ -99,15 +99,13 @@ CORRELATION_WINDOW_HOURS: int = 24
 MAX_INSIGHTS_TO_SCAN: int = 200
 
 # Phase 6.2: Expected scraper sources
-EXPECTED_SOURCES: list[str] = [
-    "reddit", "product_hunt", "google_trends", "twitter", "hacker_news"
-]
+EXPECTED_SOURCES: list[str] = ["reddit", "product_hunt", "google_trends", "twitter", "hacker_news"]
 
 # Phase 6.5B: Source credibility weights (multiplied against relevance_score)
 SOURCE_CREDIBILITY_WEIGHTS: dict[str, float] = {
-    "hacker_news": 1.2,    # Curated, technical audience
-    "product_hunt": 1.1,   # Curated launches
-    "reddit": 1.0,         # Baseline
+    "hacker_news": 1.2,  # Curated, technical audience
+    "product_hunt": 1.1,  # Curated launches
+    "reddit": 1.0,  # Baseline
     "google_trends": 0.9,  # Volume signal, not quality
-    "twitter": 0.8,        # Noisy, short-form
+    "twitter": 0.8,  # Noisy, short-form
 }

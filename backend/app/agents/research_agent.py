@@ -82,15 +82,9 @@ class ResearchResult(BaseModel):
     risk_assessment: RiskAssessment
 
     # Summary Scores (0-1)
-    opportunity_score: float = Field(
-        ge=0, le=1, description="Overall opportunity score (0-1)"
-    )
-    market_fit_score: float = Field(
-        ge=0, le=1, description="Product-market fit score (0-1)"
-    )
-    execution_readiness: float = Field(
-        ge=0, le=1, description="Execution readiness score (0-1)"
-    )
+    opportunity_score: float = Field(ge=0, le=1, description="Overall opportunity score (0-1)")
+    market_fit_score: float = Field(ge=0, le=1, description="Product-market fit score (0-1)")
+    execution_readiness: float = Field(ge=0, le=1, description="Execution readiness score (0-1)")
 
 
 # ============================================================
@@ -290,10 +284,12 @@ Please provide a comprehensive 40-step analysis following all frameworks:
         output_tokens = 0
 
         # Try to get actual token counts from result
-        if hasattr(result, 'usage') and result.usage:
+        if hasattr(result, "usage") and result.usage:
             usage = result.usage()
-            input_tokens = getattr(usage, 'input_tokens', 0) or getattr(usage, 'prompt_tokens', 0)
-            output_tokens = getattr(usage, 'output_tokens', 0) or getattr(usage, 'completion_tokens', 0)
+            input_tokens = getattr(usage, "input_tokens", 0) or getattr(usage, "prompt_tokens", 0)
+            output_tokens = getattr(usage, "output_tokens", 0) or getattr(
+                usage, "completion_tokens", 0
+            )
 
         # Fallback to estimation if no usage data
         if input_tokens == 0:

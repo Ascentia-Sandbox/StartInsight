@@ -29,12 +29,8 @@ router = APIRouter(prefix="/api/success-stories", tags=["success-stories"])
 
 @router.get("", response_model=SuccessStoryListResponse)
 async def list_success_stories(
-    featured: Annotated[
-        bool | None, Query(description="Filter by featured status")
-    ] = None,
-    search: Annotated[
-        str | None, Query(description="Search by founder or company name")
-    ] = None,
+    featured: Annotated[bool | None, Query(description="Filter by featured status")] = None,
+    search: Annotated[str | None, Query(description="Search by founder or company name")] = None,
     limit: Annotated[int, Query(ge=1, le=50, description="Number of results")] = 10,
     offset: Annotated[int, Query(ge=0, description="Pagination offset")] = 0,
     db: AsyncSession = Depends(get_db),
@@ -73,9 +69,7 @@ async def list_success_stories(
     stories = result.scalars().all()
 
     # Get total count
-    count_query = select(func.count(SuccessStory.id)).where(
-        SuccessStory.is_published == True
-    )
+    count_query = select(func.count(SuccessStory.id)).where(SuccessStory.is_published == True)
     if featured is not None:
         count_query = count_query.where(SuccessStory.is_featured == featured)
     if search:

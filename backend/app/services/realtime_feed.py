@@ -65,7 +65,7 @@ class EventStore:
             self._events.append(event)
             # Trim old events
             if len(self._events) > self._max_events:
-                self._events = self._events[-self._max_events:]
+                self._events = self._events[-self._max_events :]
 
         # Notify all subscribers
         for subscriber_id, queue in list(self._subscribers.items()):
@@ -295,10 +295,7 @@ def get_recent_insights(
     events = store.get_recent_events(count=limit)
 
     if since:
-        events = [
-            e for e in events
-            if datetime.fromisoformat(e.timestamp) > since
-        ]
+        events = [e for e in events if datetime.fromisoformat(e.timestamp) > since]
 
     return events
 

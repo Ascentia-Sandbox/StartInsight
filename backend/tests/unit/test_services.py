@@ -230,9 +230,7 @@ class TestExportService:
             "opportunity_score": 8,
             "problem_score": 7,
             "feasibility_score": 6,
-            "competitors": [
-                {"name": "Competitor A", "weakness": "Slow"}
-            ],
+            "competitors": [{"name": "Competitor A", "weakness": "Slow"}],
         }
 
         html = export_insight_pdf(insight)
@@ -312,7 +310,11 @@ class TestExportService:
                 "analysis": "Strong value proposition",
             },
             "competitor_landscape": [
-                {"name": "Competitor A", "unique_value_prop": "Best analytics", "threat_level": "medium"},
+                {
+                    "name": "Competitor A",
+                    "unique_value_prop": "Best analytics",
+                    "threat_level": "medium",
+                },
             ],
             "execution_roadmap": [
                 {"phase_number": 1, "name": "MVP", "duration": "4-6 weeks"},
@@ -423,6 +425,7 @@ class TestRealtimeFeed:
         """Test publishing new insight event."""
         # Reset global event store
         import app.services.realtime_feed as feed_module
+
         feed_module._event_store = None
 
         insight_id = str(uuid4())
@@ -441,6 +444,7 @@ class TestRealtimeFeed:
         """Test feed statistics."""
         # Reset global event store
         import app.services.realtime_feed as feed_module
+
         feed_module._event_store = None
 
         stats = get_feed_stats()

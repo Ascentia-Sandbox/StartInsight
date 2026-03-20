@@ -181,7 +181,7 @@ async def request_analysis(
         raise HTTPException(
             status_code=429,
             detail=f"Monthly quota exceeded. Limit: {quota_limit} analyses. "
-                   f"Upgrade to get more analyses.",
+            f"Upgrade to get more analyses.",
         )
 
     # Create analysis record
@@ -291,15 +291,19 @@ async def get_analysis(
                 ValidationSignal(**v) for v in analysis.validation_signals
             ]
         if analysis.execution_roadmap:
-            response.execution_roadmap = [
-                ExecutionPhase(**e) for e in analysis.execution_roadmap
-            ]
+            response.execution_roadmap = [ExecutionPhase(**e) for e in analysis.execution_roadmap]
         if analysis.risk_assessment:
             response.risk_assessment = RiskAssessment(**analysis.risk_assessment)
 
-        response.opportunity_score = float(analysis.opportunity_score) if analysis.opportunity_score else None
-        response.market_fit_score = float(analysis.market_fit_score) if analysis.market_fit_score else None
-        response.execution_readiness = float(analysis.execution_readiness) if analysis.execution_readiness else None
+        response.opportunity_score = (
+            float(analysis.opportunity_score) if analysis.opportunity_score else None
+        )
+        response.market_fit_score = (
+            float(analysis.market_fit_score) if analysis.market_fit_score else None
+        )
+        response.execution_readiness = (
+            float(analysis.execution_readiness) if analysis.execution_readiness else None
+        )
 
     return response
 
@@ -414,7 +418,7 @@ async def create_research_request(
         raise HTTPException(
             status_code=429,
             detail=f"Monthly quota exceeded. Limit: {quota_limit} requests. "
-                   f"Upgrade to get more requests.",
+            f"Upgrade to get more requests.",
         )
 
     # Create research request
@@ -607,7 +611,7 @@ async def update_request_status(
         raise HTTPException(
             status_code=400,
             detail=f"Cannot update request with status '{research_request.status}'. "
-                   "Only pending requests can be reviewed.",
+            "Only pending requests can be reviewed.",
         )
 
     # Update request
@@ -778,4 +782,3 @@ async def list_all_analyses(
         ],
         total=total,
     )
-

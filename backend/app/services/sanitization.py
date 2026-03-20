@@ -1,13 +1,12 @@
 """Input sanitization service for XSS prevention."""
 
-
 import bleach
 
 # Allowed HTML tags (safe subset for formatted text)
-ALLOWED_TAGS = ['p', 'b', 'i', 'u', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'br']
+ALLOWED_TAGS = ["p", "b", "i", "u", "em", "strong", "a", "ul", "ol", "li", "br"]
 
 # Allowed attributes (only href and title for links)
-ALLOWED_ATTRIBUTES = {'a': ['href', 'title']}
+ALLOWED_ATTRIBUTES = {"a": ["href", "title"]}
 
 
 def sanitize_html(text: str | None) -> str | None:
@@ -49,14 +48,14 @@ def sanitize_insight(insight_data: dict) -> dict:
         Modifies the dictionary in-place AND returns it
     """
     text_fields = [
-        'problem_statement',
-        'proposed_solution',
-        'market_gap_analysis',
-        'target_customer_segments',
-        'competitive_landscape',
-        'revenue_model_suggestions',
-        'implementation_roadmap',
-        'key_risks_and_challenges',
+        "problem_statement",
+        "proposed_solution",
+        "market_gap_analysis",
+        "target_customer_segments",
+        "competitive_landscape",
+        "revenue_model_suggestions",
+        "implementation_roadmap",
+        "key_risks_and_challenges",
     ]
 
     for field in text_fields:

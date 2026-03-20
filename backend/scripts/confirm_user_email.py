@@ -5,6 +5,7 @@ Confirm user email in Supabase (via REST API).
 Uses httpx for Supabase Auth Admin API and SQLAlchemy for local DB lookups.
 NO Supabase SDK per CLAUDE.md rules.
 """
+
 import asyncio
 import os
 import sys
@@ -30,9 +31,7 @@ async def confirm_email(email: str):
 
     # Look up supabase_user_id from local DB
     async with AsyncSessionLocal() as session:
-        result = await session.execute(
-            select(User.supabase_user_id).where(User.email == email)
-        )
+        result = await session.execute(select(User.supabase_user_id).where(User.email == email))
         supabase_user_id = result.scalar_one_or_none()
 
     if not supabase_user_id:

@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 # PYDANTIC SCHEMAS
 # ============================================================================
 
+
 class BlogPost(BaseModel):
     """AI-generated blog post structure"""
 
@@ -161,6 +162,7 @@ content_generator_agent = Agent(
 # AGENT DEPENDENCY INJECTION
 # ============================================================================
 
+
 @content_generator_agent.system_prompt
 async def add_insight_context(ctx: RunContext[dict[str, Any]]) -> str:
     """Add insight data context to system prompt."""
@@ -173,14 +175,14 @@ async def add_insight_context(ctx: RunContext[dict[str, Any]]) -> str:
 
     context = f"""
 **Source Insight:**
-- Title: {insight.get('title', 'N/A')}
-- Problem: {insight.get('problem_statement', 'N/A')[:400]}
-- Solution: {insight.get('proposed_solution', 'N/A')[:400]}
-- Target Audience: {insight.get('target_audience', 'N/A')[:200]}
-- Market Size: {insight.get('market_size', 'N/A')[:200]}
-- Revenue Model: {insight.get('revenue_model', 'N/A')[:200]}
-- Viability Score: {insight.get('viability_score', 'N/A')}/10
-- Category: {insight.get('category', 'N/A')}
+- Title: {insight.get("title", "N/A")}
+- Problem: {insight.get("problem_statement", "N/A")[:400]}
+- Solution: {insight.get("proposed_solution", "N/A")[:400]}
+- Target Audience: {insight.get("target_audience", "N/A")[:200]}
+- Market Size: {insight.get("market_size", "N/A")[:200]}
+- Revenue Model: {insight.get("revenue_model", "N/A")[:200]}
+- Viability Score: {insight.get("viability_score", "N/A")}/10
+- Category: {insight.get("category", "N/A")}
 
 **Content Request:**
 - Type: {content_type}
@@ -200,6 +202,7 @@ Generate {content_type} content that:
 # ============================================================================
 # SERVICE FUNCTIONS
 # ============================================================================
+
 
 async def generate_blog_post(
     insight_id: UUID,
@@ -333,11 +336,7 @@ async def generate_content_calendar(
     logger.info(f"Generating {weeks_ahead}-week content calendar")
 
     # Get recent high-scoring insights for content ideas
-    stmt = (
-        select(Insight)
-        .order_by(Insight.relevance_score.desc().nullslast())
-        .limit(10)
-    )
+    stmt = select(Insight).order_by(Insight.relevance_score.desc().nullslast()).limit(10)
     result = await session.execute(stmt)
     insights = result.scalars().all()
 
@@ -351,8 +350,9 @@ async def generate_content_calendar(
         for i in insights
     ]
 
-    result = await asyncio.wait_for(content_generator_agent.run(
-        user_prompt=f"""Generate a {weeks_ahead}-week content calendar with {posts_per_week} posts per week.
+    result = await asyncio.wait_for(
+        content_generator_agent.run(
+            user_prompt=f"""Generate a {weeks_ahead}-week content calendar with {posts_per_week} posts per week.
 
 Mix of content types:
 - 2 blog posts per week
@@ -365,12 +365,14 @@ Base content on these top-performing insights:
 Include variety in topics: how-to guides, trend analysis, listicles, success stories.
 Suggest specific dates starting from today's date.
 Prioritize time-sensitive trends as 'high' priority.""",
-        deps={
-            "insight": {},
-            "content_type": "calendar",
-            "target_audience": "startup founders",
-        },
-    ), timeout=settings.llm_call_timeout)
+            deps={
+                "insight": {},
+                "content_type": "calendar",
+                "target_audience": "startup founders",
+            },
+        ),
+        timeout=settings.llm_call_timeout,
+    )
 
     logger.info(f"Generated {len(result.output.calendar_suggestions)} calendar items")
     return result.output.calendar_suggestions
@@ -429,6 +431,7 @@ async def generate_seo_suggestions(
 # ============================================================================
 # CONVENIENCE FUNCTIONS
 # ============================================================================
+
 
 async def generate_all_content(
     insight_id: UUID,

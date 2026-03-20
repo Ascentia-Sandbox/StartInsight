@@ -200,9 +200,7 @@ class InsightSummary(BaseModel):
 class InteractionCreate(BaseModel):
     """Schema for tracking an interaction."""
 
-    interaction_type: str = Field(
-        description="Type: view, interested, claim, share, export"
-    )
+    interaction_type: str = Field(description="Type: view, interested, claim, share, export")
     extra_metadata: dict = Field(
         default_factory=dict,
         description="Additional context (e.g., share platform, export format)",

@@ -58,15 +58,17 @@ async def fetch_daily_insight_task(ctx: dict) -> dict:
         if not await _is_agent_enabled(db):
             logger.info(f"Agent {AGENT_NAME} is disabled, skipping execution")
             # Log skipped execution
-            db.add(AgentExecutionLog(
-                agent_type=AGENT_NAME,
-                source="insights",
-                status="skipped",
-                started_at=started_at,
-                completed_at=datetime.now(UTC),
-                items_processed=0,
-                extra_metadata={"reason": "agent_disabled"},
-            ))
+            db.add(
+                AgentExecutionLog(
+                    agent_type=AGENT_NAME,
+                    source="insights",
+                    status="skipped",
+                    started_at=started_at,
+                    completed_at=datetime.now(UTC),
+                    items_processed=0,
+                    extra_metadata={"reason": "agent_disabled"},
+                )
+            )
             await db.commit()
             return {"status": "skipped", "reason": "agent_disabled"}
 
@@ -84,16 +86,18 @@ async def fetch_daily_insight_task(ctx: dict) -> dict:
             if not insights:
                 # No new insights - log and return
                 completed_at = datetime.now(UTC)
-                db.add(AgentExecutionLog(
-                    agent_type=AGENT_NAME,
-                    source="insights",
-                    status="completed",
-                    started_at=started_at,
-                    completed_at=completed_at,
-                    duration_ms=int((completed_at - started_at).total_seconds() * 1000),
-                    items_processed=0,
-                    extra_metadata={"reason": "no_new_insights"},
-                ))
+                db.add(
+                    AgentExecutionLog(
+                        agent_type=AGENT_NAME,
+                        source="insights",
+                        status="completed",
+                        started_at=started_at,
+                        completed_at=completed_at,
+                        duration_ms=int((completed_at - started_at).total_seconds() * 1000),
+                        items_processed=0,
+                        extra_metadata={"reason": "no_new_insights"},
+                    )
+                )
                 await db.commit()
                 logger.info("Daily insight agent: no new insights in last 24h")
                 return {"status": "completed", "items": 0, "reason": "no_new_insights"}
@@ -103,20 +107,22 @@ async def fetch_daily_insight_task(ctx: dict) -> dict:
 
             # Log successful execution
             completed_at = datetime.now(UTC)
-            db.add(AgentExecutionLog(
-                agent_type=AGENT_NAME,
-                source="insights",
-                status="completed",
-                started_at=started_at,
-                completed_at=completed_at,
-                duration_ms=int((completed_at - started_at).total_seconds() * 1000),
-                items_processed=len(insights),
-                extra_metadata={
-                    "top_insight_id": str(top_insight.id),
-                    "top_score": top_insight.relevance_score,
-                    "candidates_evaluated": len(insights),
-                },
-            ))
+            db.add(
+                AgentExecutionLog(
+                    agent_type=AGENT_NAME,
+                    source="insights",
+                    status="completed",
+                    started_at=started_at,
+                    completed_at=completed_at,
+                    duration_ms=int((completed_at - started_at).total_seconds() * 1000),
+                    items_processed=len(insights),
+                    extra_metadata={
+                        "top_insight_id": str(top_insight.id),
+                        "top_score": top_insight.relevance_score,
+                        "candidates_evaluated": len(insights),
+                    },
+                )
+            )
             await db.commit()
 
             logger.info(
@@ -134,16 +140,18 @@ async def fetch_daily_insight_task(ctx: dict) -> dict:
         except Exception as e:
             # Log failed execution
             completed_at = datetime.now(UTC)
-            db.add(AgentExecutionLog(
-                agent_type=AGENT_NAME,
-                source="insights",
-                status="failed",
-                started_at=started_at,
-                completed_at=completed_at,
-                duration_ms=int((completed_at - started_at).total_seconds() * 1000),
-                items_processed=0,
-                error_message=str(e),
-            ))
+            db.add(
+                AgentExecutionLog(
+                    agent_type=AGENT_NAME,
+                    source="insights",
+                    status="failed",
+                    started_at=started_at,
+                    completed_at=completed_at,
+                    duration_ms=int((completed_at - started_at).total_seconds() * 1000),
+                    items_processed=0,
+                    error_message=str(e),
+                )
+            )
             await db.commit()
 
             logger.exception(f"Daily insight agent failed: {e}")

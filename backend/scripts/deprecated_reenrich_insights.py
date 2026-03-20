@@ -124,8 +124,7 @@ async def reenrich():
 
                 success += 1
                 logger.info(
-                    f"[{i}/{total}] OK: '{new_insight.title}' "
-                    f"(slug={new_slug}, {elapsed:.1f}s)"
+                    f"[{i}/{total}] OK: '{new_insight.title}' (slug={new_slug}, {elapsed:.1f}s)"
                 )
 
             except Exception as e:
@@ -145,8 +144,7 @@ async def reenrich():
         # Final commit
         await session.commit()
         logger.info(
-            f"Re-enrichment complete: {success} updated, {failed} failed "
-            f"out of {total} total"
+            f"Re-enrichment complete: {success} updated, {failed} failed out of {total} total"
         )
 
 

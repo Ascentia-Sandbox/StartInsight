@@ -66,11 +66,11 @@ async def backfill():
             # Skip if trend data already exists with real dates
             existing_data = trend.trend_data or {}
             if existing_data.get("dates") and len(existing_data["dates"]) >= 7:
-                logger.info(f"[{i+1}/{len(trends)}] Already has trend data: {trend.keyword}")
+                logger.info(f"[{i + 1}/{len(trends)}] Already has trend data: {trend.keyword}")
                 skipped += 1
                 continue
 
-            logger.info(f"[{i+1}/{len(trends)}] Fetching trends for '{trend.keyword}'")
+            logger.info(f"[{i + 1}/{len(trends)}] Fetching trends for '{trend.keyword}'")
 
             # Rate limit
             time.sleep(REQUEST_DELAY)

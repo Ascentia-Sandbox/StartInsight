@@ -5,6 +5,7 @@ Revises: c007
 Create Date: 2026-02-16 16:00:00.000000
 
 """
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -34,9 +35,7 @@ def upgrade() -> None:
     )
 
     # 2. Delete seed_data raw_signals
-    op.execute(
-        sa.text("DELETE FROM raw_signals WHERE source = 'seed_data'")
-    )
+    op.execute(sa.text("DELETE FROM raw_signals WHERE source = 'seed_data'"))
 
 
 def downgrade() -> None:

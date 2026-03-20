@@ -40,29 +40,61 @@ from app.scrapers.sources.trends_scraper import TrendsScraper
 # Extended keywords for historical data generation
 EXTENDED_KEYWORDS = [
     # AI & Automation
-    "AI automation", "machine learning tools", "chatbot platforms",
-    "AI writing assistant", "AI image generation", "voice AI",
+    "AI automation",
+    "machine learning tools",
+    "chatbot platforms",
+    "AI writing assistant",
+    "AI image generation",
+    "voice AI",
     # SaaS & Productivity
-    "project management software", "CRM platform", "team collaboration",
-    "note-taking app", "calendar scheduling", "email automation",
+    "project management software",
+    "CRM platform",
+    "team collaboration",
+    "note-taking app",
+    "calendar scheduling",
+    "email automation",
     # Developer Tools
-    "API management", "database monitoring", "CI/CD pipeline",
-    "code review tools", "testing automation", "deployment platform",
+    "API management",
+    "database monitoring",
+    "CI/CD pipeline",
+    "code review tools",
+    "testing automation",
+    "deployment platform",
     # E-commerce & Marketing
-    "Shopify alternatives", "email marketing automation", "social media scheduler",
-    "SEO tools", "analytics platform", "conversion optimization",
+    "Shopify alternatives",
+    "email marketing automation",
+    "social media scheduler",
+    "SEO tools",
+    "analytics platform",
+    "conversion optimization",
     # Fintech
-    "payment processing", "invoicing software", "expense tracking",
-    "budgeting app", "cryptocurrency wallet", "investment platform",
+    "payment processing",
+    "invoicing software",
+    "expense tracking",
+    "budgeting app",
+    "cryptocurrency wallet",
+    "investment platform",
     # Health & Wellness
-    "fitness tracking", "mental health app", "telemedicine",
-    "nutrition planning", "workout app", "meditation app",
+    "fitness tracking",
+    "mental health app",
+    "telemedicine",
+    "nutrition planning",
+    "workout app",
+    "meditation app",
     # Education
-    "online course platform", "learning management system", "tutoring marketplace",
-    "language learning app", "skill assessment", "video learning",
+    "online course platform",
+    "learning management system",
+    "tutoring marketplace",
+    "language learning app",
+    "skill assessment",
+    "video learning",
     # Creator Economy
-    "content monetization", "creator tools", "newsletter platform",
-    "video editing software", "podcast hosting", "membership platform",
+    "content monetization",
+    "creator tools",
+    "newsletter platform",
+    "video editing software",
+    "podcast hosting",
+    "membership platform",
 ]
 
 # Seed insight templates for historical data
@@ -118,7 +150,9 @@ async def get_insight_count(db: AsyncSession) -> int:
     return result.scalar() or 0
 
 
-async def run_scrapers_for_date(db: AsyncSession, target_date: datetime, keywords: list[str]) -> int:
+async def run_scrapers_for_date(
+    db: AsyncSession, target_date: datetime, keywords: list[str]
+) -> int:
     """
     Run scrapers for a specific date and backdate timestamps.
 
@@ -233,8 +267,8 @@ async def generate_seed_insight(
         relevance_score=random.uniform(0.65, 0.95),  # Realistic spread
         competitor_analysis=[
             {
-                "name": f"Competitor {i+1}",
-                "url": f"https://example.com/competitor-{i+1}",
+                "name": f"Competitor {i + 1}",
+                "url": f"https://example.com/competitor-{i + 1}",
                 "description": f"Existing solution in {template['tags'][0]} space",
             }
             for i in range(2)
@@ -273,7 +307,7 @@ async def generate_seed_insights_for_date(
         # Commit in batches of 10
         if (i + 1) % 10 == 0:
             await db.commit()
-            logger.info(f"Generated {i+1}/{count} insights")
+            logger.info(f"Generated {i + 1}/{count} insights")
 
     await db.commit()
 
@@ -304,7 +338,7 @@ async def backfill_historical_data():
         week1_signals = 0
         for days_ago in range(6, -1, -1):  # 7 days ago to today
             target_date = now - timedelta(days=days_ago)
-            logger.info(f"\nDay {7-days_ago}/30: {target_date.date()}")
+            logger.info(f"\nDay {7 - days_ago}/30: {target_date.date()}")
 
             collected = await run_scrapers_for_date(db, target_date, EXTENDED_KEYWORDS[:10])
             week1_signals += collected
@@ -339,7 +373,9 @@ async def backfill_historical_data():
         logger.info("=" * 60)
         logger.info(f"Initial: {initial_signals} signals, {initial_insights} insights")
         logger.info(f"Final: {final_signals} signals, {final_insights} insights")
-        logger.info(f"Added: {final_signals - initial_signals} signals, {final_insights - initial_insights} insights")
+        logger.info(
+            f"Added: {final_signals - initial_signals} signals, {final_insights - initial_insights} insights"
+        )
 
         # Verify daily distribution
         logger.info("\n" + "=" * 60)
@@ -348,8 +384,7 @@ async def backfill_historical_data():
 
         result = await db.execute(
             select(
-                func.date(Insight.created_at).label('date'),
-                func.count(Insight.id).label('count')
+                func.date(Insight.created_at).label("date"), func.count(Insight.id).label("count")
             )
             .group_by(func.date(Insight.created_at))
             .order_by(func.date(Insight.created_at))

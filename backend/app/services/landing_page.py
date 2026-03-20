@@ -31,9 +31,7 @@ class HeroSection(BaseModel):
     subheadline: str = Field(max_length=200, description="Supporting subheadline")
     cta_primary: str = Field(max_length=30, description="Primary CTA button text")
     cta_secondary: str = Field(max_length=30, description="Secondary CTA text")
-    hero_image_suggestion: str = Field(
-        description="Description of ideal hero image/illustration"
-    )
+    hero_image_suggestion: str = Field(description="Description of ideal hero image/illustration")
 
 
 class FeatureItem(BaseModel):
@@ -49,9 +47,7 @@ class SocialProofItem(BaseModel):
 
     type: str = Field(description="Type: testimonial, stat, logo, case_study")
     content: str = Field(description="Content or placeholder text")
-    attribution: str | None = Field(
-        default=None, description="Attribution (name, company)"
-    )
+    attribution: str | None = Field(default=None, description="Attribution (name, company)")
 
 
 class PricingTier(BaseModel):
@@ -59,9 +55,7 @@ class PricingTier(BaseModel):
 
     name: str = Field(description="Tier name (Free, Starter, Pro)")
     price: str = Field(description="Price string ($0, $19/mo)")
-    features: list[str] = Field(
-        min_length=3, max_length=7, description="3-7 features"
-    )
+    features: list[str] = Field(min_length=3, max_length=7, description="3-7 features")
     cta: str = Field(description="CTA button text")
     highlighted: bool = Field(default=False, description="Is this the recommended tier?")
 
@@ -71,9 +65,7 @@ class SEOMetadata(BaseModel):
 
     title: str = Field(max_length=60, description="Page title (max 60 chars)")
     description: str = Field(max_length=160, description="Meta description (max 160)")
-    keywords: list[str] = Field(
-        min_length=5, max_length=10, description="Target keywords"
-    )
+    keywords: list[str] = Field(min_length=5, max_length=10, description="Target keywords")
     og_title: str = Field(description="Open Graph title")
     og_description: str = Field(description="Open Graph description")
 
@@ -82,22 +74,14 @@ class LandingPageTemplate(BaseModel):
     """Complete landing page template."""
 
     hero: HeroSection
-    features: list[FeatureItem] = Field(
-        min_length=3, max_length=6, description="3-6 features"
-    )
+    features: list[FeatureItem] = Field(min_length=3, max_length=6, description="3-6 features")
     social_proof: list[SocialProofItem] = Field(
         min_length=2, max_length=5, description="2-5 social proof items"
     )
-    pricing: list[PricingTier] | None = Field(
-        default=None, description="Optional pricing tiers"
-    )
-    faq: list[dict[str, str]] = Field(
-        min_length=3, max_length=8, description="3-8 FAQ items"
-    )
+    pricing: list[PricingTier] | None = Field(default=None, description="Optional pricing tiers")
+    faq: list[dict[str, str]] = Field(min_length=3, max_length=8, description="3-8 FAQ items")
     seo: SEOMetadata
-    html_structure: str = Field(
-        description="HTML structure suggestion with Tailwind classes"
-    )
+    html_structure: str = Field(description="HTML structure suggestion with Tailwind classes")
 
 
 # ============================================================
@@ -190,7 +174,7 @@ async def generate_landing_page(
         brand_context = f"""
 ## Brand Guidelines
 - Tone: {brand_package.brand_voice.tone}
-- Key Messages: {', '.join(brand_package.brand_voice.key_messages)}
+- Key Messages: {", ".join(brand_package.brand_voice.key_messages)}
 - Colors: Primary {brand_package.color_palette.primary}
 """
 
@@ -316,9 +300,18 @@ def get_default_landing_page(company_name: str) -> LandingPageTemplate:
             ),
         ],
         faq=[
-            {"question": "How do I get started?", "answer": "Sign up for free and follow our quick setup guide."},
-            {"question": "Can I cancel anytime?", "answer": "Yes, cancel your subscription at any time with no fees."},
-            {"question": "Is my data secure?", "answer": "We use enterprise-grade encryption and are SOC 2 compliant."},
+            {
+                "question": "How do I get started?",
+                "answer": "Sign up for free and follow our quick setup guide.",
+            },
+            {
+                "question": "Can I cancel anytime?",
+                "answer": "Yes, cancel your subscription at any time with no fees.",
+            },
+            {
+                "question": "Is my data secure?",
+                "answer": "We use enterprise-grade encryption and are SOC 2 compliant.",
+            },
         ],
         seo=SEOMetadata(
             title=f"{company_name} - Modern Solution for Your Needs",

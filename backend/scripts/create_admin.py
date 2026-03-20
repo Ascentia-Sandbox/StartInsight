@@ -5,6 +5,7 @@ Create super admin user in Supabase (via REST API) and local database.
 Uses httpx for Supabase Auth Admin API and SQLAlchemy for local DB.
 NO Supabase SDK per CLAUDE.md rules.
 """
+
 import asyncio
 import os
 import sys
@@ -26,9 +27,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
 
-async def supabase_admin_request(
-    method: str, path: str, json: dict | None = None
-) -> dict:
+async def supabase_admin_request(method: str, path: str, json: dict | None = None) -> dict:
     """Make an authenticated request to Supabase Auth Admin API."""
     async with httpx.AsyncClient() as client:
         response = await client.request(
@@ -83,9 +82,7 @@ async def create_admin_user(admin_email: str, admin_password: str):
                 select(User).where(User.supabase_user_id == supabase_uid)
             )
         else:
-            result = await session.execute(
-                select(User).where(User.email == admin_email)
-            )
+            result = await session.execute(select(User).where(User.email == admin_email))
         user = result.scalar_one_or_none()
 
         if not user:
@@ -93,9 +90,7 @@ async def create_admin_user(admin_email: str, admin_password: str):
             return
 
         # Check if already admin
-        admin_result = await session.execute(
-            select(AdminUser).where(AdminUser.user_id == user.id)
-        )
+        admin_result = await session.execute(select(AdminUser).where(AdminUser.user_id == user.id))
         existing_admin = admin_result.scalar_one_or_none()
 
         if existing_admin:

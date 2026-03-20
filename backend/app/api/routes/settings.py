@@ -32,8 +32,10 @@ router = APIRouter(prefix="/api/admin/settings", tags=["System Settings"])
 # Pydantic schemas
 # --------------------------------------------------------------------------
 
+
 class SettingItem(BaseModel):
     """Single setting response."""
+
     key: str
     value: Any
     description: str | None = None
@@ -42,16 +44,19 @@ class SettingItem(BaseModel):
 
 class SettingsListResponse(BaseModel):
     """All settings grouped by category."""
+
     settings: dict[str, list[SettingItem]]
 
 
 class SettingUpdateRequest(BaseModel):
     """Request body for updating a setting."""
+
     value: Any
 
 
 class SettingUpdateResponse(BaseModel):
     """Response after updating a setting."""
+
     key: str
     value: Any
     updated_at: datetime
@@ -62,39 +67,170 @@ class SettingUpdateResponse(BaseModel):
 # --------------------------------------------------------------------------
 
 DEFAULT_SETTINGS: list[dict[str, Any]] = [
-    {"key": "general.site_name", "value": "StartInsight", "category": "general", "description": "The public-facing name of the platform"},
-    {"key": "general.tagline", "value": "AI-Powered Startup Intelligence", "category": "general", "description": "Tagline displayed on the site header and marketing pages"},
-    {"key": "email.from_address", "value": "noreply@startinsight.co", "category": "email", "description": "Default sender email address for transactional emails"},
-    {"key": "email.from_name", "value": "StartInsight", "category": "email", "description": "Display name for outgoing emails"},
-    {"key": "email.digest_enabled", "value": True, "category": "email", "description": "Enable or disable weekly digest email sending"},
-    {"key": "features.community_voting", "value": True, "category": "features", "description": "Enable community voting on insights"},
-    {"key": "features.gamification", "value": False, "category": "features", "description": "Enable gamification system (achievements, points, credits)"},
-    {"key": "features.weekly_digest", "value": True, "category": "features", "description": "Enable weekly digest email feature for users"},
-    {"key": "pipeline.scrape_interval_hours", "value": 6, "category": "pipeline", "description": "Hours between automated scraping runs"},
-    {"key": "pipeline.analysis_batch_size", "value": 50, "category": "pipeline", "description": "Number of signals to process per analysis batch"},
-    {"key": "pipeline.min_relevance_score", "value": 5.0, "category": "pipeline", "description": "Minimum relevance score (0-10) for insights to be published"},
-    {"key": "ai.default_model", "value": "gemini-2.0-flash", "category": "ai", "description": "Primary LLM model for AI agent tasks"},
-    {"key": "ai.fallback_model", "value": "claude-3.5-sonnet", "category": "ai", "description": "Fallback LLM model when primary is unavailable"},
-    {"key": "ai.temperature", "value": 0.7, "category": "ai", "description": "LLM temperature (0.0-1.0) controlling response randomness"},
-    {"key": "ai.max_tokens", "value": 4096, "category": "ai", "description": "Maximum tokens per LLM response"},
+    {
+        "key": "general.site_name",
+        "value": "StartInsight",
+        "category": "general",
+        "description": "The public-facing name of the platform",
+    },
+    {
+        "key": "general.tagline",
+        "value": "AI-Powered Startup Intelligence",
+        "category": "general",
+        "description": "Tagline displayed on the site header and marketing pages",
+    },
+    {
+        "key": "email.from_address",
+        "value": "noreply@startinsight.co",
+        "category": "email",
+        "description": "Default sender email address for transactional emails",
+    },
+    {
+        "key": "email.from_name",
+        "value": "StartInsight",
+        "category": "email",
+        "description": "Display name for outgoing emails",
+    },
+    {
+        "key": "email.digest_enabled",
+        "value": True,
+        "category": "email",
+        "description": "Enable or disable weekly digest email sending",
+    },
+    {
+        "key": "features.community_voting",
+        "value": True,
+        "category": "features",
+        "description": "Enable community voting on insights",
+    },
+    {
+        "key": "features.gamification",
+        "value": False,
+        "category": "features",
+        "description": "Enable gamification system (achievements, points, credits)",
+    },
+    {
+        "key": "features.weekly_digest",
+        "value": True,
+        "category": "features",
+        "description": "Enable weekly digest email feature for users",
+    },
+    {
+        "key": "pipeline.scrape_interval_hours",
+        "value": 6,
+        "category": "pipeline",
+        "description": "Hours between automated scraping runs",
+    },
+    {
+        "key": "pipeline.analysis_batch_size",
+        "value": 50,
+        "category": "pipeline",
+        "description": "Number of signals to process per analysis batch",
+    },
+    {
+        "key": "pipeline.min_relevance_score",
+        "value": 5.0,
+        "category": "pipeline",
+        "description": "Minimum relevance score (0-10) for insights to be published",
+    },
+    {
+        "key": "ai.default_model",
+        "value": "gemini-2.0-flash",
+        "category": "ai",
+        "description": "Primary LLM model for AI agent tasks",
+    },
+    {
+        "key": "ai.fallback_model",
+        "value": "claude-3.5-sonnet",
+        "category": "ai",
+        "description": "Fallback LLM model when primary is unavailable",
+    },
+    {
+        "key": "ai.temperature",
+        "value": 0.7,
+        "category": "ai",
+        "description": "LLM temperature (0.0-1.0) controlling response randomness",
+    },
+    {
+        "key": "ai.max_tokens",
+        "value": 4096,
+        "category": "ai",
+        "description": "Maximum tokens per LLM response",
+    },
     # Scraper source configuration
-    {"key": "scraper.reddit.subreddits", "value": ["startups", "SaaS", "Entrepreneur", "smallbusiness", "indiehackers"], "category": "scraper", "description": "Reddit subreddits to scrape for startup signals"},
-    {"key": "scraper.reddit.posts_per_sub", "value": 25, "category": "scraper", "description": "Max posts to fetch per subreddit per run"},
-    {"key": "scraper.reddit.min_upvotes", "value": 10, "category": "scraper", "description": "Minimum upvotes to include a Reddit post"},
-    {"key": "scraper.producthunt.categories", "value": ["Tech", "SaaS", "Artificial Intelligence", "Developer Tools", "Productivity"], "category": "scraper", "description": "Product Hunt categories to monitor"},
-    {"key": "scraper.producthunt.items_per_run", "value": 30, "category": "scraper", "description": "Max products to fetch per run"},
-    {"key": "scraper.hackernews.min_score", "value": 50, "category": "scraper", "description": "Minimum HN score to include a story"},
-    {"key": "scraper.hackernews.max_results", "value": 30, "category": "scraper", "description": "Max stories to fetch per run"},
-    {"key": "scraper.hackernews.story_types", "value": ["top", "best", "show"], "category": "scraper", "description": "HN story types to fetch (top, best, new, ask, show, job)"},
-    {"key": "scraper.twitter.search_queries", "value": ["startup launch", "new SaaS", "AI startup", "indie maker"], "category": "scraper", "description": "Twitter/X search queries for startup signals"},
-    {"key": "scraper.google_trends.regions", "value": ["US", "GB", "DE"], "category": "scraper", "description": "Google Trends regions to monitor"},
-    {"key": "scraper.google_trends.keywords", "value": ["AI startup", "SaaS tool", "no-code", "automation"], "category": "scraper", "description": "Google Trends keywords to track"},
+    {
+        "key": "scraper.reddit.subreddits",
+        "value": ["startups", "SaaS", "Entrepreneur", "smallbusiness", "indiehackers"],
+        "category": "scraper",
+        "description": "Reddit subreddits to scrape for startup signals",
+    },
+    {
+        "key": "scraper.reddit.posts_per_sub",
+        "value": 25,
+        "category": "scraper",
+        "description": "Max posts to fetch per subreddit per run",
+    },
+    {
+        "key": "scraper.reddit.min_upvotes",
+        "value": 10,
+        "category": "scraper",
+        "description": "Minimum upvotes to include a Reddit post",
+    },
+    {
+        "key": "scraper.producthunt.categories",
+        "value": ["Tech", "SaaS", "Artificial Intelligence", "Developer Tools", "Productivity"],
+        "category": "scraper",
+        "description": "Product Hunt categories to monitor",
+    },
+    {
+        "key": "scraper.producthunt.items_per_run",
+        "value": 30,
+        "category": "scraper",
+        "description": "Max products to fetch per run",
+    },
+    {
+        "key": "scraper.hackernews.min_score",
+        "value": 50,
+        "category": "scraper",
+        "description": "Minimum HN score to include a story",
+    },
+    {
+        "key": "scraper.hackernews.max_results",
+        "value": 30,
+        "category": "scraper",
+        "description": "Max stories to fetch per run",
+    },
+    {
+        "key": "scraper.hackernews.story_types",
+        "value": ["top", "best", "show"],
+        "category": "scraper",
+        "description": "HN story types to fetch (top, best, new, ask, show, job)",
+    },
+    {
+        "key": "scraper.twitter.search_queries",
+        "value": ["startup launch", "new SaaS", "AI startup", "indie maker"],
+        "category": "scraper",
+        "description": "Twitter/X search queries for startup signals",
+    },
+    {
+        "key": "scraper.google_trends.regions",
+        "value": ["US", "GB", "DE"],
+        "category": "scraper",
+        "description": "Google Trends regions to monitor",
+    },
+    {
+        "key": "scraper.google_trends.keywords",
+        "value": ["AI startup", "SaaS tool", "no-code", "automation"],
+        "category": "scraper",
+        "description": "Google Trends keywords to track",
+    },
 ]
 
 
 # --------------------------------------------------------------------------
 # Endpoints
 # --------------------------------------------------------------------------
+
 
 @router.get(
     "/",
@@ -141,9 +277,7 @@ async def update_setting(
 ) -> SettingUpdateResponse:
     """Update a single system setting by key."""
     # Find the setting (or create if it doesn't exist)
-    result = await db.execute(
-        select(SystemSetting).where(SystemSetting.key == key)
-    )
+    result = await db.execute(select(SystemSetting).where(SystemSetting.key == key))
     setting = result.scalar_one_or_none()
 
     if not setting:
@@ -167,6 +301,7 @@ async def update_setting(
 
     # Explicit updated_at since onupdate may not fire in all drivers
     from sqlalchemy import func as sa_func
+
     setting.updated_at = sa_func.now()
 
     # Create audit log entry

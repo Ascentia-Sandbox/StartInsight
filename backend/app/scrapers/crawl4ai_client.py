@@ -119,7 +119,9 @@ class Crawl4AIClient:
                     metadata={
                         "source": "crawl4ai",
                         "success": result.success,
-                        "status_code": result.status_code if hasattr(result, "status_code") else None,
+                        "status_code": result.status_code
+                        if hasattr(result, "status_code")
+                        else None,
                     },
                 )
 

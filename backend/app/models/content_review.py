@@ -36,9 +36,7 @@ class ContentReviewQueue(Base):
     """
 
     __tablename__ = "content_review_queue"
-    __table_args__ = (
-        UniqueConstraint("content_type", "content_id", name="uq_content_review"),
-    )
+    __table_args__ = (UniqueConstraint("content_type", "content_id", name="uq_content_review"),)
 
     id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),

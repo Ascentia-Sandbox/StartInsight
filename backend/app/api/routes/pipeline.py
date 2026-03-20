@@ -36,6 +36,7 @@ VALID_SCRAPERS = ["reddit", "product_hunt", "hacker_news", "twitter", "google_tr
 # Schemas
 # ============================================
 
+
 class ScraperStatus(BaseModel):
     name: str
     status: str
@@ -44,10 +45,12 @@ class ScraperStatus(BaseModel):
     items_fetched: int | None
     success_rate_24h: float
 
+
 class PipelineStatusResponse(BaseModel):
     scrapers: list[ScraperStatus]
     processing_queue: dict[str, int]
     api_quotas: dict[str, dict[str, Any]]
+
 
 class HealthCheckResponse(BaseModel):
     id: UUID
@@ -60,6 +63,7 @@ class HealthCheckResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class QuotaUsageResponse(BaseModel):
     id: UUID
     api_name: str
@@ -70,6 +74,7 @@ class QuotaUsageResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class AlertCreate(BaseModel):
     alert_name: str = Field(..., max_length=100)
     alert_type: str = Field(..., pattern="^(threshold|anomaly|failure)$")
@@ -77,6 +82,7 @@ class AlertCreate(BaseModel):
     condition: dict[str, Any]
     severity: str = Field(default="warning", pattern="^(info|warning|critical)$")
     notification_channels: list[str] | None = None
+
 
 class AlertResponse(BaseModel):
     id: UUID
@@ -91,6 +97,7 @@ class AlertResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class IncidentResponse(BaseModel):
     id: UUID
     alert_id: UUID
@@ -101,6 +108,7 @@ class IncidentResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class IncidentAction(BaseModel):
     action: str = Field(..., pattern="^(acknowledge|resolve)$")
 
@@ -108,6 +116,7 @@ class IncidentAction(BaseModel):
 # ============================================
 # Pipeline Status Endpoints
 # ============================================
+
 
 @router.get("/status", response_model=PipelineStatusResponse)
 async def get_pipeline_status(
@@ -134,30 +143,33 @@ async def get_pipeline_status(
             select(func.count()).where(
                 PipelineHealthCheck.scraper_name == scraper,
                 PipelineHealthCheck.checked_at >= day_ago,
-                PipelineHealthCheck.status == "healthy"
+                PipelineHealthCheck.status == "healthy",
             )
         )
         total_count = await db.execute(
             select(func.count()).where(
                 PipelineHealthCheck.scraper_name == scraper,
-                PipelineHealthCheck.checked_at >= day_ago
+                PipelineHealthCheck.checked_at >= day_ago,
             )
         )
         success = success_count.scalar() or 0
         total = total_count.scalar() or 1
         success_rate = success / total if total > 0 else 0.0
 
-        scraper_statuses.append(ScraperStatus(
-            name=scraper,
-            status=latest.status if latest else "unknown",
-            last_check=latest.checked_at if latest else None,
-            response_time_ms=latest.response_time_ms if latest else None,
-            items_fetched=latest.items_fetched if latest else None,
-            success_rate_24h=round(success_rate, 2)
-        ))
+        scraper_statuses.append(
+            ScraperStatus(
+                name=scraper,
+                status=latest.status if latest else "unknown",
+                last_check=latest.checked_at if latest else None,
+                response_time_ms=latest.response_time_ms if latest else None,
+                items_fetched=latest.items_fetched if latest else None,
+                success_rate_24h=round(success_rate, 2),
+            )
+        )
 
     # Get processing queue stats (from raw_signals)
     from app.models.raw_signal import RawSignal
+
     pending = await db.execute(select(func.count()).where(RawSignal.processed == False))
     processed = await db.execute(select(func.count()).where(RawSignal.processed == True))
 
@@ -177,7 +189,7 @@ async def get_pipeline_status(
     return PipelineStatusResponse(
         scrapers=scraper_statuses,
         processing_queue={"pending": pending.scalar() or 0, "processed": processed.scalar() or 0},
-        api_quotas=quotas
+        api_quotas=quotas,
     )
 
 
@@ -228,13 +240,17 @@ async def trigger_scraper(
 
             from app.core.config import settings
 
-            pool: ArqRedis = await create_pool(ArqRedisSettings(
-                host=settings.redis_host,
-                port=settings.redis_port,
-            ))
+            pool: ArqRedis = await create_pool(
+                ArqRedisSettings(
+                    host=settings.redis_host,
+                    port=settings.redis_port,
+                )
+            )
             job = await pool.enqueue_job(task_name)
             await pool.aclose()
-            logger.info(f"Enqueued scraper task '{task_name}' (job_id={job.job_id}) by admin {admin.id}")
+            logger.info(
+                f"Enqueued scraper task '{task_name}' (job_id={job.job_id}) by admin {admin.id}"
+            )
         except Exception as e:
             logger.warning(f"Failed to enqueue scraper task for {name}: {e}")
 
@@ -314,6 +330,7 @@ async def get_quota_usage(
 # ============================================
 # Alert Management Endpoints
 # ============================================
+
 
 @router.get("/alerts", response_model=list[AlertResponse])
 async def list_alerts(
@@ -402,6 +419,7 @@ async def delete_alert(
 # Incident Management Endpoints
 # ============================================
 
+
 @router.get("/incidents", response_model=list[IncidentResponse])
 async def list_incidents(
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -428,7 +446,9 @@ async def update_incident(
     admin: Annotated[User, Depends(require_admin)],
 ):
     """Acknowledge or resolve an incident."""
-    result = await db.execute(select(AdminAlertIncident).where(AdminAlertIncident.id == incident_id))
+    result = await db.execute(
+        select(AdminAlertIncident).where(AdminAlertIncident.id == incident_id)
+    )
     incident = result.scalar_one_or_none()
 
     if not incident:

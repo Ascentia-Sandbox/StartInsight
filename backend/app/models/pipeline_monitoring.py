@@ -30,11 +30,15 @@ class PipelineHealthCheck(Base):
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     scraper_name: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
-    status: Mapped[str] = mapped_column(String(20), nullable=False, comment="healthy, degraded, down")
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, comment="healthy, degraded, down"
+    )
     response_time_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     items_fetched: Mapped[int | None] = mapped_column(Integer, nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
-    checked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    checked_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     def __repr__(self) -> str:
         return f"<PipelineHealthCheck(scraper={self.scraper_name}, status={self.status})>"
@@ -47,14 +51,20 @@ class APIQuotaUsage(Base):
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     api_name: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
-    metric_name: Mapped[str] = mapped_column(String(50), nullable=False, comment="requests, tokens, cost_usd")
+    metric_name: Mapped[str] = mapped_column(
+        String(50), nullable=False, comment="requests, tokens, cost_usd"
+    )
     value: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False)
     period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    recorded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     def __repr__(self) -> str:
-        return f"<APIQuotaUsage(api={self.api_name}, metric={self.metric_name}, value={self.value})>"
+        return (
+            f"<APIQuotaUsage(api={self.api_name}, metric={self.metric_name}, value={self.value})>"
+        )
 
 
 class AdminAlert(Base):
@@ -64,18 +74,28 @@ class AdminAlert(Base):
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     alert_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    alert_type: Mapped[str] = mapped_column(String(50), nullable=False, comment="threshold, anomaly, failure")
+    alert_type: Mapped[str] = mapped_column(
+        String(50), nullable=False, comment="threshold, anomaly, failure"
+    )
     metric_name: Mapped[str] = mapped_column(String(100), nullable=False)
     condition: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     severity: Mapped[str] = mapped_column(String(20), default="warning", nullable=False)
     notification_channels: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, index=True)
-    created_by: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_by: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relationships
-    creator: Mapped["User | None"] = relationship("User", foreign_keys=[created_by], lazy="selectin")
-    incidents: Mapped[list["AdminAlertIncident"]] = relationship("AdminAlertIncident", back_populates="alert", cascade="all, delete-orphan")
+    creator: Mapped["User | None"] = relationship(
+        "User", foreign_keys=[created_by], lazy="selectin"
+    )
+    incidents: Mapped[list["AdminAlertIncident"]] = relationship(
+        "AdminAlertIncident", back_populates="alert", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<AdminAlert(name={self.alert_name}, severity={self.severity}, active={self.is_active})>"
@@ -87,16 +107,28 @@ class AdminAlertIncident(Base):
     __tablename__ = "admin_alert_incidents"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    alert_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("admin_alerts.id", ondelete="CASCADE"), nullable=False)
+    alert_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("admin_alerts.id", ondelete="CASCADE"), nullable=False
+    )
     triggered_value: Mapped[Decimal | None] = mapped_column(Numeric(12, 4), nullable=True)
-    status: Mapped[str] = mapped_column(String(20), default="open", nullable=False, comment="open, acknowledged, resolved")
-    acknowledged_by: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    status: Mapped[str] = mapped_column(
+        String(20), default="open", nullable=False, comment="open, acknowledged, resolved"
+    )
+    acknowledged_by: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relationships
-    alert: Mapped["AdminAlert"] = relationship("AdminAlert", back_populates="incidents", lazy="selectin")
-    acknowledger: Mapped["User | None"] = relationship("User", foreign_keys=[acknowledged_by], lazy="selectin")
+    alert: Mapped["AdminAlert"] = relationship(
+        "AdminAlert", back_populates="incidents", lazy="selectin"
+    )
+    acknowledger: Mapped["User | None"] = relationship(
+        "User", foreign_keys=[acknowledged_by], lazy="selectin"
+    )
 
     def __repr__(self) -> str:
         return f"<AdminAlertIncident(alert_id={self.alert_id}, status={self.status})>"

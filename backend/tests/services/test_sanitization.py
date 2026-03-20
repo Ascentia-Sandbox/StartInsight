@@ -1,6 +1,5 @@
 """Tests for input sanitization service."""
 
-
 from app.services.sanitization import sanitize_html, sanitize_insight
 
 
@@ -68,7 +67,7 @@ class TestSanitizeHtml:
 
     def test_strips_style_tag(self):
         """Style tags should be stripped."""
-        html = '<style>body{display:none}</style><p>Text</p>'
+        html = "<style>body{display:none}</style><p>Text</p>"
         result = sanitize_html(html)
         assert "<style>" not in result
         assert "<p>Text</p>" in result

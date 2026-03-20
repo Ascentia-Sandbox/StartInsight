@@ -189,9 +189,7 @@ async def list_api_keys(
     Requires authentication. Does not return full key values.
     """
     query = (
-        select(APIKey)
-        .where(APIKey.user_id == current_user.id)
-        .order_by(APIKey.created_at.desc())
+        select(APIKey).where(APIKey.user_id == current_user.id).order_by(APIKey.created_at.desc())
     )
     result = await db.execute(query)
     keys = result.scalars().all()

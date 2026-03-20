@@ -120,6 +120,7 @@ def get_stripe_client():
     """Get Stripe client instance."""
     try:
         import stripe
+
         stripe.api_key = settings.stripe_secret_key
         return stripe
     except ImportError:
@@ -166,15 +167,19 @@ async def create_checkout_session(
             raise ValueError("URL contains path traversal attempts")
 
         # Check path depth to prevent deep directory traversal
-        success_path_depth = len(success_url_parsed.path.split('/')) if success_url_parsed.path else 0
-        cancel_path_depth = len(cancel_url_parsed.path.split('/')) if cancel_url_parsed.path else 0
+        success_path_depth = (
+            len(success_url_parsed.path.split("/")) if success_url_parsed.path else 0
+        )
+        cancel_path_depth = len(cancel_url_parsed.path.split("/")) if cancel_url_parsed.path else 0
 
         if success_path_depth > 10 or cancel_path_depth > 10:
             raise ValueError("URL path depth exceeds maximum allowed")
 
         # Validate URLs belong to allowed domains (prevent open redirect attacks)
         allowed_origins = settings.cors_origins_list
-        allowed_hosts = {urlparse(origin).hostname for origin in allowed_origins if urlparse(origin).hostname}
+        allowed_hosts = {
+            urlparse(origin).hostname for origin in allowed_origins if urlparse(origin).hostname
+        }
         success_host = success_url_parsed.hostname
         cancel_host = cancel_url_parsed.hostname
 
@@ -304,7 +309,7 @@ async def handle_webhook_event(
             "customer.subscription.updated",
             "customer.subscription.deleted",
             "invoice.paid",
-            "invoice.payment_failed"
+            "invoice.payment_failed",
         ]
 
         if event["type"] not in allowed_event_types:
@@ -402,9 +407,8 @@ async def handle_webhook_event(
             # ✅ AUDIT LOGGING - Log webhook processing for audit purposes
             # In a production environment, this would be stored in a dedicated audit log table
             from app.services.compliance_service import AuditLoggingService
-            await AuditLoggingService.log_webhook_processing(
-                db, event_id, event_type, "processed"
-            )
+
+            await AuditLoggingService.log_webhook_processing(db, event_id, event_type, "processed")
             db.add(webhook_event)
             await db.commit()
 
@@ -429,7 +433,9 @@ async def handle_webhook_event(
     except stripe.error.SignatureVerificationError as e:
         logger.error(f"Invalid webhook signature: {e}")
         # Log the event ID for better debugging
-        logger.error(f"Failed webhook event ID: {event_id if 'event_id' in locals() else 'unknown'}")
+        logger.error(
+            f"Failed webhook event ID: {event_id if 'event_id' in locals() else 'unknown'}"
+        )
         return {"status": "error", "error": "invalid_signature"}
     except Exception as e:
         logger.error(f"Webhook processing failed: {e}", exc_info=True)
@@ -465,22 +471,26 @@ async def _handle_checkout_completed(data: dict, db: AsyncSession) -> dict:
         raise ValueError(f"User {user_id} not found")
 
     # Create or update subscription (atomic upsert)
-    stmt = insert(Subscription).values(
-        user_id=user_id,
-        stripe_customer_id=customer_id,
-        stripe_subscription_id=subscription_id,
-        tier=tier,
-        status="active",
-        subscription_metadata=data.get("metadata", {}),
-    ).on_conflict_do_update(
-        index_elements=["user_id"],
-        set_={
-            "stripe_customer_id": customer_id,
-            "stripe_subscription_id": subscription_id,
-            "tier": tier,
-            "status": "active",
-            "subscription_metadata": data.get("metadata", {}),
-        }
+    stmt = (
+        insert(Subscription)
+        .values(
+            user_id=user_id,
+            stripe_customer_id=customer_id,
+            stripe_subscription_id=subscription_id,
+            tier=tier,
+            status="active",
+            subscription_metadata=data.get("metadata", {}),
+        )
+        .on_conflict_do_update(
+            index_elements=["user_id"],
+            set_={
+                "stripe_customer_id": customer_id,
+                "stripe_subscription_id": subscription_id,
+                "tier": tier,
+                "status": "active",
+                "subscription_metadata": data.get("metadata", {}),
+            },
+        )
     )
 
     await db.execute(stmt)
@@ -543,7 +553,11 @@ async def _handle_subscription_deleted(data: dict, db: AsyncSession) -> dict:
     from app.models.subscription import Subscription
 
     stripe_subscription_id = data.get("id")
-    canceled_at = datetime.fromtimestamp(data.get("canceled_at", 0)) if data.get("canceled_at") else datetime.now(UTC)
+    canceled_at = (
+        datetime.fromtimestamp(data.get("canceled_at", 0))
+        if data.get("canceled_at")
+        else datetime.now(UTC)
+    )
 
     logger.info(f"Subscription {stripe_subscription_id} cancelled")
 
@@ -582,7 +596,7 @@ async def _handle_invoice_paid(data: dict, db: AsyncSession) -> dict:
     customer_id = data.get("customer")
     amount_paid = data.get("amount_paid", 0)
     currency = data.get("currency", "usd")
-    logger.info(f"Invoice {invoice_id} paid: ${amount_paid/100:.2f} {currency.upper()}")
+    logger.info(f"Invoice {invoice_id} paid: ${amount_paid / 100:.2f} {currency.upper()}")
 
     # Find subscription by stripe_customer_id
     result = await db.execute(
@@ -606,7 +620,7 @@ async def _handle_invoice_paid(data: dict, db: AsyncSession) -> dict:
     db.add(payment_record)
     await db.commit()
 
-    logger.info(f"Payment recorded for subscription {subscription.id}: ${amount_paid/100:.2f}")
+    logger.info(f"Payment recorded for subscription {subscription.id}: ${amount_paid / 100:.2f}")
 
     return {
         "status": "processed",

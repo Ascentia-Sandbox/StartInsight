@@ -4,6 +4,7 @@ Revision ID: b022
 Revises: c22518f05cbf
 Create Date: 2026-02-08
 """
+
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
 

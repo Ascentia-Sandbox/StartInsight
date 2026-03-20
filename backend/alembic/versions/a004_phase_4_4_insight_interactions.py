@@ -75,9 +75,7 @@ def upgrade() -> None:
     # ============================================
     op.create_index("idx_interactions_user", "insight_interactions", ["user_id"])
     op.create_index("idx_interactions_insight", "insight_interactions", ["insight_id"])
-    op.create_index(
-        "idx_interactions_type", "insight_interactions", ["interaction_type"]
-    )
+    op.create_index("idx_interactions_type", "insight_interactions", ["interaction_type"])
     op.create_index(
         "idx_interactions_created",
         "insight_interactions",
@@ -164,17 +162,13 @@ def downgrade() -> None:
     ]
 
     for policy_name in policies:
-        op.execute(
-            f'DROP POLICY IF EXISTS "{policy_name}" ON insight_interactions;'
-        )
+        op.execute(f'DROP POLICY IF EXISTS "{policy_name}" ON insight_interactions;')
 
     # Disable RLS
     op.execute("ALTER TABLE insight_interactions DISABLE ROW LEVEL SECURITY;")
 
     # Drop check constraint
-    op.execute(
-        "ALTER TABLE insight_interactions DROP CONSTRAINT IF EXISTS chk_interaction_type;"
-    )
+    op.execute("ALTER TABLE insight_interactions DROP CONSTRAINT IF EXISTS chk_interaction_type;")
 
     # Drop indexes
     op.drop_index("idx_interactions_type_created", table_name="insight_interactions")

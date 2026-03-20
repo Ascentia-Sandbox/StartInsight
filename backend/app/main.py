@@ -49,9 +49,7 @@ if settings.sentry_dsn and settings.environment in ("production", "staging"):
         if exc_info and exc_info[1]:
             exc_str = str(exc_info[1])
             # Drop Gemini/LLM 429 rate-limit errors (expected, not actionable)
-            if "429" in exc_str and (
-                "Resource exhausted" in exc_str or "rate" in exc_str.lower()
-            ):
+            if "429" in exc_str and ("Resource exhausted" in exc_str or "rate" in exc_str.lower()):
                 return None
             # Drop DB pool exhaustion (transient, self-recovering)
             if "MaxClientsInSessionMode" in exc_str or "Max client connections" in exc_str:
@@ -73,8 +71,8 @@ if settings.sentry_dsn and settings.environment in ("production", "staging"):
             FastApiIntegration(transaction_style="url"),
             SqlalchemyIntegration(),
             LoggingIntegration(
-                level=_logging.INFO,          # Breadcrumbs from INFO+
-                event_level=_logging.ERROR,   # Sentry issues from ERROR+
+                level=_logging.INFO,  # Breadcrumbs from INFO+
+                event_level=_logging.ERROR,  # Sentry issues from ERROR+
                 sentry_logs_level=_logging.WARNING,  # Sentry Logs tab from WARNING+
             ),
         ],
@@ -123,6 +121,7 @@ async def lifespan(app: FastAPI):
     # 2. Close Redis connections
     try:
         from app.core.cache import close_redis
+
         await close_redis()
         logger.info("Redis connections closed")
     except Exception as e:
@@ -131,6 +130,7 @@ async def lifespan(app: FastAPI):
     # 3. Close database connection pool
     try:
         from app.db.session import close_db
+
         await close_db()
         logger.info("Database connections closed")
     except Exception as e:
@@ -154,6 +154,7 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json",
 )
+
 
 # Request ID middleware for correlation (add BEFORE CORS)
 class RequestIDMiddleware(BaseHTTPMiddleware):
@@ -210,6 +211,7 @@ app.add_middleware(RateLimiterMiddleware, max_requests=100, window_seconds=3600)
 # Global Exception Handlers (Production Security)
 # ============================================================================
 
+
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
     """
@@ -221,14 +223,15 @@ async def generic_exception_handler(request: Request, exc: Exception):
         extra={
             "path": request.url.path,
             "method": request.method,
-            "error_type": type(exc).__name__
+            "error_type": type(exc).__name__,
         },
-        exc_info=True  # Includes stack trace in logs
+        exc_info=True,  # Includes stack trace in logs
     )
 
     # Send to Sentry if configured
     if settings.sentry_dsn:
         import sentry_sdk
+
         sentry_sdk.capture_exception(exc)
 
     # Return generic error (DO NOT expose implementation details)
@@ -236,8 +239,8 @@ async def generic_exception_handler(request: Request, exc: Exception):
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
             "detail": "Internal server error. Our team has been notified.",
-            "request_id": getattr(request.state, "request_id", None)
-        }
+            "request_id": getattr(request.state, "request_id", None),
+        },
     )
 
 
@@ -246,18 +249,17 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     """Handle Pydantic validation errors (422 errors)."""
     errors = []
     for error in exc.errors():
-        errors.append({
-            "field": ".".join(str(loc) for loc in error["loc"]),
-            "message": error["msg"],
-            "type": error["type"]
-        })
+        errors.append(
+            {
+                "field": ".".join(str(loc) for loc in error["loc"]),
+                "message": error["msg"],
+                "type": error["type"],
+            }
+        )
 
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={
-            "detail": "Validation error",
-            "errors": errors
-        }
+        content={"detail": "Validation error", "errors": errors},
     )
 
 
@@ -275,10 +277,7 @@ async def integrity_error_handler(request: Request, exc: IntegrityError):
     else:
         detail = "Database constraint violation"
 
-    return JSONResponse(
-        status_code=status.HTTP_409_CONFLICT,
-        content={"detail": detail}
-    )
+    return JSONResponse(status_code=status.HTTP_409_CONFLICT, content={"detail": detail})
 
 
 @app.exception_handler(OperationalError)
@@ -288,14 +287,15 @@ async def operational_error_handler(request: Request, exc: OperationalError):
 
     if settings.sentry_dsn:
         import sentry_sdk
+
         sentry_sdk.capture_exception(exc)
 
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         content={
             "detail": "Service temporarily unavailable. Please try again.",
-            "request_id": getattr(request.state, "request_id", None)
-        }
+            "request_id": getattr(request.state, "request_id", None),
+        },
     )
 
 
@@ -306,7 +306,7 @@ async def jwt_error_handler(request: Request, exc: InvalidTokenError):
 
     return JSONResponse(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        content={"detail": "Invalid or expired authentication token"}
+        content={"detail": "Invalid or expired authentication token"},
     )
 
 

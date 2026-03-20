@@ -7,6 +7,7 @@ Create Date: 2026-02-21
 Allows tools to carry an affiliate/referral URL that overrides the
 standard website_url in the frontend Visit button.
 """
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa

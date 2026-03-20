@@ -63,8 +63,8 @@ class TestSubscriberCountFormatting:
 class TestCommunityValidatorInit:
     """Test CommunityValidator initialization."""
 
-    @patch('app.services.community_validator.praw.Reddit')
-    @patch('app.services.community_validator.settings')
+    @patch("app.services.community_validator.praw.Reddit")
+    @patch("app.services.community_validator.settings")
     def test_init_with_credentials(self, mock_settings, mock_reddit):
         """Should initialize with credentials."""
         mock_settings.reddit_client_id = "test_client_id"
@@ -76,7 +76,7 @@ class TestCommunityValidatorInit:
         mock_reddit.assert_called_once()
         assert validator._reddit is not None
 
-    @patch('app.services.community_validator.settings')
+    @patch("app.services.community_validator.settings")
     def test_init_without_credentials(self, mock_settings):
         """Should handle missing credentials gracefully."""
         mock_settings.reddit_client_id = None

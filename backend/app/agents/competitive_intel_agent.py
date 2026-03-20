@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 # PYDANTIC SCHEMAS
 # ============================================================================
 
+
 class CompetitorAnalysis(BaseModel):
     """AI-generated analysis of a single competitor"""
 
@@ -184,6 +185,7 @@ competitive_intel_agent = Agent(
 # AGENT DEPENDENCY INJECTION
 # ============================================================================
 
+
 @competitive_intel_agent.system_prompt
 async def add_competitor_context(ctx: RunContext[dict[str, Any]]) -> str:
     """
@@ -201,9 +203,9 @@ async def add_competitor_context(ctx: RunContext[dict[str, Any]]) -> str:
     # Format competitor data for LLM context
     competitor_context = f"""
 **Startup Idea:**
-- Problem: {insight.get('problem_statement', 'N/A')[:300]}
-- Solution: {insight.get('proposed_solution', 'N/A')[:300]}
-- Market: {insight.get('market_size', 'N/A')[:200]}
+- Problem: {insight.get("problem_statement", "N/A")[:300]}
+- Solution: {insight.get("proposed_solution", "N/A")[:300]}
+- Market: {insight.get("market_size", "N/A")[:200]}
 
 **Competitors to Analyze ({len(competitors)} total):**
 
@@ -211,14 +213,14 @@ async def add_competitor_context(ctx: RunContext[dict[str, Any]]) -> str:
 
     for i, comp in enumerate(competitors, start=1):
         competitor_context += f"""
-{i}. **{comp['name']}** ({comp['url']})
-   - Description: {comp['description'] or 'N/A'}
-   - Value Proposition: {comp['value_proposition'] or 'N/A'}
-   - Target Audience: {comp['target_audience'] or 'N/A'}
-   - Pricing: {comp['metrics'].get('pricing', 'N/A')}
-   - Features: {list(comp['features'].keys())[:10] if comp['features'] else 'N/A'}
-   - Team Size: {comp['metrics'].get('team_size', 'N/A')}
-   - Funding: {comp['metrics'].get('funding', 'N/A')}
+{i}. **{comp["name"]}** ({comp["url"]})
+   - Description: {comp["description"] or "N/A"}
+   - Value Proposition: {comp["value_proposition"] or "N/A"}
+   - Target Audience: {comp["target_audience"] or "N/A"}
+   - Pricing: {comp["metrics"].get("pricing", "N/A")}
+   - Features: {list(comp["features"].keys())[:10] if comp["features"] else "N/A"}
+   - Team Size: {comp["metrics"].get("team_size", "N/A")}
+   - Funding: {comp["metrics"].get("funding", "N/A")}
 
 """
 
@@ -237,6 +239,7 @@ async def add_competitor_context(ctx: RunContext[dict[str, Any]]) -> str:
 # ============================================================================
 # SERVICE FUNCTIONS
 # ============================================================================
+
 
 async def analyze_competitors_with_retry(
     insight_id: UUID,
@@ -273,7 +276,9 @@ async def analyze_competitors_with_retry(
     competitors = result.scalars().all()
 
     if not competitors or len(competitors) == 0:
-        raise ValueError(f"No competitors found for insight {insight_id}. Please scrape competitors first.")
+        raise ValueError(
+            f"No competitors found for insight {insight_id}. Please scrape competitors first."
+        )
 
     logger.info(f"Found {len(competitors)} competitors to analyze")
 
@@ -302,7 +307,9 @@ async def analyze_competitors_with_retry(
     # Run agent with retry logic
     for attempt in range(max_retries):
         try:
-            logger.info(f"Running competitive intelligence agent (attempt {attempt + 1}/{max_retries})")
+            logger.info(
+                f"Running competitive intelligence agent (attempt {attempt + 1}/{max_retries})"
+            )
 
             result = await asyncio.wait_for(
                 competitive_intel_agent.run(
@@ -341,7 +348,7 @@ async def analyze_competitors_with_retry(
                     f"Competitive analysis failed after {max_retries} attempts: {str(e)}"
                 )
             # Retry with exponential backoff
-            await asyncio.sleep(2 ** attempt)
+            await asyncio.sleep(2**attempt)
 
 
 async def _update_competitor_profiles_with_analysis(

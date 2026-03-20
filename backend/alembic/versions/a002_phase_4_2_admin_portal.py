@@ -41,14 +41,29 @@ def upgrade() -> None:
         sa.Column("agent_type", sa.String(length=50), nullable=False),
         sa.Column("source", sa.String(length=50), nullable=True),
         sa.Column("status", sa.String(length=20), nullable=False),
-        sa.Column("started_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "started_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("duration_ms", sa.Integer(), nullable=True),
         sa.Column("items_processed", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("items_failed", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("error_message", sa.Text(), nullable=True),
-        sa.Column("extra_metadata", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default="{}"),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "extra_metadata",
+            postgresql.JSONB(astext_type=sa.Text()),
+            nullable=False,
+            server_default="{}",
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
 
@@ -64,8 +79,18 @@ def upgrade() -> None:
         sa.Column("id", sa.UUID(), nullable=False, server_default=sa.text("gen_random_uuid()")),
         sa.Column("metric_type", sa.String(length=50), nullable=False),
         sa.Column("metric_value", sa.Numeric(10, 4), nullable=False),
-        sa.Column("dimensions", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default="{}"),
-        sa.Column("recorded_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "dimensions",
+            postgresql.JSONB(astext_type=sa.Text()),
+            nullable=False,
+            server_default="{}",
+        ),
+        sa.Column(
+            "recorded_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
 

@@ -103,7 +103,9 @@ async def list_chats(
 ):
     """List user's chat sessions, optionally filtered by insight."""
     query = select(IdeaChat).where(IdeaChat.user_id == current_user.id)
-    count_query = select(func.count()).select_from(IdeaChat).where(IdeaChat.user_id == current_user.id)
+    count_query = (
+        select(func.count()).select_from(IdeaChat).where(IdeaChat.user_id == current_user.id)
+    )
 
     if insight_id:
         query = query.where(IdeaChat.insight_id == insight_id)
@@ -204,8 +206,12 @@ async def send_message(
     insight = chat.insight
     scores = {}
     for field in [
-        "opportunity_score", "problem_score", "feasibility_score",
-        "why_now_score", "execution_difficulty", "go_to_market_score",
+        "opportunity_score",
+        "problem_score",
+        "feasibility_score",
+        "why_now_score",
+        "execution_difficulty",
+        "go_to_market_score",
         "founder_fit_score",
     ]:
         val = getattr(insight, field, None)

@@ -32,7 +32,7 @@ class TestTierRateLimits:
         # Each tier should be >= previous
         for i in range(1, len(limits)):
             assert limits[i] >= limits[i - 1], (
-                f"{tier_order[i]} ({limits[i]}) should be >= {tier_order[i-1]} ({limits[i-1]})"
+                f"{tier_order[i]} ({limits[i]}) should be >= {tier_order[i - 1]} ({limits[i - 1]})"
             )
 
     def test_anonymous_rate_limit(self):

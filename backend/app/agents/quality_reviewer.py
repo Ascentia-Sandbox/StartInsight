@@ -35,35 +35,28 @@ class ArticleReview(BaseModel):
     """Quality review result for a market insight article."""
 
     quality_score: int = Field(
-        ge=1, le=10,
-        description="Overall quality score (1-10). 7+ is publishable."
+        ge=1, le=10, description="Overall quality score (1-10). 7+ is publishable."
     )
     data_accuracy: int = Field(
-        ge=1, le=10,
-        description="Are data points specific and realistic? (1-10)"
+        ge=1, le=10, description="Are data points specific and realistic? (1-10)"
     )
     actionability: int = Field(
-        ge=1, le=10,
-        description="Does it provide concrete takeaways for founders? (1-10)"
+        ge=1, le=10, description="Does it provide concrete takeaways for founders? (1-10)"
     )
     readability: int = Field(
-        ge=1, le=10,
-        description="Is the article well-structured and easy to scan? (1-10)"
+        ge=1, le=10, description="Is the article well-structured and easy to scan? (1-10)"
     )
     issues: list[str] = Field(
-        default_factory=list,
-        description="Specific issues found (empty if none). Max 5."
+        default_factory=list, description="Specific issues found (empty if none). Max 5."
     )
     publish_recommendation: bool = Field(
         description="True if article meets quality bar for publishing"
     )
     improved_title: str | None = Field(
-        default=None,
-        description="Suggested improved title if original is weak, else null"
+        default=None, description="Suggested improved title if original is weak, else null"
     )
     improved_summary: str | None = Field(
-        default=None,
-        description="Suggested improved summary if original is weak, else null"
+        default=None, description="Suggested improved summary if original is weak, else null"
     )
 
 
@@ -71,19 +64,14 @@ class InsightAuditResult(BaseModel):
     """Quality audit result for a startup insight."""
 
     completeness_score: int = Field(
-        ge=1, le=10,
-        description="How complete is the insight data? (1-10)"
+        ge=1, le=10, description="How complete is the insight data? (1-10)"
     )
     missing_fields: list[str] = Field(
-        default_factory=list,
-        description="Fields that are null/empty but should have data"
+        default_factory=list, description="Fields that are null/empty but should have data"
     )
-    score_consistency: bool = Field(
-        description="Are the 8 dimension scores internally consistent?"
-    )
+    score_consistency: bool = Field(description="Are the 8 dimension scores internally consistent?")
     title_quality: int = Field(
-        ge=1, le=10,
-        description="Is proposed_solution a concise product name? (1-10)"
+        ge=1, le=10, description="Is proposed_solution a concise product name? (1-10)"
     )
     needs_reanalysis: bool = Field(
         description="True if insight should be re-analyzed by enhanced analyzer"
@@ -181,9 +169,7 @@ async def _audit_insight_with_retry(prompt: str) -> InsightAuditResult:
 async def _is_agent_enabled(session: AsyncSession, agent_name: str) -> bool:
     """Check if an agent is enabled in AgentConfiguration."""
     result = await session.execute(
-        select(AgentConfiguration).where(
-            AgentConfiguration.agent_name == agent_name
-        )
+        select(AgentConfiguration).where(AgentConfiguration.agent_name == agent_name)
     )
     config = result.scalar_one_or_none()
     if config is None:
@@ -253,20 +239,24 @@ async def review_draft_articles(session: AsyncSession) -> list[dict]:
 
             await session.commit()
 
-            results.append({
-                "article_id": str(article.id),
-                "title": article.title,
-                "quality_score": review.quality_score,
-                "published": article.is_published,
-                "issues": review.issues,
-            })
+            results.append(
+                {
+                    "article_id": str(article.id),
+                    "title": article.title,
+                    "quality_score": review.quality_score,
+                    "published": article.is_published,
+                    "issues": review.issues,
+                }
+            )
 
         except Exception as e:
             logger.error(f"Failed to review article {article.id}: {e}")
-            results.append({
-                "article_id": str(article.id),
-                "error": str(e),
-            })
+            results.append(
+                {
+                    "article_id": str(article.id),
+                    "error": str(e),
+                }
+            )
 
     return results
 
@@ -289,10 +279,10 @@ async def audit_insights(session: AsyncSession, batch_size: int = 20) -> list[di
     result = await session.execute(
         select(Insight)
         .where(
-            (Insight.value_ladder.is_(None)) |
-            (Insight.why_now_analysis.is_(None)) |
-            (Insight.proof_signals.is_(None)) |
-            (Insight.market_size_estimate.in_(["Large", "Medium", "Small", "Unknown"]))
+            (Insight.value_ladder.is_(None))
+            | (Insight.why_now_analysis.is_(None))
+            | (Insight.proof_signals.is_(None))
+            | (Insight.market_size_estimate.in_(["Large", "Medium", "Small", "Unknown"]))
         )
         .order_by(Insight.created_at.desc())
         .limit(batch_size)
@@ -326,7 +316,9 @@ async def audit_insights(session: AsyncSession, batch_size: int = 20) -> list[di
                 "has_proof_signals": insight.proof_signals is not None,
                 "has_execution_plan": insight.execution_plan is not None,
                 "has_market_gap": insight.market_gap_analysis is not None,
-                "competitor_count": len(insight.competitor_analysis) if insight.competitor_analysis else 0,
+                "competitor_count": len(insight.competitor_analysis)
+                if insight.competitor_analysis
+                else 0,
             }
 
             audit_prompt = (
@@ -337,26 +329,29 @@ async def audit_insights(session: AsyncSession, batch_size: int = 20) -> list[di
 
             audit = await _audit_insight_with_retry(audit_prompt)
 
-            results.append({
-                "insight_id": str(insight.id),
-                "title": insight.proposed_solution,
-                "completeness_score": audit.completeness_score,
-                "title_quality": audit.title_quality,
-                "missing_fields": audit.missing_fields,
-                "needs_reanalysis": audit.needs_reanalysis,
-            })
+            results.append(
+                {
+                    "insight_id": str(insight.id),
+                    "title": insight.proposed_solution,
+                    "completeness_score": audit.completeness_score,
+                    "title_quality": audit.title_quality,
+                    "missing_fields": audit.missing_fields,
+                    "needs_reanalysis": audit.needs_reanalysis,
+                }
+            )
 
         except Exception as e:
             logger.error(f"Failed to audit insight {insight.id}: {e}")
-            results.append({
-                "insight_id": str(insight.id),
-                "error": str(e),
-            })
+            results.append(
+                {
+                    "insight_id": str(insight.id),
+                    "error": str(e),
+                }
+            )
 
     flagged = sum(1 for r in results if r.get("needs_reanalysis"))
     logger.info(
-        f"Insight audit complete: {len(results)} reviewed, "
-        f"{flagged} flagged for re-analysis"
+        f"Insight audit complete: {len(results)} reviewed, {flagged} flagged for re-analysis"
     )
     return results
 

@@ -35,10 +35,23 @@ def upgrade() -> None:
         sa.Column("pricing", sa.String(length=200), nullable=False),
         sa.Column("website_url", sa.String(length=500), nullable=False),
         sa.Column("logo_url", sa.String(length=500), nullable=True),
-        sa.Column("is_featured", sa.Boolean(), nullable=False, server_default=sa.text("false"), index=True),
+        sa.Column(
+            "is_featured", sa.Boolean(), nullable=False, server_default=sa.text("false"), index=True
+        ),
         sa.Column("sort_order", sa.Integer(), nullable=False, server_default=sa.text("0")),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()"), index=True),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+            index=True,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
     )
 
     # Create index for created_at DESC (most recent first)

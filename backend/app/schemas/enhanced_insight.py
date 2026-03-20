@@ -40,12 +40,8 @@ class RevenuePotential(str):
 class ValueLadderTier(BaseModel):
     """Single tier in the value ladder."""
 
-    tier: str = Field(
-        description="Tier name: lead_magnet, frontend, core, backend"
-    )
-    price: str = Field(
-        description="Price range: Free, $9-$29/mo, $49-$99/mo, $299+/mo"
-    )
+    tier: str = Field(description="Tier name: lead_magnet, frontend, core, backend")
+    price: str = Field(description="Price range: Free, $9-$29/mo, $49-$99/mo, $299+/mo")
     name: str = Field(description="Product name for this tier")
     description: str = Field(description="What this tier offers")
     features: list[str] = Field(default_factory=list, description="Key features")
@@ -91,9 +87,7 @@ class EnhancedScoreBase(BaseModel):
     """Base 8-dimension scores."""
 
     # Core Opportunity Metrics (1-10)
-    opportunity_score: int = Field(
-        ge=1, le=10, description="Market size: 1=tiny, 10=massive"
-    )
+    opportunity_score: int = Field(ge=1, le=10, description="Market size: 1=tiny, 10=massive")
     problem_score: int = Field(
         ge=1, le=10, description="Pain severity: 1=nice-to-have, 10=existential"
     )
@@ -154,9 +148,7 @@ class EnhancedScoreResponse(EnhancedScoreBase):
     """Enhanced scores in API response."""
 
     # Computed aggregate score
-    aggregate_score: float = Field(
-        ge=0.0, le=10.0, description="Weighted average of all scores"
-    )
+    aggregate_score: float = Field(ge=0.0, le=10.0, description="Weighted average of all scores")
 
 
 class EnhancedInsightResponse(BaseModel):

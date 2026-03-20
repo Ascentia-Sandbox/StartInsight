@@ -1,4 +1,5 @@
 """Rate limiting middleware for payment endpoints."""
+
 import logging
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
@@ -13,6 +14,7 @@ logger = logging.getLogger(__name__)
 # In-memory rate limiting for non-production environments
 # For production, use Redis-based rate limiting
 _rate_limits: defaultdict[str, list] = defaultdict(list)
+
 
 class RateLimiterMiddleware(BaseHTTPMiddleware):
     """
@@ -51,10 +53,7 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
             client_ip = self._get_client_ip(request)
             if self._is_rate_limited(client_ip):
                 logger.warning(f"Rate limit exceeded for IP: {client_ip}")
-                return Response(
-                    content="Too Many Requests",
-                    status_code=HTTP_429_TOO_MANY_REQUESTS
-                )
+                return Response(content="Too Many Requests", status_code=HTTP_429_TOO_MANY_REQUESTS)
 
             # Record this request
             self._record_request(client_ip)
@@ -63,12 +62,7 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
 
     def _should_rate_limit(self, request: Request) -> bool:
         """Determine if this endpoint should be rate limited."""
-        payment_endpoints = [
-            "/api/checkout",
-            "/api/portal",
-            "/api/webhook",
-            "/api/payments"
-        ]
+        payment_endpoints = ["/api/checkout", "/api/portal", "/api/webhook", "/api/payments"]
 
         # Check if this is a payment-related endpoint
         for endpoint in payment_endpoints:
@@ -76,11 +70,7 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
                 return True
 
         # Also rate limit specific sensitive operations
-        sensitive_operations = [
-            "POST /api/checkout",
-            "POST /api/portal",
-            "POST /api/webhook"
-        ]
+        sensitive_operations = ["POST /api/checkout", "POST /api/portal", "POST /api/webhook"]
 
         request_identifier = f"{request.method} {request.url.path}"
         for op in sensitive_operations:
@@ -106,10 +96,7 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
 
         # Get requests in current window
         ip_requests = _rate_limits[client_ip]
-        recent_requests = [
-            req_time for req_time in ip_requests
-            if req_time > window_start
-        ]
+        recent_requests = [req_time for req_time in ip_requests if req_time > window_start]
 
         # Check if rate limit exceeded
         return len(recent_requests) >= self.max_requests
@@ -122,6 +109,5 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         # Clean up old requests
         window_start = now - timedelta(seconds=self.window_seconds)
         _rate_limits[client_ip] = [
-            req_time for req_time in _rate_limits[client_ip]
-            if req_time > window_start
+            req_time for req_time in _rate_limits[client_ip] if req_time > window_start
         ]

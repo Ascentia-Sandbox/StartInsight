@@ -67,6 +67,7 @@ class CircuitBreaker:
 
     async def _get_redis(self):
         from app.core.cache import get_redis
+
         return await get_redis()
 
     async def get_state(self) -> CircuitState:
@@ -81,7 +82,9 @@ class CircuitBreaker:
                 opened_at = await r.get(f"{self._key_prefix}:opened_at")
                 if opened_at and (time.time() - float(opened_at)) >= self.COOLDOWN_SECONDS:
                     await r.set(f"{self._key_prefix}:state", CircuitState.HALF_OPEN)
-                    logger.info(f"Circuit breaker {self.source_name}: OPEN → HALF_OPEN (cooldown expired)")
+                    logger.info(
+                        f"Circuit breaker {self.source_name}: OPEN → HALF_OPEN (cooldown expired)"
+                    )
                     return CircuitState.HALF_OPEN
 
             return CircuitState(state)
@@ -129,6 +132,7 @@ class CircuitBreaker:
                 )
         except Exception as e:
             logger.warning(f"Circuit breaker write error for {self.source_name}: {e}")
+
 
 # Exceptions that are safe to retry
 RETRYABLE_EXCEPTIONS = (
@@ -254,16 +258,13 @@ class BaseScraper(ABC):
                 content_hash = self.compute_content_hash(result.content)
 
                 # Check if content already exists
-                existing_query = select(RawSignal).where(
-                    RawSignal.content_hash == content_hash
-                )
+                existing_query = select(RawSignal).where(RawSignal.content_hash == content_hash)
                 existing_result = await session.execute(existing_query)
                 existing = existing_result.scalar_one_or_none()
 
                 if existing:
                     logger.debug(
-                        f"Duplicate content skipped: {result.url} "
-                        f"(matches signal {existing.id})"
+                        f"Duplicate content skipped: {result.url} (matches signal {existing.id})"
                     )
                     duplicates_skipped += 1
                     continue
@@ -277,9 +278,7 @@ class BaseScraper(ABC):
                 url_existing = url_result.scalar_one_or_none()
 
                 if url_existing:
-                    logger.debug(
-                        f"Duplicate URL skipped: {result.url}"
-                    )
+                    logger.debug(f"Duplicate URL skipped: {result.url}")
                     duplicates_skipped += 1
                     continue
 
@@ -299,16 +298,10 @@ class BaseScraper(ABC):
                 session.add(signal)
                 signals.append(signal)
 
-                logger.debug(
-                    f"Added signal from {self.source_name}: "
-                    f"{result.title or result.url}"
-                )
+                logger.debug(f"Added signal from {self.source_name}: {result.title or result.url}")
 
             except Exception as e:
-                logger.error(
-                    f"Error creating signal for {result.url}: "
-                    f"{type(e).__name__} - {e}"
-                )
+                logger.error(f"Error creating signal for {result.url}: {type(e).__name__} - {e}")
                 continue
 
         # Flush to get IDs without committing
@@ -359,24 +352,18 @@ class BaseScraper(ABC):
         try:
             # Step 1: Scrape data
             results = await self.scrape()
-            logger.info(
-                f"{self.source_name}: Scraped {len(results)} items"
-            )
+            logger.info(f"{self.source_name}: Scraped {len(results)} items")
 
             # Step 2: Save to database
             signals = await self.save_to_database(session, results)
 
             logger.info(
-                f"{self.source_name}: Workflow completed successfully. "
-                f"Saved {len(signals)} signals"
+                f"{self.source_name}: Workflow completed successfully. Saved {len(signals)} signals"
             )
             return signals
 
         except Exception as e:
-            logger.error(
-                f"{self.source_name}: Scraping workflow failed: "
-                f"{type(e).__name__} - {e}"
-            )
+            logger.error(f"{self.source_name}: Scraping workflow failed: {type(e).__name__} - {e}")
             raise
 
     def log_scrape_summary(self, results: list[ScrapeResult]) -> None:
@@ -391,9 +378,7 @@ class BaseScraper(ABC):
             return
 
         total_content_length = sum(len(r.content) for r in results)
-        avg_content_length = (
-            total_content_length // len(results) if results else 0
-        )
+        avg_content_length = total_content_length // len(results) if results else 0
 
         logger.info(
             f"{self.source_name} Scrape Summary:\n"
@@ -444,7 +429,5 @@ class BaseScraper(ABC):
         if len(content) <= max_length:
             return content
 
-        logger.warning(
-            f"Content truncated from {len(content)} to {max_length} chars"
-        )
+        logger.warning(f"Content truncated from {len(content)} to {max_length} chars")
         return content[:max_length] + "\n\n[Content truncated...]"
