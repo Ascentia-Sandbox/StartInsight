@@ -109,6 +109,92 @@ All improvements use existing infrastructure. Only potential cost increase: Clau
 
 ---
 
+## Production Audit Findings (2026-03-20)
+
+Full live audit after merging `develop` → `main` (3 commits: test suite, dead code cleanup, DB pool fix).
+
+### Critical Bugs
+
+| # | Issue | Severity | Status |
+|---|-------|----------|--------|
+| C1 | `/health/scraping` 500 — timezone-aware datetime vs naive TIMESTAMP column (BACKEND-1B) | HIGH | ✅ Fixed (pushed) |
+| C2 | `/founder-fits` returns 404 — page exists at `[locale]/founder-fits` but locale middleware doesn't serve it | HIGH | Needs fix |
+| C3 | CI/CD `VERCEL_TOKEN` secret missing for production deploy — was using nonexistent secret name | HIGH | ✅ Fixed (pushed) |
+
+### Backend Issues (Sentry)
+
+| # | Issue | Events | Last Seen | Status |
+|---|-------|--------|-----------|--------|
+| B1 | BACKEND-P: `/api/insights` 500 MaxClientsInSessionMode | 5 | Mar 8 | Likely resolved by pool size fix (086cabc) |
+| B2 | BACKEND-19: `/api/insights/stats/public` 500 MaxClientsInSessionMode | 1 | Mar 8 | Likely resolved by pool size fix (086cabc) |
+| B3 | `/health/sources` returns empty `{"sources": []}` — source_health table has no data | LOW | Active | Needs seed/pipeline |
+
+### UI/UX Issues
+
+| # | Issue | Page | Severity |
+|---|-------|------|----------|
+| U1 | `/insights` shows 9 loading skeletons but no data loads (SSR fetch appears to fail silently) | Insights | HIGH |
+| U2 | `/trends` shows loading skeletons, no trend data renders | Trends | HIGH |
+| U3 | `/market-insights` shows loading skeletons, no data renders | Market Insights | HIGH |
+| U4 | `/idea-of-the-day` shows loading skeleton, no daily idea | Idea of Day | MEDIUM |
+| U5 | `/pulse` framework loads but no real-time metrics visible | Pulse | MEDIUM |
+| U6 | `/success-stories` framework loads but individual stories don't render in initial HTML | Success Stories | LOW |
+| U7 | `/tools` — Market Size Calculator visible but tool directory cards don't render in SSR | Tools | LOW |
+
+**Root cause for U1-U5:** These pages fetch from the backend API client-side. The data likely loads in-browser after JavaScript hydration. WebFetch only sees SSR output. However, if the backend API returns empty or errors, these pages will show perpetual loading states. Need browser verification.
+
+### Pages Working Correctly
+
+| Page | URL | Status |
+|------|-----|--------|
+| Home | `/` | ✅ Hero, insight cards, CTAs all render |
+| Pricing | `/pricing` | ✅ 4 tiers displayed correctly |
+| Features | `/features` | ✅ Content renders |
+| About | `/about` | ✅ Full content, metrics, timeline |
+| FAQ | `/faq` | ✅ 16 questions in 4 categories |
+| Contact | `/contact` | ✅ Form with fields, contact info |
+| Platform Tour | `/platform-tour` | ✅ Content, metrics, audience segments |
+| API Docs | `/api-docs` | ✅ Endpoint categories, Swagger link |
+| Compare | `/compare` | ✅ Empty state (by design — needs selections) |
+| Login | `/auth/login` | ✅ Email/password + Google OAuth |
+
+### Security Concerns
+
+| # | Issue | Severity |
+|---|-------|----------|
+| S1 | 23 Dependabot vulnerabilities (1 critical, 13 high, 7 moderate, 2 low) | HIGH |
+| S2 | GitHub Actions using deprecated Node.js 20 runners (forced to Node 24 by June 2026) | MEDIUM |
+| S3 | Sentry release tag shows "local" instead of commit SHA | LOW |
+
+### Performance & Infrastructure
+
+| # | Issue | Severity |
+|---|-------|----------|
+| P1 | Frontend Sentry — zero issues (clean) | ✅ Good |
+| P2 | Backend health checks: `/health` ✅, `/health/ready` ✅ (DB + Redis healthy) | ✅ Good |
+| P3 | 3 GitHub Releases auto-created for today's deploys | ✅ Good |
+| P4 | `ruff format` was not applied to 179 backend files — now fixed | ✅ Fixed |
+
+### Recommended Priority Actions
+
+**Immediate (This Week):**
+1. Fix `/founder-fits` 404 — debug locale middleware routing
+2. Verify `/insights`, `/trends`, `/market-insights` in real browser — confirm data loads after JS hydration
+3. Triage Dependabot alerts — fix the 1 critical + 13 high vulnerabilities
+
+**Short-term (Next 2 Weeks):**
+4. Populate `source_health` table via pipeline runs
+5. Upgrade GitHub Actions to Node 24-compatible versions
+6. Set Railway `RAILWAY_GIT_COMMIT_SHA` for Sentry release tracking
+7. Monitor BACKEND-P and BACKEND-19 — confirm pool fix resolved them
+
+**Medium-term (Month 1):**
+8. Browser-test all authenticated pages (dashboard, workspace, validate, research, chat, billing, admin)
+9. Run Lighthouse audit on production (target Performance > 70)
+10. Set up synthetic monitoring for key user flows
+
+---
+
 ## Completed: Previous Tiers (Archive)
 
 ### Tier 1 — Blocking (COMPLETE ✅ — 2026-02-22)
