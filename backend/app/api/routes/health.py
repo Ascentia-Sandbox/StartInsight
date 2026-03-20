@@ -146,7 +146,7 @@ async def scraper_health_check(
     # Calculate error rate (signals with no content or failed processing)
     error_count_query = await db.execute(
         select(func.count(RawSignal.id)).where(
-            RawSignal.created_at >= twenty_four_hours_ago, RawSignal.content.is_(None)
+            RawSignal.created_at >= twenty_four_hours_ago_naive, RawSignal.content.is_(None)
         )
     )
     error_count = error_count_query.scalar() or 0
