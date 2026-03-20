@@ -60,7 +60,6 @@ dependencies = [
     "authlib>=1.6.9",            # JWS/JWE/OIDC/alg:none bypass fixes (#24,#28-30)
     "pyasn1>=0.6.3",             # DoS fix (#33)
     "pyopenssl>=26.0.0",         # Buffer overflow + TLS bypass fixes (#31,#32)
-    "nltk>=3.9.3",               # Path traversal, remote shutdown, XSS, DoS fixes (#42-45)
 ]
 
 [project.optional-dependencies]
