@@ -28,57 +28,25 @@
 
 ## Compliance
 
-### Privacy Policy PDPA Update
+### ~~Privacy Policy PDPA Update~~ ✅ Fixed by /plan on 2026-03-24
 
-**What:** Update existing privacy/page.tsx to add PDPA (Malaysia Personal Data Protection Act) compliance, newsletter consent tracking, and referral data usage sections.
-
-**Why:** P1 BLOCKER for newsletter launch. Malaysia's PDPA requires explicit consent for data collection and processing. The existing privacy page covers GDPR basics but lacks PDPA-specific sections, newsletter consent language, and referral data disclosure.
-
-**Context:** Privacy page already exists at frontend/app/[locale]/privacy/page.tsx with 10+ sections covering data collection, AI processing, Stripe, and basic GDPR. Needs additions for: (a) PDPA compliance sections, (b) newsletter email collection consent, (c) referral code tracking disclosure, (d) PostHog analytics opt-out, (e) cookie consent if not already present.
-
-**Effort:** S
-**Priority:** P1
-**Depends on:** None — can be done immediately
+All 5 PDPA sections (13–17) were already present from a prior commit. Added explicit consent statement to NewsletterForm.tsx with Privacy Policy link (commit e0639db).
 
 ## Infrastructure
 
-### Newsletter Merge-on-Signup
+### ~~Newsletter Merge-on-Signup~~ ✅ Fixed by /plan on 2026-03-24
 
-**What:** When a newsletter subscriber creates an account, merge their subscriber record with their user record.
+Added `user_id` FK to `newsletter_subscribers` (migration c016), and linked the subscriber record in `_verify_and_get_user` after JIT user upsert (commit 215cf9c).
 
-**Why:** Without merge logic, a person who subscribed to the newsletter before signing up will have two separate records — their newsletter preferences won't carry over, and they may receive duplicate emails or lose their subscription status.
+### ~~Stripe Webhook Backward Compatibility Window~~ ✅ Fixed by /plan on 2026-03-24
 
-**Context:** Identified during eng review (2026-03-23) by Codex outside voice. The plan creates a separate newsletter_subscribers table for lead-gen (allowing non-registered visitors to subscribe). When these visitors later create accounts, the system needs to: (a) detect matching email, (b) link subscriber record to user, (c) carry over preferences. Existing user_preferences.py has email preference infrastructure that should be the target state.
-
-**Effort:** S
-**Priority:** P2
-**Depends on:** Newsletter subscriber table implementation (Phase 1)
-
-### Stripe Webhook Backward Compatibility Window
-
-**What:** Handle in-flight Stripe webhooks that reference old tier names (starter, enterprise) during the pricing migration.
-
-**Why:** If any webhook events are queued by Stripe before the tier rename and arrive after deployment, they'll reference old tier names that no longer exist in the codebase. With zero customers this is extremely unlikely, but the webhook handler should gracefully map old→new tier names rather than failing.
-
-**Context:** Identified during eng review (2026-03-23). The _handle_checkout_completed function reads tier from webhook metadata. During migration, add a simple mapping: {"starter": "pro", "enterprise": "pro"} as a fallback in the webhook handler. Can be removed after 30 days.
-
-**Effort:** S
-**Priority:** P2
-**Depends on:** Pricing tier consolidation (Phase 1)
+`TIER_COMPAT_MAP` already present (starter→pro, enterprise→api). Added tier sync to `_handle_subscription_updated` so status changes (canceled/unpaid/active) propagate to `user.subscription_tier` (commit 85d1b14). Remove `TIER_COMPAT_MAP` by 2026-04-23.
 
 ## Design
 
-### Premium Content Blur Treatment
+### ~~Premium Content Blur Treatment~~ ✅ Fixed by /plan on 2026-03-24
 
-**What:** Design the exact blur/gate treatment for premium content on insight detail pages — gradient fade vs hard blur, teaser text visibility, visual hierarchy of the gate overlay.
-
-**Why:** The plan says "blurred preview of full report" but doesn't specify the exact visual treatment. Without a spec, the implementer will default to a generic blur-sm that doesn't communicate value or create urgency. The blur treatment directly affects conversion — users need to see enough to want more, but not so much that they feel cheated.
-
-**Context:** Identified during design review (2026-03-23). Existing FeatureLock.tsx uses `blur-sm opacity-50` with a centered lock overlay. Options to explore: (a) gradient fade (content visible at top, progressively blurred), (b) hard blur with teaser headline visible, (c) partial content visible with "Continue reading with Pro" inline gate. The gradient fade pattern (used by Medium, The Athletic) has the strongest conversion evidence.
-
-**Effort:** S
-**Priority:** P2
-**Depends on:** Sectioned paywall implementation (Phase 1)
+Replaced `blur-sm opacity-50` in `FeatureLock.tsx` with CSS gradient fade (transparent 0–55% → background 88%) and bottom-anchored upgrade CTA. No hard blur — editorial aesthetic (commit e0639db).
 
 ### Create DESIGN.md
 
