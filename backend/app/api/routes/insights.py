@@ -17,7 +17,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.api.deps import AdminUser, CurrentUser
+from app.api.deps import AdminUser, CurrentUser, check_report_access
 from app.core.cache import cache_get, cache_set
 from app.core.config import settings
 from app.core.rate_limits import limiter
@@ -136,6 +136,25 @@ def apply_translation(insight_data: dict, language: str) -> dict:
             insight_data[field] = lang_translations[field]
 
     return insight_data
+
+
+PREMIUM_FIELDS = [
+    "execution_plan",
+    "value_ladder",
+    "competitor_analysis",
+    "market_sizing",
+    "market_gap_analysis",
+    "failure_analysis",
+    "business_model_canvas",
+]
+
+
+def _strip_premium_fields(insight_dict: dict) -> dict:
+    """Null out premium fields for free-tier users who exceeded their report limit."""
+    for field in PREMIUM_FIELDS:
+        if field in insight_dict:
+            insight_dict[field] = None if not isinstance(insight_dict.get(field), list) else []
+    return insight_dict
 
 
 def _serialize_insight(insight: Insight, target_language: str = "en") -> dict:
@@ -517,11 +536,13 @@ async def get_insight_by_slug(
         Query(description="Explicit language override (en, zh-CN, id-ID, vi-VN, th-TH, tl-PH)"),
     ] = None,
     db: AsyncSession = Depends(get_db),
-) -> InsightResponse:
+    report_access: dict = Depends(check_report_access),
+) -> dict:
     """
     Get single insight by slug.
 
     Returns the insight matching the given URL-friendly slug.
+    Freemium paywall: premium fields stripped after free report limit.
 
     - **slug**: URL-friendly slug of the insight
     - **language**: Explicit language override
@@ -542,7 +563,12 @@ async def get_insight_by_slug(
 
     insight_dict = _serialize_insight(insight, target_language)
 
-    return InsightResponse.model_validate(insight_dict)
+    if report_access["access"] == "sectioned":
+        _strip_premium_fields(insight_dict)
+
+    insight_dict["report_access"] = report_access
+
+    return insight_dict
 
 
 @router.get("/{insight_id}", response_model=InsightResponse)
@@ -556,11 +582,13 @@ async def get_insight(
         Query(description="Explicit language override (en, zh-CN, id-ID, vi-VN, th-TH, tl-PH)"),
     ] = None,
     db: AsyncSession = Depends(get_db),
-) -> InsightResponse:
+    report_access: dict = Depends(check_report_access),
+) -> dict:
     """
     Get single insight by ID.
 
     Phase 15.4: APAC Multi-language Support - Returns translated content based on Accept-Language header or explicit language parameter.
+    Freemium paywall: premium fields stripped after free report limit.
 
     Returns the insight with its related raw signal data.
 
@@ -588,7 +616,12 @@ async def get_insight(
 
     insight_dict = _serialize_insight(insight, target_language)
 
-    return InsightResponse.model_validate(insight_dict)
+    if report_access["access"] == "sectioned":
+        _strip_premium_fields(insight_dict)
+
+    insight_dict["report_access"] = report_access
+
+    return insight_dict
 
 
 @router.get("/{insight_id}/trend-data")

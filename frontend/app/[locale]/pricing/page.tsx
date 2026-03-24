@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Check, X, Zap, Crown, Building2, Rocket } from "lucide-react";
+import { Check, X, Zap, Crown, Code2 } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -19,16 +19,16 @@ const tiers = [
     name: "Free",
     price: "$0",
     period: "forever",
-    description: "Perfect for exploring startup ideas",
-    icon: Rocket,
+    description: "Explore global startup ideas",
+    icon: Zap,
     features: [
-      { name: "5 idea generations/month", included: true },
+      { name: "Browse global startup ideas", included: true },
       { name: "Basic 4-dimension scoring", included: true },
+      { name: "3 free premium reports", included: true },
       { name: "Community trends access", included: true },
-      { name: "Email support", included: true },
-      { name: "AI research agent", included: false },
-      { name: "Builder integrations", included: false },
-      { name: "Team collaboration", included: false },
+      { name: "Save up to 10 insights", included: true },
+      { name: "Full analysis reports", included: false },
+      { name: "Asia-specific intelligence", included: false },
       { name: "API access", included: false },
     ],
     cta: "Get Started Free",
@@ -36,67 +36,43 @@ const tiers = [
     popular: false,
   },
   {
-    name: "Starter",
+    name: "Pro",
     price: "$19",
     period: "/month",
-    description: "For solo founders validating ideas",
-    icon: Zap,
-    features: [
-      { name: "50 idea generations/month", included: true },
-      { name: "8-dimension scoring", included: true },
-      { name: "Full trends database", included: true },
-      { name: "Priority email support", included: true },
-      { name: "AI research agent (10/mo)", included: true },
-      { name: "Builder integrations", included: false },
-      { name: "Team collaboration", included: false },
-      { name: "API access", included: false },
-    ],
-    cta: "Start 14-Day Trial",
-    href: "/auth/signup?plan=starter",
-    popular: false,
-    savings: "Save $150/mo vs competitors",
-  },
-  {
-    name: "Pro",
-    price: "$49",
-    period: "/month",
-    description: "For serious founders building businesses",
+    description: "Full analysis for serious founders",
     icon: Crown,
     features: [
-      { name: "Unlimited idea generations", included: true },
-      { name: "8-dimension scoring", included: true },
-      { name: "Full trends + predictions", included: true },
-      { name: "24/7 priority support", included: true },
-      { name: "AI research agent (50/mo)", included: true },
-      { name: "Builder integrations (5)", included: true },
-      { name: "Team collaboration (5 seats)", included: true },
-      { name: "API access (10K calls)", included: false },
+      { name: "Unlimited premium reports", included: true },
+      { name: "8-dimension AI scoring", included: true },
+      { name: "Full trends + 7-day forecast", included: true },
+      { name: "AI research agent (10/mo)", included: true },
+      { name: "Asia-specific intelligence", included: true },
+      { name: "Accelerator matching", included: true },
+      { name: "Export to PDF/CSV", included: true },
+      { name: "Priority support", included: true },
     ],
     cta: "Start 14-Day Trial",
     href: "/auth/signup?plan=pro",
     popular: true,
-    savings: "Save $500/mo vs Datadog",
+    savings: "Most Popular",
   },
   {
-    name: "Enterprise",
-    price: "$299",
+    name: "API",
+    price: "$49",
     period: "/month",
-    description: "For agencies and large teams",
-    icon: Building2,
+    description: "Programmatic access for builders",
+    icon: Code2,
     features: [
-      { name: "Unlimited everything", included: true },
-      { name: "White-label branding", included: true },
-      { name: "Custom domain", included: true },
-      { name: "Dedicated account manager", included: true },
-      { name: "AI research agent (unlimited)", included: true },
-      { name: "All builder integrations", included: true },
-      { name: "Unlimited team seats", included: true },
-      { name: "API access (unlimited)", included: true },
+      { name: "Everything in Pro", included: true },
+      { name: "1,000 API calls per month", included: true },
+      { name: "Programmatic access to idea data", included: true },
+      { name: "Webhook integrations", included: true },
+      { name: "Team collaboration (10 seats)", included: true },
+      { name: "Dedicated support", included: true },
     ],
-    cta: "Contact Sales",
-    href: "/contact?plan=enterprise",
+    cta: "Start 14-Day Trial",
+    href: "/auth/signup?plan=api",
     popular: false,
-    savings: "Save $5K+/mo vs building in-house",
   },
 ];
 
@@ -107,11 +83,11 @@ const faqs = [
   },
   {
     question: "What payment methods do you accept?",
-    answer: "We accept all major credit cards (Visa, Mastercard, American Express) through our secure Stripe payment processor. Enterprise customers can also pay via invoice.",
+    answer: "We accept all major credit cards (Visa, Mastercard, American Express) through our secure Stripe payment processor.",
   },
   {
-    question: "Is there a free trial?",
-    answer: "Yes! Both Starter and Pro plans come with a 14-day free trial. No credit card required to start. You'll only be charged if you decide to continue after the trial.",
+    question: "What are the 3 free premium reports?",
+    answer: "New users get 3 free premium reports — full analysis including Business Model Canvas, failure analysis, market sizing, and accelerator matches. After 3 reports, upgrade to Pro for unlimited access.",
   },
   {
     question: "What happens to my data if I cancel?",
@@ -142,10 +118,9 @@ export default function PricingPage() {
     operatingSystem: "Web",
     url: "https://startinsight.co/pricing",
     offers: [
-      { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD", description: "5 idea generations/month, basic scoring" },
-      { "@type": "Offer", name: "Starter", price: "19", priceCurrency: "USD", billingIncrement: "MON", description: "50 ideas/month, 8-dimension scoring, AI research" },
-      { "@type": "Offer", name: "Pro", price: "49", priceCurrency: "USD", billingIncrement: "MON", description: "Unlimited ideas, full research, builder integrations, team" },
-      { "@type": "Offer", name: "Enterprise", price: "299", priceCurrency: "USD", billingIncrement: "MON", description: "White-label, dedicated support, custom integrations" },
+      { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD", description: "Browse global ideas, 3 free premium reports, basic scoring" },
+      { "@type": "Offer", name: "Pro", price: "19", priceCurrency: "USD", billingIncrement: "MON", description: "Unlimited reports, 8-dimension scoring, Asia intelligence, research agent" },
+      { "@type": "Offer", name: "API", price: "49", priceCurrency: "USD", billingIncrement: "MON", description: "Everything in Pro plus 1,000 API calls/month, webhooks, team collaboration" },
     ],
   };
 
@@ -169,7 +144,7 @@ export default function PricingPage() {
           <span>No credit card required</span>
           <span className="mx-2">|</span>
           <Check className="h-4 w-4 text-green-500" />
-          <span>14-day free trial</span>
+          <span>3 free premium reports</span>
           <span className="mx-2">|</span>
           <Check className="h-4 w-4 text-green-500" />
           <span>Cancel anytime</span>
@@ -178,12 +153,12 @@ export default function PricingPage() {
 
       {/* Pricing Cards */}
       <section className="container mx-auto px-4 pb-16">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {tiers.map((tier) => (
             <Card
               key={tier.name}
               className={`relative flex flex-col ${
-                tier.popular ? "border-primary shadow-lg scale-105" : ""
+                tier.popular ? "border-primary shadow-lg scale-105 order-first md:order-none" : ""
               }`}
             >
               {tier.popular && (
@@ -203,11 +178,6 @@ export default function PricingPage() {
                   <span className="text-4xl font-bold">{tier.price}</span>
                   <span className="text-muted-foreground">{tier.period}</span>
                 </div>
-                {tier.savings && (
-                  <Badge variant="outline" className="w-full justify-center mb-4 text-green-600 border-green-600">
-                    {tier.savings}
-                  </Badge>
-                )}
                 <ul className="space-y-3">
                   {tier.features.map((feature) => (
                     <li key={feature.name} className="flex items-center gap-2 text-sm">
@@ -243,35 +213,33 @@ export default function PricingPage() {
       <section className="container mx-auto px-4 py-16">
         <h2 className="text-3xl font-bold text-center mb-8">Compare All Features</h2>
         <div className="overflow-x-auto">
-          <table className="w-full max-w-5xl mx-auto border-collapse">
+          <table className="w-full max-w-4xl mx-auto border-collapse">
             <thead>
               <tr className="border-b">
                 <th className="text-left py-4 px-4 font-medium">Feature</th>
                 <th className="text-center py-4 px-4 font-medium">Free</th>
-                <th className="text-center py-4 px-4 font-medium">Starter</th>
                 <th className="text-center py-4 px-4 font-medium bg-primary/5">Pro</th>
-                <th className="text-center py-4 px-4 font-medium">Enterprise</th>
+                <th className="text-center py-4 px-4 font-medium">API</th>
               </tr>
             </thead>
             <tbody>
               {[
-                { feature: "Idea Generations", free: "5/mo", starter: "50/mo", pro: "Unlimited", enterprise: "Unlimited" },
-                { feature: "Scoring Dimensions", free: "4", starter: "8", pro: "8", enterprise: "8 + Custom" },
-                { feature: "AI Research Reports", free: "-", starter: "10/mo", pro: "50/mo", enterprise: "Unlimited" },
-                { feature: "Trend Predictions", free: "-", starter: "-", pro: "7-day", enterprise: "30-day" },
-                { feature: "Builder Integrations", free: "-", starter: "-", pro: "5", enterprise: "All" },
-                { feature: "Team Seats", free: "1", starter: "1", pro: "5", enterprise: "Unlimited" },
-                { feature: "API Calls", free: "-", starter: "-", pro: "10K/mo", enterprise: "Unlimited" },
-                { feature: "Data Retention", free: "7 days", starter: "30 days", pro: "1 year", enterprise: "Unlimited" },
-                { feature: "Support", free: "Email", starter: "Priority", pro: "24/7", enterprise: "Dedicated" },
-                { feature: "White-Label", free: "-", starter: "-", pro: "-", enterprise: "Yes" },
+                { feature: "Premium Reports", free: "3 total", pro: "Unlimited", api: "Unlimited" },
+                { feature: "Scoring Dimensions", free: "4", pro: "8", api: "8" },
+                { feature: "AI Research Agent", free: "-", pro: "10/mo", api: "Unlimited" },
+                { feature: "Trend Forecasts", free: "-", pro: "7-day", api: "7-day" },
+                { feature: "Asia Intelligence", free: "-", pro: "Yes", api: "Yes" },
+                { feature: "Accelerator Matching", free: "-", pro: "Yes", api: "Yes" },
+                { feature: "Export (PDF/CSV)", free: "-", pro: "Yes", api: "Yes" },
+                { feature: "API Calls", free: "-", pro: "-", api: "1,000/mo" },
+                { feature: "Team Seats", free: "1", pro: "5", api: "10" },
+                { feature: "Support", free: "Email", pro: "Priority", api: "Dedicated" },
               ].map((row) => (
                 <tr key={row.feature} className="border-b hover:bg-muted/50">
                   <td className="py-3 px-4 text-sm">{row.feature}</td>
                   <td className="py-3 px-4 text-center text-sm text-muted-foreground">{row.free}</td>
-                  <td className="py-3 px-4 text-center text-sm">{row.starter}</td>
                   <td className="py-3 px-4 text-center text-sm bg-primary/5 font-medium">{row.pro}</td>
-                  <td className="py-3 px-4 text-center text-sm">{row.enterprise}</td>
+                  <td className="py-3 px-4 text-center text-sm">{row.api}</td>
                 </tr>
               ))}
             </tbody>
@@ -302,11 +270,11 @@ export default function PricingPage() {
           <CardContent className="pt-8 pb-8">
             <h2 className="text-2xl font-bold mb-2">Ready to Find Your Next Big Idea?</h2>
             <p className="mb-6 text-primary-foreground/80">
-              Join 10,000+ founders who discovered their startup ideas with StartInsight.
+              Start discovering startup opportunities backed by data, not hype.
             </p>
             <Button asChild size="lg" variant="secondary">
               <Link href={isLoggedIn ? "/dashboard" : "/auth/signup"}>
-                {isLoggedIn ? "Go to Dashboard" : "Start Free Trial"}
+                {isLoggedIn ? "Go to Dashboard" : "Get Started Free"}
               </Link>
             </Button>
           </CardContent>

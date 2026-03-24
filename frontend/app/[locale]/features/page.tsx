@@ -152,8 +152,8 @@ const featureCategories = [
     ],
   },
   {
-    id: "enterprise",
-    name: "Enterprise",
+    id: "api",
+    name: "API",
     features: [
       {
         icon: Building2,

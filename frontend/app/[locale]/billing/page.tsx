@@ -18,34 +18,25 @@ const plans = [
     name: 'Free',
     price: '$0',
     period: 'forever',
-    description: 'Get started with basic features',
+    description: 'Explore global startup ideas',
     features: [...PLAN_FEATURES.free],
-  },
-  {
-    id: 'starter',
-    name: 'Starter',
-    price: '$19',
-    period: 'per month',
-    description: 'For individual entrepreneurs',
-    features: [...PLAN_FEATURES.starter],
-    popular: true,
   },
   {
     id: 'pro',
     name: 'Pro',
-    price: '$49',
+    price: '$19',
     period: 'per month',
-    description: 'For serious founders and teams',
+    description: 'Full analysis for serious founders',
     features: [...PLAN_FEATURES.pro],
+    popular: true,
   },
   {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: '$299',
+    id: 'api',
+    name: 'API',
+    price: '$49',
     period: 'per month',
-    description: 'For large teams and organizations',
-    features: [...PLAN_FEATURES.enterprise],
-    contactSales: true,
+    description: 'Programmatic access for builders',
+    features: [...PLAN_FEATURES.api],
   },
 ];
 
@@ -81,7 +72,7 @@ export default function BillingPage() {
 
   // Create checkout session mutation
   const checkoutMutation = useMutation({
-    mutationFn: (tier: 'starter' | 'pro' | 'enterprise') =>
+    mutationFn: (tier: 'pro' | 'api') =>
       createCheckoutSession(accessToken!, {
         tier,
         billing_cycle: 'monthly',
@@ -111,9 +102,9 @@ export default function BillingPage() {
             <Skeleton className="h-9 w-48 mx-auto mb-2" />
             <Skeleton className="h-4 w-72 mx-auto" />
           </div>
-          {/* Plan cards skeleton — 4 columns matching the real grid */}
-          <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
+          {/* Plan cards skeleton — 3 columns matching the real grid */}
+          <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
               <Card key={i}>
                 <CardHeader>
                   <Skeleton className="h-6 w-20 mb-2" />
@@ -142,22 +133,17 @@ export default function BillingPage() {
   const currentTier = subscription?.tier || 'free';
 
   const getButtonText = (planId: string) => {
-    if (planId === 'enterprise') return 'Contact Sales';
     if (planId === currentTier) return 'Current Plan';
     if (planId === 'free') return 'Downgrade';
     return `Upgrade to ${planId.charAt(0).toUpperCase() + planId.slice(1)}`;
   };
 
   const handlePlanAction = (planId: string) => {
-    if (planId === 'enterprise') {
-      window.location.assign('mailto:enterprise@startinsight.co');
-      return;
-    }
     if (planId === currentTier) return;
     if (planId === 'free') {
       portalMutation.mutate();
     } else {
-      checkoutMutation.mutate(planId as 'starter' | 'pro');
+      checkoutMutation.mutate(planId as 'pro' | 'api');
     }
   };
 
@@ -181,25 +167,18 @@ export default function BillingPage() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-3">
           {plans.map((plan) => (
             <Card
               key={plan.name}
               className={`relative ${plan.popular ? 'border-primary shadow-lg' : ''} ${
                 plan.id === currentTier ? 'ring-2 ring-primary' : ''
-              } ${'contactSales' in plan ? 'border-primary/20' : ''}`}
+              }`}
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full">
                     Most Popular
-                  </span>
-                </div>
-              )}
-              {'contactSales' in plan && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full">
-                    Enterprise
                   </span>
                 </div>
               )}
@@ -229,27 +208,17 @@ export default function BillingPage() {
                 </ul>
               </CardContent>
               <CardFooter>
-                {'contactSales' in plan ? (
-                  <Button
-                    className="w-full"
-                    variant="default"
-                    onClick={() => handlePlanAction(plan.id)}
-                  >
-                    Contact Sales
-                  </Button>
-                ) : (
-                  <Button
-                    className="w-full"
-                    variant={plan.popular && plan.id !== currentTier ? 'default' : 'outline'}
-                    disabled={plan.id === currentTier || checkoutMutation.isPending || portalMutation.isPending}
-                    onClick={() => handlePlanAction(plan.id)}
-                  >
-                    {(checkoutMutation.isPending || portalMutation.isPending) && plan.id !== currentTier ? (
-                      <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                    ) : null}
-                    {getButtonText(plan.id)}
-                  </Button>
-                )}
+                <Button
+                  className="w-full"
+                  variant={plan.popular && plan.id !== currentTier ? 'default' : 'outline'}
+                  disabled={plan.id === currentTier || checkoutMutation.isPending || portalMutation.isPending}
+                  onClick={() => handlePlanAction(plan.id)}
+                >
+                  {(checkoutMutation.isPending || portalMutation.isPending) && plan.id !== currentTier ? (
+                    <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                  ) : null}
+                  {getButtonText(plan.id)}
+                </Button>
               </CardFooter>
             </Card>
           ))}
@@ -309,18 +278,17 @@ export default function BillingPage() {
           </div>
         </div>
 
-        {/* Enterprise CTA */}
+        {/* Custom needs CTA */}
         <div className="mt-16 text-center">
           <Card className="max-w-2xl mx-auto bg-muted/50">
             <CardContent className="pt-6">
-              <h3 className="text-xl font-semibold">Need a custom solution?</h3>
+              <h3 className="text-xl font-semibold">Need something different?</h3>
               <p className="text-muted-foreground mt-2">
-                For enterprise teams with custom requirements, we offer tailored plans with
-                dedicated support, SLAs, and white-label options.
+                For custom requirements, higher API limits, or team plans, reach out to us.
               </p>
-              <Link href="mailto:enterprise@startinsight.co">
+              <Link href="/contact">
                 <Button variant="outline" className="mt-4">
-                  Contact Sales
+                  Contact Us
                 </Button>
               </Link>
             </CardContent>

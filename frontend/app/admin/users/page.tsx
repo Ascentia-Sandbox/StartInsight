@@ -69,20 +69,18 @@ import { toast } from "sonner";
 import { formatDateMYT } from "@/lib/utils";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 
-const TIERS = ["free", "starter", "pro", "enterprise"] as const;
+const TIERS = ["free", "pro", "api"] as const;
 
 const tierColors: Record<string, string> = {
   free: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-  starter: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
   pro: "bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300",
-  enterprise:
-    "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
+  api: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
 };
 
 function TierBadge({ tier }: { tier: string }) {
   return (
     <Badge variant="outline" className={tierColors[tier] || tierColors.free}>
-      {tier === "enterprise" && <Crown className="h-3 w-3 mr-1" />}
+      {tier === "api" && <Crown className="h-3 w-3 mr-1" />}
       {tier === "pro" && <Shield className="h-3 w-3 mr-1" />}
       {tier.charAt(0).toUpperCase() + tier.slice(1)}
     </Badge>
@@ -394,7 +392,7 @@ function AdminUsersContent() {
               <CardTitle className="text-sm font-medium capitalize">
                 {tier}
               </CardTitle>
-              {tier === "enterprise" && (
+              {tier === "api" && (
                 <Crown className="h-4 w-4 text-amber-500 dark:text-amber-400" />
               )}
               {tier === "pro" && (

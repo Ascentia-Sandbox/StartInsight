@@ -56,7 +56,23 @@ const sections = [
     content: `We may update this Privacy Policy periodically. We will notify you of significant changes by posting the new policy on this page and updating the "Last Updated" date. For material changes, we will also send an email notification to your registered address.`,
   },
   {
-    title: "13. Contact Us",
+    title: "13. Malaysia Personal Data Protection Act (PDPA 2010)",
+    content: `If you are located in Malaysia, you have rights under the Personal Data Protection Act 2010 (PDPA). StartInsight Sdn Bhd is the data controller responsible for your personal data. We process your data based on consent (provided at registration and newsletter signup) and contractual necessity (to deliver the Service). You have the right to: (a) access and correct your personal data; (b) withdraw consent at any time (which does not affect the lawfulness of prior processing); (c) make complaints to the Department of Personal Data Protection (JPDP). For cross-border transfers, we ensure your data is protected to a standard comparable to the PDPA. To exercise your rights, contact privacy@startinsight.co.`,
+  },
+  {
+    title: "14. Newsletter and Email Communications",
+    content: `When you subscribe to our newsletter, we collect your email address and subscription source (e.g., homepage or footer form). We use a double opt-in process: after submitting your email, you will receive a confirmation email with a verification link that expires after 24 hours. Your subscription is only active after you click this link. We use Resend as our email delivery provider. You may unsubscribe at any time via the unsubscribe link in every email or by contacting us. We retain newsletter subscriber data (email and subscription date) until you unsubscribe, after which we delete it within 30 days. If you later create an account, your newsletter preferences will be linked to your user profile.`,
+  },
+  {
+    title: "15. Referral Programme",
+    content: `Our referral programme allows you to share a unique referral link with others. When someone signs up using your referral link, we record: (a) the referrer's referral code (linked to your account); (b) the referee's signup origin (that they arrived via a referral link). This data is used solely to attribute referrals and deliver referral rewards (e.g., free premium report access). We do not share your referral activity with third parties. You may request deletion of your referral data by contacting us.`,
+  },
+  {
+    title: "16. Analytics and Tracking (PostHog)",
+    content: `We use PostHog, a product analytics platform, to understand how users interact with the Service. PostHog collects: page views, feature usage events (e.g., report viewed, paywall interactions), session replays (anonymised), and device/browser information. PostHog data is processed in the EU/US under a data processing agreement. You may opt out of PostHog tracking by: (a) enabling "Do Not Track" in your browser settings; (b) using a browser extension that blocks analytics scripts; or (c) contacting us at privacy@startinsight.co to request exclusion. Opting out does not affect your ability to use the Service.`,
+  },
+  {
+    title: "17. Contact Us",
     content: `For privacy-related inquiries, please contact our Data Protection Officer at privacy@startinsight.co or write to us via our contact page. We aim to respond to all requests within 30 days.`,
   },
 ];
@@ -74,7 +90,7 @@ export default function PrivacyPage() {
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             We take your privacy seriously. Here&apos;s how we handle your data.
           </p>
-          <p className="text-sm text-muted-foreground mt-4">Last updated: February 20, 2026</p>
+          <p className="text-sm text-muted-foreground mt-4">Last updated: March 23, 2026</p>
         </div>
       </section>
 

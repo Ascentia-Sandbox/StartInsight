@@ -35,7 +35,7 @@ const satoshi = localFont({
 export const metadata: Metadata = {
   title: "StartInsight - AI-Powered Startup Idea Discovery",
   description:
-    "Discover your next million-dollar startup idea with AI-powered market intelligence.",
+    "Discover validated startup ideas with 8-dimension AI scoring. Browse 3 free premium reports, then upgrade for unlimited access to market sizing, execution plans, and competitive analysis.",
   icons: {
     icon: [
       { url: '/icon.svg', type: 'image/svg+xml' },

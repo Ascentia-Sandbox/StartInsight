@@ -416,7 +416,7 @@ export async function fetchPricing(): Promise<PricingResponse> {
 export async function createCheckoutSession(
   accessToken: string,
   payload: {
-    tier: 'starter' | 'pro' | 'enterprise';
+    tier: 'pro' | 'api';
     billing_cycle?: 'monthly' | 'yearly';
     success_url: string;
     cancel_url: string;

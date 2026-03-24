@@ -100,14 +100,14 @@ export default function TeamsPage() {
           </div>
           <div className="flex items-center gap-3">
             {/* Seat counter for capped tiers */}
-            {isFeatureAllowed('starter') && limits.team_members !== -1 && limits.team_members > 0 && (
+            {isFeatureAllowed('pro') && limits.team_members !== -1 && limits.team_members > 0 && (
               <span className="text-sm text-muted-foreground tabular-nums">
                 {usage.team_members} / {limits.team_members} seats
               </span>
             )}
             <Button
               onClick={() => setShowCreateModal(true)}
-              disabled={!isFeatureAllowed('starter') || atLimit('team_members')}
+              disabled={!isFeatureAllowed('pro') || atLimit('team_members')}
             >
               Create Team
             </Button>
@@ -115,16 +115,16 @@ export default function TeamsPage() {
         </div>
 
         {/* Free tier info banner */}
-        {!isFeatureAllowed('starter') && (
+        {!isFeatureAllowed('pro') && (
           <div className="mb-6 rounded-md border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 p-4 text-sm">
-            <p className="font-medium text-blue-800 dark:text-blue-200">Teams require a Starter plan or higher</p>
+            <p className="font-medium text-blue-800 dark:text-blue-200">Teams require a Pro plan or higher</p>
             <p className="text-blue-700 dark:text-blue-300 mt-0.5">
               Upgrade to collaborate with colleagues, share insights, and manage team workspaces.
             </p>
           </div>
         )}
 
-        <FeatureLock requiredTier="starter" currentTier={tier} featureName="Teams">
+        <FeatureLock requiredTier="pro" currentTier={tier} featureName="Teams">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="animate-spin h-8 w-8 text-primary" />

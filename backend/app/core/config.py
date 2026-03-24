@@ -101,6 +101,10 @@ class Settings(BaseSettings):
     # Phase 7.2: Public API
     public_api_rate_limit: int = 100  # Requests per hour per API key
 
+    # PLG Freemium Paywall
+    paywall_enabled: bool = False  # Feature flag — flip after PostHog confirms events fire
+    free_reports_limit: int = 3  # Max premium reports for free-tier users
+
     # Phase 7.3: Multi-tenancy
     default_tenant_id: str = "default"
     enable_multi_tenancy: bool = False

@@ -4,15 +4,14 @@ import { Button } from '@/components/ui/button';
 
 const TIER_ORDER: Record<string, number> = {
   free: 0,
-  starter: 1,
-  pro: 2,
-  enterprise: 3,
+  starter: 1, // Backward compat — remove after 2026-04-23
+  pro: 1,
+  api: 2,
 };
 
 const TIER_LABELS: Record<string, string> = {
-  starter: 'Starter',
   pro: 'Pro',
-  enterprise: 'Enterprise',
+  api: 'API',
 };
 
 interface FeatureLockProps {

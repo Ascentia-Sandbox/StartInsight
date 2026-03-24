@@ -52,19 +52,19 @@ export function UpgradeModal({ open, onClose, message }: UpgradeModalProps) {
         )}
 
         <div className="space-y-3 mb-6 text-sm text-muted-foreground">
-          <p className="font-medium text-foreground">Upgrade to unlock:</p>
+          <p className="font-medium text-foreground">Upgrade to Pro to unlock:</p>
           <ul className="space-y-1.5 list-disc list-inside">
-            <li>Unlimited insights and analyses</li>
-            <li>Priority AI research processing</li>
-            <li>Team collaboration features</li>
-            <li>API access for integrations</li>
-            <li>PDF & advanced export formats</li>
+            <li>Unlimited premium reports</li>
+            <li>8-dimension AI scoring + forecasts</li>
+            <li>AI research agent</li>
+            <li>Asia-specific intelligence</li>
+            <li>Export to PDF/CSV</li>
           </ul>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
           <Button asChild className="flex-1">
-            <Link href="/billing" onClick={onClose}>View Plans</Link>
+            <Link href="/pricing" onClick={onClose}>View Plans</Link>
           </Button>
           <Button variant="outline" className="flex-1" onClick={onClose}>
             Maybe Later

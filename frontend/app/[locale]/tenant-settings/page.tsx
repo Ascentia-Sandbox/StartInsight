@@ -200,7 +200,7 @@ export default function TenantSettingsPage() {
   };
 
   // Check if user can access tenant features (enterprise tier)
-  const canAccessTenant = subscription?.tier === 'enterprise' || subscription?.tier === 'pro';
+  const canAccessTenant = subscription?.tier === 'api' || subscription?.tier === 'pro';
 
   if (isCheckingAuth || tenantLoading) {
     return (

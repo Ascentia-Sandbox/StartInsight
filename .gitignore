@@ -169,3 +169,4 @@ pyrightconfig.json
 
 # MCP server config (contains local API tokens)
 .mcp.json
+.gstack/

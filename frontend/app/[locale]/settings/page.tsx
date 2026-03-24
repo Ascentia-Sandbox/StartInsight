@@ -362,13 +362,11 @@ export default function SettingsPage() {
               <div>
                 <p className="font-semibold capitalize">{subscription?.tier || 'Free'} Plan</p>
                 <p className="text-sm text-muted-foreground">
-                  {subscription?.tier === 'enterprise'
-                    ? 'Unlimited everything, priority support, API access'
+                  {subscription?.tier === 'api'
+                    ? 'Everything in Pro + 1,000 API calls/month, team collaboration'
                     : subscription?.tier === 'pro'
-                    ? 'Unlimited everything, team features'
-                    : subscription?.tier === 'starter'
-                    ? 'Unlimited insights, 5 research/month'
-                    : '5 insights/day, basic features'}
+                    ? 'Unlimited reports, 8-dimension scoring, Asia intelligence'
+                    : '3 free reports, basic scoring'}
                 </p>
               </div>
               <Link href="/billing">

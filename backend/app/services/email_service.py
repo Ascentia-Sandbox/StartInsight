@@ -237,6 +237,37 @@ TEMPLATES: dict[str, EmailTemplate] = {
         </div>
         """,
     ),
+    "newsletter_confirm": EmailTemplate(
+        subject="Confirm your StartInsight newsletter subscription",
+        html_template="""
+        <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #3B82F6;">Confirm Your Subscription</h1>
+            <p>Thanks for subscribing to the StartInsight newsletter!</p>
+            <p>Please confirm your email address by clicking the button below:</p>
+            <a href="{{confirm_url}}" style="display: inline-block; background: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+                Confirm Email
+            </a>
+            <p style="margin-top: 24px; color: #6B7280; font-size: 12px;">
+                This link expires in 24 hours. If you didn't subscribe, you can safely ignore this email.
+            </p>
+        </div>
+        """,
+    ),
+    "newsletter_welcome": EmailTemplate(
+        subject="Welcome to the StartInsight newsletter!",
+        html_template="""
+        <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #3B82F6;">You're In!</h1>
+            <p>Your subscription is confirmed. You'll receive weekly insights on the most promising startup opportunities, backed by data — not hype.</p>
+            <a href="{{app_url}}" style="display: inline-block; background: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+                Browse Insights
+            </a>
+            <p style="margin-top: 24px; color: #6B7280; font-size: 12px;">
+                <a href="{{unsubscribe_url}}">Unsubscribe</a>
+            </p>
+        </div>
+        """,
+    ),
 }
 
 

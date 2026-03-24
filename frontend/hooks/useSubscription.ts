@@ -8,9 +8,9 @@ import type { SubscriptionStatus } from '@/lib/types';
 
 const TIER_ORDER: Record<string, number> = {
   free: 0,
-  starter: 1,
-  pro: 2,
-  enterprise: 3,
+  starter: 1, // Backward compat — remove after 2026-04-23
+  pro: 1,
+  api: 2,
 };
 
 /**
@@ -43,6 +43,8 @@ export function useSubscription() {
   const tier = data?.tier ?? 'free';
   const limits = data?.limits ?? {};
   const usage = data?.usage ?? { insights_today: 0, analyses_this_month: 0, team_members: 0 };
+  const freeReportsUsed = data?.free_reports_used ?? 0;
+  const freeReportsLimit = data?.free_reports_limit ?? 3;
 
   /**
    * Returns true if the current tier meets or exceeds the required tier.
@@ -75,5 +77,5 @@ export function useSubscription() {
     return Math.min(100, Math.round((current / limit) * 100));
   };
 
-  return { tier, limits, usage, isFeatureAllowed, atLimit, usagePercent, isLoading };
+  return { tier, limits, usage, freeReportsUsed, freeReportsLimit, isFeatureAllowed, atLimit, usagePercent, isLoading };
 }

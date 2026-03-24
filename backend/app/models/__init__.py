@@ -57,6 +57,7 @@ from app.models.integrations import (
     IntegrationWebhook,
 )
 from app.models.market_insight import MarketInsight
+from app.models.newsletter import NewsletterSubscriber
 from app.models.pipeline_monitoring import (
     AdminAlert,
     AdminAlertIncident,
@@ -182,4 +183,6 @@ __all__ = [
     "SystemSetting",
     # Phase 6.2A: Source Health
     "SourceHealth",
+    # PLG: Newsletter
+    "NewsletterSubscriber",
 ]

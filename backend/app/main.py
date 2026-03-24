@@ -364,6 +364,7 @@ from app.api.routes import (  # noqa: E402
     insights,
     integrations,
     market_insights,
+    newsletter,
     payments,
     pipeline,
     preferences,
@@ -415,6 +416,7 @@ app.include_router(chat.router, tags=["Chat Strategist"])  # Phase B
 app.include_router(settings_routes.router, tags=["System Settings"])  # Phase G
 app.include_router(pulse.router, tags=["Market Pulse"])  # Phase Q5.1
 app.include_router(contact.router, tags=["Contact"])  # Phase Q6.3
+app.include_router(newsletter.router, tags=["Newsletter"])  # PLG newsletter
 app.include_router(referrals.router, tags=["Referrals"])  # Referral program
 app.include_router(email_tracking.router, tags=["Email Tracking"])  # Open pixel tracking
 

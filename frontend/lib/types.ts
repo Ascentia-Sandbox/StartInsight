@@ -302,6 +302,8 @@ export const SubscriptionStatusSchema = z.object({
   cancel_at_period_end: z.boolean().optional(),
   limits: z.record(z.string(), z.number()),
   usage: SubscriptionUsageSchema.optional(),
+  free_reports_used: z.number().optional(),
+  free_reports_limit: z.number().optional(),
 });
 
 export type PricingTier = z.infer<typeof PricingTierSchema>;

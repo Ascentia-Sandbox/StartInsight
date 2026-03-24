@@ -30,7 +30,7 @@ function UserMenu({ user }: { user: User }) {
   const [open, setOpen] = useState(false);
   const supabase = getSupabaseClient();
   const showAdmin = isAdmin(user);
-  const { tier } = useSubscription();
+  const { tier, freeReportsUsed, freeReportsLimit } = useSubscription();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -45,8 +45,18 @@ function UserMenu({ user }: { user: User }) {
     .toUpperCase()
     .slice(0, 2);
 
+  const showReportCounter = tier === 'free' && freeReportsUsed > 0;
+
   return (
-    <div className="relative">
+    <div className="relative flex items-center gap-2">
+      {showReportCounter && (
+        <span
+          className="text-xs font-medium text-teal-700 dark:text-teal-300 bg-teal-100 dark:bg-teal-900/40 px-2 py-0.5 rounded-full"
+          aria-live="polite"
+        >
+          {freeReportsUsed}/{freeReportsLimit} free
+        </span>
+      )}
       <button
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 rounded-full bg-primary text-primary-foreground w-9 h-9 items-center justify-center text-sm font-medium hover:opacity-80 transition-opacity"

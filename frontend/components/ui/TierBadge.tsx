@@ -2,9 +2,9 @@ import { cn } from '@/lib/utils';
 
 const TIER_STYLES: Record<string, string> = {
   free: 'bg-muted text-muted-foreground',
-  starter: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+  starter: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300', // Backward compat — remove after 2026-04-23
   pro: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-  enterprise: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  api: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
 };
 
 interface TierBadgeProps {

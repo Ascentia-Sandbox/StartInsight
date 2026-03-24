@@ -39,7 +39,7 @@ router = APIRouter(prefix="/api/payments", tags=["Payments"])
 class CheckoutRequest(BaseModel):
     """Checkout session request."""
 
-    tier: str = Field(..., pattern=r"^(starter|pro|enterprise)$")
+    tier: str = Field(..., pattern=r"^(pro|api)$")
     billing_cycle: str = Field(default="monthly", pattern=r"^(monthly|yearly)$")
     success_url: str
     cancel_url: str

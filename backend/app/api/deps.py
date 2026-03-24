@@ -298,11 +298,11 @@ async def _verify_and_get_user(token: str, db: AsyncSession) -> User:
     result = await db.execute(stmt)
     user = result.scalar_one()
 
-    # Grant Enterprise tier to admin/superadmin users (in-memory override, not persisted)
+    # Grant API tier to admin/superadmin users (in-memory override, not persisted)
     app_metadata = payload.get("app_metadata", {}) or {}
     role = app_metadata.get("role", "")
     if role in ("superadmin", "admin"):
-        user.subscription_tier = "enterprise"
+        user.subscription_tier = "api"
 
     # Set Sentry user context for this request (no-op if Sentry not initialised)
     try:
@@ -324,6 +324,78 @@ async def _verify_and_get_user(token: str, db: AsyncSession) -> User:
 
     logger.info(f"Authenticated user: {user.email}")
     return user
+
+
+async def check_report_access(
+    user: User | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Check and consume a free report slot for freemium paywall.
+
+    Returns access metadata:
+    - "full": paid user or paywall disabled — show everything
+    - "last_report_overlay": 3rd (final) free report — show full + post-read overlay
+    - "sectioned": 4th+ report — strip premium fields
+
+    Uses atomic SQL increment to prevent race conditions.
+    """
+    from sqlalchemy import text
+
+    # Paywall disabled or no user → full access
+    if not settings.paywall_enabled:
+        return {
+            "access": "full",
+            "reports_used": 0,
+            "reports_limit": settings.free_reports_limit,
+        }
+
+    # Anonymous users get sectioned access (must sign up)
+    if user is None:
+        return {
+            "access": "sectioned",
+            "reports_used": 0,
+            "reports_limit": settings.free_reports_limit,
+        }
+
+    # Paid users always get full access
+    if user.subscription_tier in ("pro", "api"):
+        return {
+            "access": "full",
+            "reports_used": 0,
+            "reports_limit": settings.free_reports_limit,
+        }
+
+    limit = settings.free_reports_limit
+
+    # Atomic increment: only increments if under the limit
+    result = await db.execute(
+        text(
+            "UPDATE users "
+            "SET free_reports_used = free_reports_used + 1 "
+            "WHERE id = :uid AND free_reports_used < :max "
+            "RETURNING free_reports_used"
+        ),
+        {"uid": str(user.id), "max": limit},
+    )
+    row = result.fetchone()
+
+    if row is not None:
+        used = row[0]
+        await db.commit()
+        access = "last_report_overlay" if used == limit else "full"
+        return {
+            "access": access,
+            "reports_used": used,
+            "reports_limit": limit,
+        }
+
+    # Increment failed → user is at or above the limit
+    return {
+        "access": "sectioned",
+        "reports_used": user.free_reports_used,
+        "reports_limit": limit,
+    }
 
 
 # Type aliases for cleaner dependency injection

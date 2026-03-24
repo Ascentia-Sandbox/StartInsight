@@ -23,6 +23,8 @@ import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 import { TrendChart } from '@/components/trend-chart';
 import { ScoreRadar } from '@/components/evidence/score-radar';
 import { config } from '@/lib/env';
+import { analytics, Events } from '@/lib/analytics';
+import { Lock } from 'lucide-react';
 
 // Trend data response type
 interface TrendDataResponse {
@@ -145,6 +147,30 @@ export default function InsightDetailPage() {
     },
     enabled: !!insightId,
   });
+
+  // Freemium paywall state
+  const reportAccess = (insight as Record<string, unknown>)?.report_access as
+    | { access: string; reports_used: number; reports_limit: number }
+    | undefined;
+  const isSectioned = reportAccess?.access === 'sectioned';
+  const isLastReport = reportAccess?.access === 'last_report_overlay';
+  const [showLastReportDialog, setShowLastReportDialog] = useState(false);
+
+  // Fire PostHog events on insight load
+  useEffect(() => {
+    if (!insight) return;
+    analytics.track(Events.REPORT_VIEWED, { slug, id: insightId });
+    if (isSectioned) {
+      analytics.track(Events.PAYWALL_HIT, {
+        slug,
+        reports_used: reportAccess?.reports_used,
+        reports_limit: reportAccess?.reports_limit,
+      });
+    }
+    if (isLastReport) {
+      setShowLastReportDialog(true);
+    }
+  }, [insight?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (isLoading) {
     return (
@@ -402,6 +428,25 @@ export default function InsightDetailPage() {
                 </p>
               </div>
             )}
+            {/* Freemium paywall gate */}
+            {isSectioned && (
+              <div className="mt-10 p-8 bg-muted/50 rounded-2xl border text-center space-y-4">
+                <Lock className="h-10 w-10 mx-auto text-muted-foreground" />
+                <h3 className="text-xl font-semibold">Unlock the Full Report</h3>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  You&apos;ve used all {reportAccess?.reports_limit} free premium reports.
+                  Upgrade to Pro for unlimited access to market sizing, execution plans, competitive landscape, and more.
+                </p>
+                <Button
+                  asChild
+                  className="bg-primary text-primary-foreground"
+                  onClick={() => analytics.track(Events.UPGRADE_CLICKED, { source: 'paywall_gate', slug })}
+                >
+                  <Link href="/pricing">Upgrade to Pro — $19/mo</Link>
+                </Button>
+              </div>
+            )}
+
             {/* Market Gap Analysis */}
             {insight.market_gap_analysis && (
               <div className="mt-6 p-4 bg-muted/30 rounded-lg border-l-4 border-primary/40">
@@ -802,6 +847,34 @@ export default function InsightDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Last-report overlay dialog */}
+      {showLastReportDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-background rounded-2xl border shadow-xl max-w-md w-full mx-4 p-8 text-center space-y-4">
+            <h3 className="text-xl font-semibold">That was your last free report</h3>
+            <p className="text-muted-foreground">
+              Upgrade to Pro for unlimited access to premium reports, market sizing, execution plans, and competitive landscape analysis.
+            </p>
+            <div className="flex flex-col gap-2">
+              <Button
+                asChild
+                className="bg-primary text-primary-foreground w-full"
+                onClick={() => analytics.track(Events.UPGRADE_CLICKED, { source: 'last_report_overlay', slug })}
+              >
+                <Link href="/pricing">Upgrade to Pro — $19/mo</Link>
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setShowLastReportDialog(false)}
+                className="text-muted-foreground"
+              >
+                Continue reading
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

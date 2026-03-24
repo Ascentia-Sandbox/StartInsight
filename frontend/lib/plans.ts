@@ -3,39 +3,29 @@
 
 export const PLAN_FEATURES = {
   free: [
-    '5 idea generations/month',
+    'Browse global startup ideas',
     'Basic 4-dimension scoring',
+    '3 free premium reports',
     'Community trends access',
     'Save up to 10 insights',
-    'Email support',
   ],
-  starter: [
-    '50 idea generations/month',
+  pro: [
+    'Unlimited premium reports',
     '8-dimension AI scoring',
-    'Full trends database',
+    'Full trends + 7-day forecast',
     'AI research agent (10/month)',
+    'Asia-specific intelligence',
+    'Accelerator matching',
     'Export to PDF/CSV',
     'Priority support',
   ],
-  pro: [
-    'Unlimited idea generations',
-    '8-dimension scoring + predictions',
-    'Full trends + 7-day forecast',
-    'AI research agent (50/month)',
-    'Builder integrations (5 platforms)',
-    'Team collaboration (5 seats)',
-    'API access (10K calls/month)',
-    '24/7 priority support',
-  ],
-  enterprise: [
+  api: [
     'Everything in Pro',
-    'Unlimited team members',
-    'Unlimited API access',
-    'Custom AI model fine-tuning',
-    'Dedicated account manager',
-    'SLA guarantee (99.9% uptime)',
-    'White-label options',
-    'SSO & SAML support',
+    '1,000 API calls per month',
+    'Programmatic access to idea data',
+    'Webhook integrations',
+    'Team collaboration (10 seats)',
+    'Dedicated support',
   ],
 } as const;
 
@@ -43,7 +33,6 @@ export type PlanTier = keyof typeof PLAN_FEATURES;
 
 export const PLAN_PRICES = {
   free: { price: '$0', period: 'forever' },
-  starter: { price: '$19', period: '/month' },
-  pro: { price: '$49', period: '/month' },
-  enterprise: { price: '$299', period: '/month' },
+  pro: { price: '$19', period: '/month' },
+  api: { price: '$49', period: '/month' },
 } as const;

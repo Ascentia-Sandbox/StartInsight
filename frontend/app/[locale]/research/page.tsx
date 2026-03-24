@@ -227,9 +227,8 @@ export default function ResearchPage() {
                 <>
                   Provide a detailed description of your startup idea for comprehensive analysis.{' '}
                   {tier === 'free' && 'Requires admin approval (1 request/month).'}
-                  {tier === 'starter' && 'Auto-approved (3 requests/month).'}
                   {tier === 'pro' && 'Auto-approved (10 requests/month).'}
-                  {tier === 'enterprise' && 'Auto-approved (100 requests/month).'}
+                  {tier === 'api' && 'Auto-approved (unlimited requests).'}
                 </>
               )}
               {inputType === 'url' &&

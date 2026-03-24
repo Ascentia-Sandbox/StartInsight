@@ -39,75 +39,67 @@ PRICING_TIERS: dict[str, PricingTier] = {
         price_monthly=0,
         price_yearly=0,
         features=[
-            "5 insights per day",
-            "1 research analysis per month",
-            "Basic export (CSV)",
-            "Community support",
+            "Browse global startup ideas",
+            "Basic 4-dimension scoring",
+            "3 free premium reports",
+            "Community trends access",
+            "Save up to 10 insights",
         ],
         limits={
             "insights_per_day": 5,
             "analyses_per_month": 1,
             "api_calls_per_hour": 10,
             "team_members": 0,
-        },
-    ),
-    "starter": PricingTier(
-        name="Starter",
-        price_monthly=1900,  # $19/mo
-        price_yearly=15900,  # $159/yr (save 30%)
-        features=[
-            "Unlimited insights",
-            "3 research analyses per month",
-            "Full export (PDF, CSV, JSON)",
-            "Email notifications",
-            "Email support",
-        ],
-        limits={
-            "insights_per_day": -1,  # Unlimited
-            "analyses_per_month": 3,
-            "api_calls_per_hour": 100,
-            "team_members": 3,
+            "free_reports": 3,
         },
     ),
     "pro": PricingTier(
         name="Pro",
-        price_monthly=4900,  # $49/mo
-        price_yearly=39900,  # $399/yr (save 30%)
+        price_monthly=1900,  # $19/mo
+        price_yearly=15900,  # $159/yr (save 30%)
         features=[
-            "Everything in Starter",
-            "10 research analyses per month",
-            "Brand package generator",
-            "Landing page generator",
-            "Real-time feed access",
-            "API access",
+            "Unlimited premium reports",
+            "8-dimension AI scoring",
+            "Full trends + 7-day forecast",
+            "AI research agent (10/month)",
+            "Asia-specific intelligence",
+            "Accelerator matching",
+            "Export to PDF/CSV",
             "Priority support",
         ],
         limits={
-            "insights_per_day": -1,
+            "insights_per_day": -1,  # Unlimited
             "analyses_per_month": 10,
-            "api_calls_per_hour": 500,
-            "team_members": 10,
+            "api_calls_per_hour": 100,
+            "team_members": 5,
         },
     ),
-    "enterprise": PricingTier(
-        name="Enterprise",
-        price_monthly=19900,  # $199/mo
-        price_yearly=159900,  # $1599/yr
+    "api": PricingTier(
+        name="API",
+        price_monthly=4900,  # $49/mo
+        price_yearly=39900,  # $399/yr (save 30%)
         features=[
             "Everything in Pro",
-            "Unlimited research analyses",
-            "White-label branding",
-            "Custom domain",
-            "Dedicated account manager",
-            "SLA guarantee",
+            "1,000 API calls per month",
+            "Programmatic access to idea data",
+            "Webhook integrations",
+            "Team collaboration (10 seats)",
+            "Dedicated support",
         ],
         limits={
             "insights_per_day": -1,
             "analyses_per_month": -1,
-            "api_calls_per_hour": 2000,
-            "team_members": -1,
+            "api_calls_per_hour": 500,
+            "team_members": 10,
         },
     ),
+}
+
+# Backward compat for in-flight Stripe webhooks during tier migration.
+# Maps old tier names to new ones. Remove after 30 days (by 2026-04-23).
+TIER_COMPAT_MAP: dict[str, str] = {
+    "starter": "pro",
+    "enterprise": "api",
 }
 
 
@@ -456,7 +448,8 @@ async def _handle_checkout_completed(data: dict, db: AsyncSession) -> dict:
     user_id = data.get("client_reference_id")
     customer_id = data.get("customer")
     subscription_id = data.get("subscription")
-    tier = data.get("metadata", {}).get("tier", "starter")
+    raw_tier = data.get("metadata", {}).get("tier", "pro")
+    tier = TIER_COMPAT_MAP.get(raw_tier, raw_tier)  # Map old tier names
 
     if not user_id or not customer_id:
         raise ValueError("Missing user_id or customer_id in checkout session")

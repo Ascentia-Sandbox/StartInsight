@@ -7,7 +7,7 @@ See architecture.md Section "Database Schema Extensions" for full specification.
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, String, Text, func
+from sqlalchemy import DateTime, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -73,7 +73,21 @@ class User(Base):
         default="free",
         nullable=False,
         index=True,
-        doc="Subscription tier: free, starter, pro, enterprise",
+        doc="Subscription tier: free, pro, api",
+    )
+
+    # Freemium paywall — premium report counter
+    free_reports_used: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
+        doc="Number of premium reports viewed by free-tier users (resets on upgrade)",
+    )
+
+    free_reports_reset_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        doc="When the free reports counter was last reset",
     )
 
     # User preferences (theme, notifications, etc.)
