@@ -532,9 +532,22 @@ async def _handle_subscription_updated(data: dict, db: AsyncSession) -> dict:
     subscription.current_period_end = current_period_end
     subscription.cancel_at_period_end = cancel_at_period_end
 
+    # Sync subscription_tier to user record so access control is always consistent.
+    # subscription.deleted fires later (or may not fire for payment failures),
+    # so we must handle tier downgrades here too.
+    from app.models.user import User
+
+    user_result = await db.execute(select(User).where(User.id == subscription.user_id))
+    user = user_result.scalar_one_or_none()
+    if user:
+        if status in ("canceled", "unpaid"):
+            user.subscription_tier = "free"
+        elif status == "active":
+            user.subscription_tier = subscription.tier
+
     await db.commit()
 
-    logger.info(f"Subscription {stripe_subscription_id} updated in database")
+    logger.info(f"Subscription {stripe_subscription_id} updated in database (status={status})")
 
     return {
         "status": "processed",
