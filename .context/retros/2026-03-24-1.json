@@ -1,0 +1,64 @@
+{
+  "date": "2026-03-24",
+  "window": "7d",
+  "metrics": {
+    "commits": 9,
+    "contributors": 1,
+    "prs_merged": 0,
+    "insertions": 43508,
+    "deletions": 3672,
+    "net_loc": 39836,
+    "test_loc": 37654,
+    "test_ratio": 0.87,
+    "active_days": 1,
+    "sessions": 1,
+    "deep_sessions": 1,
+    "avg_session_minutes": 73,
+    "loc_per_session_hour": 32600,
+    "feat_pct": 0.11,
+    "fix_pct": 0.67,
+    "docs_pct": 0.11,
+    "ci_pct": 0.11,
+    "peak_hour": 11,
+    "ai_assisted_commits": 9
+  },
+  "authors": {
+    "zhenyu707": {
+      "commits": 9,
+      "insertions": 43508,
+      "deletions": 3672,
+      "test_ratio": 0.87,
+      "top_area": "backend/"
+    }
+  },
+  "version_range": ["v2026.03.07.x", "v2026.03.20.x"],
+  "streak_days": 0,
+  "backlog": {
+    "total_open": 5,
+    "p0_p1": 1,
+    "p2": 0,
+    "p3": 2,
+    "completed_this_period": 0,
+    "added_this_period": 3
+  },
+  "test_health": {
+    "total_test_files": 24,
+    "tests_added_this_period": 0,
+    "regression_test_commits": 0,
+    "test_files_changed": 2
+  },
+  "skill_usage": {
+    "review": 3,
+    "qa": 3,
+    "office-hours": 3,
+    "plan-ceo-review": 2,
+    "plan-eng-review": 2,
+    "plan-design-review": 2,
+    "design-consultation": 2,
+    "autoplan": 1,
+    "browse": 1,
+    "setup-browser-cookies": 1,
+    "retro": 1
+  },
+  "tweetable": "Week of Mar 17: 9 commits, +43.5k/-3.7k LOC, 87% test ratio, 1 deep session (73min) | Streak: 0d (last ship: Mar 20)"
+}
