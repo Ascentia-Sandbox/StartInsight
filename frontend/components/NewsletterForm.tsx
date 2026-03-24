@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, CheckCircle2 } from 'lucide-react';
@@ -73,6 +74,13 @@ export function NewsletterForm({ source = 'homepage' }: NewsletterFormProps) {
       {state === 'error' && (
         <p className="text-sm text-red-500 mt-2 text-center">{message}</p>
       )}
+      <p className="text-xs text-muted-foreground mt-3 text-center">
+        By subscribing you agree to our{' '}
+        <Link href="/privacy" className="underline underline-offset-2 hover:text-foreground transition-colors">
+          Privacy Policy
+        </Link>
+        . Unsubscribe anytime.
+      </p>
     </div>
   );
 }
