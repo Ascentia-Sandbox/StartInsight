@@ -17,7 +17,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         autocapture: false, // manual event tracking only
       })
       // Expose for feature flag checks via isFeatureFlagEnabled()
-      ;(window as Record<string, unknown>).__ph = posthog
+      ;(window as unknown as Record<string, unknown>).__ph = posthog
     })
   }, [])
 

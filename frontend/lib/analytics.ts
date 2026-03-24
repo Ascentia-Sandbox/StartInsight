@@ -42,7 +42,7 @@ export const Events = {
 export function isFeatureFlagEnabled(flag: string): boolean {
   if (typeof window === 'undefined') return false
   try {
-    const posthog = (window as Record<string, unknown>).__ph as { isFeatureEnabled?: (flag: string) => boolean } | undefined
+    const posthog = (window as unknown as Record<string, unknown>).__ph as { isFeatureEnabled?: (flag: string) => boolean } | undefined
     return posthog?.isFeatureEnabled?.(flag) ?? false
   } catch {
     return false

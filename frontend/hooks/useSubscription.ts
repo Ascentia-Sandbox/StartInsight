@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import type { Session } from '@supabase/supabase-js';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { fetchSubscriptionStatus } from '@/lib/api';
 import type { SubscriptionStatus } from '@/lib/types';
@@ -26,12 +27,12 @@ export function useSubscription() {
     const supabase = getSupabaseClient();
 
     // Seed initial session immediately
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
       setAccessToken(session?.access_token ?? null);
     });
 
     // Keep token in sync with auth state changes (login, logout, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
       setAccessToken(session?.access_token ?? null);
     });
 
