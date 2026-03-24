@@ -23,14 +23,19 @@ export function useSubscription() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
-    const getToken = async () => {
-      const supabase = getSupabaseClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.access_token) {
-        setAccessToken(session.access_token);
-      }
-    };
-    getToken();
+    const supabase = getSupabaseClient();
+
+    // Seed initial session immediately
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setAccessToken(session?.access_token ?? null);
+    });
+
+    // Keep token in sync with auth state changes (login, logout, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAccessToken(session?.access_token ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const { data, isLoading } = useQuery<SubscriptionStatus>({

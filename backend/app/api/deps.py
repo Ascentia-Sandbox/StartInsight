@@ -390,10 +390,15 @@ async def check_report_access(
             "reports_limit": limit,
         }
 
-    # Increment failed → user is at or above the limit
+    # Increment failed → user is at or above the limit; re-fetch to get fresh count
+    fresh = await db.execute(
+        text("SELECT free_reports_used FROM users WHERE id = :uid"),
+        {"uid": str(user.id)},
+    )
+    fresh_row = fresh.fetchone()
     return {
         "access": "sectioned",
-        "reports_used": user.free_reports_used,
+        "reports_used": fresh_row[0] if fresh_row else limit,
         "reports_limit": limit,
     }
 

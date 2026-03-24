@@ -1,12 +1,8 @@
 'use client';
 
 import Link from "next/link";
-import { useState } from "react";
-import { Lightbulb, Loader2, CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { config } from "@/lib/env";
-import { analytics, Events } from "@/lib/analytics";
+import { Lightbulb } from "lucide-react";
+import { NewsletterForm } from "@/components/NewsletterForm";
 
 const footerLinks = {
   "Browse Ideas": [
@@ -39,35 +35,6 @@ const footerLinks = {
 };
 
 export function Footer() {
-  const [email, setEmail] = useState('');
-  const [nlState, setNlState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [nlMessage, setNlMessage] = useState('');
-
-  const handleSubscribe = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    setNlState('loading');
-    try {
-      const res = await fetch(`${config.apiUrl}/api/newsletter/subscribe`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, source: 'footer' }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setNlState('success');
-        setNlMessage(data.message);
-        analytics.track(Events.NEWSLETTER_SIGNUP, { source: 'footer' });
-      } else {
-        setNlState('error');
-        setNlMessage(data.detail || 'Something went wrong.');
-      }
-    } catch {
-      setNlState('error');
-      setNlMessage('Network error. Please try again.');
-    }
-  };
-
   return (
     <footer className="border-t bg-muted/30 dark:bg-muted/10">
       <div className="container mx-auto px-4 py-12">
@@ -77,34 +44,7 @@ export function Footer() {
           <p className="text-sm text-muted-foreground mb-4">
             Weekly insights on the most promising startup opportunities, backed by data.
           </p>
-          {nlState === 'success' ? (
-            <div className="flex items-center justify-center gap-2 text-green-600">
-              <CheckCircle2 className="h-4 w-4" />
-              <span className="text-sm">{nlMessage}</span>
-            </div>
-          ) : (
-            <form onSubmit={handleSubscribe} className="flex gap-2">
-              <Input
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="flex-1"
-                disabled={nlState === 'loading'}
-              />
-              <Button type="submit" disabled={nlState === 'loading'} size="sm">
-                {nlState === 'loading' ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  'Subscribe'
-                )}
-              </Button>
-            </form>
-          )}
-          {nlState === 'error' && (
-            <p className="text-xs text-red-500 mt-2">{nlMessage}</p>
-          )}
+          <NewsletterForm source="footer" />
         </div>
 
         {/* Link Columns */}
