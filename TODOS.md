@@ -48,17 +48,9 @@ Added `user_id` FK to `newsletter_subscribers` (migration c016), and linked the 
 
 Replaced `blur-sm opacity-50` in `FeatureLock.tsx` with CSS gradient fade (transparent 0–55% → background 88%) and bottom-anchored upgrade CTA. No hard blur — editorial aesthetic (commit e0639db).
 
-### Create DESIGN.md
+### ~~Create DESIGN.md~~ ✅ Fixed by /design-consultation on 2026-03-23, committed 2026-03-24
 
-**What:** Document the existing design system — oklch color tokens, Satoshi/JetBrains Mono/Instrument Serif fonts, spacing scale, component patterns, dark mode strategy.
-
-**Why:** The design tokens exist in globals.css but aren't documented as a system. Without DESIGN.md, every new page or component risks inconsistency — different accent colors, wrong font pairings, ad-hoc spacing. This is especially important as the PLG plan adds 3+ new UI surfaces (newsletter forms, paywall gates, report counter).
-
-**Context:** Identified during design review (2026-03-23). Current state: oklch tokens in globals.css (primary: deep teal `oklch(0.45 0.12 195)`, accent: warm amber `oklch(0.75 0.15 75)`, background: warm off-white `oklch(0.985 0.005 90)`), 3 custom fonts, shadcn/ui components, 0.625rem border-radius. Run `/design-consultation` to generate a comprehensive DESIGN.md.
-
-**Effort:** S
-**Priority:** P2
-**Depends on:** None — can be done immediately
+234-line design system reference covering oklch color tokens, typography (Instrument Serif/Satoshi/JetBrains Mono), spacing scale, border radius hierarchy, shadow scale, motion tokens, textures, accessibility, and component patterns.
 
 ### Weekly AI Trend Report PDF Template
 
