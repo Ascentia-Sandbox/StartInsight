@@ -200,6 +200,9 @@ class InsightResponse(BaseModel):
             ]
         return v
 
+    # Freemium paywall access metadata (injected at runtime, not stored in DB)
+    report_access: dict[str, Any] | None = None
+
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 

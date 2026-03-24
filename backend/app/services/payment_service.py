@@ -487,6 +487,9 @@ async def _handle_checkout_completed(data: dict, db: AsyncSession) -> dict:
     )
 
     await db.execute(stmt)
+
+    # Sync subscription tier to user record
+    user.subscription_tier = tier
     await db.commit()
 
     logger.info(f"Subscription activated for user {user_id}: {tier}")
@@ -507,8 +510,8 @@ async def _handle_subscription_updated(data: dict, db: AsyncSession) -> dict:
 
     stripe_subscription_id = data.get("id")
     status = data.get("status")
-    current_period_start = datetime.fromtimestamp(data.get("current_period_start", 0))
-    current_period_end = datetime.fromtimestamp(data.get("current_period_end", 0))
+    current_period_start = datetime.fromtimestamp(data.get("current_period_start", 0), tz=UTC)
+    current_period_end = datetime.fromtimestamp(data.get("current_period_end", 0), tz=UTC)
     cancel_at_period_end = data.get("cancel_at_period_end", False)
 
     logger.info(f"Subscription {stripe_subscription_id} updated to {status}")
@@ -547,7 +550,7 @@ async def _handle_subscription_deleted(data: dict, db: AsyncSession) -> dict:
 
     stripe_subscription_id = data.get("id")
     canceled_at = (
-        datetime.fromtimestamp(data.get("canceled_at", 0))
+        datetime.fromtimestamp(data.get("canceled_at", 0), tz=UTC)
         if data.get("canceled_at")
         else datetime.now(UTC)
     )
@@ -569,6 +572,14 @@ async def _handle_subscription_deleted(data: dict, db: AsyncSession) -> dict:
     subscription.tier = "free"
     subscription.canceled_at = canceled_at
     subscription.stripe_subscription_id = None  # Clear subscription ID
+
+    # Sync subscription tier to user record
+    from app.models.user import User
+
+    user_result = await db.execute(select(User).where(User.id == subscription.user_id))
+    user = user_result.scalar_one_or_none()
+    if user:
+        user.subscription_tier = "free"
 
     await db.commit()
 
@@ -681,6 +692,9 @@ def _get_price_id(tier: str, billing_cycle: str) -> str | None:
         ("starter", "yearly"): settings.stripe_price_starter_yearly,
         ("pro", "yearly"): settings.stripe_price_pro_yearly,
         ("enterprise", "yearly"): settings.stripe_price_enterprise_yearly,
+        # DB tier names used by the frontend (pro=starter-level, api=enterprise-level)
+        ("api", "monthly"): settings.stripe_price_enterprise,
+        ("api", "yearly"): settings.stripe_price_enterprise_yearly,
     }
     return price_map.get((tier, billing_cycle))
 

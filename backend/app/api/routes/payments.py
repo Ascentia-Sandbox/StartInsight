@@ -219,7 +219,7 @@ async def _get_subscription_usage(user_id: UUID, db: AsyncSession) -> Subscripti
     today_midnight = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
     first_of_month = datetime.now(UTC).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    # Count insights created today by this user
+    # Count insights created today (platform-wide; insights are not user-scoped)
     insights_today_result = await db.execute(
         select(func.count())
         .select_from(Insight)

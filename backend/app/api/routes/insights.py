@@ -150,11 +150,12 @@ PREMIUM_FIELDS = [
 
 
 def _strip_premium_fields(insight_dict: dict) -> dict:
-    """Null out premium fields for free-tier users who exceeded their report limit."""
+    """Return a copy of insight_dict with premium fields nulled out for free-tier users."""
+    result = dict(insight_dict)
     for field in PREMIUM_FIELDS:
-        if field in insight_dict:
-            insight_dict[field] = None if not isinstance(insight_dict.get(field), list) else []
-    return insight_dict
+        if field in result:
+            result[field] = None if not isinstance(result.get(field), list) else []
+    return result
 
 
 def _serialize_insight(insight: Insight, target_language: str = "en") -> dict:
@@ -564,7 +565,7 @@ async def get_insight_by_slug(
     insight_dict = _serialize_insight(insight, target_language)
 
     if report_access["access"] == "sectioned":
-        _strip_premium_fields(insight_dict)
+        insight_dict = _strip_premium_fields(insight_dict)
 
     insight_dict["report_access"] = report_access
 
@@ -617,7 +618,7 @@ async def get_insight(
     insight_dict = _serialize_insight(insight, target_language)
 
     if report_access["access"] == "sectioned":
-        _strip_premium_fields(insight_dict)
+        insight_dict = _strip_premium_fields(insight_dict)
 
     insight_dict["report_access"] = report_access
 
