@@ -314,6 +314,21 @@ async def _verify_and_get_user(token: str, db: AsyncSession) -> User:
 
     await db.commit()
 
+    # Link newsletter subscriber record if this email subscribed before signing up
+    if email:
+        try:
+            await db.execute(
+                text(
+                    "UPDATE newsletter_subscribers "
+                    "SET user_id = :uid "
+                    "WHERE email = :email AND user_id IS NULL"
+                ),
+                {"uid": str(user.id), "email": email},
+            )
+            await db.commit()
+        except Exception as e:
+            logger.warning(f"Newsletter subscriber merge failed (non-fatal): {e}")
+
     # ✅ Check if user is soft-deleted (account deactivated)
     if user.deleted_at is not None:
         raise HTTPException(
