@@ -4,7 +4,7 @@
 **Read When:** Before every task to understand current phase status
 **Dependencies:** Read project-brief.md first for context
 **Purpose:** Current phase tracking, immediate tasks, blockers, what's working/next
-**Last Updated:** 2026-03-20
+**Last Updated:** 2026-03-24
 ---
 
 # Active Context: StartInsight Development
@@ -154,9 +154,23 @@ All arq tasks now scheduled and running via APScheduler + Railway Redis:
 12. ✅ Email digest validation + open-rate tracking — tracking pixel, UTM params, plain-text fallback
 
 **Pending (requires manual action):**
-- Set `NEXT_PUBLIC_POSTHOG_KEY` in Vercel dashboard to activate PostHog analytics
-- Submit `https://startinsight.co/sitemap.xml` to Google Search Console
-- Seed content to 600+ insights before ProductHunt launch (currently 522; pipeline running every 6h)
+- ~~Set `NEXT_PUBLIC_POSTHOG_KEY` in Vercel dashboard~~ ✅ Done 2026-03-24 — `NEXT_PUBLIC_POSTHOG_KEY` + `NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com` set for all environments
+- Submit `https://startinsight.co/sitemap.xml` to Google Search Console (deferred — no deadline)
+- Seed content to 600+ insights before ProductHunt launch (pipeline running every 6h; was 522 as of 2026-03-20)
+
+## Recent Work (2026-03-24)
+
+**Sprint: PLG Freemium + Stripe Compat + PostHog (6 items)**
+
+1. ✅ **PostHog env vars** — `NEXT_PUBLIC_POSTHOG_KEY` + `NEXT_PUBLIC_POSTHOG_HOST` set in Vercel for all environments. Analytics events now live.
+2. ✅ **TypeScript build fix** — 3 files blocked production builds (TS7006/TS7031/strict cast errors). Fixed `PostHogProvider.tsx`, `analytics.ts`, `useSubscription.ts`. Production restored at commit `c9b4625`.
+3. ✅ **PLG: Gradient fade paywall** — `FeatureLock.tsx`: replaced `blur-sm opacity-50` with CSS gradient fade (transparent→bg at 88%) + bottom-anchored upgrade CTA. Editorial aesthetic, no hard blur.
+4. ✅ **Stripe webhook compat** — `TIER_COMPAT_MAP` (starter→pro, enterprise→api) already present. Added tier sync to `_handle_subscription_updated` so canceled/unpaid/active status changes propagate to `user.subscription_tier`. Remove `TIER_COMPAT_MAP` by 2026-04-23.
+5. ✅ **Newsletter merge-on-signup** — Migration c016 adds `user_id` FK to `newsletter_subscribers`. `_verify_and_get_user` links subscriber record after JIT user upsert.
+6. ✅ **PDPA consent** — Explicit consent statement + Privacy Policy link added to `NewsletterForm.tsx`. All 5 PDPA sections (13–17) already present.
+7. ✅ **DESIGN.md committed** — 234-line design system reference (oklch tokens, typography, spacing, component patterns, dark mode strategy). Closes TODOS.md P2 item.
+
+**New migrations this sprint:** c014 (free_reports_used on users), c015 (newsletter_subscribers table), c016 (user_id FK)
 
 ## Key File Locations
 
