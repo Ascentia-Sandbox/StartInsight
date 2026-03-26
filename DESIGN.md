@@ -212,7 +212,7 @@ All textures have dark mode variants with adjusted opacity/colors.
 |-----------|---------|-------------------|
 | InsightCard | Core data card showing startup idea scores | Platform-specific source badges with branded colors; 8-dimension score display; confidence levels (green/amber/red) |
 | Header | Main navigation | Auth-aware, tier badge, mega menu, mobile menu, theme toggle |
-| FeatureLock | Paywall gate | Blur + lock overlay on premium content |
+| FeatureLock | Paywall gate | CSS gradient fade (transparent→background) + bottom-anchored upgrade CTA — no hard blur (editorial aesthetic) |
 | TrendChart / TrendSparkline | Data visualization | Uses chart color tokens |
 | ScoreRadar | Radar chart for 8 dimensions | Canvas-based, responsive |
 | CommandPalette | Quick search/navigate | Dialog pattern with keyboard shortcuts |
@@ -232,3 +232,4 @@ All textures have dark mode variants with adjusted opacity/colors.
 | 2026-03-23 | Documented shadow scale | Formalized 3 existing shadow levels (resting/hover/elevated) to prevent drift |
 | 2026-03-23 | Documented transition tokens | Named existing 150ms/200ms patterns to ensure consistency |
 | 2026-03-23 | Documented border-radius hierarchy | Clarified 7-tier radius scale derived from base `--radius` |
+| 2026-03-24 | FeatureLock: blur → gradient fade | Replaced `blur-sm opacity-50` with CSS gradient fade for editorial aesthetic consistency (commit e0639db) |

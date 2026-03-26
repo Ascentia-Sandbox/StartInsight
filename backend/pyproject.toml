@@ -52,6 +52,7 @@ dependencies = [
     "bleach>=6.1.0",  # Input sanitization for XSS prevention
     "itsdangerous>=2.1.0",  # Token signing for email unsubscribe
     "tenacity>=8.2.0",  # Retry logic for AI agent calls (rate limit handling)
+    "weasyprint>=62.0",  # Conviction funnel: HTML→PDF report generation
     # Security pins — explicit versions to override vulnerable transitives
     "cryptography>=46.0.5",      # SECT curve subgroup attack fix (#15)
     "pillow>=12.1.1",            # PSD OOB write fix (#16)

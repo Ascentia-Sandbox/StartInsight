@@ -268,6 +268,52 @@ TEMPLATES: dict[str, EmailTemplate] = {
         </div>
         """,
     ),
+    # ── Conviction funnel: paid category reports ──────────────────────────
+    "report_confirmation": EmailTemplate(
+        subject="Your {{category_title}} Report is Being Generated",
+        html_template="""
+        <div style="font-family: system-ui, -apple-system, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a1a;">
+            <div style="border-bottom: 3px solid #0D7377; padding-bottom: 16px; margin-bottom: 24px;">
+                <p style="font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #0D7377; margin: 0 0 8px 0;">StartInsight</p>
+                <h1 style="font-family: Georgia, serif; font-size: 22px; color: #0a0a0a; margin: 0;">Your {{category_title}} Report is Being Generated</h1>
+            </div>
+            <p style="font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">Thank you for your purchase. Our AI is now analysing market signals and generating your report.</p>
+            <div style="background: #f0fafa; border-left: 4px solid #0D7377; padding: 14px 18px; border-radius: 0 4px 4px 0; margin-bottom: 24px;">
+                <p style="font-size: 14px; font-weight: 600; color: #0D7377; margin: 0 0 4px 0;">Estimated delivery: within {{eta_minutes}} minutes</p>
+                <p style="font-size: 13px; color: #4b5563; margin: 0;">You will receive a separate email with your PDF report attached.</p>
+            </div>
+            <p style="font-size: 13px; color: #6b7280; margin: 0;">If you do not receive your report within 30 minutes, reply to this email and we will resolve it immediately.</p>
+        </div>
+        """,
+    ),
+    "report_delivery": EmailTemplate(
+        subject="Your {{category_title}} Report is Ready — StartInsight",
+        html_template="""
+        <div style="font-family: system-ui, -apple-system, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a1a;">
+            <div style="border-bottom: 3px solid #0D7377; padding-bottom: 16px; margin-bottom: 24px;">
+                <p style="font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #0D7377; margin: 0 0 8px 0;">StartInsight</p>
+                <h1 style="font-family: Georgia, serif; font-size: 22px; color: #0a0a0a; margin: 0;">Your {{category_title}} Report is Ready</h1>
+            </div>
+            <p style="font-size: 14px; line-height: 1.6;">Your paid market intelligence report is attached as a PDF.</p>
+            <p style="font-size: 14px; line-height: 1.6;">The report covers demand signals, underserved niches, competitive landscape, customer pain points, and a recommended first-wedge entry strategy.</p>
+            <p style="font-size: 13px; color: #6b7280; margin-top: 24px;">This report is for personal use only. Do not distribute without permission.</p>
+        </div>
+        """,
+    ),
+    "report_failed": EmailTemplate(
+        subject="We're Working on Your {{category_title}} Report",
+        html_template="""
+        <div style="font-family: system-ui, -apple-system, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a1a;">
+            <div style="border-bottom: 3px solid #0D7377; padding-bottom: 16px; margin-bottom: 24px;">
+                <p style="font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #0D7377; margin: 0 0 8px 0;">StartInsight</p>
+                <h1 style="font-family: Georgia, serif; font-size: 22px; color: #0a0a0a; margin: 0;">We're Working on Your Report</h1>
+            </div>
+            <p style="font-size: 14px; line-height: 1.6;">We encountered a technical issue while generating your <strong>{{category_title}}</strong> report. Our team has been notified and will resolve this shortly.</p>
+            <p style="font-size: 14px; line-height: 1.6;">You will receive your completed report within 2 hours. If the issue persists, please reply to this email and we will issue a full refund.</p>
+            <p style="font-size: 13px; color: #6b7280;">Reference: {{payment_intent_id}}</p>
+        </div>
+        """,
+    ),
 }
 
 

@@ -5,38 +5,46 @@
 ### CRITICAL: Always Read These Files First
 Before answering ANY complex question or starting ANY implementation task, you MUST read the relevant memory-bank files in this order:
 
-1. **`memory-bank/project-brief.md`** (582 lines)
+**Quick Reference (before deep reading):**
+- `README.md` (root, ~34K) — Live URLs, full feature list, production status overview. Read for fast orientation before diving into memory-bank files.
+
+1. **`memory-bank/project-brief.md`** (194 lines)
    - Purpose: Executive summary, business objectives, 3 core loops, competitive positioning vs IdeaBrowser
    - When to read: At the start of any new session, before proposing architectural changes
 
-2. **`memory-bank/active-context.md`** (742 lines)
+2. **`memory-bank/active-context.md`** (202 lines)
    - Purpose: Current phase (Phase 1-10 complete, production ready), immediate tasks, testing status, what's working/next
    - When to read: Before every task to understand current state
 
-3. **`memory-bank/implementation-plan.md`** (572 lines)
+3. **`memory-bank/implementation-plan.md`** (743 lines)
    - Purpose: Phases 1-10 completion status, testing requirements (291 backend + 47 E2E), decision records (DR-001 to DR-005)
    - When to read: When planning implementation steps, checking phase requirements
 
-4. **`memory-bank/architecture.md`** (2,118 lines)
+4. **`memory-bank/architecture.md`** (2,354 lines)
    - Purpose: System architecture, 69 tables, 230 API endpoints, SSE architecture, authentication, admin portal, Phase 8-10 features
    - When to read: Before implementing features, designing database models, creating APIs
 
-5. **`memory-bank/tech-stack.md`** (1,197 lines)
+5. **`memory-bank/tech-stack.md`** (389 lines)
    - Purpose: Phase 1-10 dependencies, cost analysis ($294/mo at 10K users), revenue projections ($59K MRR at 10K users)
    - When to read: When choosing libraries, verifying dependencies, resolving conflicts, cost planning
 
-6. **`memory-bank/progress.md`** (707 lines, updated 2026-02-08)
+6. **`memory-bank/progress.md`** (1,180 lines, updated 2026-03-25)
    - Purpose: Completion log (Phase 1-10 complete, production ready), recent changes, historical milestones
    - When to read: After completing tasks (for logging), before starting work (to avoid duplication)
 
-7. **`memory-bank/improvement-plan.md`** (~280 lines)
+7. **`memory-bank/improvement-plan.md`** (225 lines)
    - Purpose: Post-launch growth roadmap — Tier 1 (blocking), Tier 2 (Month 1), Tier 3 (Month 2-3) priorities with 30-day success metrics
    - When to read: Before planning any growth, content, monitoring, or testing work
+
+8. **`TODOS.md`** (root, ~90 lines)
+   - Purpose: Active task tracker — pending features (P2/P3), compliance fixes, design tasks with status
+   - When to read: Before starting any new feature or fix; after completing tasks (mark done)
 
 ### Context-Based Reading Guide
 
 | Scenario | Files to Read | Priority |
 |----------|---------------|----------|
+| **Quick orientation** | README.md | HIGH |
 | **Starting a new session** | project-brief.md, active-context.md, progress.md | HIGH |
 | **Implementing a feature** | active-context.md, implementation-plan.md, architecture.md | HIGH |
 | **Database/model changes** | architecture.md (Database Schema section), tech-stack.md | CRITICAL |
@@ -45,7 +53,8 @@ Before answering ANY complex question or starting ANY implementation task, you M
 | **Implementing Phase 8-10 features** | active-context.md, implementation-plan.md (Phase 8-10), architecture.md (Phase 8-10 sections) | CRITICAL |
 | **Authentication/Admin setup** | architecture.md (Authentication Architecture, Admin Portal), implementation-plan.md (Phase 4.1-4.2) | CRITICAL |
 | **Cost/pricing planning** | tech-stack.md (Cost Analysis), project-brief.md (Competitive Positioning) | HIGH |
-| **Growth / next actions** | improvement-plan.md, active-context.md | HIGH |
+| **UI/visual decisions** | DESIGN.md | CRITICAL |
+| **Growth / next actions** | improvement-plan.md, TODOS.md, active-context.md | HIGH |
 | **Debugging/questions** | All files (in reading order above) | MEDIUM |
 
 ### Rules
@@ -61,7 +70,7 @@ Before answering ANY complex question or starting ANY implementation task, you M
 
 ## ??? Tech Stack Rules (Strict)
 - **Backend**: FastAPI (Async), SQLAlchemy 2.0 (Async), Pydantic V2, `uv` package manager. **NO Django.**
-- **Frontend**: Next.js 14+ (App Router), TypeScript, Tailwind CSS, shadcn/ui.
+- **Frontend**: Next.js 16+ (App Router), TypeScript, Tailwind CSS, shadcn/ui.
 - **Database**: PostgreSQL (AsyncPG). **NO Supabase SDK** (use standard SQL/Alchemy).
 - **AI**: PydanticAI v1.x (standard). **LLM**: Gemini 2.0 Flash (primary), Claude 3.5 Sonnet (fallback).
 - **Scraper**: Firecrawl (Official SDK).

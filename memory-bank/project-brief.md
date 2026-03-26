@@ -91,7 +91,7 @@ Users are readers, not creators. The platform emphasizes discovery, curation, an
 - **Purpose:** Surface insights to end users in a consumable format
 - **Trigger:** User accesses Next.js dashboard
 - **Process:**
-  - FastAPI serves ranked insights via 232+ REST endpoints
+  - FastAPI serves ranked insights via 235+ REST endpoints
   - Frontend displays: Top 5 daily, deep-dive view, trend graphs, validation data
   - User filters by category, date, keyword, status
 - **Output:** Interactive Next.js dashboard
@@ -102,15 +102,15 @@ Users are readers, not creators. The platform emphasizes discovery, curation, an
 
 ```
 6 Scrapers → arq tasks → Railway Redis queue → Supabase PostgreSQL
-          → 8 AI Agents (Gemini 2.0 Flash) → 232+ FastAPI endpoints
+          → 8 AI Agents (Gemini 2.0 Flash) → 235+ FastAPI endpoints
           → Next.js App Router (Vercel)
 ```
 
 | Layer | Technology | Hosting |
 |-------|------------|---------|
-| **Frontend** | Next.js 14+ App Router, TypeScript, Tailwind, shadcn/ui | Vercel (free) |
+| **Frontend** | Next.js 16+ App Router, TypeScript, Tailwind, shadcn/ui | Vercel (free) |
 | **Backend** | FastAPI async, SQLAlchemy 2.0, Pydantic V2 | Railway (free 500h/mo) |
-| **Database** | PostgreSQL via Supabase Pro, 69 tables | Supabase Pro ($25/mo) |
+| **Database** | PostgreSQL via Supabase Pro, 70 tables | Supabase Pro ($25/mo) |
 | **Task Queue** | arq + Redis | Railway Redis (free) |
 | **Auth** | Supabase JWT (ES256 via JWKS) | Supabase Pro (included) |
 | **AI** | PydanticAI v1.x + Gemini 2.0 Flash | Google API (~$1-5/mo) |
@@ -123,11 +123,11 @@ Users are readers, not creators. The platform emphasizes discovery, curation, an
 
 ## 7. Data Scale (Production)
 
-- **Database:** 69 tables (26 core + 43 Phase 8-10 features)
-- **API Endpoints:** 232+
+- **Database:** 70 tables (26 core + 43 Phase 8-10 features + 1 Phase 6)
+- **API Endpoints:** 235+
 - **AI Agents:** 8 active agents
 - **Scrapers:** 6 active scrapers
-- **Tests:** 291 backend tests (85% coverage), 47 E2E tests (5 browsers)
+- **Tests:** 398 backend tests (47% coverage), 47 E2E tests (5 browsers)
 - **Background Jobs:** 8 scheduled arq tasks (every 6h + daily + weekly)
 
 ---
@@ -148,7 +148,7 @@ Users are readers, not creators. The platform emphasizes discovery, curation, an
 | Scoring dimensions | 4 | **8 (2x)** |
 | Data sources | 4 | **6 (+50%)** |
 | Real-time updates | 24h digest | **<100ms SSE** |
-| Public API | No | **232+ endpoints** |
+| Public API | No | **235+ endpoints** |
 | Admin agent controller | No | **Yes (SSE streaming)** |
 | Team collaboration | Empire tier only | **All tiers (RBAC)** |
 | APAC latency | 180ms (US-based) | **50ms (Sydney)** |
@@ -173,22 +173,27 @@ All content fully seeded and live:
 
 ## 10. Post-Launch Priorities
 
-**Immediate (Content Seeding):**
-- Seed 50+ insights across 10+ categories via admin portal
-- Verify scraper pipeline health in admin → Pipeline Monitoring
-- Submit sitemap to Google Search Console
+**Complete (Tier 1–3 ✅):**
+- Scraper pipeline health verified and hardened (Phase 6)
+- Uptime monitoring live (UptimeRobot)
+- Google Search Console SEO: sitemap, JSON-LD, verification meta
+- Content seeding CLI: `backend/scripts/seed_content.py`
+- PostHog analytics + Sentry release tracking
+- Onboarding banner, Redis caching, E2E expansion
+- ProductHunt launch plan drafted
+- Public API docs, referral program, email digest validation
 
-**Short-term (Growth):**
-- Set up UptimeRobot / Checkly uptime monitoring
-- Launch to waitlist / Product Hunt
-- Create initial batch of marketing content
+**Pending (manual action, no deadline):**
+- Submit https://startinsight.co/sitemap.xml to Google Search Console
+- Seed content to 600+ insights before ProductHunt launch (pipeline running every 6h)
+- Remove TIER_COMPAT_MAP by 2026-04-23 (Stripe backward compat window)
 
-**Monitoring (Ongoing):**
-- Review Sentry for new production errors weekly
-- Monitor Stripe webhook health (checkout, subscription events)
+**Ongoing:**
+- Review Sentry weekly for production errors
+- Monitor Stripe webhook health
 - Check Railway metrics (CPU, memory, response times)
 
 ---
 
-**Last Updated:** 2026-02-19
-**Status:** LIVE IN PRODUCTION — All phases complete. Scheduler running. Content seeding next.
+**Last Updated:** 2026-03-25
+**Status:** LIVE IN PRODUCTION — All phases complete. PLG freemium + Stripe compat + PostHog live. Sitemap submission + content seeding to 600+ insights for ProductHunt pending.

@@ -73,6 +73,7 @@ class Settings(BaseSettings):
     stripe_price_starter_yearly: str | None = None
     stripe_price_pro_yearly: str | None = None
     stripe_price_enterprise_yearly: str | None = None
+    stripe_price_report: str | None = None  # One-time RM49 category report price ID
 
     # Application URL (for email links)
     app_url: str = "http://localhost:3001"

@@ -119,7 +119,7 @@ Unlike traditional brainstorming tools, StartInsight relies on **real-time marke
 - **Public API**: 235+ REST endpoints with Swagger/OpenAPI documentation
 - **API Key Management**: Scoped keys with usage tracking, rate limiting
 - **Export Tools**: CSV/JSON exports with brand customization
-- **Row-Level Security**: Supabase RLS policies on all 69 tables
+- **Row-Level Security**: Supabase RLS policies on all 70 tables
 - **Comprehensive Testing**: 398 backend tests (47% coverage), 47 E2E tests (8 suites, 5 browsers)
 - **CI/CD Pipeline**: GitHub Actions — Security Scan → Tests (fast + integration parallel) → Migrate → Build → Deploy
 - **Sentry Automation**: Daily triage workflow (Mon-Fri), auto-fix for 4 known error patterns
@@ -217,16 +217,9 @@ graph LR
 
 > **Cloud-First Setup**: StartInsight uses Supabase Cloud PostgreSQL (production) and Railway Redis (production). Local dev uses a local Redis instance.
 
-For detailed setup instructions, see **[SETUP.md](SETUP.md)** - a comprehensive guide covering:
-- Prerequisites (Supabase accounts)
-- Backend and frontend configuration
-- Database initialization
-- Troubleshooting common issues
-- Production deployment
-
 ### Prerequisites
 
-- **Python 3.12+**
+- **Python 3.11+**
 - **Node.js 18+**
 - **uv** (Python package manager): `curl -LsSf https://astral.sh/uv/install.sh | sh`
 - **Supabase Account**: [supabase.com](https://supabase.com) (PostgreSQL database + auth)
@@ -325,14 +318,6 @@ npm run dev
 ```
 
 Frontend runs at: **http://localhost:3000**
-
----
-
-## 📖 Full Setup Guide
-
-For troubleshooting, production deployment, and advanced configuration, see:
-
-**[SETUP.md](SETUP.md)** - Comprehensive cloud-first setup guide
 
 ---
 
@@ -442,7 +427,7 @@ StartInsight/
 │   ├── app/
 │   │   ├── core/              # Config, errors, dependencies
 │   │   ├── db/                # Database session, base classes
-│   │   ├── models/            # SQLAlchemy models (69 tables)
+│   │   ├── models/            # SQLAlchemy models (70 tables)
 │   │   ├── schemas/           # Pydantic schemas
 │   │   ├── api/               # API routes (230 endpoints)
 │   │   │   ├── routes/        # Insight, user, admin, public content
@@ -514,7 +499,7 @@ cd frontend && npm run dev
 # Database Migrations
 cd backend && alembic upgrade head
 
-# Backend Tests (291 tests, 85% coverage)
+# Backend Tests (398 tests, 47% coverage)
 cd backend && pytest tests/ -v --cov=app
 
 # Frontend E2E Tests (47 tests, 5 browsers)
@@ -575,7 +560,7 @@ Comprehensive documentation is maintained in the `memory-bank/` directory:
 
 ### Backend Testing (pytest)
 
-**Stats**: 291 tests across 22 files, 85% coverage
+**Stats**: 398 tests across 30+ files, 47% coverage
 
 ```bash
 # Run all backend tests
@@ -661,11 +646,11 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 
 | Metric | Value |
 |--------|-------|
-| **Backend** | 232+ API endpoints, 69 database tables, 15+ services |
+| **Backend** | 235+ API endpoints, 70 database tables, 15+ services |
 | **Frontend** | 35+ routes (dashboard, workspace, research, admin, 10 public pages) |
-| **Database** | 25+ Alembic migrations (c009 latest), Row-Level Security enabled |
+| **Database** | 16 Alembic migrations (c016 at head), Row-Level Security enabled |
 | **AI Agents** | 8 agents (enhanced_analyzer, research, competitive_intel, market_intel, content_generator, chat_agent, quality_reviewer, weekly_digest) |
-| **Testing** | 291 backend tests (22 files, 85% coverage), 47 E2E tests (8 suites, 5 browsers) |
+| **Testing** | 398 backend tests (30+ files, 47% coverage), 47 E2E tests (8 suites, 5 browsers) |
 | **Content** | 84+ seeded items (54 tools, 12 success stories, 180+ trends, 13 blog articles) |
 | **Payments** | Stripe live mode — 3 products, 6 prices (monthly + yearly), webhook active |
 | **Monitoring** | Sentry (errors + traces + logs + AI spans), ascentia-km org, events confirmed |
@@ -723,7 +708,7 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 
 **Service Health Check (2026-03-04)**:
 - ✅ Railway: `api.startinsight.co` → `{"status":"ready","checks":{"database":"healthy","redis":"healthy"}}`
-- ✅ Supabase Pro: PostgreSQL accessible (66 tables, 25 migrations at c009)
+- ✅ Supabase Pro: PostgreSQL accessible (70 tables, 16 migrations at c016)
 - ✅ Vercel: startinsight.co → HTTP 200
 - ✅ Sentry: `backend` + `frontend` projects active (ascentia-km org)
 - ✅ Google Gemini: gemini-2.0-flash API accessible

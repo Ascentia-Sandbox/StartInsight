@@ -13,6 +13,23 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-03-26)
+
+- [2026-03-26] [CONVICTION-FUNNEL-3]: Tests + TS type fix for teaser response
+  - Files: test_conviction_funnel.py, reports/[category]/page.tsx
+  - Tech: 22 tests (model/webhook/pipeline/admin/funnel), fixed frontend types to match CategoryTeaserResponse
+  - Status: ✓ Complete — 454 backend tests total
+
+- [2026-03-26] [CONVICTION-FUNNEL-2]: Report generation service + full API routes
+  - Files: report_generator.py, reports.py, email_service.py, main.py
+  - Tech: PydanticAI + WeasyPrint PDF + Resend attachment + tenacity retry on Gemini 429s
+  - Status: ✓ Complete
+
+- [2026-03-26] [CONVICTION-FUNNEL]: Category landing page + Stripe checkout route
+  - Files: reports/[category]/page.tsx, ReportCheckoutButton.tsx, UTMCapture.tsx, reports.py, config.py
+  - Tech: Next.js 16 async params server page with ISR + new GET /api/reports/create-checkout endpoint
+  - Status: ✓ Complete
+
 ## Recent Progress (2026-03-20)
 
 - [2026-03-20] [QA-FIX]: Code quality fixes + CI credential bug

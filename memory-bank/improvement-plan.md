@@ -70,8 +70,8 @@ Upgrading StartInsight's scraping and analytics infrastructure with production-g
 | Phase | Table | Change | Migration |
 |-------|-------|--------|-----------|
 | 6.2A | `source_health` | NEW TABLE (12 columns) | c012 |
-| 6.4A | `source_health` | ADD 3 columns (baseline_mean/variance/count) | c013 |
-| 6.4B | `insights` | ADD 3 columns (correlation_group_id/score/source_count) | c014 |
+| 6.4A | `source_health` | ADD 3 columns (baseline_mean/variance/count) | c013 (part of) |
+| 6.4B | `insights` | ADD 3 columns (correlation_group_id/score/source_count) | c013 (part of) |
 
 ## New API Endpoints
 

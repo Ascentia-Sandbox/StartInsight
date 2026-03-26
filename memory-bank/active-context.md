@@ -35,7 +35,7 @@
 |---------|----------|---------------|
 | **Frontend** | Vercel | `https://startinsight.co` ✅ |
 | **Backend** | Railway | `https://api.startinsight.co` ✅ |
-| **Database** | Supabase Pro | Sydney ap-southeast-2, c009 migration, session-mode pooler |
+| **Database** | Supabase Pro | Sydney ap-southeast-2, c016 migration head, session-mode pooler |
 | **Redis** | Railway (native) | `redis.railway.internal:6379`, provisioned 2026-02-19 ✅ |
 | **Email** | Resend | Live mode, 3K/mo free tier |
 | **Payments** | Stripe | Live mode, 3 products / 6 prices (monthly + yearly) |
@@ -188,15 +188,15 @@ All arq tasks now scheduled and running via APScheduler + Railway Redis:
 
 ## Architecture in One Paragraph
 
-6 scrapers → arq tasks (cron, not APScheduler) → Railway Redis queue → Supabase PostgreSQL → 8 AI agents (Gemini 2.0 Flash) → 232+ FastAPI endpoints → Next.js App Router. Auth via Supabase JWT (ES256). Payments via Stripe. Email via Resend. Errors/traces via Sentry. All infra on Railway (backend + Redis) + Vercel (frontend) + Supabase Pro (DB). CI/CD via GitHub Actions.
+6 scrapers → arq tasks (cron, not APScheduler) → Railway Redis queue → Supabase PostgreSQL → 8 AI agents (Gemini 2.0 Flash) → 235+ FastAPI endpoints → Next.js App Router. Auth via Supabase JWT (ES256). Payments via Stripe. Email via Resend. Errors/traces via Sentry. All infra on Railway (backend + Redis) + Vercel (frontend) + Supabase Pro (DB). CI/CD via GitHub Actions.
 
 ## Testing
 
-- **Backend:** `cd backend && pytest tests/ -v --cov=app` (291 tests, 85% coverage)
+- **Backend:** `cd backend && pytest tests/ -v --cov=app` (398 tests, 47% coverage)
 - **Frontend:** `cd frontend && npx playwright test` (47 E2E, 5 browsers)
 - **Lint:** `cd backend && uv run ruff check . --fix`
 
 ---
 
-**Last Updated:** 2026-02-22
-**Status:** LIVE IN PRODUCTION — All Tier 1/2/3 improvement tasks complete. 249 backend tests passing. Migration c011 pending on production. Awaiting PostHog key + Google Search Console verification + content seeding to 600+ insights for ProductHunt launch.
+**Last Updated:** 2026-03-25
+**Status:** LIVE IN PRODUCTION — All Tier 1/2/3 improvement tasks complete. 398 backend tests passing (47% coverage). Migrations c001–c016 applied. PostHog live. Sitemap submission + content seeding to 600+ insights for ProductHunt launch pending.

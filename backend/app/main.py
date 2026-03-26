@@ -370,6 +370,7 @@ from app.api.routes import (  # noqa: E402
     preferences,
     pulse,
     referrals,
+    reports,
     research,
     signals,
     success_stories,
@@ -419,6 +420,7 @@ app.include_router(contact.router, tags=["Contact"])  # Phase Q6.3
 app.include_router(newsletter.router, tags=["Newsletter"])  # PLG newsletter
 app.include_router(referrals.router, tags=["Referrals"])  # Referral program
 app.include_router(email_tracking.router, tags=["Email Tracking"])  # Open pixel tracking
+app.include_router(reports.router, tags=["Reports"])  # Conviction funnel paid reports
 
 # Static file serving for uploaded images (Phase 20.1)
 os.makedirs("uploads/images", exist_ok=True)

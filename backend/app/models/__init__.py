@@ -68,6 +68,7 @@ from app.models.pipeline_monitoring import (
 # Phase 17: Content Automation Pipeline
 from app.models.pipeline_run import PipelineRun
 from app.models.raw_signal import RawSignal
+from app.models.report_request import ReportRequest
 from app.models.research_request import ResearchRequest
 from app.models.saved_insight import SavedInsight
 
@@ -185,4 +186,6 @@ __all__ = [
     "SourceHealth",
     # PLG: Newsletter
     "NewsletterSubscriber",
+    # Conviction Funnel: Category Reports
+    "ReportRequest",
 ]

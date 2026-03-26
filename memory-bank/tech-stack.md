@@ -103,8 +103,8 @@
 - **PostgreSQL** via **Supabase Pro** (ap-southeast-2 Sydney)
   - Connection: session-mode pooler, SSL required
   - Pool: 20 size, 30 max overflow, recycle 3600s
-  - 69 tables, all with Row-Level Security enabled
-  - 25+ Alembic migrations (c009 at head)
+  - 70 tables, all with Row-Level Security enabled
+  - 16 Alembic migrations (c016 at head)
 - **SQLAlchemy 2.0 async** (`sqlalchemy[asyncio]>=2.0.25`)
 - **asyncpg ≥0.29** — Async PostgreSQL driver
 - **Alembic ≥1.13** — Migration version control
@@ -212,10 +212,10 @@ dependencies = [
   - `RAILWAY_API_TOKEN` (account-level) + `--project` flag required
 
 ### Database Migrations
-- **Alembic** — Python-managed, 25+ migrations
+- **Alembic** — Python-managed, 16 migrations (c001–c016)
 - **Never re-run** migration c006 (not idempotent)
 - **Migration c008** (`purge_seed_data`) is irreversible — run staging first
-- Current head: `c009`
+- Current head: `c016`
 
 ### Package Managers
 - **uv** (Python) — Blazing-fast, replaces pip/poetry: `uv sync`, `uv run`
@@ -224,7 +224,7 @@ dependencies = [
 ### Linting / Quality
 - **Ruff** — Python linter + formatter (replaces flake8 + black)
 - **ESLint + Prettier** — TypeScript/React
-- **pytest ≥7.4** with `pytest-asyncio` + `pytest-cov` — 291 tests, 85% coverage
+- **pytest ≥7.4** with `pytest-asyncio` + `pytest-cov` — 398 tests, 47% coverage
 - **Playwright** — 47 E2E tests, 5 browsers (Chrome, Firefox, Safari, Mobile Chrome, Mobile Safari)
 
 ---
@@ -240,9 +240,9 @@ dependencies = [
          ↓ unprocessed signals
 [8 PydanticAI Agents] ──► [Gemini 2.0 Flash $0.10/M]
          ↓ structured insights
-[Supabase PostgreSQL: insights table (69 tables total)]
+[Supabase PostgreSQL: insights table (70 tables total)]
          ↓ REST / SSE
-[FastAPI: 232+ endpoints]
+[FastAPI: 235+ endpoints]
          ↓ JSON
 [Next.js 16 App Router: 35+ routes]
 ```

@@ -90,7 +90,7 @@ User → Next.js → GET /api/insights → FastAPI → PostgreSQL → JSON respo
 
 ---
 
-## 4. Database Schema (69 Tables)
+## 4. Database Schema (70 Tables)
 
 ### 4.1 Core Tables (Phase 1-3)
 
