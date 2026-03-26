@@ -24,11 +24,11 @@ export function ChartLoadingSkeleton() {
 
           {/* Chart skeleton */}
           <div className="h-[300px] flex items-end gap-2 px-4">
-            {Array.from({ length: 12 }).map((_, i) => (
+            {[60, 80, 55, 90, 70, 85, 65, 75, 95, 50, 70, 80].map((h, i) => (
               <Skeleton
                 key={i}
                 className="flex-1"
-                style={{ height: `${Math.random() * 100 + 50}%` }}
+                style={{ height: `${h}%` }}
               />
             ))}
           </div>
