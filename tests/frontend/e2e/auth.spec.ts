@@ -45,14 +45,14 @@ test.describe('Authentication Flows', () => {
     test('should have link to signin page', async ({ page }) => {
       await page.goto('/auth/signup');
 
-      const signinLink = page.locator('a:has-text("Sign in"), a:has-text("Log in"), text=/already have an account/i');
+      const signinLink = page.locator('a:has-text("Sign in"), a:has-text("Log in")').or(page.getByText(/already have an account/i));
       await expect(signinLink.first()).toBeVisible();
     });
   });
 
   test.describe('Sign In', () => {
     test('should display signin form', async ({ page }) => {
-      await page.goto('/auth/signin');
+      await page.goto('/auth/login');
 
       await expect(page.locator('input[type="email"]')).toBeVisible();
       await expect(page.locator('input[type="password"]')).toBeVisible();
@@ -60,7 +60,7 @@ test.describe('Authentication Flows', () => {
     });
 
     test('should show error for invalid credentials', async ({ page }) => {
-      await page.goto('/auth/signin');
+      await page.goto('/auth/login');
 
       await page.fill('input[type="email"]', 'nonexistent@example.com');
       await page.fill('input[type="password"]', 'wrongpassword');
@@ -72,18 +72,18 @@ test.describe('Authentication Flows', () => {
     });
 
     test('should have forgot password link', async ({ page }) => {
-      await page.goto('/auth/signin');
+      await page.goto('/auth/login');
 
-      const forgotLink = page.locator('a:has-text("Forgot"), text=/forgot password/i');
+      const forgotLink = page.locator('a:has-text("Forgot")').or(page.getByText(/forgot password/i));
       if (await forgotLink.count() > 0) {
         await expect(forgotLink.first()).toBeVisible();
       }
     });
 
     test('should have link to signup page', async ({ page }) => {
-      await page.goto('/auth/signin');
+      await page.goto('/auth/login');
 
-      const signupLink = page.locator('a:has-text("Sign up"), a:has-text("Create"), text=/don.t have an account/i');
+      const signupLink = page.locator('a:has-text("Sign up"), a:has-text("Create")').or(page.getByText(/don.t have an account/i));
       await expect(signupLink.first()).toBeVisible();
     });
   });
@@ -93,14 +93,14 @@ test.describe('Authentication Flows', () => {
       await page.goto('/dashboard');
 
       // Should redirect to signin
-      await page.waitForURL(/\/(auth\/signin|signin|login)/i, { timeout: 5000 });
+      await page.waitForURL(/\/(auth\/login|signin|login)/i, { timeout: 5000 });
     });
 
     test('should redirect unauthenticated users from workspace', async ({ page }) => {
       await page.goto('/workspace');
 
       // Should redirect to signin
-      await page.waitForURL(/\/(auth\/signin|signin|login)/i, { timeout: 5000 });
+      await page.waitForURL(/\/(auth\/login|signin|login)/i, { timeout: 5000 });
     });
 
     test('should redirect unauthenticated users from research', async ({ page }) => {
@@ -117,14 +117,14 @@ test.describe('Authentication Flows', () => {
       await page.goto('/billing');
 
       // Should redirect to signin
-      await page.waitForURL(/\/(auth\/signin|signin|login)/i, { timeout: 5000 });
+      await page.waitForURL(/\/(auth\/login|signin|login)/i, { timeout: 5000 });
     });
 
     test('should redirect unauthenticated users from admin', async ({ page }) => {
       await page.goto('/admin');
 
       // Should redirect to signin
-      await page.waitForURL(/\/(auth\/signin|signin|login)/i, { timeout: 5000 });
+      await page.waitForURL(/\/(auth\/login|signin|login)/i, { timeout: 5000 });
     });
   });
 
@@ -185,7 +185,7 @@ test.describe('Authentication UI Elements', () => {
 
   test('should show navigation for authenticated user flow', async ({ page }) => {
     // Navigate to signin page
-    await page.goto('/auth/signin');
+    await page.goto('/auth/login');
 
     // Check for OAuth provider buttons (Google, GitHub, etc.)
     const oauthButtons = page.locator('button:has-text("Google"), button:has-text("GitHub"), button:has-text("Continue with")');

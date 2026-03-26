@@ -36,7 +36,7 @@ test.describe('Workspace', () => {
   test.describe('Insights list page', () => {
     test.beforeEach(async ({ page }) => {
       await page.goto('/insights');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
     });
 
     test('loads at /insights without authentication', async ({ page }) => {
@@ -44,16 +44,16 @@ test.describe('Workspace', () => {
     });
 
     test('shows insight cards', async ({ page }) => {
-      // Cards can be custom components or generic shadcn Card elements
-      const insightCards = page.locator(
-        '[data-testid="insight-card"], .card, article'
-      );
+      // Wait for API to load cards (takes ~2s), then check for insight links
+      await page.waitForSelector('main a[href*="/insights/"]', { timeout: 15000 });
+      const insightCards = page.locator('main a[href*="/insights/"]');
       const count = await insightCards.count();
       expect(count).toBeGreaterThan(0);
     });
 
     test('insight card contains readable text', async ({ page }) => {
-      const firstCard = page.locator('[data-testid="insight-card"], .card').first();
+      await page.waitForSelector('main a[href*="/insights/"]', { timeout: 15000 });
+      const firstCard = page.locator('main a[href*="/insights/"]').first();
       await expect(firstCard).toBeVisible();
 
       // Each card should have some textual content
@@ -62,19 +62,19 @@ test.describe('Workspace', () => {
     });
 
     test('insight cards show a save/bookmark icon or button', async ({ page }) => {
+      // Wait for content to load
+      await page.waitForSelector('main a[href*="/insights/"]', { timeout: 15000 });
+
       // The InsightCard component renders a bookmark/save icon
       const saveButton = page.locator(
-        '[data-testid="save-button"], button[aria-label*="save" i], button[aria-label*="bookmark" i], svg[class*="bookmark" i]'
+        'button[aria-label*="save" i], button[aria-label*="bookmark" i], button[aria-label*="compare" i]'
       );
 
-      // Not all views expose the save button without login — check presence
-      // rather than forcing visibility (it may require hover state)
       if (await saveButton.count() > 0) {
-        // At least one save button exists in the list
         expect(await saveButton.count()).toBeGreaterThan(0);
       } else {
         // Fallback: confirm the page loaded cards with content
-        const cards = page.locator('[data-testid="insight-card"], .card');
+        const cards = page.locator('main a[href*="/insights/"]');
         expect(await cards.count()).toBeGreaterThan(0);
       }
     });

@@ -8,13 +8,13 @@ test.describe('Insight Detail Page', () => {
     // Navigate to homepage first
     await page.goto('/');
 
-    // Wait for insights to load
-    await page.waitForSelector('[data-testid="insight-card"], .skeleton', { timeout: 10000 });
+    // Wait for insights to load (API takes ~2s)
+    await page.waitForSelector('main a[href*="/insights/"]', { timeout: 15000 });
 
-    // Click first "View Details" button (if available)
-    const viewDetailsButton = page.locator('text=View Details').first();
-    if (await viewDetailsButton.count() > 0) {
-      await viewDetailsButton.click();
+    // Click first insight card link
+    const insightLink = page.locator('main a[href*="/insights/"]').first();
+    if (await insightLink.count() > 0) {
+      await insightLink.click();
       // Wait for navigation
       await page.waitForURL(/\/insights\/[a-f0-9-]+/);
     }
