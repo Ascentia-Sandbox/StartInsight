@@ -80,7 +80,7 @@ Before answering ANY complex question or starting ANY implementation task, you M
 - **Frontend Dev**: `cd frontend && npm run dev`
 - **DB Migrations**: `cd backend && alembic upgrade head`
 - **Backend Tests**: `cd backend && pytest tests/ -v --cov=app`
-- **Frontend E2E Tests**: `cd frontend && npx playwright test`
+- **Frontend E2E Tests**: `NODE_PATH=frontend/node_modules frontend/node_modules/.bin/playwright test --config tests/frontend/playwright.config.ts --project=chromium`
 - **Lint**: `cd backend && uv run ruff check . --fix`
 
 ## ?? Coding Style
