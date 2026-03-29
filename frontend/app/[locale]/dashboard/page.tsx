@@ -328,7 +328,7 @@ export default function DashboardPage() {
                       {status.saved_count > 0 && (
                         <div className="flex items-center gap-3">
                           <Bookmark className="h-5 w-5 text-primary" />
-                          <p>You have <strong>{status.saved_count}</strong> saved insights in your workspace.</p>
+                          <p>You have <strong>{status.saved_count}</strong> saved {status.saved_count === 1 ? 'insight' : 'insights'} in your workspace.</p>
                         </div>
                       )}
                       {status.ratings_count > 0 && (

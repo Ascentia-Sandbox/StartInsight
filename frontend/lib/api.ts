@@ -1337,7 +1337,7 @@ export async function fetchSystemSettings(
   accessToken: string
 ): Promise<SystemSettingsGrouped> {
   const client = createAuthenticatedClient(accessToken);
-  const { data } = await client.get('/api/admin/settings');
+  const { data } = await client.get('/api/admin/settings/');
   return data;
 }
 
