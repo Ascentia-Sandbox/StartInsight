@@ -112,6 +112,8 @@ export default function ChatPage() {
   const [selectedMode, setSelectedMode] = useState<ChatMode>('general');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Guard against duplicate session creation on rapid double-click (before React re-renders)
+  const isCreatingRef = useRef(false);
 
   // Fetch insight details (resolves slug to full insight with UUID)
   const { data: insight } = useQuery({
@@ -183,11 +185,22 @@ export default function ChatPage() {
       return data as ChatSession;
     },
     onSuccess: (data) => {
+      isCreatingRef.current = false;
       setActiveChatId(data.id);
       setMessages([]);
       queryClient.invalidateQueries({ queryKey: ['chat-sessions'] });
     },
+    onError: () => {
+      isCreatingRef.current = false;
+    },
   });
+
+  // Deduplicated session start — guards against rapid double-clicks
+  const handleStartSession = useCallback((mode: ChatMode) => {
+    if (isCreatingRef.current || createChatMutation.isPending) return;
+    isCreatingRef.current = true;
+    createChatMutation.mutate(mode);
+  }, [createChatMutation]);
 
   // Delete chat session
   const deleteChatMutation = useMutation({
@@ -372,15 +385,12 @@ export default function ChatPage() {
               <Button
                 className="w-full"
                 size="sm"
-                onClick={() => createChatMutation.mutate(selectedMode)}
+                onClick={() => handleStartSession(selectedMode)}
                 disabled={createChatMutation.isPending}
               >
-                {createChatMutation.isPending ? (
-                  <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                ) : (
-                  <Plus className="h-3 w-3 mr-2" />
-                )}
-                Start Session
+                <Loader2 className={`h-3 w-3 mr-2 animate-spin ${createChatMutation.isPending ? '' : 'hidden'}`} />
+                <Plus className={`h-3 w-3 mr-2 ${createChatMutation.isPending ? 'hidden' : ''}`} />
+                {createChatMutation.isPending ? 'Creating session...' : 'Start Session'}
               </Button>
             </CardContent>
           </Card>
@@ -462,7 +472,7 @@ export default function ChatPage() {
                     <button
                       key={key}
                       className={`flex items-center gap-4 p-4 rounded-lg border text-left transition-all hover:shadow-md ${cfg.bg}`}
-                      onClick={() => createChatMutation.mutate(key)}
+                      onClick={() => handleStartSession(key)}
                       disabled={createChatMutation.isPending}
                     >
                       <cfg.icon className={`h-8 w-8 ${cfg.color}`} />
@@ -495,7 +505,7 @@ export default function ChatPage() {
                       onClick={() => {
                         if (!isActive) {
                           // Start a new chat session with this mode
-                          createChatMutation.mutate(key);
+                          handleStartSession(key);
                         }
                       }}
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
