@@ -400,7 +400,8 @@ RESEARCH_QUOTA_LIMITS = {
     "free": 1,  # 1 analysis per month
     "starter": 3,  # 3 analyses per month
     "pro": 10,  # 10 analyses per month
-    "enterprise": 100,  # 100 analyses per month
+    "enterprise": 100,  # 100 analyses per month (legacy name)
+    "api": 100,  # 100 analyses per month
 }
 
 

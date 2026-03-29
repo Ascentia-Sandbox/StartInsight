@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Lightbulb, Link2, BarChart3, Loader2, CheckCircle, Clock } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase/client';
@@ -21,6 +21,8 @@ type InputType = 'idea' | 'url' | 'competitor';
 
 export default function ResearchPage() {
   const router = useRouter();
+  const params = useParams();
+  const locale = (params?.locale as string) || 'en';
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [inputType, setInputType] = useState<InputType>('idea');
@@ -122,16 +124,20 @@ export default function ResearchPage() {
       setTargetMarket('');
       toast.success('Research request submitted successfully');
 
-      // If auto-approved (paid tiers), redirect to analysis
+      // If auto-approved (paid tiers), redirect to workspace where analysis will appear
       if (request.status === 'approved' && request.analysis_id) {
+        toast.success('Analysis queued — check your workspace for results');
         setTimeout(() => {
-          router.push(`/research/${request.analysis_id}`);
+          router.push(`/${locale}/workspace`);
         }, 2000);
       }
     } catch (err: any) {
       if (err?.response?.status === 429) {
         setError('Monthly quota exceeded. Upgrade your plan to submit more research requests.');
         toast.error('Monthly quota exceeded');
+      } else if (err?.response?.status === 409) {
+        setError('A research request with this information already exists. Please try with different details.');
+        toast.error('Duplicate request');
       } else if (err instanceof Error) {
         setError(err.message);
         toast.error('Failed to submit research request');

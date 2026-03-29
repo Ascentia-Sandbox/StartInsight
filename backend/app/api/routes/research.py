@@ -433,8 +433,8 @@ async def create_research_request(
     await db.commit()
     await db.refresh(research_request)
 
-    # Auto-approve for paid tiers (Starter, Pro, Enterprise)
-    if current_user.subscription_tier in ["starter", "pro", "enterprise"]:
+    # Auto-approve for paid tiers (Starter, Pro, Enterprise, Api)
+    if current_user.subscription_tier in ["starter", "pro", "enterprise", "api"]:
         research_request.status = "approved"
         research_request.reviewed_at = datetime.now(UTC)
         research_request.admin_id = None  # System auto-approval
