@@ -1207,3 +1207,8 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: backend/app/services/compliance_manager.py, frontend/components/builder/builder-integration.tsx, frontend/components/builder/builder-integration-enhanced.tsx
   - Tech: Zero imports confirmed via grep before deletion
   - Status: [✓ Complete]
+
+- [2026-03-29] [QA-SESSION]: Systematic QA of all authenticated and public pages
+  - Files: frontend/app/[locale]/dashboard/page.tsx, frontend/lib/api.ts
+  - Tech: Fixed grammar plural, prevented Mixed Content error on admin Pipeline/Settings
+  - Status: [✓ Complete]

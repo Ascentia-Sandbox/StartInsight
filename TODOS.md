@@ -59,3 +59,29 @@ Replaced `blur-sm opacity-50` in `FeatureLock.tsx` with CSS gradient fade (trans
 **Frontend:** "Export PDF" button in `frontend/app/[locale]/reports/page.tsx` wired to endpoint.
 - Free tier: top 10 summaries + upgrade CTA page
 - Pro tier: full detail (market size, revenue potential, opportunity score, solution)
+
+## QA Issues (2026-03-29)
+
+### ~~ISSUE-001: Grammar — "1 saved insights"~~ ✅ Fixed 2026-03-29
+
+Singular/plural logic added to `dashboard/page.tsx` line 331. Commit 6028bad.
+
+### ~~ISSUE-004: Admin Pipeline/Settings stuck on spinner (Mixed Content)~~ ✅ Fixed 2026-03-29
+
+`fetchSystemSettings` in `lib/api.ts` was calling `/api/admin/settings` (no trailing slash). FastAPI redirects to `/api/admin/settings/` but Railway strips HTTPS from the Location header → Mixed Content blocks the request. Fix: use trailing slash. Commit 6028bad.
+
+### ISSUE-002: Validate page — Similar Ideas always show "100% match" (P2)
+
+All 5 similar ideas on the validate result page show "100% match" regardless of actual semantic similarity. Irrelevant ideas (pet game dev, XSS protection, theme park rides) match an HR onboarding SaaS at 100%. Likely the similarity score field is being populated incorrectly by the backend.
+
+### ISSUE-003: Chat UX — no auto-focus after sending first message (P2)
+
+After sending a message in the chat (when no session is active), the UI creates a session and sends the message, but doesn't auto-navigate to the newly-active session. User must manually click the session in the sidebar to see the AI response.
+
+### ISSUE-005: Market Insights article cards not keyboard-accessible (P3)
+
+Cards use `cursor:pointer` divs instead of `<a>` elements. Not keyboard-navigable or screen-reader friendly.
+
+### ISSUE-006: Select controlled/uncontrolled warning in console (P3)
+
+`[warning] Select is changing from uncontrolled to controlled` appears on validate page when dropdowns are used. Radix Select initialized without a value then set. Low priority but noisy in console.
