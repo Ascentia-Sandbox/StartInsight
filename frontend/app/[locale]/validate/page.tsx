@@ -19,6 +19,7 @@ import { ScoreRadar } from '@/components/evidence/score-radar';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { config } from '@/lib/env';
 import { saveInsight } from '@/lib/api';
+import { useSubscription } from '@/hooks/useSubscription';
 import { toast } from 'sonner';
 import {
   Loader2,
@@ -136,19 +137,27 @@ export default function ValidatePage() {
   const locale = (params?.locale as string) || 'en';
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const { tier, limits, isLoading: subLoading } = useSubscription();
   const [ideaDescription, setIdeaDescription] = useState('');
   const [targetMarket, setTargetMarket] = useState('');
   const [budget, setBudget] = useState('');
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Get auth token on mount
+  // Get auth token on mount — also subscribe to auth state changes so that
+  // cookie-based session restorations (which fire onAuthStateChange, not getSession)
+  // are captured and the tier badge updates correctly.
   useEffect(() => {
     const supabase = getSupabaseClient();
     supabase.auth.getSession().then(({ data }: { data: { session: { access_token: string } | null } }) => {
       setAccessToken(data.session?.access_token ?? null);
       setAuthLoading(false);
     });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: { access_token: string } | null) => {
+      setAccessToken(session?.access_token ?? null);
+      setAuthLoading(false);
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   const mutation = useMutation({
@@ -202,10 +211,14 @@ export default function ValidatePage() {
               Get instant 8-dimension scoring, market analysis, and competitive landscape.
               More comprehensive than any other idea validation tool.
             </p>
-            {!authLoading && (
+            {!authLoading && !subLoading && (
               <div className="mt-4 inline-flex items-center gap-2 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 rounded-full px-4 py-1.5 text-sm font-medium">
                 {!accessToken && <Lock className="h-3.5 w-3.5" />}
-                Free tier: 3 validations/month
+                {accessToken
+                  ? limits.validations_per_month === -1
+                    ? `${tier} plan: unlimited validations`
+                    : `${tier} plan: ${limits.validations_per_month ?? 3} validations/month`
+                  : 'Free tier: 3 validations/month'}
               </div>
             )}
           </div>
