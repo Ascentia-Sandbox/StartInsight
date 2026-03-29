@@ -30,13 +30,13 @@ export default function ResearchResultsPage() {
     const supabase = getSupabaseClient();
     // getSession covers immediate availability; onAuthStateChange covers
     // cookie-based session restorations that fire asynchronously.
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }: { data: { session: { access_token: string } | null } }) => {
       if (session) {
         setAccessToken(session.access_token);
         setIsCheckingAuth(false);
       }
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: { access_token: string } | null) => {
       if (session) {
         setAccessToken(session.access_token);
         setIsCheckingAuth(false);
