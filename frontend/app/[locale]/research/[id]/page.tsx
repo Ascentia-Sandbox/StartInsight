@@ -27,17 +27,24 @@ export default function ResearchResultsPage() {
   const [activeTab, setActiveTab] = useState<string>('overview');
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const supabase = getSupabaseClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push(`/auth/login?redirectTo=/${locale}/research/${id}`);
-        return;
+    const supabase = getSupabaseClient();
+    // getSession covers immediate availability; onAuthStateChange covers
+    // cookie-based session restorations that fire asynchronously.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setAccessToken(session.access_token);
+        setIsCheckingAuth(false);
       }
-      setAccessToken(session.access_token);
-      setIsCheckingAuth(false);
-    };
-    checkAuth();
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setAccessToken(session.access_token);
+        setIsCheckingAuth(false);
+      } else {
+        router.push(`/auth/login?redirectTo=/${locale}/research/${id}`);
+      }
+    });
+    return () => subscription.unsubscribe();
   }, [router, locale, id]);
 
   const { data: analysis, isLoading, error } = useQuery({
