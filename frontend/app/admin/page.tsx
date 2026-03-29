@@ -274,35 +274,20 @@ function AdminContent() {
     );
   }
 
-  if (metricsError) {
-    const isNetworkError = metricsError instanceof TypeError || (metricsError as Error)?.message?.includes('fetch');
-    const is403 = (metricsError as { status?: number })?.status === 403;
+  const metricsIs403 = (metricsError as { status?: number })?.status === 403;
+  const metricsIsNetworkError = !!metricsError && !metricsIs403;
 
+  if (metricsIs403) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
             <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">
-              {is403 ? 'Access Denied' : isNetworkError ? 'Backend Unavailable' : 'Something Went Wrong'}
-            </h2>
-            <p className="text-muted-foreground mb-4">
-              {is403
-                ? 'You do not have admin access.'
-                : isNetworkError
-                ? 'Cannot connect to the backend server. Please ensure it is running.'
-                : (metricsError as Error)?.message || 'An unexpected error occurred.'}
-            </p>
-            <div className="flex gap-2 justify-center">
-              {!is403 && (
-                <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-dashboard'] })}>
-                  Retry
-                </Button>
-              )}
-              <Link href={is403 ? '/dashboard' : '/admin'}>
-                <Button>{is403 ? 'Return to Dashboard' : 'Reload'}</Button>
-              </Link>
-            </div>
+            <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
+            <p className="text-muted-foreground mb-4">You do not have admin access.</p>
+            <Link href="/dashboard">
+              <Button>Return to Dashboard</Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
@@ -369,6 +354,21 @@ function AdminContent() {
           <span className="text-xs text-muted-foreground">Live</span>
         </div>
       </div>
+
+      {metricsIsNetworkError && (
+        <div className="flex items-center gap-3 p-4 mb-6 rounded-lg border border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span className="text-sm flex-1">Backend temporarily unavailable — live metrics may be stale.</span>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs h-7 shrink-0"
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-dashboard'] })}
+          >
+            Retry
+          </Button>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
