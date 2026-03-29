@@ -13,6 +13,18 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-03-29)
+
+- [2026-03-29] [QA-ADMIN-001]: Admin dashboard indefinite spinner fix
+  - Files: app/admin/page.tsx
+  - Tech: `isLoading` now only `metricsLoading`; agents card has inline spinner; 403 = full-page block, network errors = banner
+  - Status: ✓ Complete
+
+- [2026-03-29] [QA-AUTH-002]: Research results page auth race condition fix
+  - Files: app/[locale]/research/[id]/page.tsx
+  - Tech: Added `onAuthStateChange` alongside `getSession()` for cookie-based session restore; fixed TS7006 implicit-any
+  - Status: ✓ Complete
+
 ## Recent Progress (2026-03-26)
 
 - [2026-03-26] [CONVICTION-FUNNEL-3]: Tests + TS type fix for teaser response
