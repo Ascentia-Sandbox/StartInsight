@@ -185,7 +185,7 @@ Full live audit after merging `develop` → `main` (3 commits: test suite, dead 
 **Short-term (Next 2 Weeks):**
 4. Populate `source_health` table via pipeline runs — needs next scraper cycle
 5. ~~Upgrade GitHub Actions to Node 24-compatible versions~~ — ✅ FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 added
-6. Set Railway `RAILWAY_GIT_COMMIT_SHA` for Sentry release tracking
+6. ~~Set Railway `RAILWAY_GIT_COMMIT_SHA` for Sentry release tracking~~ — ✅ Done 2026-03-29
 7. Monitor BACKEND-P and BACKEND-19 — confirm pool fix resolved them (no events since Mar 8)
 
 **Medium-term (Month 1):**
