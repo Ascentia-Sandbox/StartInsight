@@ -168,7 +168,7 @@ export default function DashboardPage() {
                   <Search className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">0</div>
+                  <div className="text-2xl font-bold">{subscription?.usage?.analyses_this_month ?? 0}</div>
                   <p className="text-xs text-muted-foreground">
                     Run AI-powered market research
                   </p>

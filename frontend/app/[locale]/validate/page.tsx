@@ -534,7 +534,7 @@ export default function ValidatePage() {
                     <h3 className="font-semibold text-lg">Want a 40-step deep research report?</h3>
                     <p className="text-sm text-muted-foreground mt-1">
                       Our AI Research Agent performs comprehensive market analysis, competitive intelligence,
-                      and feasibility assessment. Available for Starter and Pro plans.
+                      and feasibility assessment. Available for Pro plans.
                     </p>
                   </div>
                   <Button

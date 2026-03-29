@@ -1,18 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2, Bookmark, Star, Rocket, ExternalLink } from 'lucide-react';
+import { Loader2, Bookmark, Star, Rocket, ExternalLink, Search, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase/client';
-import { fetchWorkspaceStatus, fetchSavedInsights, fetchUserRatings } from '@/lib/api';
+import { fetchWorkspaceStatus, fetchSavedInsights, fetchUserRatings, fetchUserAnalyses } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { SavedInsight, UserRating } from '@/lib/types';
+import { Progress } from '@/components/ui/progress';
+import type { SavedInsight, UserRating, ResearchAnalysisSummary } from '@/lib/types';
 
-type TabType = 'saved' | 'ratings' | 'building';
+type TabType = 'saved' | 'ratings' | 'building' | 'research';
 
 export default function WorkspacePage() {
   const router = useRouter();
@@ -62,6 +63,13 @@ export default function WorkspacePage() {
     enabled: !!accessToken && activeTab === 'ratings',
   });
 
+  // Fetch research analyses
+  const { data: analyses, isLoading: analysesLoading, error: analysesError } = useQuery({
+    queryKey: ['user-analyses', accessToken],
+    queryFn: () => fetchUserAnalyses(accessToken!, { limit: 50 }),
+    enabled: !!accessToken && activeTab === 'research',
+  });
+
   if (isCheckingAuth) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -73,7 +81,11 @@ export default function WorkspacePage() {
     );
   }
 
-  const isLoading = statusLoading || (activeTab === 'ratings' ? ratingsLoading : savedLoading);
+  const isLoading = statusLoading || (
+    activeTab === 'ratings' ? ratingsLoading :
+    activeTab === 'research' ? analysesLoading :
+    savedLoading
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -165,10 +177,20 @@ export default function WorkspacePage() {
           >
             Building
           </button>
+          <button
+            onClick={() => setActiveTab('research')}
+            className={`pb-2 px-1 border-b-2 font-medium transition-colors ${
+              activeTab === 'research'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Research
+          </button>
         </div>
 
         {/* Content */}
-        {(savedError || ratingsError) ? (
+        {(savedError || ratingsError || analysesError) ? (
           <div className="text-center py-12 text-muted-foreground">
             <p>Failed to load data. Please try refreshing.</p>
           </div>
@@ -178,6 +200,8 @@ export default function WorkspacePage() {
           </div>
         ) : activeTab === 'ratings' ? (
           <RatingsContent ratings={ratings?.items || []} />
+        ) : activeTab === 'research' ? (
+          <ResearchContent analyses={analyses?.items || []} />
         ) : (
           <SavedInsightsContent
             insights={savedInsights?.items || []}
@@ -366,6 +390,83 @@ function RatingsContent({ ratings }: { ratings: UserRating[] }) {
           </CardContent>
         </Card>
       ))}
+    </div>
+  );
+}
+
+function ResearchContent({ analyses }: { analyses: ResearchAnalysisSummary[] }) {
+  if (analyses.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-12">
+          <div className="text-center">
+            <Search className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No research analyses yet</h3>
+            <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+              Submit a research request to get a comprehensive 40-step AI market analysis.
+            </p>
+            <Link href="/research">
+              <Button>Start Research</Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const statusConfig: Record<string, { icon: React.ElementType; label: string; color: string }> = {
+    pending: { icon: Clock, label: 'Pending', color: 'text-yellow-600' },
+    processing: { icon: Loader2, label: 'Processing', color: 'text-blue-600' },
+    completed: { icon: CheckCircle, label: 'Completed', color: 'text-green-600' },
+    failed: { icon: AlertCircle, label: 'Failed', color: 'text-red-600' },
+  };
+
+  return (
+    <div className="space-y-4">
+      {analyses.map((analysis) => {
+        const cfg = statusConfig[analysis.status] ?? statusConfig.pending;
+        const StatusIcon = cfg.icon;
+        return (
+          <Card key={analysis.id}>
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <StatusIcon className={`h-4 w-4 ${cfg.color} ${analysis.status === 'processing' ? 'animate-spin' : ''}`} />
+                    <span className={`text-sm font-medium ${cfg.color}`}>{cfg.label}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(analysis.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="text-sm font-medium line-clamp-2">{analysis.idea_description}</p>
+                  {analysis.target_market && (
+                    <p className="text-xs text-muted-foreground">{analysis.target_market}</p>
+                  )}
+                  {analysis.status === 'processing' && (
+                    <div>
+                      <Progress value={analysis.progress_percent} className="h-1.5" />
+                      <p className="text-xs text-muted-foreground mt-1">{analysis.progress_percent}% complete</p>
+                    </div>
+                  )}
+                  {analysis.opportunity_score !== null && analysis.opportunity_score !== undefined && (
+                    <Badge variant="outline" className="text-xs">
+                      Opportunity: {Math.round(analysis.opportunity_score * 100)}%
+                    </Badge>
+                  )}
+                </div>
+                {analysis.status === 'completed' && (
+                  <Link href={`/research/${analysis.id}`}>
+                    <Button variant="outline" size="sm">
+                      <ExternalLink className="h-4 w-4 mr-1" />
+                      View Results
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }

@@ -465,6 +465,133 @@ export type ResearchRequestListResponse = z.infer<typeof ResearchRequestListResp
 export type ResearchRequestAction = z.infer<typeof ResearchRequestActionSchema>;
 
 // ============================================
+// Research Analysis Types (custom analysis results)
+// ============================================
+
+const MarketAnalysisSchema = z.object({
+  tam: z.string(),
+  sam: z.string(),
+  som: z.string(),
+  growth_rate: z.number(),
+  market_maturity: z.enum(['nascent', 'growing', 'mature', 'declining']),
+  key_trends: z.array(z.string()),
+});
+
+const CompetitorProfileSchema = z.object({
+  name: z.string(),
+  url: z.string(),
+  funding: z.string(),
+  unique_value_prop: z.string(),
+  weakness: z.string(),
+  market_share_estimate: z.number(),
+  threat_level: z.enum(['low', 'medium', 'high']),
+});
+
+const ValueEquationSchema = z.object({
+  dream_outcome_score: z.number(),
+  perceived_likelihood_score: z.number(),
+  time_delay_score: z.number(),
+  effort_sacrifice_score: z.number(),
+  value_score: z.number(),
+  analysis: z.string(),
+});
+
+const MarketMatrixSchema = z.object({
+  demand_score: z.number(),
+  difficulty_score: z.number(),
+  quadrant: z.enum(['star', 'cash_cow', 'question_mark', 'dog']),
+  positioning_strategy: z.string(),
+});
+
+const ACPFrameworkSchema = z.object({
+  awareness_score: z.number(),
+  consideration_score: z.number(),
+  purchase_score: z.number(),
+  funnel_bottleneck: z.string(),
+  recommended_channels: z.array(z.string()),
+});
+
+const ValidationSignalSchema = z.object({
+  source: z.string(),
+  signal_type: z.string(),
+  description: z.string(),
+  url: z.string().nullable().optional(),
+  sentiment: z.enum(['positive', 'neutral', 'negative']),
+  strength: z.enum(['weak', 'moderate', 'strong']),
+});
+
+const ExecutionPhaseSchema = z.object({
+  phase_number: z.number(),
+  name: z.string(),
+  duration: z.string(),
+  milestones: z.array(z.string()),
+  budget_estimate: z.string(),
+  key_risks: z.array(z.string()),
+});
+
+const RiskAssessmentSchema = z.object({
+  technical_risk: z.number(),
+  market_risk: z.number(),
+  team_risk: z.number(),
+  financial_risk: z.number(),
+  overall_risk: z.number(),
+  mitigation_strategies: z.array(z.string()),
+});
+
+export const ResearchAnalysisDetailSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  status: z.enum(['pending', 'processing', 'completed', 'failed']),
+  progress_percent: z.number(),
+  current_step: z.string().nullable().optional(),
+  idea_description: z.string(),
+  target_market: z.string(),
+  budget_range: z.string(),
+  market_analysis: MarketAnalysisSchema.nullable().optional(),
+  competitor_landscape: z.array(CompetitorProfileSchema).default([]),
+  value_equation: ValueEquationSchema.nullable().optional(),
+  market_matrix: MarketMatrixSchema.nullable().optional(),
+  acp_framework: ACPFrameworkSchema.nullable().optional(),
+  validation_signals: z.array(ValidationSignalSchema).default([]),
+  execution_roadmap: z.array(ExecutionPhaseSchema).default([]),
+  risk_assessment: RiskAssessmentSchema.nullable().optional(),
+  opportunity_score: z.number().nullable().optional(),
+  market_fit_score: z.number().nullable().optional(),
+  execution_readiness: z.number().nullable().optional(),
+  tokens_used: z.number().default(0),
+  analysis_cost_usd: z.number().default(0),
+  error_message: z.string().nullable().optional(),
+  created_at: datetimeValidator,
+  started_at: datetimeValidator.nullable().optional(),
+  completed_at: datetimeValidator.nullable().optional(),
+});
+
+export type ResearchAnalysisDetail = z.infer<typeof ResearchAnalysisDetailSchema>;
+export type MarketAnalysis = z.infer<typeof MarketAnalysisSchema>;
+export type CompetitorProfile = z.infer<typeof CompetitorProfileSchema>;
+export type ExecutionPhase = z.infer<typeof ExecutionPhaseSchema>;
+export type RiskAssessment = z.infer<typeof RiskAssessmentSchema>;
+
+export const ResearchAnalysisSummarySchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(['pending', 'processing', 'completed', 'failed']),
+  progress_percent: z.number(),
+  idea_description: z.string(),
+  target_market: z.string(),
+  opportunity_score: z.number().nullable().optional(),
+  created_at: datetimeValidator,
+  completed_at: datetimeValidator.nullable().optional(),
+});
+
+export const ResearchAnalysisListResponseSchema = z.object({
+  items: z.array(ResearchAnalysisSummarySchema),
+  total: z.number(),
+});
+
+export type ResearchAnalysisSummary = z.infer<typeof ResearchAnalysisSummarySchema>;
+export type ResearchAnalysisListResponse = z.infer<typeof ResearchAnalysisListResponseSchema>;
+
+// ============================================
 // User Profile Types (Phase 4.1)
 // ============================================
 

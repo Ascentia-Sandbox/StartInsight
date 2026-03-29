@@ -28,6 +28,8 @@ import {
   DomainConfigSchema,
   ResearchRequestSchema,
   ResearchRequestListResponseSchema,
+  ResearchAnalysisListResponseSchema,
+  ResearchAnalysisDetailSchema,
   type Insight,
   type InsightListResponse,
   type FetchInsightsParams,
@@ -53,6 +55,8 @@ import {
   type ResearchRequest,
   type ResearchRequestListResponse,
   type ResearchRequestAction,
+  type ResearchAnalysisListResponse,
+  type ResearchAnalysisDetail,
   type UserProfile,
   type UserUpdate,
   type Tenant,
@@ -1104,6 +1108,30 @@ export async function fetchUserResearchRequests(
   const client = createAuthenticatedClient(accessToken);
   const { data } = await client.get('/api/research/requests', { params });
   return ResearchRequestListResponseSchema.parse(data);
+}
+
+/**
+ * Get a specific research analysis by ID
+ */
+export async function fetchAnalysisById(
+  accessToken: string,
+  analysisId: string
+): Promise<ResearchAnalysisDetail> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get(`/api/research/analysis/${analysisId}`);
+  return ResearchAnalysisDetailSchema.parse(data);
+}
+
+/**
+ * List user's research analyses (completed/in-progress results)
+ */
+export async function fetchUserAnalyses(
+  accessToken: string,
+  params?: { limit?: number; offset?: number }
+): Promise<ResearchAnalysisListResponse> {
+  const client = createAuthenticatedClient(accessToken);
+  const { data } = await client.get('/api/research/analyses', { params });
+  return ResearchAnalysisListResponseSchema.parse(data);
 }
 
 /**

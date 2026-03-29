@@ -208,7 +208,7 @@ function ResearchQueueContent() {
           <CardHeader>
             <CardTitle>Research Requests</CardTitle>
             <CardDescription>
-              {requestsData?.total || 0} total request{requestsData?.total !== 1 ? 's' : ''}
+              {isLoading ? 'Loading...' : `${requestsData?.total ?? 0} total request${requestsData?.total !== 1 ? 's' : ''}`}
               {selectedStatus && ` • Showing ${selectedStatus} requests`}
             </CardDescription>
           </CardHeader>
