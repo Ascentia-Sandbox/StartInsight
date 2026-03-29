@@ -211,6 +211,7 @@ export default function WorkspacePage() {
 
         {/* Instructions (when empty) */}
         {!isLoading &&
+          activeTab !== 'research' &&
           ((activeTab !== 'ratings' && (!savedInsights?.items || savedInsights.items.length === 0)) ||
            (activeTab === 'ratings' && (!ratings?.items || ratings.items.length === 0))) && (
           <div className="mt-8 grid gap-4 md:grid-cols-3">
