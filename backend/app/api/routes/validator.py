@@ -196,12 +196,14 @@ async def validate_idea(
         )
         overlap = len(idea_words & existing_words)
         if overlap >= 3:
+            all_words = idea_words | existing_words
+            sim_score = round(overlap / len(all_words), 2) if all_words else 0.0
             similar_ideas.append(
                 SimilarIdea(
                     id=str(existing.id),
                     title=existing.title,
                     proposed_solution=existing.proposed_solution,
-                    relevance_score=existing.relevance_score,
+                    relevance_score=sim_score,
                     opportunity_score=existing.opportunity_score,
                     market_size_estimate=existing.market_size_estimate,
                 )

@@ -151,6 +151,13 @@ export default function ChatPage() {
     enabled: !!accessToken && !!insightId,
   });
 
+  // Auto-select most recent session when sessions load and none is active
+  useEffect(() => {
+    if (chatSessions?.items?.length && !activeChatId) {
+      setActiveChatId(chatSessions.items[0].id);
+    }
+  }, [chatSessions, activeChatId]);
+
   // Fetch active chat messages
   const { data: activeChat } = useQuery({
     queryKey: ['chat-detail', activeChatId, accessToken],

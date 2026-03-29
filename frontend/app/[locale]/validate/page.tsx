@@ -259,7 +259,7 @@ export default function ValidatePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label>Target Market</Label>
-                <Select onValueChange={setTargetMarket} value={targetMarket || undefined}>
+                <Select onValueChange={setTargetMarket} value={targetMarket}>
                   <SelectTrigger className="mt-1.5">
                     <SelectValue placeholder="Select market..." />
                   </SelectTrigger>
@@ -272,7 +272,7 @@ export default function ValidatePage() {
               </div>
               <div>
                 <Label>Budget Range</Label>
-                <Select onValueChange={setBudget} value={budget || undefined}>
+                <Select onValueChange={setBudget} value={budget}>
                   <SelectTrigger className="mt-1.5">
                     <SelectValue placeholder="Select budget..." />
                   </SelectTrigger>
