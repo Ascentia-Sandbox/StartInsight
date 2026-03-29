@@ -198,8 +198,32 @@ const sampleReport: MarketReport = {
 export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [report, setReport] = useState<MarketReport | null>(sampleReport);
   const [selectedReportType, setSelectedReportType] = useState("market_sizing");
+
+  const handleExportPdf = async () => {
+    setIsDownloadingPdf(true);
+    try {
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://api.startinsight.co";
+      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      const res = await fetch(`${API_BASE}/api/reports/weekly-pdf`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error("PDF generation failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `startinsight-weekly-report.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // silently fail — user sees button return to normal state
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
 
   const handleGenerateReport = async () => {
     setIsGenerating(true);
@@ -288,9 +312,9 @@ export default function ReportsPage() {
                   </>
                 )}
               </Button>
-              <Button variant="outline">
+              <Button variant="outline" onClick={handleExportPdf} disabled={isDownloadingPdf}>
                 <Download className="w-4 h-4 mr-2" />
-                Export PDF
+                {isDownloadingPdf ? "Generating…" : "Export PDF"}
               </Button>
             </div>
           </div>

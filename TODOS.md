@@ -52,14 +52,10 @@ Replaced `blur-sm opacity-50` in `FeatureLock.tsx` with CSS gradient fade (trans
 
 234-line design system reference covering oklch color tokens, typography (Instrument Serif/Satoshi/JetBrains Mono), spacing scale, border radius hierarchy, shadow scale, motion tokens, textures, accessibility, and component patterns.
 
-### Weekly AI Trend Report PDF Template
+### ~~Weekly AI Trend Report PDF Template~~ ✅ Done 2026-03-29
 
-**What:** Design the visual template for the weekly AI trend report PDF — branded header, section layout, data visualization style, free vs paid content split.
-
-**Why:** The PDF is the primary lead magnet and shareable asset in the PLG plan. A poorly designed PDF undermines the brand and reduces sharing. The free version (top 10 summaries) needs to look good enough to share while making the paid version (full analysis + BMC) clearly more valuable.
-
-**Context:** Identified during design review (2026-03-23). The plan accepts the weekly AI trend report as scope but specifies zero visual design. Needs: (a) branded header with StartInsight logo + issue number, (b) section layout for trend summaries, (c) data viz style for scores/charts, (d) clear visual distinction between free summary and paid full analysis, (e) CTA placement for upgrade. Consider using existing oklch color tokens for brand consistency.
-
-**Effort:** S
-**Priority:** P2
-**Depends on:** None — can start before Phase 2 content push
+**Backend:** `backend/app/services/weekly_report_pdf.py` — WeasyPrint HTML template.
+**Endpoint:** `GET /api/reports/weekly-pdf` (reports.py) — free/pro tiers, auth-optional.
+**Frontend:** "Export PDF" button in `frontend/app/[locale]/reports/page.tsx` wired to endpoint.
+- Free tier: top 10 summaries + upgrade CTA page
+- Pro tier: full detail (market size, revenue potential, opportunity score, solution)

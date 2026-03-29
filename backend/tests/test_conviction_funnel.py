@@ -14,7 +14,6 @@ Tests use in-memory SQLite via conftest.py fixtures for DB isolation.
 
 from __future__ import annotations
 
-import json
 from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -28,10 +27,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_admin
-from app.db.session import get_db
 from app.models.insight import Insight
 from app.models.report_request import ReportRequest
-
 
 # ============================================================================
 # FIXTURES
@@ -238,7 +235,6 @@ class TestCategoryInsightsEndpoint:
         # The route uses text("category ILIKE :cat") which does not work with
         # the Insight model (no category column). We patch the DB execute to
         # return mock insights.
-        from app.api.routes.reports import get_category_insights_teaser
 
         mock_insight = MagicMock()
         mock_insight.id = uuid4()

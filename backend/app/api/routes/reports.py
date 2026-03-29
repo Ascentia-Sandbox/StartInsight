@@ -7,31 +7,35 @@ Endpoints:
   POST /api/reports/track-view           — Track teaser views (no auth)
   POST /api/admin/reports/{id}/retry     — Admin retry for failed reports
   GET  /api/reports/funnel-stats         — Admin per-channel kill criteria
+  GET  /api/reports/weekly-pdf           — Weekly AI Trend Report PDF (free/pro tiers)
 """
 
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any
 from urllib.parse import urlparse
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
-from sqlalchemy import func, select, text
+from sqlalchemy import desc, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import require_admin
+from app.api.deps import get_current_user_optional, require_admin
 from app.core.config import settings
 from app.db.session import AsyncSessionLocal, get_db
 from app.models.insight import Insight
 from app.models.report_request import ReportRequest
+from app.models.user import User
 from app.services.report_generator import (
     CATEGORY_CONFIG,
     generate_report,
     send_confirmation_email,
 )
+from app.services.weekly_report_pdf import build_weekly_report_html, generate_weekly_report_pdf
 
 logger = logging.getLogger(__name__)
 
@@ -621,4 +625,101 @@ async def get_funnel_stats(
         total_teaser_views=total_teaser_views,
         total_payments=total_payments,
         overall_conversion_pct=overall_conversion,
+    )
+
+
+# ============================================================================
+# WEEKLY PDF REPORT
+# ============================================================================
+
+
+@router.get(
+    "/api/reports/weekly-pdf",
+    tags=["Reports"],
+    summary="Download the weekly AI Trend Report as a branded PDF",
+    responses={
+        200: {
+            "content": {"application/pdf": {}},
+            "description": "PDF file — free (top 10 summaries) or pro (full analysis)",
+        }
+    },
+)
+async def get_weekly_pdf_report(
+    db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
+) -> Response:
+    """Generate and return the weekly AI Trend Report as a downloadable PDF.
+
+    - Unauthenticated / free-tier users receive the teaser PDF (top 10 summaries
+      with a paywall CTA page).
+    - Pro / enterprise users receive the full-detail PDF (market size, revenue
+      potential, opportunity score, proposed solution).
+
+    The top 10 insights are the same set used by the Monday weekly digest email,
+    ranked by relevance_score from the past 7 days (falls back to all-time top 10
+    if no insights were published this week).
+    """
+    is_pro = (
+        current_user is not None
+        and current_user.subscription_tier in ("pro", "enterprise", "api")
+    )
+
+    # Fetch top 10 insights — same query as weekly digest task
+    one_week_ago = datetime.now(UTC) - timedelta(days=7)
+    result = await db.execute(
+        select(Insight)
+        .where(Insight.created_at >= one_week_ago)
+        .order_by(desc(Insight.relevance_score))
+        .limit(10)
+    )
+    insights = result.scalars().all()
+
+    # Fallback: if no insights published this week, use all-time top 10
+    if not insights:
+        result = await db.execute(
+            select(Insight).order_by(desc(Insight.relevance_score)).limit(10)
+        )
+        insights = result.scalars().all()
+
+    if not insights:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No insights available to generate report",
+        )
+
+    # Build insight dicts matching the weekly digest shape
+    today = datetime.now(UTC).date()
+    week_number = today.isocalendar()[1]
+    _utm = "utm_source=pdf&utm_medium=report&utm_campaign=weekly_pdf"
+
+    insight_list = [
+        {
+            "title": ins.title or (ins.proposed_solution or "")[:80],
+            "problem_statement": ins.problem_statement or "",
+            "relevance_score": f"{(ins.relevance_score or 0) * 100:.0f}%",
+            "market_size": ins.market_size_estimate or "—",
+            "revenue_potential": getattr(ins, "revenue_potential", None) or "—",
+            "opportunity_score": getattr(ins, "opportunity_score", None),
+            "proposed_solution": ins.proposed_solution or "",
+            "insight_url": f"https://startinsight.co/insights/{ins.id}?{_utm}",
+        }
+        for ins in insights
+    ]
+
+    try:
+        html = build_weekly_report_html(insight_list, week_number, is_pro=is_pro)
+        pdf_bytes = await generate_weekly_report_pdf(html)
+    except Exception:
+        logger.exception("[weekly-pdf] PDF generation failed")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="PDF generation failed — please try again",
+        )
+
+    filename = f"startinsight-weekly-{today.isoformat()}-{'pro' if is_pro else 'preview'}.pdf"
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

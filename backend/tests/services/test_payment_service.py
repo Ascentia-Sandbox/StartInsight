@@ -21,9 +21,8 @@ class TestPricingTiers:
     def test_pricing_tiers_exist(self):
         """Test that all pricing tiers are defined."""
         assert "free" in PRICING_TIERS
-        assert "starter" in PRICING_TIERS
         assert "pro" in PRICING_TIERS
-        assert "enterprise" in PRICING_TIERS
+        assert "api" in PRICING_TIERS
 
     def test_free_tier_prices(self):
         """Test free tier has zero prices."""
@@ -31,12 +30,11 @@ class TestPricingTiers:
         assert free_tier.price_monthly == 0
         assert free_tier.price_yearly == 0
 
-    def test_starter_tier_prices(self):
-        """Test starter tier pricing in cents."""
-        starter_tier = PRICING_TIERS["starter"]
-        assert starter_tier.price_monthly == 1900  # $19
-        # Yearly price varies by implementation
-        assert starter_tier.price_yearly > 0
+    def test_pro_tier_prices(self):
+        """Test pro tier pricing in cents."""
+        pro_tier = PRICING_TIERS["pro"]
+        assert pro_tier.price_monthly == 1900  # $19/mo
+        assert pro_tier.price_yearly > 0
 
     def test_tier_features_defined(self):
         """Test that each tier has features defined."""
