@@ -26,6 +26,16 @@ jobs:
           FRONTEND_ISSUES=$(curl -s -H "Authorization: Bearer $SENTRY_AUTH_TOKEN" \
             "https://sentry.io/api/0/projects/ascentia-km/frontend/issues/?query=is:unresolved&statsPeriod=24h&sort=freq&limit=25")
 
+          # Validate responses are arrays (non-array = auth error or API failure)
+          if ! echo "$BACKEND_ISSUES" | jq -e 'type == "array"' > /dev/null 2>&1; then
+            echo "::error::Sentry backend API error: $(echo "$BACKEND_ISSUES" | jq -r '.detail // .error // "unexpected response"')"
+            exit 1
+          fi
+          if ! echo "$FRONTEND_ISSUES" | jq -e 'type == "array"' > /dev/null 2>&1; then
+            echo "::error::Sentry frontend API error: $(echo "$FRONTEND_ISSUES" | jq -r '.detail // .error // "unexpected response"')"
+            exit 1
+          fi
+
           BACKEND_COUNT=$(echo "$BACKEND_ISSUES" | jq 'length')
           FRONTEND_COUNT=$(echo "$FRONTEND_ISSUES" | jq 'length')
           TOTAL=$((BACKEND_COUNT + FRONTEND_COUNT))
