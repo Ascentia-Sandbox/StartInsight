@@ -212,12 +212,33 @@ app.add_middleware(RateLimiterMiddleware, max_requests=100, window_seconds=3600)
 # ============================================================================
 
 
+_DB_POOL_EXHAUSTION_MARKERS = ("MaxClientsInSessionMode", "Max client connections", "QueuePool limit")
+
+
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
     """
     Handle all unhandled exceptions (500 errors).
     Logs full error details but returns generic message to prevent information leakage.
     """
+    exc_str = str(exc)
+
+    # DB connection pool exhaustion — transient, self-recovering. Return 503 without
+    # noisy Sentry events (already filtered in _before_send but logging integration
+    # would still emit an ERROR log that creates a separate Sentry log event).
+    if any(marker in exc_str for marker in _DB_POOL_EXHAUSTION_MARKERS):
+        logger.warning(
+            f"DB pool exhausted on {request.url.path}: {exc}",
+            extra={"path": request.url.path, "method": request.method},
+        )
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={
+                "detail": "Service temporarily overloaded. Please retry in a moment.",
+                "request_id": getattr(request.state, "request_id", None),
+            },
+        )
+
     logger.error(
         f"Unhandled exception: {exc}",
         extra={

@@ -135,8 +135,14 @@ async def scraper_health_check(
     from app.core.constants import EXPECTED_SOURCES
 
     expected_sources = EXPECTED_SOURCES
+    def _hours_since(ts) -> float:
+        """Safe age calculation; strips tzinfo so aware/naive never mix."""
+        ts_naive = ts.replace(tzinfo=None) if ts.tzinfo else ts
+        now_naive = now.replace(tzinfo=None) if now.tzinfo else now
+        return (now_naive - ts_naive).total_seconds() / 3600
+
     all_sources_recent = all(
-        last_runs.get(source) and (now - last_runs[source]) < timedelta(hours=7)
+        last_runs.get(source) and _hours_since(last_runs[source]) < 7
         for source in expected_sources
     )
 

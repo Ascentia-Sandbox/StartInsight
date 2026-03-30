@@ -74,9 +74,9 @@ async def run_analysis_background(
     budget_range: str,
 ):
     """Background task to run the research analysis."""
-    from app.db.session import async_session_maker
+    from app.db.session import AsyncSessionLocal
 
-    async with async_session_maker() as db:
+    async with AsyncSessionLocal() as db:
         try:
             # Get the analysis record
             analysis = await db.get(CustomAnalysis, analysis_id)

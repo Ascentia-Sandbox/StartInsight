@@ -61,12 +61,14 @@ async def get_market_pulse(
     try:
         now = datetime.now(UTC)
         day_ago = now - timedelta(hours=24)
+        # DB columns are TIMESTAMP WITHOUT TIME ZONE — strip tzinfo for comparisons
+        day_ago_naive = day_ago.replace(tzinfo=None)
 
         # Signals collected in last 24h
         signals_24h = 0
         try:
             signals_result = await db.execute(
-                select(func.count()).where(RawSignal.created_at >= day_ago)
+                select(func.count()).where(RawSignal.created_at >= day_ago_naive)
             )
             signals_24h = signals_result.scalar() or 0
         except Exception as e:
@@ -76,7 +78,7 @@ async def get_market_pulse(
         insights_24h = 0
         try:
             insights_24h_result = await db.execute(
-                select(func.count()).where(Insight.created_at >= day_ago)
+                select(func.count()).where(Insight.created_at >= day_ago_naive)
             )
             insights_24h = insights_24h_result.scalar() or 0
         except Exception as e:
@@ -95,7 +97,7 @@ async def get_market_pulse(
         try:
             sources_result = await db.execute(
                 select(RawSignal.source, func.count().label("cnt"))
-                .where(RawSignal.created_at >= day_ago)
+                .where(RawSignal.created_at >= day_ago_naive)
                 .group_by(RawSignal.source)
                 .order_by(text("cnt DESC"))
                 .limit(6)
@@ -140,7 +142,7 @@ async def get_market_pulse(
         try:
             markets_result = await db.execute(
                 select(Insight.market_size_estimate, func.count().label("cnt"))
-                .where(Insight.created_at >= now - timedelta(days=7))
+                .where(Insight.created_at >= (now - timedelta(days=7)).replace(tzinfo=None))
                 .where(Insight.market_size_estimate.isnot(None))
                 .group_by(Insight.market_size_estimate)
                 .order_by(text("cnt DESC"))
