@@ -37,7 +37,12 @@ jobs:
           HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
 
           echo "status_code=$HTTP_STATUS" >> "$GITHUB_OUTPUT"
-          echo "body=$HTTP_BODY"          >> "$GITHUB_OUTPUT"
+          # Multi-line values must use heredoc delimiter to avoid corrupting GITHUB_OUTPUT
+          {
+            echo "body<<__BODY_EOF__"
+            echo "$HTTP_BODY"
+            echo "__BODY_EOF__"
+          } >> "$GITHUB_OUTPUT"
           echo "timestamp=$(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> "$GITHUB_OUTPUT"
 
           if [[ "$HTTP_STATUS" != "200" ]] || [[ "$HTTP_BODY" != *"healthy"* ]]; then
@@ -191,7 +196,11 @@ jobs:
           HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
 
           echo "status_code=$HTTP_STATUS" >> "$GITHUB_OUTPUT"
-          echo "body=$HTTP_BODY"          >> "$GITHUB_OUTPUT"
+          {
+            echo "body<<__BODY_EOF__"
+            echo "$HTTP_BODY"
+            echo "__BODY_EOF__"
+          } >> "$GITHUB_OUTPUT"
           echo "timestamp=$(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> "$GITHUB_OUTPUT"
 
           if [[ "$HTTP_STATUS" != "200" ]] || [[ "$HTTP_BODY" != *"healthy"* ]]; then
