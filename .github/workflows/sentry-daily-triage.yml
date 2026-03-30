@@ -13,6 +13,8 @@ jobs:
   triage:
     name: Create Triage Issue
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
 
     steps:
       - name: Fetch unresolved Sentry issues
