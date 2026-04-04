@@ -3,18 +3,89 @@
 
 User-agent: *
 Allow: /
+Crawl-delay: 1
 
 # Sitemap
 Sitemap: https://startinsight.co/sitemap.xml
 
-# Disallow admin pages
+# AI model site map (GEO — Generative Engine Optimization)
+# See https://llmstxt.org/ for specification
+# llms.txt: https://startinsight.co/llms.txt
+
+# ── AI Crawler Access ──────────────────────────────────────
+# Explicitly allow AI crawlers for GEO citation optimization
+
+User-agent: GPTBot
+Allow: /insights/
+Allow: /explore/
+Allow: /market-insights/
+Allow: /trends/
+Allow: /reports/
+Allow: /success-stories/
+Allow: /tools/
+Allow: /pricing/
+Allow: /features/
+Allow: /about/
+Allow: /faq/
+Allow: /api/feed/rss
+Allow: /api/explore/
+Allow: /api/widgets/
+Disallow: /dashboard/
+Disallow: /workspace/
+Disallow: /settings/
+Disallow: /billing/
 Disallow: /admin/
-Disallow: /api/
+Disallow: /api/admin/
 
-# Disallow auth pages from being indexed
-Disallow: /auth/callback
+User-agent: ClaudeBot
+Allow: /
+Disallow: /dashboard/
+Disallow: /workspace/
+Disallow: /settings/
+Disallow: /billing/
+Disallow: /admin/
 
-# Disallow private user pages
+User-agent: PerplexityBot
+Allow: /
+Disallow: /dashboard/
+Disallow: /workspace/
+Disallow: /settings/
+Disallow: /billing/
+Disallow: /admin/
+
+User-agent: Google-Extended
+Allow: /
+
+# ── Public Content (all crawlers) ──────────────────────────
+Allow: /insights/
+Allow: /explore/
+Allow: /trends/
+Allow: /market-insights/
+Allow: /reports/
+Allow: /success-stories/
+Allow: /tools/
+Allow: /pricing/
+Allow: /features/
+Allow: /platform-tour/
+Allow: /faq/
+Allow: /about/
+Allow: /contact/
+Allow: /founder-fits/
+Allow: /idea-of-the-day/
+Allow: /pulse/
+Allow: /api-docs/
+Allow: /developers/
+Allow: /auth/login
+Allow: /auth/signup
+
+# Public API endpoints (RSS, explore, widgets)
+Allow: /api/feed/rss
+Allow: /api/explore/
+Allow: /api/widgets/
+
+# ── Private Pages ──────────────────────────────────────────
+Disallow: /admin/
+Disallow: /api/admin/
 Disallow: /dashboard/
 Disallow: /workspace/
 Disallow: /settings/
@@ -22,21 +93,4 @@ Disallow: /billing/
 Disallow: /teams/
 Disallow: /api-keys/
 Disallow: /tenant-settings/
-
-# Allow public pages
-Allow: /insights/
-Allow: /trends/
-Allow: /pricing/
-Allow: /features/
-Allow: /platform-tour/
-Allow: /tools/
-Allow: /success-stories/
-Allow: /market-insights/
-Allow: /faq/
-Allow: /about/
-Allow: /contact/
-Allow: /auth/login
-Allow: /auth/signup
-
-# Crawl-delay for polite crawling
-Crawl-delay: 1
+Disallow: /auth/callback

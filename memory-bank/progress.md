@@ -15,6 +15,11 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ## Recent Progress (2026-04-04)
 
+- [2026-04-04] [GTM-PHASE5]: GEO — Generative Engine Optimization
+  - Files: llms.txt (NEW), robots.txt, insights/layout.tsx, market-insights/layout.tsx, explore/[category]/page.tsx, content_generator_agent.py
+  - Tech: llms.txt for AI models; GPTBot/ClaudeBot/PerplexityBot in robots.txt; JSON-LD (Dataset, Blog, ItemList, FAQPage); answer-first content; GEO-optimized agent prompts
+  - Status: [✓ Complete]
+
 - [2026-04-04] [GTM-PHASE4]: Community & API — referral incentives + embeddable widget
   - Files: referrals.py, user.py (schema), ReferralWidget.tsx (NEW)
   - Tech: 3-tier referral rewards (1=report, 3=badge, 5=all reports); trending widget endpoint with CORS *

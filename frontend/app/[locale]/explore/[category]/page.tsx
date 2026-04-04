@@ -69,19 +69,6 @@ export async function generateMetadata({
   const year = new Date().getFullYear();
   const fullTitle = `${title} ${year} — StartInsight`;
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: fullTitle,
-    description: meta_description,
-    url: `https://startinsight.co/explore/${slug}`,
-    publisher: {
-      '@type': 'Organization',
-      name: 'StartInsight',
-      url: 'https://startinsight.co',
-    },
-  };
-
   return {
     title: fullTitle,
     description: meta_description,
@@ -95,9 +82,6 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title: fullTitle,
       description: meta_description,
-    },
-    other: {
-      'script:ld+json': JSON.stringify(jsonLd),
     },
   };
 }
@@ -119,8 +103,68 @@ export default async function ExploreCategoryPage({
   const { category: cat, insights } = data;
   const year = new Date().getFullYear();
 
+  // GEO: Structured data for AI citation
+  const topInsights = insights.slice(0, 5);
+  const topNames = topInsights.map((i) => i.title ?? i.proposed_solution).join(', ');
+
+  const itemListJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: `${cat.title} — ${year}`,
+    description: cat.meta_description,
+    url: `https://startinsight.co/explore/${category}`,
+    numberOfItems: insights.length,
+    itemListElement: insights.slice(0, 20).map((i, idx) => ({
+      '@type': 'ListItem',
+      position: idx + 1,
+      name: i.title ?? i.proposed_solution,
+      url: `https://startinsight.co/insights/${i.slug ?? i.id}`,
+    })),
+  };
+
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: `What are the best ${cat.title.toLowerCase()} in ${year}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `Based on real-time analysis of Reddit, Product Hunt, Google Trends, and Hacker News, the top ${cat.title.toLowerCase()} include ${topNames}. Each is scored across 8 dimensions including market opportunity, problem severity, and founder fit.`,
+        },
+      },
+      {
+        '@type': 'Question',
+        name: `How are these ${cat.title.toLowerCase()} validated?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `StartInsight uses 8 AI agents to analyze 150+ market signals daily from 6 data sources. Each idea is scored on opportunity (market size), problem severity, feasibility, timing, revenue potential, execution difficulty, go-to-market ease, and founder fit.`,
+        },
+      },
+      {
+        '@type': 'Question',
+        name: `How often is this ${cat.title.toLowerCase()} data updated?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `The data is updated every 6 hours. StartInsight scrapers collect signals from Reddit, Product Hunt, Google Trends, Twitter/X, and Hacker News on a continuous cycle. New insights are scored and published automatically.`,
+        },
+      },
+    ],
+  };
+
   return (
     <main className="min-h-screen">
+      {/* GEO: JSON-LD structured data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+
       {/* Hero */}
       <section className="bg-gradient-to-b from-[#0D7377]/5 to-transparent py-16">
         <div className="max-w-[1000px] mx-auto px-4 sm:px-6">
@@ -135,9 +179,20 @@ export default async function ExploreCategoryPage({
           <h1 className="font-serif text-3xl md:text-4xl font-bold tracking-tight mb-4">
             {cat.title} — {year}
           </h1>
+
+          {/* GEO: Answer-first paragraph — first 200 words for AI citation */}
+          <p className="text-base leading-relaxed mb-4">
+            The top {cat.title.toLowerCase()} in {year}, based on real-time
+            analysis of Reddit, Product Hunt, Google Trends, and Hacker News
+            data, include {topNames || 'opportunities being analyzed'}.
+            These ideas are scored across 8 dimensions — opportunity, problem
+            severity, feasibility, timing, revenue potential, execution
+            difficulty, go-to-market ease, and founder fit — by StartInsight{"'"}s
+            AI agents, which process 150+ market signals daily from 6 data sources.
+          </p>
+
           <p className="text-lg text-muted-foreground max-w-2xl">
-            {cat.description} Scored across 8 dimensions by our AI, sourced from
-            Reddit, Product Hunt, Google Trends, and more.
+            {cat.description}
           </p>
 
           <div className="flex items-center gap-4 mt-6 text-sm text-muted-foreground">
@@ -147,7 +202,7 @@ export default async function ExploreCategoryPage({
             </span>
             <span className="flex items-center gap-1">
               <TrendingUp className="h-4 w-4" />
-              Updated hourly
+              Updated every 6 hours
             </span>
           </div>
         </div>
@@ -217,6 +272,48 @@ export default async function ExploreCategoryPage({
             AI-sourced opportunities delivered to your inbox every Monday.
           </p>
           <NewsletterForm source={`explore-${category}`} />
+        </div>
+      </section>
+
+      {/* GEO: FAQ section — matches exact queries founders ask AI */}
+      <section className="max-w-[1000px] mx-auto px-4 sm:px-6 py-10 border-t">
+        <h2 className="font-serif text-xl font-semibold mb-6">
+          Frequently Asked Questions
+        </h2>
+        <div className="space-y-6">
+          <div>
+            <h3 className="font-medium mb-1">
+              What are the best {cat.title.toLowerCase()} in {year}?
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Based on real-time analysis of Reddit, Product Hunt, Google Trends,
+              and Hacker News, the top opportunities include{' '}
+              {topNames || 'ideas currently being analyzed'}. Each is scored
+              across 8 dimensions including market opportunity, problem severity,
+              and founder fit.
+            </p>
+          </div>
+          <div>
+            <h3 className="font-medium mb-1">
+              How are these ideas validated?
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              StartInsight uses 8 AI agents to analyze 150+ market signals daily
+              from 6 data sources. Each idea is scored on opportunity, problem
+              severity, feasibility, timing, revenue potential, execution
+              difficulty, go-to-market ease, and founder fit.
+            </p>
+          </div>
+          <div>
+            <h3 className="font-medium mb-1">
+              How often is this data updated?
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Every 6 hours. Scrapers collect signals continuously, and new
+              insights are scored and published automatically. Market insight
+              articles are published every 3 days.
+            </p>
+          </div>
         </div>
       </section>
 

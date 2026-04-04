@@ -18,7 +18,7 @@
 
 ## Current Focus: Automated GTM System (2026-04-04)
 
-**Full plan:** `memory-bank/gtm-automation-plan.md` (600+ lines, 4 phases)
+**Full plan:** `memory-bank/gtm-automation-plan.md` (5 phases, includes GEO)
 
 ### GTM Phase 1: Fix & Instrument (COMPLETE ✅ — 2026-04-04)
 - ✅ Category reports linked in mega-menu, footer, sitemap (3 URLs)
@@ -54,9 +54,16 @@
 - ✅ ReferralWidget component with progress bar, tier badges, share buttons (Twitter, LinkedIn, WhatsApp, Copy)
 - ⏳ Pending: ProductHunt launch preparation (founder work, no code needed)
 
-### Previously: GTM Phase 3 (plan reference)
-- Auto-generate /explore/[category] landing pages
-- RSS feed for insights
+### GTM Phase 5: GEO — Generative Engine Optimization (NEXT)
+- Create `/llms.txt` + `/llms-full.txt` for AI model site comprehension
+- Update `robots.txt` to explicitly allow GPTBot, ClaudeBot, PerplexityBot + unblock `/api/feed/rss`, `/api/explore/`, `/explore/`
+- Add JSON-LD (Dataset, Article, ItemList, FAQPage) to insight pages, market insight articles, explore pages
+- Answer-first content on explore pages (first 200 words = direct answer)
+- FAQ sections on explore pages (matches exact AI queries)
+- Update content generator agent prompts for citation-optimized output
+- Real timestamps in sitemap (replace `new Date()` with DB timestamps)
+- Check Cloudflare AI bot blocking settings (manual)
+- See `memory-bank/gtm-automation-plan.md` Phase 5 for full spec
 - Internal linking system
 
 ### GTM Phase 4: Community & API (Week 6-8)

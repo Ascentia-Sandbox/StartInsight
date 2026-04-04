@@ -3,14 +3,14 @@
 **Reading Priority:** CRITICAL
 **Read When:** Before any marketing, distribution, or growth work
 **Dependencies:** Read active-context.md and project-brief.md first
-**Purpose:** Automated go-to-market system design — product-led growth without physical meetups
-**Last Updated:** 2026-04-04
+**Purpose:** Automated go-to-market system — PLG + GEO (Generative Engine Optimization)
+**Last Updated:** 2026-04-04 (revised with Phase 5: GEO)
 ---
 
-# Automated GTM System: Product-Led Marketing Plan
+# Automated GTM System: Product-Led Marketing + GEO Plan
 
-## Status: READY TO IMPLEMENT — Phase 1 Critical
-## Revenue: $0 | Paying Customers: 0 | Product: Complete
+## Status: Phase 1-4 COMPLETE | Phase 5 (GEO) READY TO IMPLEMENT
+## Revenue: $0 | Paying Customers: 0 | Product: Complete + GTM Automated
 
 ---
 
@@ -455,6 +455,330 @@ Standard RSS 2.0 XML. Add `<link rel="alternate" type="application/rss+xml">` to
 | Twitter API | Free | Free | Basic write access with OAuth 1.0a |
 | LinkedIn | Free | Free | Marketing API free tier or Make.com free |
 | **Total** | **~$30** | **~$33** | Negligible increase |
+
+---
+
+## PHASE 5: Generative Engine Optimization (GEO)
+
+### Why GEO Matters More Than SEO for StartInsight
+
+Traditional SEO gets you into Google search results. GEO gets you **cited by AI** when someone asks ChatGPT, Perplexity, Gemini, or Claude: "What are the best startup ideas in fintech?" or "What AI SaaS opportunities exist in Malaysia?"
+
+The numbers are staggering:
+- AI-referred sessions grew **527% YoY** in early 2025
+- **50% of AI-cited content** is less than 13 weeks old (StartInsight publishes every 3 days)
+- **86% of citations** come from sites with 5+ interconnected pages on a topic (we have 12 explore pages + insights + articles)
+- Overlap between Google top links and AI citations has dropped below **20%** — GEO is a separate game
+
+StartInsight is uniquely positioned because:
+1. **Structured data IS the product** — 8-dimension scored insights with source attribution
+2. **Freshness advantage** — new content every 6 hours, articles every 3 days
+3. **Multi-source corroboration** — insights cite Reddit, PH, Google Trends, HN, Twitter
+4. **Pillar-cluster architecture** — 12 explore pages + 500+ insight pages + articles
+
+### Current GEO Gaps (Critical)
+
+| Gap | Impact | Fix |
+|-----|--------|-----|
+| **No llms.txt** | AI models can't efficiently understand site structure | Create `/llms.txt` + `/llms-full.txt` |
+| **robots.txt blocks /api/** | RSS feed + explore API invisible to crawlers | Allow `/api/feed/rss` + `/api/explore/` |
+| **No AI crawler directives** | GPTBot, ClaudeBot, PerplexityBot not explicitly allowed | Add named crawler rules |
+| **Cloudflare may block AI bots** | Cloudflare default changed to block AI crawlers | Check and whitelist |
+| **No JSON-LD on insight pages** | AI can't parse structured insight data | Add Dataset + Review schema |
+| **No JSON-LD on market insights** | Articles not structured for AI extraction | Add Article + BlogPosting schema |
+| **Explore pages missing /explore/ in robots.txt** | 12 SEO pages not explicitly allowed | Add Allow: /explore/ |
+| **No answer-first content** | AI prefers direct answers in first 200 words | Restructure page content |
+| **No FAQ schema on explore pages** | Missing FAQPage markup that AI loves | Add FAQ sections |
+| **Sitemap uses `new Date()`** | No real freshness signals | Use actual DB timestamps |
+
+---
+
+### Phase 5.1: AI Access Layer (CRITICAL — Day 1)
+
+**Goal:** Make StartInsight's content accessible and parseable by AI crawlers.
+
+#### 5.1A: Create llms.txt
+
+**New file:** `frontend/public/llms.txt`
+
+```markdown
+# StartInsight
+
+> AI-powered startup idea discovery platform. 8-dimension scoring from 6 real-time data sources (Reddit, Product Hunt, Google Trends, Twitter/X, Hacker News, Firecrawl). 500+ validated startup opportunities updated every 6 hours.
+
+## Startup Ideas Database
+- [Browse All Ideas](https://startinsight.co/insights): 500+ AI-scored startup ideas with problem statements, solutions, market sizing
+- [Idea of the Day](https://startinsight.co/idea-of-the-day): Daily featured opportunity
+- [Founder Fits](https://startinsight.co/founder-fits): Ideas scored for solo founders
+
+## Explore by Category
+- [AI SaaS Ideas](https://startinsight.co/explore/ai-saas-ideas): AI and SaaS opportunities
+- [Fintech Ideas](https://startinsight.co/explore/fintech-startup-ideas): Payment, banking, lending gaps
+- [Developer Tools](https://startinsight.co/explore/devtools-opportunities): API, SDK, infrastructure
+- [Health Tech](https://startinsight.co/explore/health-tech-ideas): Telemedicine, wellness, digital health
+- [E-Commerce](https://startinsight.co/explore/ecommerce-gaps): Marketplace and D2C opportunities
+- [Malaysia Startups](https://startinsight.co/explore/malaysia-startup-ideas): MY-specific opportunities
+- [Singapore Startups](https://startinsight.co/explore/singapore-startup-ideas): SG-specific opportunities
+
+## Market Research
+- [Market Insights](https://startinsight.co/market-insights): AI-generated market analysis articles (published every 3 days)
+- [Trends](https://startinsight.co/trends): 180+ trending keywords with volume and growth data
+- [Market Pulse](https://startinsight.co/pulse): Real-time signal feed
+
+## Category Reports (Paid)
+- [Fintech Malaysia Report](https://startinsight.co/reports/fintech-malaysia): RM49 deep-dive
+- [F&B Malaysia Report](https://startinsight.co/reports/fnb-malaysia): RM49 deep-dive
+- [Logistics Singapore Report](https://startinsight.co/reports/logistics-singapore): RM49 deep-dive
+
+## About
+- [Platform Tour](https://startinsight.co/platform-tour): How the platform works
+- [Pricing](https://startinsight.co/pricing): Free tier + Pro ($19/mo) + API ($49/mo)
+- [API Documentation](https://startinsight.co/api-docs): 40+ public endpoints
+- [Success Stories](https://startinsight.co/success-stories): Founder case studies
+- [RSS Feed](https://startinsight.co/api/feed/rss): Latest insights + articles
+
+## API
+- [Public API](https://api.startinsight.co/docs): Swagger documentation for 235+ endpoints
+- [Trending Widget](https://api.startinsight.co/api/widgets/trending): Embeddable top 5 ideas (JSON, CORS: *)
+- [Explore Categories](https://api.startinsight.co/api/explore/categories): Category listing
+```
+
+#### 5.1B: Update robots.txt for AI crawlers
+
+**File:** `frontend/public/robots.txt`
+
+Add explicit AI crawler rules + allow public API paths:
+
+```
+# AI Crawler Access (GEO — Generative Engine Optimization)
+User-agent: GPTBot
+Allow: /
+Disallow: /dashboard/
+Disallow: /workspace/
+Disallow: /settings/
+Disallow: /billing/
+Disallow: /admin/
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+# Allow public API endpoints for AI crawlers
+Allow: /api/feed/rss
+Allow: /api/explore/
+Allow: /api/widgets/
+Allow: /explore/
+Allow: /reports/
+```
+
+#### 5.1C: Check Cloudflare AI bot settings
+
+**Manual action:** In Cloudflare dashboard → Security → Bots → ensure "AI Crawlers" are NOT blocked. Cloudflare recently changed default to block AI bots.
+
+---
+
+### Phase 5.2: Structured Data for AI (HIGH — Day 1-2)
+
+**Goal:** Add rich JSON-LD markup so AI models can parse and cite StartInsight data.
+
+#### 5.2A: JSON-LD on insight detail pages
+
+**File:** `frontend/app/[locale]/insights/[slug]/page.tsx`
+
+Add `Dataset` + `Article` schema:
+```json
+{
+  "@context": "https://schema.org",
+  "@type": ["Article", "Dataset"],
+  "headline": "{title}",
+  "description": "{problem_statement}",
+  "datePublished": "{created_at}",
+  "dateModified": "{updated_at}",
+  "author": {"@type": "Organization", "name": "StartInsight"},
+  "publisher": {"@type": "Organization", "name": "StartInsight", "url": "https://startinsight.co"},
+  "about": {
+    "@type": "CreativeWork",
+    "name": "{title}",
+    "description": "{proposed_solution}"
+  },
+  "variableMeasured": [
+    {"@type": "PropertyValue", "name": "Opportunity Score", "value": "{opportunity_score}/10"},
+    {"@type": "PropertyValue", "name": "Relevance Score", "value": "{relevance_score}"},
+    {"@type": "PropertyValue", "name": "Market Size", "value": "{market_size_estimate}"},
+    {"@type": "PropertyValue", "name": "Revenue Potential", "value": "{revenue_potential}"}
+  ]
+}
+```
+
+#### 5.2B: JSON-LD on market insight articles
+
+**File:** `frontend/app/[locale]/market-insights/[slug]/page.tsx`
+
+Add `BlogPosting` schema with `dateModified` for freshness.
+
+#### 5.2C: ItemList schema on explore pages
+
+**File:** `frontend/app/[locale]/explore/[category]/page.tsx`
+
+Add `ItemList` + `FAQPage` schema:
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "{category_title} — {year}",
+  "numberOfItems": "{count}",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "{title}", "url": "{link}"}
+  ]
+}
+```
+
+Plus FAQ section with 3-5 common questions per category (e.g., "What are the best {category} startup ideas in 2026?").
+
+---
+
+### Phase 5.3: Content Structure for AI Citation (MEDIUM — Day 2-3)
+
+**Goal:** Restructure content so AI models extract and cite it.
+
+Key research findings:
+- **44.2% of ChatGPT citations** come from the first 30% of a page
+- **First 200 words** must directly answer the implied query
+- Short paragraphs (2-3 sentences max)
+- Tables > prose for comparison data
+
+#### 5.3A: Answer-first explore pages
+
+Each explore page should start with a direct answer paragraph:
+
+> "The top {category} startup ideas in 2026, based on real-time analysis of Reddit, Product Hunt, and Google Trends data, include [top 3 ideas]. These opportunities are scored across 8 dimensions including market size, timing, and founder fit."
+
+This goes ABOVE the insight cards, in the first visible section.
+
+#### 5.3B: FAQ sections on explore pages
+
+Add 3-5 FAQs per category at the bottom of each explore page:
+- "What are the best {category} startup ideas in 2026?"
+- "How are these {category} ideas validated?"
+- "What data sources are used for {category} analysis?"
+
+These match the exact queries people ask AI assistants.
+
+#### 5.3C: Statistics and attribution in content
+
+Market insight articles should include:
+- Specific numbers ("Reddit discussions about X grew 340% in Q1 2026")
+- Source attribution ("According to Google Trends data...")
+- Tables for comparison data
+- "Data shows..." and "Analysis reveals..." language
+
+#### 5.3D: Update content generator agent prompts
+
+**File:** `backend/app/agents/content_generator_agent.py`
+
+Add to system prompt:
+- "Start every blog post with a direct answer to the implied question in the first 200 words"
+- "Include 2-3 data tables per article"
+- "Cite specific sources: Reddit, Product Hunt, Google Trends"
+- "Use 'data shows', 'analysis reveals', 'according to' phrasing"
+
+---
+
+### Phase 5.4: Freshness Signals (MEDIUM — Day 2)
+
+**Goal:** Signal content freshness to AI crawlers.
+
+#### 5.4A: Real timestamps in sitemap
+
+**File:** `frontend/app/sitemap.ts`
+
+Replace `new Date()` with actual `lastModified` timestamps from the API. Insights use `updated_at`, articles use `published_at`.
+
+#### 5.4B: dateModified in JSON-LD
+
+Every page with JSON-LD should include `dateModified` from actual DB timestamp.
+
+#### 5.4C: Quarterly content refresh automation
+
+**New scheduler task:** `refresh_top_content_task` — runs monthly, re-generates summaries for top 20 insights. This resets the "freshness clock" for AI citation decay (content >13 weeks old loses citations).
+
+---
+
+### Phase 5.5: Multi-Platform GEO Stacking (ONGOING)
+
+**Goal:** Build citations across multiple platforms for corroboration.
+
+Research shows AI engines use multi-source corroboration. If StartInsight is mentioned on Reddit, Twitter, ProductHunt, AND its own site, AI assigns higher confidence.
+
+Strategy:
+- Social posting agent (Phase 2) posts to Twitter/LinkedIn → creates external mentions
+- ProductHunt launch (Phase 4) → creates review platform presence
+- Reddit/HN community posts → creates discussion platform presence
+- Each external mention reinforces AI confidence in citing startinsight.co
+
+This is **already built** via Phase 2-4. The GEO stacking happens naturally when the social posting agent runs.
+
+---
+
+### GEO Implementation Priority
+
+| # | Task | Files | CC Time | Impact |
+|---|------|-------|---------|--------|
+| 5.1A | Create llms.txt | `frontend/public/llms.txt` | 15 min | CRITICAL — AI site map |
+| 5.1B | Update robots.txt for AI crawlers | `frontend/public/robots.txt` | 10 min | CRITICAL — unblock AI bots |
+| 5.2A | JSON-LD on insight pages | `frontend/app/[locale]/insights/[slug]/page.tsx` | 30 min | HIGH — structured insight data |
+| 5.2B | JSON-LD on market insight articles | `frontend/app/[locale]/market-insights/[slug]/page.tsx` | 20 min | HIGH — article citations |
+| 5.2C | ItemList + FAQ on explore pages | `frontend/app/[locale]/explore/[category]/page.tsx` | 30 min | HIGH — category citations |
+| 5.3A | Answer-first content on explore pages | `frontend/app/[locale]/explore/[category]/page.tsx` | 20 min | HIGH — first 200 words |
+| 5.3D | Update content generator prompts | `backend/app/agents/content_generator_agent.py` | 15 min | MEDIUM — ongoing citation optimization |
+| 5.4A | Real timestamps in sitemap | `frontend/app/sitemap.ts` | 20 min | MEDIUM — freshness signals |
+| 5.1C | Check Cloudflare AI bot settings | Cloudflare dashboard | 5 min | CRITICAL — manual check |
+| **Total** | | | **~3 hrs** | |
+
+---
+
+### GEO Success Metrics
+
+| Metric | Target | Timeframe | How to Measure |
+|--------|--------|-----------|----------------|
+| llms.txt accessible | 200 OK | Day 1 | `curl startinsight.co/llms.txt` |
+| AI crawlers in server logs | GPTBot, ClaudeBot hits | Week 1 | Railway logs |
+| Perplexity citation | >= 1 mention | Month 1 | Search "startup ideas Malaysia" on Perplexity |
+| ChatGPT citation | >= 1 mention | Month 2 | Ask ChatGPT about startup ideas |
+| AI-referred traffic in PostHog | > 0 sessions from ai.* referrers | Month 1 | PostHog referrer filter |
+| Explore page impressions | > 500 in GSC | Month 2 | Google Search Console |
+
+---
+
+### The GEO Flywheel
+
+```
+Content Generator (every 3 days)
+    → New insights + articles with answer-first structure
+    → JSON-LD structured data on every page
+    → llms.txt maps the content for AI models
+    ↓
+Social Posting Agent (2x daily)
+    → External mentions on Twitter/LinkedIn
+    → Multi-source corroboration for AI confidence
+    ↓
+AI Crawlers (GPTBot, ClaudeBot, PerplexityBot)
+    → Read llms.txt → understand site structure
+    → Read structured pages → extract cited answers
+    → Read RSS feed → discover fresh content
+    ↓
+AI Citations in ChatGPT/Perplexity/Gemini responses
+    → "According to StartInsight, the top fintech ideas in Malaysia..."
+    → Free, high-intent traffic from AI-native users
+    → Higher conversion (AI users have higher purchase intent)
+    ↓
+More users → More signals → Better content → More citations
+```
 
 ---
 

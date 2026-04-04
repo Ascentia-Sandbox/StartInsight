@@ -1,0 +1,50 @@
+# StartInsight
+
+> AI-powered startup idea discovery platform. Analyzes 150+ real-time market signals daily from Reddit, Product Hunt, Google Trends, Twitter/X, and Hacker News. Each idea is scored across 8 dimensions (opportunity, problem severity, feasibility, timing, revenue potential, execution difficulty, go-to-market, founder fit). 500+ validated startup opportunities. Updated every 6 hours. Free tier available.
+
+## Startup Ideas Database
+- [Browse All Ideas](https://startinsight.co/insights): 500+ AI-scored startup ideas with problem statements, proposed solutions, market sizing, and 8-dimension radar charts
+- [Idea of the Day](https://startinsight.co/idea-of-the-day): Daily featured startup opportunity hand-picked by AI
+- [Founder Fits](https://startinsight.co/founder-fits): Ideas scored specifically for solo founders and low barrier to entry
+
+## Explore by Category
+- [AI SaaS Startup Ideas](https://startinsight.co/explore/ai-saas-ideas): Artificial intelligence and SaaS market opportunities
+- [Fintech Startup Ideas](https://startinsight.co/explore/fintech-startup-ideas): Payment, banking, lending, and insurtech market gaps
+- [Developer Tools Opportunities](https://startinsight.co/explore/devtools-opportunities): API, SDK, DevOps, and infrastructure gaps
+- [Health Tech Startup Ideas](https://startinsight.co/explore/health-tech-ideas): Telemedicine, wellness, and digital health opportunities
+- [E-Commerce Market Gaps](https://startinsight.co/explore/ecommerce-gaps): Marketplace, D2C, and retail opportunities
+- [EdTech Startup Ideas](https://startinsight.co/explore/edtech-opportunities): Online learning, upskilling, and training gaps
+- [Remote Work Tool Ideas](https://startinsight.co/explore/remote-work-tools): Collaboration and productivity tool opportunities
+- [Sustainability Startup Ideas](https://startinsight.co/explore/sustainability-startups): Climate tech and green business opportunities
+- [Malaysia Startup Ideas](https://startinsight.co/explore/malaysia-startup-ideas): Market opportunities specific to Malaysia
+- [Singapore Startup Ideas](https://startinsight.co/explore/singapore-startup-ideas): Market opportunities specific to Singapore
+- [No-Code & Automation Ideas](https://startinsight.co/explore/no-code-automation): Workflow automation and no-code tool opportunities
+- [B2B SaaS Startup Ideas](https://startinsight.co/explore/b2b-saas-ideas): Enterprise software and sales tool market gaps
+
+## Market Research & Analysis
+- [Market Insights](https://startinsight.co/market-insights): AI-generated market analysis articles published every 3 days
+- [Trends](https://startinsight.co/trends): 180+ trending keywords with search volume and growth metrics
+- [Market Pulse](https://startinsight.co/pulse): Real-time signal feed from 6 data sources
+- [Success Stories](https://startinsight.co/success-stories): Founder case studies and success stories
+
+## Category Reports (Paid Deep-Dives)
+- [Fintech Malaysia Report](https://startinsight.co/reports/fintech-malaysia): RM49 comprehensive market gap analysis with competitor mapping
+- [F&B Malaysia Report](https://startinsight.co/reports/fnb-malaysia): RM49 food and beverage market gap analysis
+- [Logistics Singapore Report](https://startinsight.co/reports/logistics-singapore): RM49 logistics and supply chain gap analysis
+
+## Platform
+- [How It Works](https://startinsight.co/platform-tour): 8 AI agents analyze 6 data sources every 6 hours
+- [Features](https://startinsight.co/features): Full feature list including 8-dimension scoring, trend analysis, and AI chat
+- [Pricing](https://startinsight.co/pricing): Free tier, Pro ($19/mo), API ($49/mo)
+- [FAQ](https://startinsight.co/faq): 16 frequently asked questions across 4 categories
+- [About](https://startinsight.co/about): Company mission and team
+
+## Developer Resources
+- [API Documentation](https://startinsight.co/api-docs): 235+ REST API endpoints with Swagger documentation
+- [Swagger UI](https://api.startinsight.co/docs): Interactive API explorer
+- [Trending Widget API](https://api.startinsight.co/api/widgets/trending): Embeddable top 5 ideas (JSON, CORS enabled)
+- [Explore Categories API](https://api.startinsight.co/api/explore/categories): All category listings
+- [RSS Feed](https://api.startinsight.co/api/feed/rss): Latest insights and market analysis articles
+
+## Data Sources
+StartInsight collects real-time market signals from: Reddit (PRAW API, 50 posts/run), Product Hunt (30 launches/run), Google Trends (6 regions), Twitter/X (500K reads/mo), Hacker News (50+ score filter), and Firecrawl web scraping. Signals are processed by 8 PydanticAI agents using Gemini 2.0 Flash.
