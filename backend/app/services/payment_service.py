@@ -95,12 +95,6 @@ PRICING_TIERS: dict[str, PricingTier] = {
     ),
 }
 
-# Backward compat for in-flight Stripe webhooks during tier migration.
-# Maps old tier names to new ones. Remove after 30 days (by 2026-04-23).
-TIER_COMPAT_MAP: dict[str, str] = {
-    "starter": "pro",
-    "enterprise": "api",
-}
 
 
 # ============================================================
@@ -448,8 +442,7 @@ async def _handle_checkout_completed(data: dict, db: AsyncSession) -> dict:
     user_id = data.get("client_reference_id")
     customer_id = data.get("customer")
     subscription_id = data.get("subscription")
-    raw_tier = data.get("metadata", {}).get("tier", "pro")
-    tier = TIER_COMPAT_MAP.get(raw_tier, raw_tier)  # Map old tier names
+    tier = data.get("metadata", {}).get("tier", "pro")
 
     if not user_id or not customer_id:
         raise ValueError("Missing user_id or customer_id in checkout session")

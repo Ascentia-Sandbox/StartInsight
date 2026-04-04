@@ -4,16 +4,44 @@
 **Read When:** Before every task to understand current phase status
 **Dependencies:** Read project-brief.md first for context
 **Purpose:** Current phase tracking, immediate tasks, blockers, what's working/next
-**Last Updated:** 2026-03-24
+**Last Updated:** 2026-04-04
 ---
 
 # Active Context: StartInsight Development
 
 ## Current Phase
-**Status:** ✅ LIVE IN PRODUCTION — Post-launch: content growth & SEO
-**Completed:** Phase 1-10 + A-L + Q1-Q9 + Security + Sentry + Redis + Domain + Favicon + Phase 6 (100%)
-**Testing:** 398 backend tests passing (47% coverage, was 17%), 47 E2E tests (5 browsers)
+**Status:** ✅ LIVE IN PRODUCTION — GTM Phase 1 complete, Phase 2 next
+**Completed:** Phase 1-10 + A-L + Q1-Q9 + Security + Sentry + Redis + Domain + Favicon + Phase 6 + GTM Phase 1
+**Testing:** 454 backend tests passing (47% coverage), 47 E2E tests (5 browsers)
 **Database:** 70 tables, 235+ API endpoints, 8 AI agents, 6 active scrapers
+**Revenue:** $0 — demand experiment in progress
+
+## Current Focus: Automated GTM System (2026-04-04)
+
+**Full plan:** `memory-bank/gtm-automation-plan.md` (600+ lines, 4 phases)
+
+### GTM Phase 1: Fix & Instrument (COMPLETE ✅ — 2026-04-04)
+- ✅ Category reports linked in mega-menu, footer, sitemap (3 URLs)
+- ✅ PostHog events: report_category_viewed, report_checkout_started, report_checkout_error
+- ✅ TIER_COMPAT_MAP removed (was deadline 2026-04-23)
+- ⏳ Pending (founder work): share links in 5 Telegram groups, DM 10 founders, submit sitemap to GSC
+- ⏳ Pending (config): set ENABLE_DAILY_DIGEST=true in Railway env vars
+
+### GTM Phase 2: Automated Content Distribution (NEXT — Week 2-4)
+- Build social posting agent (Twitter/X + LinkedIn automation)
+- Wire content_generator_agent output to social_posts table
+- Build email nurture sequence (Day 0/1/3/7/14)
+- See `memory-bank/gtm-automation-plan.md` for full spec
+
+### GTM Phase 3: Programmatic SEO (Week 4-6)
+- Auto-generate /explore/[category] landing pages
+- RSS feed for insights
+- Internal linking system
+
+### GTM Phase 4: Community & API (Week 6-8)
+- ProductHunt launch
+- Developer API activation + embeddable widget
+- Referral incentive tiers
 
 ## Phase 6: Data Pipeline Resilience & Intelligence (COMPLETE ✅ — 2026-03-20)
 

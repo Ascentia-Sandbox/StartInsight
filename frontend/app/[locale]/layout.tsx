@@ -80,7 +80,7 @@ export async function generateMetadata({
       creator: "@startinsight",
     },
     verification: {
-      google: process.env.GOOGLE_SITE_VERIFICATION,
+      google: process.env.GOOGLE_SITE_VERIFICATION || "UWZN9hurnOBJbiCTS9PCG9wkk-ctOS2y-h0N05MV7K0",
     },
     alternates: {
       canonical: siteUrl,

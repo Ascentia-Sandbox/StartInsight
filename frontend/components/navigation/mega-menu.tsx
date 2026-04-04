@@ -31,6 +31,7 @@ import {
   Megaphone,
   Mail,
   Code2,
+  FileBarChart,
 } from "lucide-react";
 
 const browseIdeasItems = [
@@ -63,6 +64,12 @@ const browseIdeasItems = [
     href: "/market-insights",
     description: "Expert analysis and reports on emerging markets.",
     icon: BookOpen,
+  },
+  {
+    title: "Category Reports",
+    href: "/reports",
+    description: "Paid market gap reports: Fintech MY, F&B MY, Logistics SG.",
+    icon: FileBarChart,
   },
 ];
 

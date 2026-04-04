@@ -13,6 +13,23 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-04-04)
+
+- [2026-04-04] [GTM-PHASE1]: Fix conviction funnel discoverability + instrumentation
+  - Files: mega-menu.tsx, Footer.tsx, sitemap.ts, analytics.ts, ReportAnalytics.tsx (NEW), ReportCheckoutButton.tsx
+  - Tech: Added category reports to navigation/footer/sitemap; 3 PostHog events (category_viewed, checkout_started, checkout_error)
+  - Status: [✓ Complete]
+
+- [2026-04-04] [COMPAT-CLEANUP]: Remove TIER_COMPAT_MAP (Stripe backward compat)
+  - Files: payment_service.py
+  - Tech: Removed starter→pro / enterprise→api mapping; deadline was 2026-04-23
+  - Status: [✓ Complete]
+
+- [2026-04-04] [GTM-PLAN]: Automated GTM system design — 4-phase plan
+  - Files: memory-bank/gtm-automation-plan.md (NEW, 600+ lines)
+  - Tech: Product-led marketing plan: social posting agent, email nurture, programmatic SEO, referral activation
+  - Status: [✓ Complete — plan written, Phase 1 engineering done]
+
 ## Recent Progress (2026-03-29)
 
 - [2026-03-29] [QA-ADMIN-001]: Admin dashboard indefinite spinner fix

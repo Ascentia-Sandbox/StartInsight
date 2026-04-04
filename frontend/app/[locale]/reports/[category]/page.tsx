@@ -5,6 +5,7 @@ import { BarChart2, ChevronRight, Lock } from 'lucide-react';
 import { NewsletterForm } from '@/components/NewsletterForm';
 import { ReportCheckoutButton } from './ReportCheckoutButton';
 import { UTMCapture } from './UTMCapture';
+import { ReportAnalytics } from './ReportAnalytics';
 
 // Minimum insights guaranteed in the full paid report (used in copy)
 const FULL_REPORT_SIGNAL_COUNT = 10;
@@ -232,7 +233,8 @@ export default async function CategoryReportPage({
 
   return (
     <>
-      {/* Client component — stores utm_source in sessionStorage on mount */}
+      {/* Client components — analytics + UTM capture */}
+      <ReportAnalytics category={category} />
       <UTMCapture utmSource={utmSource} />
 
       <a href="#main-content" className="skip-to-content">

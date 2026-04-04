@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { analytics, Events } from '@/lib/analytics';
 
 interface ReportCheckoutButtonProps {
   category: string;
@@ -27,6 +27,7 @@ export function ReportCheckoutButton({ category, apiUrl }: ReportCheckoutButtonP
 
   const handleCheckout = async () => {
     setLoading(true);
+    analytics.track(Events.REPORT_CHECKOUT_STARTED, { category, source: sessionSource });
     try {
       const url = new URL(`${apiUrl}/api/reports/create-checkout`);
       url.searchParams.set('category', category);
@@ -46,8 +47,9 @@ export function ReportCheckoutButton({ category, apiUrl }: ReportCheckoutButtonP
         throw new Error('No checkout URL returned');
       }
     } catch (err) {
-      console.error('Checkout error:', err);
-      // Re-enable button so user can retry
+      const message = err instanceof Error ? err.message : 'Checkout failed';
+      console.error('Checkout error:', message);
+      analytics.track('report_checkout_error', { category, error: message });
       setLoading(false);
     }
   };

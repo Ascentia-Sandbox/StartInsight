@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     apple: [{ url: '/apple-icon', sizes: '180x180' }],
   },
   verification: {
-    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "UWZN9hurnOBJbiCTS9PCG9wkk-ctOS2y-h0N05MV7K0",
   },
 };
 

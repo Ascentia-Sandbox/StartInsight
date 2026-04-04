@@ -33,6 +33,10 @@ export const Events = {
   PAYWALL_HIT: 'paywall_hit',
   NEWSLETTER_SIGNUP: 'newsletter_signup',
   REFERRAL_SHARED: 'referral_shared',
+  // Conviction funnel events
+  REPORT_CATEGORY_VIEWED: 'report_category_viewed',
+  REPORT_CHECKOUT_STARTED: 'report_checkout_started',
+  NEWSLETTER_SIGNUP_REPORT: 'newsletter_signup_report',
 } as const
 
 /**

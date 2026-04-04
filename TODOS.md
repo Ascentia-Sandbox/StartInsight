@@ -38,9 +38,9 @@ All 5 PDPA sections (13–17) were already present from a prior commit. Added ex
 
 Added `user_id` FK to `newsletter_subscribers` (migration c016), and linked the subscriber record in `_verify_and_get_user` after JIT user upsert (commit 215cf9c).
 
-### ~~Stripe Webhook Backward Compatibility Window~~ ✅ Fixed by /plan on 2026-03-24
+### ~~Stripe Webhook Backward Compatibility Window~~ ✅ Fully removed 2026-04-04
 
-`TIER_COMPAT_MAP` already present (starter→pro, enterprise→api). Added tier sync to `_handle_subscription_updated` so status changes (canceled/unpaid/active) propagate to `user.subscription_tier` (commit 85d1b14). Remove `TIER_COMPAT_MAP` by 2026-04-23.
+`TIER_COMPAT_MAP` removed from `payment_service.py`. Tier sync in `_handle_subscription_updated` remains. Original compat window deadline was 2026-04-23.
 
 ## Design
 

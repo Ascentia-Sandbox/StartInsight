@@ -54,7 +54,8 @@ Before answering ANY complex question or starting ANY implementation task, you M
 | **Authentication/Admin setup** | architecture.md (Authentication Architecture, Admin Portal), implementation-plan.md (Phase 4.1-4.2) | CRITICAL |
 | **Cost/pricing planning** | tech-stack.md (Cost Analysis), project-brief.md (Competitive Positioning) | HIGH |
 | **UI/visual decisions** | DESIGN.md | CRITICAL |
-| **Growth / next actions** | improvement-plan.md, TODOS.md, active-context.md | HIGH |
+| **Growth / next actions** | gtm-automation-plan.md, improvement-plan.md, TODOS.md, active-context.md | CRITICAL |
+| **Marketing / distribution** | gtm-automation-plan.md (4-phase automated GTM system) | CRITICAL |
 | **Debugging/questions** | All files (in reading order above) | MEDIUM |
 
 ### Rules

@@ -10,6 +10,7 @@ const footerLinks = {
     { title: "Idea Database", href: "/insights" },
     { title: "Trends", href: "/trends" },
     { title: "Market Insights", href: "/market-insights" },
+    { title: "Category Reports", href: "/reports" },
     { title: "Founder Fits", href: "/founder-fits" },
   ],
   Tools: [
