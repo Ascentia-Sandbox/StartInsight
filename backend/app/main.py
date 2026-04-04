@@ -443,6 +443,13 @@ app.include_router(referrals.router, tags=["Referrals"])  # Referral program
 app.include_router(email_tracking.router, tags=["Email Tracking"])  # Open pixel tracking
 app.include_router(reports.router, tags=["Reports"])  # Conviction funnel paid reports
 
+# GTM Phase 3-4: Marketing automation endpoints
+from app.marketing.api.explore import router as explore_router
+from app.marketing.api.rss import router as rss_router
+
+app.include_router(explore_router)  # Programmatic SEO + widget
+app.include_router(rss_router)  # RSS feed
+
 # Static file serving for uploaded images (Phase 20.1)
 os.makedirs("uploads/images", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")

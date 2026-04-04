@@ -138,6 +138,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 0.7,
     },
+    // Programmatic SEO: Explore category pages (GTM Phase 3)
+    ...([
+      "ai-saas-ideas",
+      "fintech-startup-ideas",
+      "devtools-opportunities",
+      "health-tech-ideas",
+      "ecommerce-gaps",
+      "edtech-opportunities",
+      "remote-work-tools",
+      "sustainability-startups",
+      "malaysia-startup-ideas",
+      "singapore-startup-ideas",
+      "no-code-automation",
+      "b2b-saas-ideas",
+    ].map((slug) => ({
+      url: `${BASE_URL}/explore/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    }))),
     {
       url: `${BASE_URL}/auth/login`,
       lastModified: new Date(),

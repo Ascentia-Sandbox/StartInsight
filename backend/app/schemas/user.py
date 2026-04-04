@@ -242,7 +242,9 @@ class ReferralStatsResponse(BaseModel):
     referral_code: str
     referral_link: str
     referrals_count: int
-    reward_status: str
+    reward_status: str  # pending | one_report | founder_badge | all_reports
+    next_reward: str | None = None  # Description of next tier reward
+    next_reward_at: int = 0  # Referrals needed for next tier
 
     model_config = ConfigDict(from_attributes=True)
 

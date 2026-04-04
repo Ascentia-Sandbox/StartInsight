@@ -89,7 +89,28 @@ async def get_referral_stats(
         await db.scalar(select(func.count()).select_from(User).where(User.referred_by == code)) or 0
     )
 
-    reward_status = "earned" if referrals_count >= 1 else "pending"
+    # Incentive tiers
+    if referrals_count >= 5:
+        reward_status = "all_reports"  # All 3 category reports free
+    elif referrals_count >= 3:
+        reward_status = "founder_badge"  # Founder badge + priority access
+    elif referrals_count >= 1:
+        reward_status = "one_report"  # 1 free category report
+    else:
+        reward_status = "pending"
+
+    # Next tier info
+    next_tier = None
+    next_count = 0
+    if referrals_count < 1:
+        next_tier = "1 free category report (RM49 value)"
+        next_count = 1
+    elif referrals_count < 3:
+        next_tier = "Founder badge + priority access"
+        next_count = 3
+    elif referrals_count < 5:
+        next_tier = "All 3 category reports free (RM147 value)"
+        next_count = 5
 
     logger.info(
         f"Referral stats fetched for {current_user.email}: code={code}, referrals={referrals_count}"
@@ -100,4 +121,6 @@ async def get_referral_stats(
         referral_link=f"{_SITE_URL}/?ref={code}",
         referrals_count=referrals_count,
         reward_status=reward_status,
+        next_reward=next_tier,
+        next_reward_at=next_count,
     )

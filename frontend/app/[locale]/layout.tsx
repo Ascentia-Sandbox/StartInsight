@@ -84,6 +84,9 @@ export async function generateMetadata({
     },
     alternates: {
       canonical: siteUrl,
+      types: {
+        "application/rss+xml": `${siteUrl}/api/feed/rss`,
+      },
     },
   };
 }

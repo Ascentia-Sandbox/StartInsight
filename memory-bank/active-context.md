@@ -40,7 +40,21 @@
 - ✅ Registered in worker.py: post_social_content_task (10am/4pm UTC), run_email_nurture_task (10am UTC)
 - ⏳ Pending (config): set ENABLE_SOCIAL_POSTING=true + Twitter/LinkedIn creds in Railway
 
-### GTM Phase 3: Programmatic SEO (Week 4-6)
+### GTM Phase 3: Programmatic SEO (COMPLETE ✅ — 2026-04-04)
+- ✅ 12 programmatic SEO pages: `/explore/{category}` (ai-saas, fintech, devtools, health-tech, ecommerce, edtech, remote-work, sustainability, malaysia, singapore, no-code, b2b-saas)
+- ✅ Backend: `GET /api/explore/categories` + `GET /api/explore/{slug}` (keyword-matched insights)
+- ✅ RSS 2.0 feed: `GET /api/feed/rss` (12 insights + 8 articles, 1h cache)
+- ✅ 12 explore pages added to sitemap.ts
+- ✅ RSS alternate link in layout.tsx
+- ✅ SEO category definitions: `backend/app/marketing/services/seo_categories.py`
+
+### GTM Phase 4: Community & API (COMPLETE ✅ — 2026-04-04)
+- ✅ Embeddable widget: `GET /api/widgets/trending` (top 5, CORS: *, 5min cache)
+- ✅ Referral incentive tiers: 1 referral = 1 free report, 3 = founder badge, 5 = all reports
+- ✅ ReferralWidget component with progress bar, tier badges, share buttons (Twitter, LinkedIn, WhatsApp, Copy)
+- ⏳ Pending: ProductHunt launch preparation (founder work, no code needed)
+
+### Previously: GTM Phase 3 (plan reference)
 - Auto-generate /explore/[category] landing pages
 - RSS feed for insights
 - Internal linking system

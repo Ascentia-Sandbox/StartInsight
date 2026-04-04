@@ -15,6 +15,16 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ## Recent Progress (2026-04-04)
 
+- [2026-04-04] [GTM-PHASE4]: Community & API — referral incentives + embeddable widget
+  - Files: referrals.py, user.py (schema), ReferralWidget.tsx (NEW)
+  - Tech: 3-tier referral rewards (1=report, 3=badge, 5=all reports); trending widget endpoint with CORS *
+  - Status: [✓ Complete]
+
+- [2026-04-04] [GTM-PHASE3]: Programmatic SEO — 12 explore pages + RSS feed
+  - Files: marketing/api/explore.py (NEW), marketing/api/rss.py (NEW), seo_categories.py (NEW), explore/[category]/page.tsx (NEW), sitemap.ts, layout.tsx, main.py
+  - Tech: 12 keyword-matched category pages with ISR; RSS 2.0 feed (insights + articles); embeddable widget endpoint
+  - Status: [✓ Complete]
+
 - [2026-04-04] [GTM-PHASE2]: Automated content distribution — social posting + email nurture
   - Files: marketing/ (NEW module: 7 files), worker.py, config.py, email_service.py, newsletter.py, c018 migration
   - Tech: Modular monolith pattern; Twitter/LinkedIn posting agent (2x daily); email nurture drip (Day 1/3/7/14); social_posts table
