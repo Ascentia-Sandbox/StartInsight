@@ -24,14 +24,21 @@
 - ✅ Category reports linked in mega-menu, footer, sitemap (3 URLs)
 - ✅ PostHog events: report_category_viewed, report_checkout_started, report_checkout_error
 - ✅ TIER_COMPAT_MAP removed (was deadline 2026-04-23)
-- ⏳ Pending (founder work): share links in 5 Telegram groups, DM 10 founders, submit sitemap to GSC
-- ⏳ Pending (config): set ENABLE_DAILY_DIGEST=true in Railway env vars
+- ✅ ENABLE_DAILY_DIGEST=true set in Railway (deployed)
+- ✅ Google Search Console verification meta tag added
+- ⏳ Pending: GSC verification + sitemap submission (after deploy)
 
-### GTM Phase 2: Automated Content Distribution (NEXT — Week 2-4)
-- Build social posting agent (Twitter/X + LinkedIn automation)
-- Wire content_generator_agent output to social_posts table
-- Build email nurture sequence (Day 0/1/3/7/14)
-- See `memory-bank/gtm-automation-plan.md` for full spec
+### GTM Phase 2: Automated Content Distribution (COMPLETE ✅ — 2026-04-04)
+- ✅ Marketing module: `backend/app/marketing/` (modular monolith pattern)
+- ✅ SocialPost model + migration c018 (social_posts table + nurture_stage column)
+- ✅ Twitter posting service (Tweepy v2 Client, OAuth 1.0a)
+- ✅ LinkedIn posting service (Marketing API + Make.com webhook fallback)
+- ✅ Social posting agent (reads pending posts, rate limits 3 tweets + 2 LinkedIn/day)
+- ✅ Content generator wired to social_posts table (auto-creates pending posts)
+- ✅ Email nurture sequence: Day 1/3/7/14 templates + daily scheduler task
+- ✅ Config: enable_social_posting flag, LinkedIn creds, daily post limits
+- ✅ Registered in worker.py: post_social_content_task (10am/4pm UTC), run_email_nurture_task (10am UTC)
+- ⏳ Pending (config): set ENABLE_SOCIAL_POSTING=true + Twitter/LinkedIn creds in Railway
 
 ### GTM Phase 3: Programmatic SEO (Week 4-6)
 - Auto-generate /explore/[category] landing pages

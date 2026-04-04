@@ -15,6 +15,11 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ## Recent Progress (2026-04-04)
 
+- [2026-04-04] [GTM-PHASE2]: Automated content distribution — social posting + email nurture
+  - Files: marketing/ (NEW module: 7 files), worker.py, config.py, email_service.py, newsletter.py, c018 migration
+  - Tech: Modular monolith pattern; Twitter/LinkedIn posting agent (2x daily); email nurture drip (Day 1/3/7/14); social_posts table
+  - Status: [✓ Complete — code ready, needs ENABLE_SOCIAL_POSTING=true + creds in Railway]
+
 - [2026-04-04] [GTM-PHASE1]: Fix conviction funnel discoverability + instrumentation
   - Files: mega-menu.tsx, Footer.tsx, sitemap.ts, analytics.ts, ReportAnalytics.tsx (NEW), ReportCheckoutButton.tsx
   - Tech: Added category reports to navigation/footer/sitemap; 3 PostHog events (category_viewed, checkout_started, checkout_error)

@@ -99,6 +99,14 @@ class Settings(BaseSettings):
     twitter_access_secret: str | None = None
     twitter_bearer_token: str | None = None
 
+    # Marketing Automation (GTM Phase 2)
+    enable_social_posting: bool = False  # Feature flag — set true when ready
+    twitter_daily_post_limit: int = 3
+    linkedin_daily_post_limit: int = 2
+    linkedin_access_token: str | None = None
+    linkedin_company_id: str | None = None
+    linkedin_webhook_url: str | None = None  # Make.com webhook fallback
+
     # Phase 7.2: Public API
     public_api_rate_limit: int = 100  # Requests per hour per API key
 

@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -53,6 +53,11 @@ class NewsletterSubscriber(Base):
 
     source: Mapped[str] = mapped_column(
         String(50), default="footer", nullable=False
+    )
+
+    # Email nurture drip sequence: 0=welcome sent, 1=day1, 3=day3, 7=day7, 14=day14
+    nurture_stage: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0", nullable=False
     )
 
     created_at: Mapped[datetime] = mapped_column(

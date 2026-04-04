@@ -268,6 +268,86 @@ TEMPLATES: dict[str, EmailTemplate] = {
         </div>
         """,
     ),
+    # ── Email nurture sequence (GTM Phase 2) ─────────────────────────────
+    "nurture_day1": EmailTemplate(
+        subject="This week's top 5 startup ideas — StartInsight",
+        html_template="""
+        <div style="font-family: system-ui, -apple-system, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a1a;">
+            <div style="border-bottom: 3px solid #0D7377; padding-bottom: 16px; margin-bottom: 24px;">
+                <p style="font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #0D7377; margin: 0 0 8px 0;">StartInsight</p>
+                <h1 style="font-family: Georgia, serif; font-size: 22px; color: #0a0a0a; margin: 0;">This Week's Top 5 Ideas</h1>
+            </div>
+            <p style="font-size: 14px; line-height: 1.6;">Here are the highest-scoring startup opportunities our AI discovered this week:</p>
+            {{insights_html}}
+            <a href="{{app_url}}/insights?utm_source=nurture&utm_medium=email&utm_campaign=day1" style="display: inline-block; background: #0D7377; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 16px;">
+                View Full Analysis
+            </a>
+            <p style="margin-top: 24px; color: #6B7280; font-size: 12px;"><a href="{{unsubscribe_url}}">Unsubscribe</a></p>
+        </div>
+        """,
+    ),
+    "nurture_day3": EmailTemplate(
+        subject="How 8 AI agents find startup opportunities for you",
+        html_template="""
+        <div style="font-family: system-ui, -apple-system, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a1a;">
+            <div style="border-bottom: 3px solid #0D7377; padding-bottom: 16px; margin-bottom: 24px;">
+                <p style="font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #0D7377; margin: 0 0 8px 0;">StartInsight</p>
+                <h1 style="font-family: Georgia, serif; font-size: 22px; color: #0a0a0a; margin: 0;">How It Works</h1>
+            </div>
+            <p style="font-size: 14px; line-height: 1.6;">StartInsight runs 8 AI agents that scan Reddit, Product Hunt, Google Trends, Twitter, and Hacker News every 6 hours — then scores each signal across 8 dimensions.</p>
+            <ul style="font-size: 14px; line-height: 2;">
+                <li><strong>150+ signals/day</strong> from 6 data sources</li>
+                <li><strong>8-dimension scoring:</strong> opportunity, problem severity, feasibility, timing, revenue potential, difficulty, go-to-market, founder fit</li>
+                <li><strong>Auto-validated:</strong> only ideas with real evidence make the cut</li>
+            </ul>
+            <a href="{{app_url}}/platform-tour?utm_source=nurture&utm_medium=email&utm_campaign=day3" style="display: inline-block; background: #0D7377; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 16px;">
+                Take the Platform Tour
+            </a>
+            <p style="margin-top: 24px; color: #6B7280; font-size: 12px;"><a href="{{unsubscribe_url}}">Unsubscribe</a></p>
+        </div>
+        """,
+    ),
+    "nurture_day7": EmailTemplate(
+        subject="Fintech market gaps in Malaysia — free preview",
+        html_template="""
+        <div style="font-family: system-ui, -apple-system, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a1a;">
+            <div style="border-bottom: 3px solid #0D7377; padding-bottom: 16px; margin-bottom: 24px;">
+                <p style="font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #0D7377; margin: 0 0 8px 0;">StartInsight</p>
+                <h1 style="font-family: Georgia, serif; font-size: 22px; color: #0a0a0a; margin: 0;">Category Deep Dive: Fintech Malaysia</h1>
+            </div>
+            <p style="font-size: 14px; line-height: 1.6;">We've analyzed the fintech landscape in Malaysia and found real market gaps backed by data. Here's a preview of what our full category report covers:</p>
+            <ul style="font-size: 14px; line-height: 2;">
+                <li>Top signals from Reddit, HN, and Google Trends</li>
+                <li>Competitor blind spots in MY fintech</li>
+                <li>Revenue potential estimates</li>
+            </ul>
+            <a href="{{app_url}}/reports/fintech-malaysia?utm_source=nurture&utm_medium=email&utm_campaign=day7" style="display: inline-block; background: #0D7377; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 16px;">
+                See Free Teasers
+            </a>
+            <p style="margin-top: 24px; color: #6B7280; font-size: 12px;"><a href="{{unsubscribe_url}}">Unsubscribe</a></p>
+        </div>
+        """,
+    ),
+    "nurture_day14": EmailTemplate(
+        subject="Founders who found their next idea on StartInsight",
+        html_template="""
+        <div style="font-family: system-ui, -apple-system, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a1a;">
+            <div style="border-bottom: 3px solid #0D7377; padding-bottom: 16px; margin-bottom: 24px;">
+                <p style="font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #0D7377; margin: 0 0 8px 0;">StartInsight</p>
+                <h1 style="font-family: Georgia, serif; font-size: 22px; color: #0a0a0a; margin: 0;">Founder Success Stories</h1>
+            </div>
+            <p style="font-size: 14px; line-height: 1.6;">See how founders in Southeast Asia are using data-driven discovery to find validated startup opportunities.</p>
+            <a href="{{app_url}}/success-stories?utm_source=nurture&utm_medium=email&utm_campaign=day14" style="display: inline-block; background: #0D7377; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 16px;">
+                Read Their Stories
+            </a>
+            <p style="font-size: 14px; line-height: 1.6; margin-top: 24px;">Know someone who's looking for their next idea? Share StartInsight with them:</p>
+            <a href="{{app_url}}/?ref={{referral_code}}&utm_source=nurture&utm_medium=email&utm_campaign=day14_referral" style="display: inline-block; border: 2px solid #0D7377; color: #0D7377; padding: 10px 20px; text-decoration: none; border-radius: 6px;">
+                Share StartInsight
+            </a>
+            <p style="margin-top: 24px; color: #6B7280; font-size: 12px;"><a href="{{unsubscribe_url}}">Unsubscribe</a></p>
+        </div>
+        """,
+    ),
     # ── Conviction funnel: paid category reports ──────────────────────────
     "report_confirmation": EmailTemplate(
         subject="Your {{category_title}} Report is Being Generated",

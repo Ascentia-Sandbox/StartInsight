@@ -147,10 +147,11 @@ async def run_research_agent_auto_task(ctx: dict[str, Any]) -> dict[str, Any]:
 
 
 async def run_content_generator_auto_task(ctx: dict[str, Any]) -> dict[str, Any]:
-    """Auto-generate blog/social content for top insights without content (Phase D)."""
+    """Auto-generate blog/social content for top insights and persist social posts."""
     from sqlalchemy import select
 
     from app.agents.content_generator_agent import generate_all_content
+    from app.marketing.models.social_post import SocialPost
     from app.models.insight import Insight
 
     logger.info("Starting run_content_generator_auto_task")
@@ -169,14 +170,39 @@ async def run_content_generator_auto_task(ctx: dict[str, Any]) -> dict[str, Any]
                 return {"status": "completed", "items": 0, "reason": "no_eligible_insights"}
 
             processed = 0
+            social_created = 0
             for insight in insights:
                 try:
-                    await generate_all_content(insight.id, session)
+                    content = await generate_all_content(insight.id, session)
                     processed += 1
+
+                    # Persist social posts for the social posting agent to pick up
+                    for post in content.social_posts:
+                        slug = insight.slug or str(insight.id)
+                        link = f"https://startinsight.co/insights/{slug}?utm_source={post.platform}&utm_medium=social&utm_campaign=auto"
+                        session.add(
+                            SocialPost(
+                                insight_id=insight.id,
+                                platform=post.platform,
+                                content=post.content,
+                                hashtags=post.hashtags if post.hashtags else None,
+                                link_url=link,
+                                status="pending",
+                            )
+                        )
+                        social_created += 1
+
                 except Exception as e:
                     logger.error(f"Content generation failed for insight {insight.id}: {e}")
 
-        return {"status": "completed", "items": processed, "total": len(insights)}
+            await session.commit()
+
+        return {
+            "status": "completed",
+            "items": processed,
+            "total": len(insights),
+            "social_posts_created": social_created,
+        }
     except Exception as e:
         logger.error(f"run_content_generator_auto_task failed: {e}")
         return {"status": "error", "error": str(e)}
@@ -1062,6 +1088,35 @@ def _make_worker_redis_settings() -> RedisSettings:
     )
 
 
+# ── GTM Phase 2: Marketing automation tasks ─────────────────────────────────
+
+
+async def post_social_content_task(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Post pending social content to Twitter/X and LinkedIn."""
+    from app.marketing.agents.social_posting_agent import run_social_posting_pipeline
+
+    logger.info("Starting post_social_content_task")
+    try:
+        async with AsyncSessionLocal() as session:
+            return await run_social_posting_pipeline(session)
+    except Exception as e:
+        logger.error(f"post_social_content_task failed: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+async def run_email_nurture_task(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Send nurture drip emails to newsletter subscribers."""
+    from app.marketing.tasks.email_nurture import run_email_nurture
+
+    logger.info("Starting run_email_nurture_task")
+    try:
+        async with AsyncSessionLocal() as session:
+            return await run_email_nurture(session)
+    except Exception as e:
+        logger.error(f"run_email_nurture_task failed: {e}")
+        return {"status": "error", "error": str(e)}
+
+
 class WorkerSettings:
     """
     Arq worker configuration.
@@ -1103,6 +1158,9 @@ class WorkerSettings:
         run_market_intel_auto_task,
         # Phase L: Weekly digest
         send_weekly_digest_task,
+        # GTM Phase 2: Marketing automation
+        post_social_content_task,
+        run_email_nurture_task,
     ]
 
     # Cron jobs (scheduled tasks)
@@ -1170,6 +1228,20 @@ class WorkerSettings:
         cron(
             insight_quality_audit_task,
             hour={1, 7, 13, 19},
+            minute=0,
+            run_at_startup=False,
+        ),
+        # GTM Phase 2: Social posting twice daily (10am/4pm UTC = MY 6pm/midnight)
+        cron(
+            post_social_content_task,
+            hour={10, 16},
+            minute=0,
+            run_at_startup=False,
+        ),
+        # GTM Phase 2: Email nurture daily at 10:00 UTC
+        cron(
+            run_email_nurture_task,
+            hour=10,
             minute=0,
             run_at_startup=False,
         ),
