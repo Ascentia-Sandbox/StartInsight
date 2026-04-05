@@ -16,60 +16,38 @@
 **Database:** 70 tables, 235+ API endpoints, 8 AI agents, 6 active scrapers
 **Revenue:** $0 — demand experiment in progress
 
-## Current Focus: Automated GTM System (2026-04-04)
+## Current Focus: GTM + GEO OPERATIONAL MODE (2026-04-05)
 
-**Full plan:** `memory-bank/gtm-automation-plan.md` (5 phases, includes GEO)
+**Full plan:** `memory-bank/gtm-automation-plan.md` (consolidated 90-day playbook)
+**Status:** All engineering COMPLETE. Now in operational/distribution mode.
 
-### GTM Phase 1: Fix & Instrument (COMPLETE ✅ — 2026-04-04)
-- ✅ Category reports linked in mega-menu, footer, sitemap (3 URLs)
-- ✅ PostHog events: report_category_viewed, report_checkout_started, report_checkout_error
-- ✅ TIER_COMPAT_MAP removed (was deadline 2026-04-23)
-- ✅ ENABLE_DAILY_DIGEST=true set in Railway (deployed)
-- ✅ Google Search Console verification meta tag added
-- ⏳ Pending: GSC verification + sitemap submission (after deploy)
+### Engineering Complete (Phase 1-5, shipped April 4-5)
+- ✅ Phase 1: Conviction funnel discoverable (navigation, PostHog events, sitemap)
+- ✅ Phase 2: Social posting agent + email nurture (`backend/app/marketing/` module)
+- ✅ Phase 3: 12 programmatic SEO pages + RSS feed + widget API
+- ✅ Phase 4: Referral incentive tiers + ReferralWidget component
+- ✅ Phase 5: GEO (llms.txt, AI crawler robots.txt, JSON-LD, answer-first content, FAQ sections)
+- **4 commits, 54 files, 3,818 insertions**
 
-### GTM Phase 2: Automated Content Distribution (COMPLETE ✅ — 2026-04-04)
-- ✅ Marketing module: `backend/app/marketing/` (modular monolith pattern)
-- ✅ SocialPost model + migration c018 (social_posts table + nurture_stage column)
-- ✅ Twitter posting service (Tweepy v2 Client, OAuth 1.0a)
-- ✅ LinkedIn posting service (Marketing API + Make.com webhook fallback)
-- ✅ Social posting agent (reads pending posts, rate limits 3 tweets + 2 LinkedIn/day)
-- ✅ Content generator wired to social_posts table (auto-creates pending posts)
-- ✅ Email nurture sequence: Day 1/3/7/14 templates + daily scheduler task
-- ✅ Config: enable_social_posting flag, LinkedIn creds, daily post limits
-- ✅ Registered in worker.py: post_social_content_task (10am/4pm UTC), run_email_nurture_task (10am UTC)
-- ⏳ Pending (config): set ENABLE_SOCIAL_POSTING=true + Twitter/LinkedIn creds in Railway
+### Pending Activation (Founder Manual Work)
+- [ ] Verify GSC property (HTML tag) + submit sitemap.xml
+- [ ] Set ENABLE_SOCIAL_POSTING=true in Railway
+- [ ] Verify Twitter creds in Railway env vars
+- [ ] Check Cloudflare AI bot blocking settings
+- [ ] Share explore pages in 5 Telegram/WhatsApp groups
+- [ ] Test conviction funnel: visit /reports/fintech-malaysia, check PostHog
 
-### GTM Phase 3: Programmatic SEO (COMPLETE ✅ — 2026-04-04)
-- ✅ 12 programmatic SEO pages: `/explore/{category}` (ai-saas, fintech, devtools, health-tech, ecommerce, edtech, remote-work, sustainability, malaysia, singapore, no-code, b2b-saas)
-- ✅ Backend: `GET /api/explore/categories` + `GET /api/explore/{slug}` (keyword-matched insights)
-- ✅ RSS 2.0 feed: `GET /api/feed/rss` (12 insights + 8 articles, 1h cache)
-- ✅ 12 explore pages added to sitemap.ts
-- ✅ RSS alternate link in layout.tsx
-- ✅ SEO category definitions: `backend/app/marketing/services/seo_categories.py`
+### Weekly Monitoring (After Activation)
+- PostHog: report_category_viewed, report_checkout_started counts
+- social_posts table: posted vs failed counts
+- newsletter_subscribers: confirmed count
+- Google Search Console: impressions, indexed pages
+- AI citation test: ask Perplexity "startup ideas Malaysia 2026"
 
-### GTM Phase 4: Community & API (COMPLETE ✅ — 2026-04-04)
-- ✅ Embeddable widget: `GET /api/widgets/trending` (top 5, CORS: *, 5min cache)
-- ✅ Referral incentive tiers: 1 referral = 1 free report, 3 = founder badge, 5 = all reports
-- ✅ ReferralWidget component with progress bar, tier badges, share buttons (Twitter, LinkedIn, WhatsApp, Copy)
-- ⏳ Pending: ProductHunt launch preparation (founder work, no code needed)
-
-### GTM Phase 5: GEO — Generative Engine Optimization (NEXT)
-- Create `/llms.txt` + `/llms-full.txt` for AI model site comprehension
-- Update `robots.txt` to explicitly allow GPTBot, ClaudeBot, PerplexityBot + unblock `/api/feed/rss`, `/api/explore/`, `/explore/`
-- Add JSON-LD (Dataset, Article, ItemList, FAQPage) to insight pages, market insight articles, explore pages
-- Answer-first content on explore pages (first 200 words = direct answer)
-- FAQ sections on explore pages (matches exact AI queries)
-- Update content generator agent prompts for citation-optimized output
-- Real timestamps in sitemap (replace `new Date()` with DB timestamps)
-- Check Cloudflare AI bot blocking settings (manual)
-- See `memory-bank/gtm-automation-plan.md` Phase 5 for full spec
-- Internal linking system
-
-### GTM Phase 4: Community & API (Week 6-8)
-- ProductHunt launch
-- Developer API activation + embeddable widget
-- Referral incentive tiers
+### Decision Points
+- **Day 30:** Check funnel metrics, decide scale/pivot (see decision tree in gtm-automation-plan.md)
+- **Day 60:** Scale winning channels or pivot to Approach C (manual DMs)
+- **Day 90:** Target RM500 MRR, 100 signups, 50 subscribers, 3 AI citations
 
 ## Phase 6: Data Pipeline Resilience & Intelligence (COMPLETE ✅ — 2026-03-20)
 
