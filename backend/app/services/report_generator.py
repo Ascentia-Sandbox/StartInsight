@@ -92,10 +92,17 @@ class CategoryReportContent(BaseModel):
 # AI AGENT
 # ============================================================================
 
-_report_agent = Agent(
-    model="google-gla:gemini-2.0-flash",
-    output_type=CategoryReportContent,
-    system_prompt="""You are a senior market analyst specialising in Southeast Asia startup ecosystems.
+_report_agent: Agent | None = None
+
+
+def _get_report_agent() -> Agent:
+    """Lazy-init the PydanticAI agent (avoids GOOGLE_API_KEY crash at import time in CI)."""
+    global _report_agent  # noqa: PLW0603
+    if _report_agent is None:
+        _report_agent = Agent(
+            model="google-gla:gemini-2.0-flash",
+            output_type=CategoryReportContent,
+            system_prompt="""You are a senior market analyst specialising in Southeast Asia startup ecosystems.
 
 Your task is to synthesise raw market signals into an actionable investor-grade category report.
 
@@ -107,7 +114,8 @@ Rules:
 - Use plain, direct language. Short paragraphs (3-4 sentences max).
 - Sections should be 200-400 words of substantive analysis.
 """,
-)
+        )
+    return _report_agent
 
 
 # ============================================================================
@@ -123,7 +131,7 @@ Rules:
 )
 async def _run_report_agent_with_retry(prompt: str) -> CategoryReportContent:
     """Call Gemini via PydanticAI with retry on 429 / transient errors."""
-    result = await asyncio.wait_for(_report_agent.run(prompt), timeout=120)
+    result = await asyncio.wait_for(_get_report_agent().run(prompt), timeout=120)
     return result.output
 
 
