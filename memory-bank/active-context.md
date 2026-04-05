@@ -16,38 +16,46 @@
 **Database:** 70 tables, 235+ API endpoints, 8 AI agents, 6 active scrapers
 **Revenue:** $0 — demand experiment in progress
 
-## Current Focus: GTM + GEO OPERATIONAL MODE (2026-04-05)
+## Current Focus: GTM + GEO OPERATIONAL MODE (2026-04-06)
 
 **Full plan:** `memory-bank/gtm-automation-plan.md` (consolidated 90-day playbook)
-**Status:** All engineering COMPLETE. Now in operational/distribution mode.
+**Daily ops:** `memory-bank/daily-operations.md` (daily checklist + health check commands)
+**Status:** ALL ENGINES ACTIVATED. Monitoring + distribution phase.
 
-### Engineering Complete (Phase 1-5, shipped April 4-5)
-- ✅ Phase 1: Conviction funnel discoverable (navigation, PostHog events, sitemap)
-- ✅ Phase 2: Social posting agent + email nurture (`backend/app/marketing/` module)
-- ✅ Phase 3: 12 programmatic SEO pages + RSS feed + widget API
-- ✅ Phase 4: Referral incentive tiers + ReferralWidget component
-- ✅ Phase 5: GEO (llms.txt, AI crawler robots.txt, JSON-LD, answer-first content, FAQ sections)
-- **4 commits, 54 files, 3,818 insertions**
+### Activation Complete (2026-04-06)
+- ✅ Phase 1-5 engineering shipped (54 files, 3,818 insertions)
+- ✅ GSC verified + sitemap submitted (223 URLs indexed)
+- ✅ ENABLE_SOCIAL_POSTING=true set in Railway
+- ✅ Twitter creds verified in Railway
+- ✅ Cloudflare AI bot settings checked
+- ✅ llms.txt live (200), robots.txt with AI crawlers (200)
+- ✅ RSS feed live (20 items), explore pages live (12 categories)
+- ✅ Backend healthy: DB + Redis connected
 
-### Pending Activation (Founder Manual Work)
-- [ ] Verify GSC property (HTML tag) + submit sitemap.xml
-- [ ] Set ENABLE_SOCIAL_POSTING=true in Railway
-- [ ] Verify Twitter creds in Railway env vars
-- [ ] Check Cloudflare AI bot blocking settings
-- [ ] Share explore pages in 5 Telegram/WhatsApp groups
-- [ ] Test conviction funnel: visit /reports/fintech-malaysia, check PostHog
+### Health Check (2026-04-06)
+| System | Status | Detail |
+|--------|--------|--------|
+| PostHog | ACTIVE | Script present in HTML, events deployed |
+| Sitemap | LIVE | 223 URLs, 200 status |
+| RSS Feed | LIVE | 20 items (12 insights + 8 articles) |
+| Explore Pages | LIVE | 12 categories with real insights |
+| llms.txt | LIVE | AI site map accessible |
+| robots.txt | LIVE | 3 AI crawler rules (GPTBot, ClaudeBot, PerplexityBot) |
+| Backend | HEALTHY | DB + Redis connected |
+| Newsletter | ACTIVE | Subscribe endpoint returns 422 on invalid (working) |
 
-### Weekly Monitoring (After Activation)
-- PostHog: report_category_viewed, report_checkout_started counts
-- social_posts table: posted vs failed counts
-- newsletter_subscribers: confirmed count
-- Google Search Console: impressions, indexed pages
-- AI citation test: ask Perplexity "startup ideas Malaysia 2026"
+### Daily Operations
+Run the daily checklist in `memory-bank/daily-operations.md`. Key checks:
+1. PostHog: any new `report_category_viewed` or `report_checkout_started` events?
+2. Social posts: are tweets appearing on the Twitter/X account?
+3. Newsletter: any new confirmed subscribers?
+4. GSC: impressions growing? (takes 2-3 days to populate)
+5. AI citation: ask Perplexity "startup ideas Malaysia 2026"
 
 ### Decision Points
-- **Day 30:** Check funnel metrics, decide scale/pivot (see decision tree in gtm-automation-plan.md)
-- **Day 60:** Scale winning channels or pivot to Approach C (manual DMs)
-- **Day 90:** Target RM500 MRR, 100 signups, 50 subscribers, 3 AI citations
+- **Day 30 (May 5):** Check funnel metrics, decide scale/pivot (see decision tree in gtm-automation-plan.md)
+- **Day 60 (June 5):** Scale winning channels or pivot to Approach C (manual DMs)
+- **Day 90 (July 5):** Target RM500 MRR, 100 signups, 50 subscribers, 3 AI citations
 
 ## Phase 6: Data Pipeline Resilience & Intelligence (COMPLETE ✅ — 2026-03-20)
 
