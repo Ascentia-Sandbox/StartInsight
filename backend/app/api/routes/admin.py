@@ -430,11 +430,32 @@ async def trigger_agent(
     Manually trigger agent execution (out of schedule).
     Accepts any configured agent name.
     """
-    # Validate agent exists
+    # Validate agent exists in DB config OR in hardcoded task map
+    agent_task_map_keys = {
+        "reddit_scraper",
+        "product_hunt_scraper",
+        "trends_scraper",
+        "twitter_scraper",
+        "hackernews_scraper",
+        "analyzer",
+        "enhanced_analyzer",
+        "quality_reviewer",
+        "market_insight_publisher",
+        "market_insight_quality_review",
+        "content_pipeline",
+        "research_agent",
+        "content_generator",
+        "competitive_intel",
+        "market_intel",
+        "daily_insight",
+        "daily_digest",
+        "success_stories",
+        "scrape_all",
+    }
     config = await db.execute(
         select(AgentConfiguration).where(AgentConfiguration.agent_name == agent_type)
     )
-    if not config.scalar_one_or_none():
+    if not config.scalar_one_or_none() and agent_type not in agent_task_map_keys:
         raise HTTPException(status_code=404, detail=f"Agent '{agent_type}' not found")
 
     # Create execution log
