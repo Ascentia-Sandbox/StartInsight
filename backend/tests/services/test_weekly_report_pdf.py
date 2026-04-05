@@ -2,8 +2,6 @@
 
 from datetime import date
 
-import pytest
-
 from app.services.weekly_report_pdf import build_weekly_report_html
 
 SAMPLE_INSIGHTS = [

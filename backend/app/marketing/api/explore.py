@@ -7,16 +7,14 @@ GET /api/widgets/trending   — embeddable widget (top 5 trending ideas, CORS: *
 
 import logging
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
+from app.marketing.services.seo_categories import get_all_categories, get_category
 from app.models.insight import Insight
-from app.marketing.services.seo_categories import SEO_CATEGORIES, get_all_categories, get_category
-
-from fastapi import Depends
 
 logger = logging.getLogger(__name__)
 

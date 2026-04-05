@@ -5,7 +5,7 @@ Rate limits: 3 tweets/day, 2 LinkedIn posts/day.
 """
 
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession

@@ -10,7 +10,7 @@ Runs daily at 10:00 UTC via scheduler.
 """
 
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
