@@ -43,7 +43,7 @@ async def rss_feed(db: AsyncSession = Depends(get_db)):
     # Fetch latest articles
     articles_result = await db.execute(
         select(MarketInsight)
-        .where(MarketInsight.status == "published")
+        .where(MarketInsight.published_at.is_not(None))
         .order_by(MarketInsight.published_at.desc())
         .limit(8)
     )
