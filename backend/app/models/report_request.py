@@ -110,6 +110,4 @@ class ReportRequest(Base):
     )
 
     # Composite index for per-channel kill criteria queries
-    __table_args__ = (
-        Index("ix_report_requests_category_source", "category", "source"),
-    )
+    __table_args__ = (Index("ix_report_requests_category_source", "category", "source"),)

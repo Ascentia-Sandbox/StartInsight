@@ -212,7 +212,11 @@ app.add_middleware(RateLimiterMiddleware, max_requests=100, window_seconds=3600)
 # ============================================================================
 
 
-_DB_POOL_EXHAUSTION_MARKERS = ("MaxClientsInSessionMode", "Max client connections", "QueuePool limit")
+_DB_POOL_EXHAUSTION_MARKERS = (
+    "MaxClientsInSessionMode",
+    "Max client connections",
+    "QueuePool limit",
+)
 
 
 @app.exception_handler(Exception)

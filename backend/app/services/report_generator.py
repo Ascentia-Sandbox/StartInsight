@@ -181,13 +181,15 @@ def _build_report_html(
         </div>
         """
 
-    sections_html = "".join([
-        render_section(content.demand_signals, 1),
-        render_section(content.underserved_niche, 2),
-        render_section(content.competitor_map, 3),
-        render_section(content.customer_pain_points, 4),
-        render_section(content.first_wedge, 5),
-    ])
+    sections_html = "".join(
+        [
+            render_section(content.demand_signals, 1),
+            render_section(content.underserved_niche, 2),
+            render_section(content.competitor_map, 3),
+            render_section(content.customer_pain_points, 4),
+            render_section(content.first_wedge, 5),
+        ]
+    )
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -331,8 +333,10 @@ async def _generate_pdf_bytes(html: str) -> bytes:
     WeasyPrint is synchronous — run it in asyncio's default executor to avoid
     blocking the event loop.
     """
+
     def _render() -> bytes:
         from weasyprint import HTML  # type: ignore[import-untyped]
+
         return HTML(string=html).write_pdf()
 
     loop = asyncio.get_event_loop()
@@ -363,6 +367,7 @@ async def _send_report_email(
     resend_client = None
     try:
         import resend
+
         resend.api_key = settings.resend_api_key
         resend_client = resend
     except ImportError:
@@ -520,7 +525,11 @@ async def generate_report(
         market = ins.market_size_estimate
         signal_lines.append(f"- [{score:.1f}] {title} | Market: {market} | Problem: {problem}")
 
-    signals_block = "\n".join(signal_lines) if signal_lines else "(no signals found — synthesise from general knowledge of this market)"
+    signals_block = (
+        "\n".join(signal_lines)
+        if signal_lines
+        else "(no signals found — synthesise from general knowledge of this market)"
+    )
 
     prompt = f"""Generate a structured market intelligence report for the following category:
 

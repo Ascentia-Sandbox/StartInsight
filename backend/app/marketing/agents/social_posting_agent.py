@@ -16,9 +16,7 @@ from app.marketing.models.social_post import SocialPost
 logger = logging.getLogger(__name__)
 
 
-async def _count_posted_today(
-    session: AsyncSession, platform: str
-) -> int:
+async def _count_posted_today(session: AsyncSession, platform: str) -> int:
     """Count posts already sent today for a given platform."""
     today_start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
     result = await session.execute(
@@ -92,8 +90,7 @@ async def run_social_posting_pipeline(session: AsyncSession) -> dict:
             post.posted_at = datetime.now(UTC)
             posted += 1
             logger.info(
-                f"Posted to {post.platform}: {post.external_post_id} "
-                f"(insight={post.insight_id})"
+                f"Posted to {post.platform}: {post.external_post_id} (insight={post.insight_id})"
             )
 
         except Exception as e:

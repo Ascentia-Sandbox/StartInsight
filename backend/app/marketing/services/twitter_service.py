@@ -11,12 +11,14 @@ logger = logging.getLogger(__name__)
 
 def _get_client() -> tweepy.Client | None:
     """Build Tweepy v2 Client for posting. Returns None if creds missing."""
-    if not all([
-        settings.twitter_api_key,
-        settings.twitter_api_secret,
-        settings.twitter_access_token,
-        settings.twitter_access_secret,
-    ]):
+    if not all(
+        [
+            settings.twitter_api_key,
+            settings.twitter_api_secret,
+            settings.twitter_access_token,
+            settings.twitter_access_secret,
+        ]
+    ):
         logger.warning("Twitter credentials not configured — skipping")
         return None
 

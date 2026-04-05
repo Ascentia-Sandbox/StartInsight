@@ -49,9 +49,7 @@ async def _build_insights_html(session: AsyncSession, limit: int = 5) -> str:
         title = i.title or i.proposed_solution or "Untitled"
         score = f"{i.relevance_score:.1f}" if i.relevance_score else "—"
         items.append(
-            f'<li style="margin-bottom: 8px;">'
-            f'<strong>{title}</strong> — Score: {score}'
-            f"</li>"
+            f'<li style="margin-bottom: 8px;"><strong>{title}</strong> — Score: {score}</li>'
         )
     return f'<ol style="font-size: 14px; line-height: 1.8;">{"".join(items)}</ol>'
 

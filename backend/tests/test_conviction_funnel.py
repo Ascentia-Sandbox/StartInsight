@@ -74,7 +74,8 @@ async def failed_report_request(db_session: AsyncSession) -> ReportRequest:
 
 @pytest_asyncio.fixture
 async def category_insights(
-    db_session: AsyncSession, test_signal,
+    db_session: AsyncSession,
+    test_signal,
 ) -> list[Insight]:
     """Create 3 high-scoring insights tagged for fintech-malaysia."""
     insights: list[Insight] = []
@@ -104,6 +105,7 @@ async def category_insights(
 
 def _admin_override() -> dict:
     """Return a dependency override dict that bypasses require_admin."""
+
     async def _fake_admin() -> MagicMock:
         return MagicMock()
 
@@ -153,9 +155,7 @@ class TestReportRequestModel:
     """Tests for the ReportRequest SQLAlchemy model."""
 
     @pytest.mark.asyncio
-    async def test_report_request_model_creation(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_report_request_model_creation(self, db_session: AsyncSession) -> None:
         """Create a ReportRequest with all required fields and verify defaults."""
         rr = ReportRequest(
             stripe_payment_intent_id="pi_create_test_001",
@@ -174,9 +174,7 @@ class TestReportRequestModel:
         assert rr.created_at is not None, "created_at should be set by server_default"
 
     @pytest.mark.asyncio
-    async def test_report_request_unique_payment_intent(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_report_request_unique_payment_intent(self, db_session: AsyncSession) -> None:
         """Duplicate stripe_payment_intent_id raises IntegrityError."""
         pi_id = "pi_duplicate_test_001"
         rr1 = ReportRequest(
@@ -199,9 +197,7 @@ class TestReportRequestModel:
         await db_session.rollback()
 
     @pytest.mark.asyncio
-    async def test_report_request_status_transitions(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_report_request_status_transitions(self, db_session: AsyncSession) -> None:
         """Verify valid status values can be stored (no DB-level constraint, but convention)."""
         valid_statuses = ["pending", "generating", "rendered", "delivered", "failed"]
         for status_val in valid_statuses:
@@ -214,9 +210,7 @@ class TestReportRequestModel:
             db_session.add(rr)
             await db_session.commit()
             await db_session.refresh(rr)
-            assert rr.status == status_val, (
-                f"Status '{status_val}' should persist correctly"
-            )
+            assert rr.status == status_val, f"Status '{status_val}' should persist correctly"
 
 
 # ============================================================================
@@ -229,7 +223,10 @@ class TestCategoryInsightsEndpoint:
 
     @pytest.mark.asyncio
     async def test_get_category_insights_valid(
-        self, client: AsyncClient, db_session: AsyncSession, test_signal,
+        self,
+        client: AsyncClient,
+        db_session: AsyncSession,
+        test_signal,
     ) -> None:
         """GET /api/insights/category/fintech-malaysia returns insights when data exists."""
         # The route uses text("category ILIKE :cat") which does not work with
@@ -248,12 +245,12 @@ class TestCategoryInsightsEndpoint:
 
         mock_result = MagicMock()
         mock_result.scalars.return_value.all.return_value = [
-            mock_insight, mock_insight, mock_insight,
+            mock_insight,
+            mock_insight,
+            mock_insight,
         ]
 
-        with patch.object(
-            db_session, "execute", new_callable=AsyncMock, return_value=mock_result
-        ):
+        with patch.object(db_session, "execute", new_callable=AsyncMock, return_value=mock_result):
             resp = await client.get("/api/insights/category/fintech-malaysia")
 
         assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
@@ -265,7 +262,8 @@ class TestCategoryInsightsEndpoint:
 
     @pytest.mark.asyncio
     async def test_get_category_insights_unknown(
-        self, client: AsyncClient,
+        self,
+        client: AsyncClient,
     ) -> None:
         """GET /api/insights/category/unknown returns 404."""
         resp = await client.get("/api/insights/category/unknown-category")
@@ -273,15 +271,15 @@ class TestCategoryInsightsEndpoint:
 
     @pytest.mark.asyncio
     async def test_get_category_insights_empty(
-        self, client: AsyncClient, db_session: AsyncSession,
+        self,
+        client: AsyncClient,
+        db_session: AsyncSession,
     ) -> None:
         """Returns empty list and partial=true when no insights exist."""
         mock_result = MagicMock()
         mock_result.scalars.return_value.all.return_value = []
 
-        with patch.object(
-            db_session, "execute", new_callable=AsyncMock, return_value=mock_result
-        ):
+        with patch.object(db_session, "execute", new_callable=AsyncMock, return_value=mock_result):
             resp = await client.get("/api/insights/category/fintech-malaysia")
 
         assert resp.status_code == 200
@@ -291,7 +289,9 @@ class TestCategoryInsightsEndpoint:
 
     @pytest.mark.asyncio
     async def test_get_category_insights_partial(
-        self, client: AsyncClient, db_session: AsyncSession,
+        self,
+        client: AsyncClient,
+        db_session: AsyncSession,
     ) -> None:
         """Returns partial=true when fewer than 3 insights are available."""
         mock_insight = MagicMock()
@@ -307,9 +307,7 @@ class TestCategoryInsightsEndpoint:
         mock_result = MagicMock()
         mock_result.scalars.return_value.all.return_value = [mock_insight]
 
-        with patch.object(
-            db_session, "execute", new_callable=AsyncMock, return_value=mock_result
-        ):
+        with patch.object(db_session, "execute", new_callable=AsyncMock, return_value=mock_result):
             resp = await client.get("/api/insights/category/fnb-malaysia")
 
         assert resp.status_code == 200
@@ -328,21 +326,27 @@ class TestStripeReportsWebhook:
 
     @pytest.mark.asyncio
     async def test_webhook_valid_payment(
-        self, client: AsyncClient, db_session: AsyncSession,
+        self,
+        client: AsyncClient,
+        db_session: AsyncSession,
     ) -> None:
         """Valid signature + new payment creates report_request and returns accepted."""
         event = _build_stripe_event(payment_intent_id="pi_valid_webhook_001")
 
-        with patch(
-            "app.api.routes.reports._verify_stripe_signature",
-            return_value=event,
-        ), patch(
-            "app.api.routes.reports.send_confirmation_email",
-            new_callable=AsyncMock,
-            return_value={"status": "sent"},
-        ), patch(
-            "app.api.routes.reports._run_generate_report_background",
-            new_callable=AsyncMock,
+        with (
+            patch(
+                "app.api.routes.reports._verify_stripe_signature",
+                return_value=event,
+            ),
+            patch(
+                "app.api.routes.reports.send_confirmation_email",
+                new_callable=AsyncMock,
+                return_value={"status": "sent"},
+            ),
+            patch(
+                "app.api.routes.reports._run_generate_report_background",
+                new_callable=AsyncMock,
+            ),
         ):
             resp = await client.post(
                 "/api/webhooks/stripe/reports",
@@ -368,7 +372,8 @@ class TestStripeReportsWebhook:
 
     @pytest.mark.asyncio
     async def test_webhook_invalid_signature(
-        self, client: AsyncClient,
+        self,
+        client: AsyncClient,
     ) -> None:
         """Invalid Stripe signature returns 400."""
         with patch(
@@ -385,7 +390,9 @@ class TestStripeReportsWebhook:
 
     @pytest.mark.asyncio
     async def test_webhook_duplicate_payment(
-        self, client: AsyncClient, report_request: ReportRequest,
+        self,
+        client: AsyncClient,
+        report_request: ReportRequest,
     ) -> None:
         """Same payment_intent_id returns 200 with status=duplicate (idempotent)."""
         event = _build_stripe_event(
@@ -407,7 +414,8 @@ class TestStripeReportsWebhook:
 
     @pytest.mark.asyncio
     async def test_webhook_missing_metadata(
-        self, client: AsyncClient,
+        self,
+        client: AsyncClient,
     ) -> None:
         """Missing category/email in metadata returns 400."""
         event = _build_stripe_event()
@@ -440,6 +448,7 @@ def _make_patched_execute(real_execute):
     query whose compiled string contains 'ILIKE' and return an empty result set.
     All other queries are passed through to the real session.execute().
     """
+
     async def _patched_execute(stmt, *args, **kwargs):
         # Check if the statement contains ILIKE (PostgreSQL-only)
         try:
@@ -476,7 +485,9 @@ class TestReportGeneration:
 
     @pytest.mark.asyncio
     async def test_generate_report_happy_path(
-        self, db_session: AsyncSession, report_request: ReportRequest,
+        self,
+        db_session: AsyncSession,
+        report_request: ReportRequest,
     ) -> None:
         """Full pipeline: Gemini -> HTML -> WeasyPrint -> Resend -> delivered."""
         from app.services.report_generator import generate_report
@@ -487,20 +498,26 @@ class TestReportGeneration:
         real_execute = db_session.execute
         db_session.execute = _make_patched_execute(real_execute)
 
-        with patch(
-            "app.services.report_generator._run_report_agent_with_retry",
-            new_callable=AsyncMock,
-            return_value=mock_content,
-        ), patch(
-            "app.services.report_generator._generate_pdf_bytes",
-            new_callable=AsyncMock,
-            return_value=b"%PDF-1.4 fake",
-        ), patch(
-            "app.services.report_generator._send_report_email",
-            new_callable=AsyncMock,
-            return_value={"status": "sent", "id": "msg_001"},
-        ), patch.dict(
-            "sys.modules", {"sentry_sdk": _mock_sentry_module()},
+        with (
+            patch(
+                "app.services.report_generator._run_report_agent_with_retry",
+                new_callable=AsyncMock,
+                return_value=mock_content,
+            ),
+            patch(
+                "app.services.report_generator._generate_pdf_bytes",
+                new_callable=AsyncMock,
+                return_value=b"%PDF-1.4 fake",
+            ),
+            patch(
+                "app.services.report_generator._send_report_email",
+                new_callable=AsyncMock,
+                return_value={"status": "sent", "id": "msg_001"},
+            ),
+            patch.dict(
+                "sys.modules",
+                {"sentry_sdk": _mock_sentry_module()},
+            ),
         ):
             await generate_report(
                 category="fintech-malaysia",
@@ -515,8 +532,7 @@ class TestReportGeneration:
         # Verify final status
         result = await db_session.execute(
             select(ReportRequest).where(
-                ReportRequest.stripe_payment_intent_id
-                == report_request.stripe_payment_intent_id
+                ReportRequest.stripe_payment_intent_id == report_request.stripe_payment_intent_id
             )
         )
         rr = result.scalar_one()
@@ -525,7 +541,9 @@ class TestReportGeneration:
 
     @pytest.mark.asyncio
     async def test_generate_report_gemini_timeout(
-        self, db_session: AsyncSession, report_request: ReportRequest,
+        self,
+        db_session: AsyncSession,
+        report_request: ReportRequest,
     ) -> None:
         """Gemini times out -> status=failed, failed_step=gemini."""
         from app.services.report_generator import generate_report
@@ -533,12 +551,16 @@ class TestReportGeneration:
         real_execute = db_session.execute
         db_session.execute = _make_patched_execute(real_execute)
 
-        with patch(
-            "app.services.report_generator._run_report_agent_with_retry",
-            new_callable=AsyncMock,
-            side_effect=TimeoutError("Gemini timed out"),
-        ), patch.dict(
-            "sys.modules", {"sentry_sdk": _mock_sentry_module()},
+        with (
+            patch(
+                "app.services.report_generator._run_report_agent_with_retry",
+                new_callable=AsyncMock,
+                side_effect=TimeoutError("Gemini timed out"),
+            ),
+            patch.dict(
+                "sys.modules",
+                {"sentry_sdk": _mock_sentry_module()},
+            ),
         ):
             await generate_report(
                 category="fintech-malaysia",
@@ -551,8 +573,7 @@ class TestReportGeneration:
 
         result = await db_session.execute(
             select(ReportRequest).where(
-                ReportRequest.stripe_payment_intent_id
-                == report_request.stripe_payment_intent_id
+                ReportRequest.stripe_payment_intent_id == report_request.stripe_payment_intent_id
             )
         )
         rr = result.scalar_one()
@@ -561,7 +582,9 @@ class TestReportGeneration:
 
     @pytest.mark.asyncio
     async def test_generate_report_gemini_malformed(
-        self, db_session: AsyncSession, report_request: ReportRequest,
+        self,
+        db_session: AsyncSession,
+        report_request: ReportRequest,
     ) -> None:
         """Gemini returns bad JSON -> exception caught, status=failed, failed_step=gemini."""
         from app.services.report_generator import generate_report
@@ -569,12 +592,16 @@ class TestReportGeneration:
         real_execute = db_session.execute
         db_session.execute = _make_patched_execute(real_execute)
 
-        with patch(
-            "app.services.report_generator._run_report_agent_with_retry",
-            new_callable=AsyncMock,
-            side_effect=ValueError("Invalid JSON from Gemini"),
-        ), patch.dict(
-            "sys.modules", {"sentry_sdk": _mock_sentry_module()},
+        with (
+            patch(
+                "app.services.report_generator._run_report_agent_with_retry",
+                new_callable=AsyncMock,
+                side_effect=ValueError("Invalid JSON from Gemini"),
+            ),
+            patch.dict(
+                "sys.modules",
+                {"sentry_sdk": _mock_sentry_module()},
+            ),
         ):
             await generate_report(
                 category="fintech-malaysia",
@@ -587,8 +614,7 @@ class TestReportGeneration:
 
         result = await db_session.execute(
             select(ReportRequest).where(
-                ReportRequest.stripe_payment_intent_id
-                == report_request.stripe_payment_intent_id
+                ReportRequest.stripe_payment_intent_id == report_request.stripe_payment_intent_id
             )
         )
         rr = result.scalar_one()
@@ -597,7 +623,9 @@ class TestReportGeneration:
 
     @pytest.mark.asyncio
     async def test_generate_report_weasyprint_failure(
-        self, db_session: AsyncSession, report_request: ReportRequest,
+        self,
+        db_session: AsyncSession,
+        report_request: ReportRequest,
     ) -> None:
         """WeasyPrint fails -> falls back to plain-text email, still delivered."""
         from app.services.report_generator import generate_report
@@ -607,20 +635,26 @@ class TestReportGeneration:
         real_execute = db_session.execute
         db_session.execute = _make_patched_execute(real_execute)
 
-        with patch(
-            "app.services.report_generator._run_report_agent_with_retry",
-            new_callable=AsyncMock,
-            return_value=mock_content,
-        ), patch(
-            "app.services.report_generator._generate_pdf_bytes",
-            new_callable=AsyncMock,
-            side_effect=OSError("WeasyPrint crashed"),
-        ), patch(
-            "app.services.report_generator._send_report_email",
-            new_callable=AsyncMock,
-            return_value={"status": "sent", "id": "msg_fallback"},
-        ) as mock_send, patch.dict(
-            "sys.modules", {"sentry_sdk": _mock_sentry_module()},
+        with (
+            patch(
+                "app.services.report_generator._run_report_agent_with_retry",
+                new_callable=AsyncMock,
+                return_value=mock_content,
+            ),
+            patch(
+                "app.services.report_generator._generate_pdf_bytes",
+                new_callable=AsyncMock,
+                side_effect=OSError("WeasyPrint crashed"),
+            ),
+            patch(
+                "app.services.report_generator._send_report_email",
+                new_callable=AsyncMock,
+                return_value={"status": "sent", "id": "msg_fallback"},
+            ) as mock_send,
+            patch.dict(
+                "sys.modules",
+                {"sentry_sdk": _mock_sentry_module()},
+            ),
         ):
             await generate_report(
                 category="fintech-malaysia",
@@ -641,8 +675,7 @@ class TestReportGeneration:
 
         result = await db_session.execute(
             select(ReportRequest).where(
-                ReportRequest.stripe_payment_intent_id
-                == report_request.stripe_payment_intent_id
+                ReportRequest.stripe_payment_intent_id == report_request.stripe_payment_intent_id
             )
         )
         rr = result.scalar_one()
@@ -650,7 +683,9 @@ class TestReportGeneration:
 
     @pytest.mark.asyncio
     async def test_generate_report_resend_failure(
-        self, db_session: AsyncSession, report_request: ReportRequest,
+        self,
+        db_session: AsyncSession,
+        report_request: ReportRequest,
     ) -> None:
         """Resend fails after retries -> status=failed, failed_step=resend."""
         from app.services.report_generator import generate_report
@@ -660,20 +695,26 @@ class TestReportGeneration:
         real_execute = db_session.execute
         db_session.execute = _make_patched_execute(real_execute)
 
-        with patch(
-            "app.services.report_generator._run_report_agent_with_retry",
-            new_callable=AsyncMock,
-            return_value=mock_content,
-        ), patch(
-            "app.services.report_generator._generate_pdf_bytes",
-            new_callable=AsyncMock,
-            return_value=b"%PDF-1.4 fake",
-        ), patch(
-            "app.services.report_generator._send_report_email",
-            new_callable=AsyncMock,
-            return_value={"status": "error", "error": "Resend 500"},
-        ), patch.dict(
-            "sys.modules", {"sentry_sdk": _mock_sentry_module()},
+        with (
+            patch(
+                "app.services.report_generator._run_report_agent_with_retry",
+                new_callable=AsyncMock,
+                return_value=mock_content,
+            ),
+            patch(
+                "app.services.report_generator._generate_pdf_bytes",
+                new_callable=AsyncMock,
+                return_value=b"%PDF-1.4 fake",
+            ),
+            patch(
+                "app.services.report_generator._send_report_email",
+                new_callable=AsyncMock,
+                return_value={"status": "error", "error": "Resend 500"},
+            ),
+            patch.dict(
+                "sys.modules",
+                {"sentry_sdk": _mock_sentry_module()},
+            ),
         ):
             await generate_report(
                 category="fintech-malaysia",
@@ -686,8 +727,7 @@ class TestReportGeneration:
 
         result = await db_session.execute(
             select(ReportRequest).where(
-                ReportRequest.stripe_payment_intent_id
-                == report_request.stripe_payment_intent_id
+                ReportRequest.stripe_payment_intent_id == report_request.stripe_payment_intent_id
             )
         )
         rr = result.scalar_one()
@@ -717,9 +757,7 @@ class TestAdminRetry:
             "app.api.routes.reports._run_generate_report_background",
             new_callable=AsyncMock,
         ):
-            resp = await client.post(
-                f"/api/admin/reports/{failed_report_request.id}/retry"
-            )
+            resp = await client.post(f"/api/admin/reports/{failed_report_request.id}/retry")
 
         assert resp.status_code == 200, f"Expected 200, got {resp.status_code}: {resp.text}"
         data = resp.json()
@@ -735,9 +773,7 @@ class TestAdminRetry:
         """Returns 409 when report is not in 'failed' state."""
         test_app.dependency_overrides.update(_admin_override())
 
-        resp = await client.post(
-            f"/api/admin/reports/{report_request.id}/retry"
-        )
+        resp = await client.post(f"/api/admin/reports/{report_request.id}/retry")
 
         assert resp.status_code == 409, "Non-failed report should return 409 CONFLICT"
 
@@ -789,7 +825,8 @@ class TestFunnelStats:
 
     @pytest.mark.asyncio
     async def test_funnel_stats_requires_admin(
-        self, client: AsyncClient,
+        self,
+        client: AsyncClient,
     ) -> None:
         """Returns 401/403 without admin auth (no override)."""
         # Do NOT add the admin override — the real require_admin should reject

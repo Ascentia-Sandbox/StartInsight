@@ -102,7 +102,9 @@ async def rss_feed(db: AsyncSession = Depends(get_db)):
         SubElement(item, "description").text = desc
         SubElement(item, "category").text = "Market Insights"
 
-    xml_bytes = b'<?xml version="1.0" encoding="UTF-8"?>\n' + tostring(rss, encoding="unicode").encode("utf-8")
+    xml_bytes = b'<?xml version="1.0" encoding="UTF-8"?>\n' + tostring(
+        rss, encoding="unicode"
+    ).encode("utf-8")
 
     return Response(
         content=xml_bytes,

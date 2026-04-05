@@ -44,9 +44,7 @@ async def subscribe(
     Duplicate emails get a friendly message (no enumeration).
     """
     result = await db.execute(
-        select(NewsletterSubscriber).where(
-            NewsletterSubscriber.email == body.email.lower()
-        )
+        select(NewsletterSubscriber).where(NewsletterSubscriber.email == body.email.lower())
     )
     existing = result.scalar_one_or_none()
 
@@ -95,9 +93,7 @@ async def confirm(
     Validates the token and expiry, marks subscriber as confirmed.
     """
     result = await db.execute(
-        select(NewsletterSubscriber).where(
-            NewsletterSubscriber.confirmation_token == token
-        )
+        select(NewsletterSubscriber).where(NewsletterSubscriber.confirmation_token == token)
     )
     subscriber = result.scalar_one_or_none()
 
@@ -148,9 +144,7 @@ async def unsubscribe(
     Unsubscribe from the newsletter. Idempotent.
     """
     result = await db.execute(
-        select(NewsletterSubscriber).where(
-            NewsletterSubscriber.email == body.email.lower()
-        )
+        select(NewsletterSubscriber).where(NewsletterSubscriber.email == body.email.lower())
     )
     subscriber = result.scalar_one_or_none()
 

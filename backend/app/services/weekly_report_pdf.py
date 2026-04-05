@@ -449,8 +449,10 @@ async def generate_weekly_report_pdf(html: str) -> bytes:
     Mirrors the pattern from report_generator._generate_pdf_bytes.
     WeasyPrint is synchronous — off-loaded to executor to avoid blocking.
     """
+
     def _render() -> bytes:
         from weasyprint import HTML  # type: ignore[import-untyped]  # noqa: N811
+
         return HTML(string=html).write_pdf()
 
     loop = asyncio.get_event_loop()

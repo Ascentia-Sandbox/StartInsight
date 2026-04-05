@@ -20,7 +20,9 @@ async def post_to_linkedin(content: str) -> dict:
     if settings.linkedin_access_token and settings.linkedin_company_id:
         return await _post_via_api(content)
 
-    raise RuntimeError("LinkedIn not configured — set LINKEDIN_WEBHOOK_URL or LINKEDIN_ACCESS_TOKEN")
+    raise RuntimeError(
+        "LinkedIn not configured — set LINKEDIN_WEBHOOK_URL or LINKEDIN_ACCESS_TOKEN"
+    )
 
 
 async def _post_via_webhook(content: str) -> dict:

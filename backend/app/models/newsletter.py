@@ -15,17 +15,11 @@ class NewsletterSubscriber(Base):
 
     __tablename__ = "newsletter_subscribers"
 
-    id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True), primary_key=True, default=uuid4
-    )
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
 
-    email: Mapped[str] = mapped_column(
-        String(255), unique=True, nullable=False, index=True
-    )
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
 
-    confirmed: Mapped[bool] = mapped_column(
-        Boolean, default=False, nullable=False
-    )
+    confirmed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     confirmation_token: Mapped[str | None] = mapped_column(
         String(128), unique=True, nullable=True, index=True
@@ -35,13 +29,9 @@ class NewsletterSubscriber(Base):
         DateTime(timezone=True), nullable=True
     )
 
-    confirmed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    unsubscribed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    unsubscribed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Linked user account (set when a subscriber later creates an account)
     user_id: Mapped[UUID | None] = mapped_column(
@@ -51,9 +41,7 @@ class NewsletterSubscriber(Base):
         index=True,
     )
 
-    source: Mapped[str] = mapped_column(
-        String(50), default="footer", nullable=False
-    )
+    source: Mapped[str] = mapped_column(String(50), default="footer", nullable=False)
 
     # Email nurture drip sequence: 0=welcome sent, 1=day1, 3=day3, 7=day7, 14=day14
     nurture_stage: Mapped[int] = mapped_column(

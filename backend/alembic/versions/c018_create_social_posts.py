@@ -19,9 +19,7 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     op.create_table(
         "social_posts",
-        sa.Column(
-            "id", sa.dialects.postgresql.UUID(as_uuid=True), primary_key=True
-        ),
+        sa.Column("id", sa.dialects.postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column(
             "insight_id",
             sa.dialects.postgresql.UUID(as_uuid=True),
@@ -34,9 +32,7 @@ def upgrade() -> None:
         sa.Column("hashtags", sa.dialects.postgresql.JSONB(), nullable=True),
         sa.Column("link_url", sa.String(512), nullable=True),
         sa.Column("external_post_id", sa.String(255), nullable=True),
-        sa.Column(
-            "status", sa.String(20), nullable=False, server_default="pending"
-        ),
+        sa.Column("status", sa.String(20), nullable=False, server_default="pending"),
         sa.Column("error_message", sa.Text(), nullable=True),
         sa.Column("posted_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column(

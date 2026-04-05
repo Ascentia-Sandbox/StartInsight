@@ -135,6 +135,7 @@ async def scraper_health_check(
     from app.core.constants import EXPECTED_SOURCES
 
     expected_sources = EXPECTED_SOURCES
+
     def _hours_since(ts) -> float:
         """Safe age calculation; strips tzinfo so aware/naive never mix."""
         ts_naive = ts.replace(tzinfo=None) if ts.tzinfo else ts
@@ -142,8 +143,7 @@ async def scraper_health_check(
         return (now_naive - ts_naive).total_seconds() / 3600
 
     all_sources_recent = all(
-        last_runs.get(source) and _hours_since(last_runs[source]) < 7
-        for source in expected_sources
+        last_runs.get(source) and _hours_since(last_runs[source]) < 7 for source in expected_sources
     )
 
     # Calculate actual collection rate (signals/day)

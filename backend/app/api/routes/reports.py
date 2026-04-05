@@ -220,9 +220,7 @@ async def create_report_checkout(
                 detail="Payment service unavailable — Stripe not configured",
             )
         # Development mock
-        logger.warning(
-            "Stripe not configured — returning mock checkout URL (development only)"
-        )
+        logger.warning("Stripe not configured — returning mock checkout URL (development only)")
         return CheckoutSessionResponse(
             checkout_url=success_url,
             session_id="mock_session_report",
@@ -314,11 +312,7 @@ async def stripe_reports_webhook(
 
     pi_data: dict[str, Any] = event.get("data", {}).get("object", {})
     payment_intent_id: str = pi_data.get("id", "")
-    email: str = (
-        pi_data.get("receipt_email")
-        or pi_data.get("metadata", {}).get("email", "")
-        or ""
-    )
+    email: str = pi_data.get("receipt_email") or pi_data.get("metadata", {}).get("email", "") or ""
     metadata: dict[str, str] = pi_data.get("metadata", {})
     category: str = metadata.get("category", "")
     source: str = metadata.get("source", "direct")
@@ -342,9 +336,7 @@ async def stripe_reports_webhook(
 
     # Idempotency check
     existing_result = await db.execute(
-        select(ReportRequest).where(
-            ReportRequest.stripe_payment_intent_id == payment_intent_id
-        )
+        select(ReportRequest).where(ReportRequest.stripe_payment_intent_id == payment_intent_id)
     )
     if existing_result.scalar_one_or_none() is not None:
         logger.info(f"[reports-webhook] duplicate pi={payment_intent_id} — skipped")
@@ -523,9 +515,7 @@ async def retry_failed_report(
 
     Requires admin authentication. Only allowed when report status is 'failed'.
     """
-    result = await db.execute(
-        select(ReportRequest).where(ReportRequest.id == report_id)
-    )
+    result = await db.execute(select(ReportRequest).where(ReportRequest.id == report_id))
     report_req = result.scalar_one_or_none()
 
     if report_req is None:
@@ -615,9 +605,7 @@ async def get_funnel_stats(
         total_payments += payments
 
     overall_conversion = (
-        round(total_payments / total_teaser_views * 100, 1)
-        if total_teaser_views > 0
-        else 0.0
+        round(total_payments / total_teaser_views * 100, 1) if total_teaser_views > 0 else 0.0
     )
 
     return FunnelStatsResponse(
@@ -659,9 +647,10 @@ async def get_weekly_pdf_report(
     ranked by relevance_score from the past 7 days (falls back to all-time top 10
     if no insights were published this week).
     """
-    is_pro = (
-        current_user is not None
-        and current_user.subscription_tier in ("pro", "enterprise", "api")
+    is_pro = current_user is not None and current_user.subscription_tier in (
+        "pro",
+        "enterprise",
+        "api",
     )
 
     # Fetch top 10 insights — same query as weekly digest task
@@ -676,9 +665,7 @@ async def get_weekly_pdf_report(
 
     # Fallback: if no insights published this week, use all-time top 10
     if not insights:
-        result = await db.execute(
-            select(Insight).order_by(desc(Insight.relevance_score)).limit(10)
-        )
+        result = await db.execute(select(Insight).order_by(desc(Insight.relevance_score)).limit(10))
         insights = result.scalars().all()
 
     if not insights:
