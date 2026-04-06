@@ -1,5 +1,6 @@
 """Twitter/X posting service — uses Tweepy v2 Client with OAuth 1.0a."""
 
+import asyncio
 import logging
 
 import tweepy
@@ -36,7 +37,7 @@ async def post_tweet(content: str) -> dict:
     if client is None:
         raise RuntimeError("Twitter credentials not configured")
 
-    response = client.create_tweet(text=content)
+    response = await asyncio.to_thread(client.create_tweet, text=content)
 
     tweet_id = str(response.data["id"])
     logger.info(f"Tweet posted: {tweet_id}")
