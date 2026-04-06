@@ -111,7 +111,7 @@ async def run_email_nurture(session: AsyncSession) -> dict:
             # Build template variables
             unsubscribe_url = await _get_unsubscribe_url(sub.email)
             variables: dict = {
-                "app_url": settings.app_url,
+                "app_url": settings.frontend_url,
                 "unsubscribe_url": unsubscribe_url,
                 "referral_code": "",
             }

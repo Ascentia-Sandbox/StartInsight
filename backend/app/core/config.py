@@ -75,8 +75,10 @@ class Settings(BaseSettings):
     stripe_price_enterprise_yearly: str | None = None
     stripe_price_report: str | None = None  # One-time RM49 category report price ID
 
-    # Application URL (for email links)
+    # Application URL (backend base — used for API callbacks)
     app_url: str = "http://localhost:3001"
+    # Frontend URL (for email links that users click — Browse Insights, confirm, etc.)
+    frontend_url: str = "https://startinsight.co"
 
     # Phase 6.2: Email Notifications (Resend)
     resend_api_key: str | None = None

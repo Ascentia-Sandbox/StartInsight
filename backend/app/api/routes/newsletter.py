@@ -121,8 +121,8 @@ async def confirm(
             to=subscriber.email,
             template="newsletter_welcome",
             variables={
-                "app_url": settings.app_url,
-                "unsubscribe_url": f"{settings.app_url}/newsletter/unsubscribe?email={subscriber.email}",
+                "app_url": settings.frontend_url,
+                "unsubscribe_url": f"{settings.app_url}/api/newsletter/unsubscribe?email={subscriber.email}",
             },
         )
     except Exception as e:
