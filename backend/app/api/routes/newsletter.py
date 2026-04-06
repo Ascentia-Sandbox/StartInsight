@@ -156,6 +156,42 @@ async def unsubscribe(
     return {"message": "You have been unsubscribed."}
 
 
+@router.get("/unsubscribe")
+async def unsubscribe_via_link(
+    email: str | None = None,
+    token: str | None = None,
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    GET-based unsubscribe for email links. Accepts ?email= or ?token= query param.
+    """
+    target_email: str | None = email
+
+    # If token provided, decode it to get the email
+    if token and not target_email:
+        try:
+            from itsdangerous import URLSafeTimedSerializer
+
+            serializer = URLSafeTimedSerializer(settings.secret_key)
+            target_email = serializer.loads(token, salt="unsubscribe", max_age=86400 * 30)
+        except Exception:
+            pass
+
+    if not target_email:
+        return {"message": "You have been unsubscribed."}
+
+    result = await db.execute(
+        select(NewsletterSubscriber).where(NewsletterSubscriber.email == target_email.lower())
+    )
+    subscriber = result.scalar_one_or_none()
+
+    if subscriber and not subscriber.unsubscribed_at:
+        subscriber.unsubscribed_at = datetime.now(UTC)
+        await db.commit()
+
+    return {"message": "You have been unsubscribed."}
+
+
 async def _send_confirmation_email(email: str, token: str) -> None:
     """Send the double opt-in confirmation email."""
     confirm_url = f"{settings.app_url}/api/newsletter/confirm/{token}"
