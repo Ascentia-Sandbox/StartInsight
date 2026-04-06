@@ -461,8 +461,13 @@ async def send_email(
         if isinstance(to, str):
             to = [to]
 
+        # Ensure we always use startinsight.co domain (not the old .ai domain)
+        from_address = settings.email_from_address
+        if "startinsight.ai" in from_address:
+            from_address = from_address.replace("startinsight.ai", "startinsight.co")
+
         params = {
-            "from": f"{settings.email_from_name} <{settings.email_from_address}>",
+            "from": f"{settings.email_from_name} <{from_address}>",
             "to": to,
             "subject": subject,
             "html": html_content,
