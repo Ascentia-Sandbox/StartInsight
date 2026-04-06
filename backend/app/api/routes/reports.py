@@ -21,7 +21,7 @@ from uuid import UUID
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
-from sqlalchemy import desc, func, select, text
+from sqlalchemy import desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user_optional, require_admin
@@ -420,11 +420,25 @@ async def get_category_insights_teaser(
 
     cfg = CATEGORY_CONFIG[category]
 
+    # Map category slug to search keywords (insights table has no "category" column)
+    category_keywords: dict[str, list[str]] = {
+        "fintech-malaysia": ["fintech", "payment", "banking", "Malaysia", "lending"],
+        "fnb-malaysia": ["food", "beverage", "F&B", "restaurant", "Malaysia"],
+        "logistics-singapore": ["logistics", "supply chain", "shipping", "Singapore"],
+    }
+    keywords = category_keywords.get(category, [category.replace("-", " ")])
+    keyword_filters = []
+    for kw in keywords:
+        pattern = f"%{kw}%"
+        keyword_filters.append(Insight.title.ilike(pattern))
+        keyword_filters.append(Insight.problem_statement.ilike(pattern))
+        keyword_filters.append(Insight.proposed_solution.ilike(pattern))
+
     result = await db.execute(
         select(Insight)
         .where(
-            text("category ILIKE :cat").bindparams(cat=f"%{category}%"),
-            Insight.relevance_score >= 7.0,
+            or_(*keyword_filters),
+            Insight.relevance_score >= 0.5,
         )
         .order_by(Insight.relevance_score.desc())
         .limit(3)
