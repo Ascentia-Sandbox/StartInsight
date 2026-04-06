@@ -158,7 +158,7 @@ async def unsubscribe(
 
 async def _send_confirmation_email(email: str, token: str) -> None:
     """Send the double opt-in confirmation email."""
-    confirm_url = f"{settings.app_url}/newsletter/confirm?token={token}"
+    confirm_url = f"{settings.app_url}/api/newsletter/confirm/{token}"
     try:
         await send_email(
             to=email,
