@@ -1949,7 +1949,11 @@ async def get_intelligence_gaps(
             )
             continue
 
-        age = now - row["last_success_at"]
+        # Normalize to UTC-aware — asyncpg returns TIMESTAMP WITHOUT TIME ZONE as naive
+        ts = row["last_success_at"]
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=UTC)
+        age = now - ts
         if age > stale_window:
             severity = "red"
             gap_status = "very_stale"
@@ -1965,7 +1969,7 @@ async def get_intelligence_gaps(
                 "source": source,
                 "severity": severity,
                 "status": gap_status,
-                "last_success": row["last_success_at"].isoformat(),
+                "last_success": ts.isoformat(),
                 "age_hours": round(age.total_seconds() / 3600, 1),
                 "consecutive_failures": row["consecutive_failures"],
                 "circuit": row["circuit_state"],
