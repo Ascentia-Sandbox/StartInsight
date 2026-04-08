@@ -227,8 +227,8 @@ async def run_competitive_intel_auto_task(ctx: dict[str, Any]) -> dict[str, Any]
                 .where(Insight.relevance_score >= 0.7)
                 .where(
                     or_(
-                        Insight.updated_at < stale_cutoff,
-                        Insight.updated_at.is_(None),
+                        Insight.edited_at < stale_cutoff,
+                        Insight.edited_at.is_(None),
                     )
                 )
                 .order_by(Insight.relevance_score.desc())
