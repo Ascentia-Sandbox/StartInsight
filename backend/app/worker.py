@@ -14,6 +14,7 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from arq import cron
 from arq.connections import RedisSettings
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.core.config import settings
 from app.db.session import AsyncSessionLocal
@@ -804,7 +805,9 @@ async def hourly_trends_update_task(ctx: dict[str, Any]) -> dict[str, Any]:
                             item[1] for item in filtered_data
                         ]
 
-                    # Mark signal as modified
+                    # Mark signal as modified — flag_modified required because
+                    # SQLAlchemy does not auto-detect in-place JSON mutations.
+                    flag_modified(signal, "extra_metadata")
                     session.add(signal)
 
                     updated_count += 1

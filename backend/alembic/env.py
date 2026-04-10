@@ -14,6 +14,7 @@ from app.core.config import settings
 
 # Import Base and all models for autogenerate support
 from app.db.base import Base
+from app.marketing.models.social_post import SocialPost  # noqa: F401 - GTM Phase 3-4
 from app.models import RawSignal  # noqa: F401 - imported for autogenerate
 
 # this is the Alembic Config object, which provides
