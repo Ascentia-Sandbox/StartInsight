@@ -489,6 +489,8 @@ async def trigger_agent(
         "daily_digest": "send_daily_digests_task",
         "success_stories": "update_success_stories_task",
         "scrape_all": "scrape_all_sources_task",
+        "social_posting": "post_social_content_task",
+        "email_nurture": "run_email_nurture_task",
     }
 
     task_name = agent_task_map.get(agent_type)
