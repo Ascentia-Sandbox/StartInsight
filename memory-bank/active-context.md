@@ -32,18 +32,23 @@
 - ✅ RSS feed live (20 items), explore pages live (12 categories)
 - ✅ Backend healthy: DB + Redis connected
 
-### Day 5 Performance Review (2026-04-11)
+### Day 6 Status (2026-04-12)
 
 | Engine | Status | Detail |
 |--------|--------|--------|
 | Content pipeline | GREEN | 2,085 insights (+240), 180 articles, latest today |
-| Social posting | RED | 20 created, 0 posted — Twitter 403 (read-only permissions). 10 posts reset to pending. |
+| Social posting | PENDING FIX | X Premium $5 purchased. Steps: developer.x.com → Read+Write → regenerate tokens → update Railway TWITTER_ACCESS_TOKEN + TWITTER_ACCESS_SECRET → trigger test |
 | Email nurture | YELLOW | 1 confirmed subscriber, nurture running |
 | SEO/GEO | GREEN | llms.txt, robots.txt, sitemap, JSON-LD all live. Waiting for indexing (2-4 weeks). |
 | Conversion funnel | NO DATA | 0 report requests, 0 checkouts, 0 new signups |
-| Infrastructure | GREEN | 0 Sentry errors (24h), DB+Redis healthy |
+| Infrastructure | GREEN | 0 Sentry errors confirmed (live query 2026-04-12), DB+Redis healthy |
 
-**Critical fix needed:** Twitter app permissions → developer.x.com → change to "Read and Write"
+**Twitter fix steps:**
+1. developer.x.com → App Settings → change permissions to "Read and Write"
+2. Keys and tokens → Regenerate Access Token + Access Token Secret (copy immediately)
+3. Railway → backend → Variables → update `TWITTER_ACCESS_TOKEN` + `TWITTER_ACCESS_SECRET`
+4. Admin portal → Agents → social_posting → Trigger to test
+
 **Primary bottleneck:** Zero community distribution (Telegram/Reddit) — no external traffic
 
 ### Daily Operations

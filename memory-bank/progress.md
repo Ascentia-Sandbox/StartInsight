@@ -1249,3 +1249,8 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: frontend/app/[locale]/dashboard/page.tsx, frontend/lib/api.ts
   - Tech: Fixed grammar plural, prevented Mixed Content error on admin Pipeline/Settings
   - Status: [✓ Complete]
+
+- [2026-04-12] [GTM-DAY6]: Day 6 status check — Sentry clean, Twitter fix in progress
+  - Files: memory-bank/active-context.md, memory-bank/daily-operations.md
+  - Tech: Sentry 0 issues; Twitter 403 root cause confirmed (read-only tokens); X Premium $5 purchased; tokens must be regenerated after permission change
+  - Status: [→ In Progress] — awaiting Railway env var update with new TWITTER_ACCESS_TOKEN + TWITTER_ACCESS_SECRET

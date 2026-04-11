@@ -642,7 +642,7 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 
 ## 📊 Current Status
 
-**Status**: ✅ **PRODUCTION LIVE** (2026-02-22) — Custom domain `startinsight.co` live
+**Status**: ✅ **PRODUCTION LIVE + GTM ACTIVE** (Day 6 of 90-day GTM, 2026-04-12) — Custom domain `startinsight.co` live
 
 | Metric | Value |
 |--------|-------|
@@ -651,12 +651,13 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 | **Database** | 16 Alembic migrations (c016 at head), Row-Level Security enabled |
 | **AI Agents** | 8 agents (enhanced_analyzer, research, competitive_intel, market_intel, content_generator, chat_agent, quality_reviewer, weekly_digest) |
 | **Testing** | 398 backend tests (30+ files, 47% coverage), 47 E2E tests (8 suites, 5 browsers) |
-| **Content** | 84+ seeded items (54 tools, 12 success stories, 180+ trends, 13 blog articles) |
+| **Content** | 2,085+ insights, 180+ market articles, 54 tools, 12 success stories (auto-growing via pipeline) |
 | **Payments** | Stripe live mode — 3 products, 6 prices (monthly + yearly), webhook active |
-| **Monitoring** | Sentry (errors + traces + logs + AI spans), ascentia-km org, events confirmed |
+| **Monitoring** | Sentry 0 unresolved issues (confirmed 2026-04-12), ascentia-km org, backend + frontend projects |
 | **Security** | HSTS, CSP, JWT ES256 JWKS, XSS prevention (bleach), rate limiting |
 | **CI/CD** | GitHub Actions — main→production, develop→staging, all passing |
-| **Scheduler** | All background jobs running (APScheduler + Railway Redis, verified 2026-02-19) — Gemini 429 retry active |
+| **Scheduler** | All background jobs running (every 6h scrapers + analyzer, daily social/email, weekly digest) |
+| **GTM** | Day 6/90 — Content pipeline GREEN (+240 insights/5 days), social posting fix in progress |
 
 **Phase Completion**:
 - ✅ Phase 1-3: MVP Foundation (scrapers, AI analysis, Next.js dashboard)
@@ -706,14 +707,14 @@ Store keys in `backend/.env` and `frontend/.env.local` (never commit `.env` file
 - ✅ Scraper pipeline fixed (Crawl4AI timeout + duplicate APScheduler/Arq scheduling removed)
 - ✅ Domain sweep: all `startinsight.ai` → `startinsight.co` across codebase
 
-**Service Health Check (2026-03-04)**:
+**Service Health Check (2026-04-12)**:
 - ✅ Railway: `api.startinsight.co` → `{"status":"ready","checks":{"database":"healthy","redis":"healthy"}}`
 - ✅ Supabase Pro: PostgreSQL accessible (70 tables, 16 migrations at c016)
 - ✅ Vercel: startinsight.co → HTTP 200
-- ✅ Sentry: `backend` + `frontend` projects active (ascentia-km org)
+- ✅ Sentry: 0 unresolved issues (live confirmed 2026-04-12), ascentia-km org
 - ✅ Google Gemini: gemini-2.0-flash API accessible
-- ⚠️ Resend: `startinsight.co` domain not yet verified in Resend (no domains configured)
-- ✅ CI/CD: Railway deploy failures now surface (removed `continue-on-error` masking)
+- ✅ CI/CD: GitHub Actions passing, main→production pipeline active
+- ⚠️ Twitter social posting: X Premium purchased; pending token regeneration (developer.x.com → Read+Write → regenerate Access Token)
 
 See `memory-bank/active-context.md` for current state and full growth roadmap.
 
@@ -749,4 +750,4 @@ For questions or issues:
 
 ---
 
-*v1.0.7 — Codebase cleanup + frontend performance (2026-03-05): SSR/ISR home page, framer-motion lazy-load (TBT 340ms→140ms), font preload, stale validate route deleted, screenshots organized into docs/screenshots/.*
+*v1.0.8 — GTM Day 6 status update (2026-04-12): 2,085+ insights live, Sentry clean (0 issues), X Premium purchased for Twitter posting fix, daily operations tracking active.*

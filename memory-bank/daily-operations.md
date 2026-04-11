@@ -10,7 +10,7 @@
 # Daily Operations Checklist
 
 ## Status: ALL ENGINES ACTIVATED (2026-04-06)
-## Day Count: 1 of 90 (started 2026-04-06, Day 30 = May 5, Day 60 = June 5, Day 90 = July 5)
+## Day Count: 6 of 90 (started 2026-04-06, Day 30 = May 5, Day 60 = June 5, Day 90 = July 5)
 
 ---
 
@@ -135,12 +135,17 @@ FROM newsletter_subscribers;
 ```
 Possible causes:
 1. ENABLE_SOCIAL_POSTING not set to true → check Railway env vars
-2. Twitter creds invalid/expired → test by checking Railway worker logs
-3. Content generator hasn't run yet → runs every 3 days, check scheduler
-4. social_posts table empty → content generator creates pending posts
-5. Rate limit hit → max 3 tweets/day, check social_posts table for "failed" status
+2. Twitter Access Token generated with read-only scope → MUST regenerate after changing app permissions
+   Fix: developer.x.com → App Settings → Read+Write → Keys & Tokens → Regenerate Access Token + Secret
+   Then update Railway: TWITTER_ACCESS_TOKEN + TWITTER_ACCESS_SECRET
+3. Twitter creds invalid/expired → test by checking Railway worker logs
+4. Content generator hasn't run yet → runs every 3 days, check scheduler
+5. social_posts table empty → content generator creates pending posts
+6. Rate limit hit → max 3 tweets/day, check social_posts table for "failed" status
 
 Debug: Check Railway logs for "post_social_content_task" or "social_posting"
+Note (2026-04-12): OAuth 1.0a Access Token scope is baked at generation time.
+Changing app permissions does NOT retroactively update existing tokens — always regenerate.
 ```
 
 ### Email nurture not sending
@@ -209,28 +214,29 @@ Use this template to log daily observations:
 
 Track these numbers daily. The trend matters more than the absolute number.
 
-| Metric | Day 1 (Apr 6) | Day 5 (Apr 11) | Day 14 | Day 30 Target |
-|--------|---------------|----------------|--------|---------------|
-| Total insights | 1,845 | 2,085 (+240) | | growing |
-| Market articles | ~170 | 180 published | | growing |
-| PostHog pageviews (24h) | 0 | ~0 external | | > 10 |
-| report_category_viewed | 0 | 0 | | > 50 |
-| report_checkout_started | 0 | 0 | | > 0 |
-| Newsletter subscribers | 0 | 1 confirmed | | > 20 |
-| Social posts created | 0 | 20 (10 tw + 10 li) | | > 30 |
-| Social posts POSTED | 0 | 0 (all failed) | | > 30 |
-| New user signups | 0 | 0 | | > 10 |
-| GSC impressions | 0 | pending check | | > 500 |
-| AI citations | 0 | pending check | | >= 1 |
-| Revenue (RM) | 0 | 0 | | > 0 |
-| Sentry errors (24h) | — | 0 | | 0 |
+| Metric | Day 1 (Apr 6) | Day 5 (Apr 11) | Day 6 (Apr 12) | Day 14 | Day 30 Target |
+|--------|---------------|----------------|----------------|--------|---------------|
+| Total insights | 1,845 | 2,085 (+240) | ~2,085 | | growing |
+| Market articles | ~170 | 180 published | ~180 | | growing |
+| PostHog pageviews (24h) | 0 | ~0 external | ~0 | | > 10 |
+| report_category_viewed | 0 | 0 | 0 | | > 50 |
+| report_checkout_started | 0 | 0 | 0 | | > 0 |
+| Newsletter subscribers | 0 | 1 confirmed | 1 confirmed | | > 20 |
+| Social posts created | 0 | 20 (10 tw + 10 li) | 20 | | > 30 |
+| Social posts POSTED | 0 | 0 (all failed) | 0 (fix pending) | | > 30 |
+| New user signups | 0 | 0 | 0 | | > 10 |
+| GSC impressions | 0 | pending | check manually | | > 500 |
+| AI citations | 0 | pending | pending | | >= 1 |
+| Revenue (RM) | 0 | 0 | 0 | | > 0 |
+| Sentry errors (24h) | — | 0 | 0 ✅ (live confirmed) | | 0 |
 
-### Day 5 Review Notes (2026-04-11)
-- **CRITICAL:** Twitter social posting failed for 5 days (403 — app permissions read-only). Fix: developer.x.com → enable Write permissions. 10 failed Twitter posts reset to pending.
-- **Content pipeline healthy:** +240 insights in 5 days (~48/day), articles auto-publishing
-- **Zero distribution:** No Telegram/Reddit/WhatsApp posts done yet. This is the primary bottleneck.
-- **SEO/GEO:** Too early to judge (takes 2-4 weeks). Infrastructure is correct.
+### Day 6 Review Notes (2026-04-12)
+- **Sentry:** 0 unresolved issues confirmed via live MCP query (both backend + frontend projects clean).
+- **Twitter fix in progress:** X Premium $5 purchased. Root cause confirmed: Access Token was generated under read-only scope. Must regenerate tokens after enabling Read+Write in developer.x.com. Railway env vars need update (TWITTER_ACCESS_TOKEN + TWITTER_ACCESS_SECRET).
+- **GSC:** Could not check headlessly (AppArmor sandbox). Check manually at search.google.com/search-console. Expect near-zero data at Day 6 — normal.
+- **Distribution still zero:** No Telegram/Reddit/WhatsApp posts done. This remains the primary bottleneck for traffic.
+- **Next action:** Fix Twitter first, then push manual distribution (Telegram/Reddit/WhatsApp).
 
 ---
 
-**Last Updated:** 2026-04-11
+**Last Updated:** 2026-04-12
