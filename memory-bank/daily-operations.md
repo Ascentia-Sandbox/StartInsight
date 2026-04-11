@@ -209,17 +209,28 @@ Use this template to log daily observations:
 
 Track these numbers daily. The trend matters more than the absolute number.
 
-| Metric | Day 1 Baseline | Day 7 | Day 14 | Day 30 Target |
-|--------|---------------|-------|--------|---------------|
-| PostHog pageviews (24h) | 0 | | | > 10 |
-| report_category_viewed | 0 | | | > 50 |
-| report_checkout_started | 0 | | | > 0 |
-| Newsletter subscribers | ? | | | > 20 |
-| Social posts (total) | 0 | | | > 30 |
-| GSC impressions | 0 | | | > 500 |
-| AI citations | 0 | | | >= 1 |
-| Revenue (RM) | 0 | | | > 0 |
+| Metric | Day 1 (Apr 6) | Day 5 (Apr 11) | Day 14 | Day 30 Target |
+|--------|---------------|----------------|--------|---------------|
+| Total insights | 1,845 | 2,085 (+240) | | growing |
+| Market articles | ~170 | 180 published | | growing |
+| PostHog pageviews (24h) | 0 | ~0 external | | > 10 |
+| report_category_viewed | 0 | 0 | | > 50 |
+| report_checkout_started | 0 | 0 | | > 0 |
+| Newsletter subscribers | 0 | 1 confirmed | | > 20 |
+| Social posts created | 0 | 20 (10 tw + 10 li) | | > 30 |
+| Social posts POSTED | 0 | 0 (all failed) | | > 30 |
+| New user signups | 0 | 0 | | > 10 |
+| GSC impressions | 0 | pending check | | > 500 |
+| AI citations | 0 | pending check | | >= 1 |
+| Revenue (RM) | 0 | 0 | | > 0 |
+| Sentry errors (24h) | — | 0 | | 0 |
+
+### Day 5 Review Notes (2026-04-11)
+- **CRITICAL:** Twitter social posting failed for 5 days (403 — app permissions read-only). Fix: developer.x.com → enable Write permissions. 10 failed Twitter posts reset to pending.
+- **Content pipeline healthy:** +240 insights in 5 days (~48/day), articles auto-publishing
+- **Zero distribution:** No Telegram/Reddit/WhatsApp posts done yet. This is the primary bottleneck.
+- **SEO/GEO:** Too early to judge (takes 2-4 weeks). Infrastructure is correct.
 
 ---
 
-**Last Updated:** 2026-04-06
+**Last Updated:** 2026-04-11

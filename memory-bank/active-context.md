@@ -32,17 +32,19 @@
 - ✅ RSS feed live (20 items), explore pages live (12 categories)
 - ✅ Backend healthy: DB + Redis connected
 
-### Health Check (2026-04-06)
-| System | Status | Detail |
+### Day 5 Performance Review (2026-04-11)
+
+| Engine | Status | Detail |
 |--------|--------|--------|
-| PostHog | ACTIVE | Script present in HTML, events deployed |
-| Sitemap | LIVE | 223 URLs, 200 status |
-| RSS Feed | LIVE | 20 items (12 insights + 8 articles) |
-| Explore Pages | LIVE | 12 categories with real insights |
-| llms.txt | LIVE | AI site map accessible |
-| robots.txt | LIVE | 3 AI crawler rules (GPTBot, ClaudeBot, PerplexityBot) |
-| Backend | HEALTHY | DB + Redis connected |
-| Newsletter | ACTIVE | Subscribe endpoint returns 422 on invalid (working) |
+| Content pipeline | GREEN | 2,085 insights (+240), 180 articles, latest today |
+| Social posting | RED | 20 created, 0 posted — Twitter 403 (read-only permissions). 10 posts reset to pending. |
+| Email nurture | YELLOW | 1 confirmed subscriber, nurture running |
+| SEO/GEO | GREEN | llms.txt, robots.txt, sitemap, JSON-LD all live. Waiting for indexing (2-4 weeks). |
+| Conversion funnel | NO DATA | 0 report requests, 0 checkouts, 0 new signups |
+| Infrastructure | GREEN | 0 Sentry errors (24h), DB+Redis healthy |
+
+**Critical fix needed:** Twitter app permissions → developer.x.com → change to "Read and Write"
+**Primary bottleneck:** Zero community distribution (Telegram/Reddit) — no external traffic
 
 ### Daily Operations
 Run the daily checklist in `memory-bank/daily-operations.md`. Key checks:
