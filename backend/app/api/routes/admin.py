@@ -451,6 +451,8 @@ async def trigger_agent(
         "daily_digest",
         "success_stories",
         "scrape_all",
+        "social_posting",
+        "email_nurture",
     }
     config = await db.execute(
         select(AgentConfiguration).where(AgentConfiguration.agent_name == agent_type)
