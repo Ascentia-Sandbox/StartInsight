@@ -414,8 +414,11 @@ async def _send_report_email(
         </div>
         """
         pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8")
+        from_address = settings.email_from_address
+        if "startinsight.ai" in from_address:
+            from_address = from_address.replace("startinsight.ai", "startinsight.co")
         params: dict[str, Any] = {
-            "from": f"{settings.email_from_name} <{settings.email_from_address}>",
+            "from": f"{settings.email_from_name} <{from_address}>",
             "to": [email],
             "subject": subject,
             "html": html_body,
@@ -430,8 +433,11 @@ async def _send_report_email(
     else:
         # Plain-text fallback when WeasyPrint failed
         html_body = plain_text_fallback or report_html
+        from_address = settings.email_from_address
+        if "startinsight.ai" in from_address:
+            from_address = from_address.replace("startinsight.ai", "startinsight.co")
         params = {
-            "from": f"{settings.email_from_name} <{settings.email_from_address}>",
+            "from": f"{settings.email_from_name} <{from_address}>",
             "to": [email],
             "subject": subject,
             "html": html_body,

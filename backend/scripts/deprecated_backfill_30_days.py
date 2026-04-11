@@ -30,7 +30,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.db.session import async_session_maker, init_db
+from app.db.session import AsyncSessionLocal, init_db
 from app.models.insight import Insight
 from app.models.raw_signal import RawSignal
 from app.scrapers.sources.product_hunt_scraper import ProductHuntScraper
@@ -321,7 +321,7 @@ async def backfill_historical_data():
     # Initialize database
     await init_db()
 
-    async with async_session_maker() as db:
+    async with AsyncSessionLocal() as db:
         # Get current counts
         initial_signals = await get_signal_count(db)
         initial_insights = await get_insight_count(db)

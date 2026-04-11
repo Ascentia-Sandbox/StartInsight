@@ -13,7 +13,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
-from sqlalchemy import func, or_, select
+from sqlalchemy import distinct, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -503,8 +503,7 @@ async def get_public_stats(
 
     # Count distinct sources
     source_count_result = (
-        await db.scalar(select(func.count(func.distinct(RawSignal.source))).select_from(RawSignal))
-        or 0
+        await db.scalar(select(func.count(distinct(RawSignal.source))).select_from(RawSignal)) or 0
     )
 
     # Count insights with enhanced scoring (8-dimension)
