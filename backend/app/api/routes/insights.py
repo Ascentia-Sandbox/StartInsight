@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy import distinct, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import noload, selectinload
 
 from app.api.deps import AdminUser, CurrentUser, check_report_access
 from app.core.cache import cache_get, cache_set
@@ -228,8 +228,13 @@ async def list_insights(
     if cached_response is not None:
         return InsightListResponse.model_validate(cached_response)
 
-    # Build query
-    query = select(Insight).options(selectinload(Insight.raw_signal))
+    # Build query — noload unused selectin relationships to avoid N+4 query fan-out
+    query = select(Insight).options(
+        selectinload(Insight.raw_signal),
+        noload(Insight.interactions),
+        noload(Insight.team_shares),
+        noload(Insight.competitors),
+    )
 
     # Filter by minimum score
     if min_score > 0.0:
@@ -336,10 +341,15 @@ async def get_daily_top(
     # Calculate 24 hours ago
     yesterday = datetime.now(UTC) - timedelta(days=1)
 
-    # Build query
+    # Build query — noload unused selectin relationships to avoid N+4 query fan-out
     query = (
         select(Insight)
-        .options(selectinload(Insight.raw_signal))
+        .options(
+            selectinload(Insight.raw_signal),
+            noload(Insight.interactions),
+            noload(Insight.team_shares),
+            noload(Insight.competitors),
+        )
         .where(Insight.created_at >= yesterday)
         .order_by(Insight.relevance_score.desc())
         .limit(limit)
@@ -375,9 +385,15 @@ async def get_idea_of_the_day(
     week_ago = datetime.now(UTC) - timedelta(days=7)
 
     # Get qualifying insights (high quality, recent)
+    # noload unused selectin relationships to avoid N+4 query fan-out
     query = (
         select(Insight)
-        .options(selectinload(Insight.raw_signal))
+        .options(
+            selectinload(Insight.raw_signal),
+            noload(Insight.interactions),
+            noload(Insight.team_shares),
+            noload(Insight.competitors),
+        )
         .where(Insight.relevance_score >= 0.7)
         .where(Insight.created_at >= week_ago)
         .order_by(Insight.relevance_score.desc())
@@ -426,9 +442,15 @@ async def get_founder_fit_picks(
     - **min_fit_score**: Minimum founder fit score (1-10, default 7)
     """
     # Build query for high founder fit insights
+    # noload unused selectin relationships to avoid N+4 query fan-out
     query = (
         select(Insight)
-        .options(selectinload(Insight.raw_signal))
+        .options(
+            selectinload(Insight.raw_signal),
+            noload(Insight.interactions),
+            noload(Insight.team_shares),
+            noload(Insight.competitors),
+        )
         .where(Insight.founder_fit_score >= min_fit_score)
         .where(Insight.relevance_score >= 0.7)
         .order_by(Insight.founder_fit_score.desc().nulls_last(), Insight.relevance_score.desc())
@@ -460,9 +482,15 @@ async def get_featured_picks(
     - Balanced across different categories/sources
     """
     # Build query for featured insights
+    # noload unused selectin relationships to avoid N+4 query fan-out
     query = (
         select(Insight)
-        .options(selectinload(Insight.raw_signal))
+        .options(
+            selectinload(Insight.raw_signal),
+            noload(Insight.interactions),
+            noload(Insight.team_shares),
+            noload(Insight.competitors),
+        )
         .where(Insight.relevance_score >= 0.85)
         .where(Insight.opportunity_score.isnot(None))  # Has enhanced scoring
         .order_by(Insight.relevance_score.desc())
