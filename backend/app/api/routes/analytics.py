@@ -13,7 +13,7 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, distinct, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db, require_admin
@@ -159,14 +159,10 @@ async def get_user_analytics(
 
     # Active users (have sessions in period)
     active_7d = await db.execute(
-        select(func.count(func.distinct(UserSession.user_id))).where(
-            UserSession.started_at >= week_ago
-        )
+        select(func.count(distinct(UserSession.user_id))).where(UserSession.started_at >= week_ago)
     )
     active_30d = await db.execute(
-        select(func.count(func.distinct(UserSession.user_id))).where(
-            UserSession.started_at >= month_ago
-        )
+        select(func.count(distinct(UserSession.user_id))).where(UserSession.started_at >= month_ago)
     )
 
     # New users this week
@@ -180,7 +176,7 @@ async def get_user_analytics(
     for tier, count in tier_counts.fetchall():
         # Calculate active rate for tier
         active_in_tier = await db.execute(
-            select(func.count(func.distinct(UserSession.user_id)))
+            select(func.count(distinct(UserSession.user_id)))
             .join(User, User.id == UserSession.user_id)
             .where(User.subscription_tier == tier, UserSession.started_at >= month_ago)
         )
@@ -204,8 +200,7 @@ async def get_user_analytics(
     avg_duration = await db.execute(select(func.avg(UserSession.duration_seconds)))
     avg_saved = await db.execute(
         select(
-            func.count(SavedInsight.id)
-            / func.nullif(func.count(func.distinct(SavedInsight.user_id)), 0)
+            func.count(SavedInsight.id) / func.nullif(func.count(distinct(SavedInsight.user_id)), 0)
         )
     )
 
@@ -233,7 +228,7 @@ async def get_user_analytics(
     avg_viewed = await db.execute(
         select(
             func.count(InsightInteraction.id)
-            / func.nullif(func.count(func.distinct(InsightInteraction.user_id)), 0)
+            / func.nullif(func.count(distinct(InsightInteraction.user_id)), 0)
         ).where(
             InsightInteraction.interaction_type == "view",
             InsightInteraction.created_at >= month_ago,
@@ -285,7 +280,7 @@ async def get_cohort_analysis(
         # Week 1 retention
         week1_end = week_end + timedelta(weeks=1)
         retained_week1 = await db.execute(
-            select(func.count(func.distinct(UserSession.user_id)))
+            select(func.count(distinct(UserSession.user_id)))
             .join(User, User.id == UserSession.user_id)
             .where(
                 User.created_at >= week_start,
@@ -298,7 +293,7 @@ async def get_cohort_analysis(
         # Week 4 retention
         week4_end = week_end + timedelta(weeks=4)
         retained_week4 = await db.execute(
-            select(func.count(func.distinct(UserSession.user_id)))
+            select(func.count(distinct(UserSession.user_id)))
             .join(User, User.id == UserSession.user_id)
             .where(
                 User.created_at >= week_start,
@@ -779,17 +774,13 @@ async def get_engagement_metrics(
 
     # DAU: unique users with sessions today
     dau_result = await db.execute(
-        select(func.count(func.distinct(UserSession.user_id))).where(
-            UserSession.started_at >= day_ago
-        )
+        select(func.count(distinct(UserSession.user_id))).where(UserSession.started_at >= day_ago)
     )
     dau = dau_result.scalar_one() or 0
 
     # MAU: unique users with sessions in last 30 days
     mau_result = await db.execute(
-        select(func.count(func.distinct(UserSession.user_id))).where(
-            UserSession.started_at >= month_ago
-        )
+        select(func.count(distinct(UserSession.user_id))).where(UserSession.started_at >= month_ago)
     )
     mau = mau_result.scalar_one() or 0
 
