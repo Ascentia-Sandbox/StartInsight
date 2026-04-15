@@ -172,7 +172,7 @@ async def unsubscribe_via_link(
         try:
             from itsdangerous import URLSafeTimedSerializer
 
-            serializer = URLSafeTimedSerializer(settings.secret_key)
+            serializer = URLSafeTimedSerializer(settings.jwt_secret or "dev-secret")
             target_email = serializer.loads(token, salt="unsubscribe", max_age=86400 * 30)
         except Exception:
             pass

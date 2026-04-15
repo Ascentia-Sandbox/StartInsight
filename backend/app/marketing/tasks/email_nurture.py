@@ -59,7 +59,7 @@ async def _get_unsubscribe_url(email: str) -> str:
     try:
         from itsdangerous import URLSafeTimedSerializer
 
-        serializer = URLSafeTimedSerializer(settings.secret_key)
+        serializer = URLSafeTimedSerializer(settings.jwt_secret or "dev-secret")
         token = serializer.dumps(email, salt="unsubscribe")
         return f"{settings.app_url}/api/newsletter/unsubscribe?token={token}"
     except Exception:
