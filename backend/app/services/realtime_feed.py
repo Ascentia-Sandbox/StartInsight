@@ -10,7 +10,7 @@ import asyncio
 import json
 import logging
 from collections.abc import AsyncGenerator
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -168,7 +168,7 @@ async def publish_new_insight(
     event = InsightFeedMessage(
         event_type="new_insight",
         insight_id=insight_id,
-        timestamp=datetime.now().isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
         data=insight_data,
     )
 
@@ -191,7 +191,7 @@ async def publish_insight_update(
     event = InsightFeedMessage(
         event_type="update",
         insight_id=insight_id,
-        timestamp=datetime.now().isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
         data=update_data,
     )
 
@@ -209,7 +209,7 @@ async def publish_insight_delete(insight_id: str) -> None:
     event = InsightFeedMessage(
         event_type="delete",
         insight_id=insight_id,
-        timestamp=datetime.now().isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
         data={},
     )
 
@@ -240,7 +240,7 @@ async def generate_sse_stream(
     queue = await store.subscribe(subscriber_id)
 
     # Send initial connection message
-    yield f"event: connected\ndata: {json.dumps({'subscriber_id': subscriber_id, 'timestamp': datetime.now().isoformat()})}\n\n"
+    yield f"event: connected\ndata: {json.dumps({'subscriber_id': subscriber_id, 'timestamp': datetime.now(UTC).isoformat()})}\n\n"
 
     # Send recent events for catch-up
     recent = store.get_recent_events(count=5)
@@ -264,7 +264,7 @@ async def generate_sse_stream(
 
             except TimeoutError:
                 # Send keepalive ping
-                yield f"event: ping\ndata: {json.dumps({'timestamp': datetime.now().isoformat()})}\n\n"
+                yield f"event: ping\ndata: {json.dumps({'timestamp': datetime.now(UTC).isoformat()})}\n\n"
 
     except asyncio.CancelledError:
         logger.info(f"SSE stream cancelled for {subscriber_id}")

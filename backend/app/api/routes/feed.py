@@ -4,7 +4,7 @@ Endpoints for real-time insight updates via SSE and polling.
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -128,7 +128,7 @@ async def poll_insights(
 
     return PollingResponse(
         events=events,
-        next_poll_timestamp=datetime.now().isoformat(),
+        next_poll_timestamp=datetime.now(UTC).isoformat(),
         has_more=len(events) >= limit,
     )
 
@@ -173,7 +173,7 @@ async def create_test_event(
         "id": insight_id,
         "problem_statement": problem,
         "relevance_score": score,
-        "created_at": datetime.now().isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
     }
 
     await publish_new_insight(insight_id, insight_data)
