@@ -416,7 +416,7 @@ async def get_idea_of_the_day(
 
     logger.info(f"Idea of the day: {selected_insight.id} (index {selected_index})")
 
-    return InsightResponse.model_validate(selected_insight)
+    return InsightResponse.model_validate(_serialize_insight(selected_insight))
 
 
 @router.get("/founder-fit-picks", response_model=list[InsightResponse])
@@ -860,6 +860,8 @@ async def get_trend_predictions(
         forecast_date_str = insight.trend_predictions.get("metadata", {}).get("forecast_date")
         if forecast_date_str:
             forecast_date = datetime.fromisoformat(forecast_date_str)
+            if forecast_date.tzinfo is None:
+                forecast_date = forecast_date.replace(tzinfo=UTC)
             age_hours = (datetime.now(UTC) - forecast_date).total_seconds() / 3600
 
             if age_hours < 24:

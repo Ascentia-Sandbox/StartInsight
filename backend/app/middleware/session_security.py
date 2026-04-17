@@ -2,7 +2,7 @@
 
 import logging
 import secrets
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -69,7 +69,9 @@ class SessionSecurityMiddleware(BaseHTTPMiddleware):
             return False
 
         created_at = datetime.fromisoformat(session_data["created_at"])
-        session_age = datetime.utcnow() - created_at
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=UTC)
+        session_age = datetime.now(UTC) - created_at
 
         # Check if session has expired
         timeout = timedelta(minutes=self.session_timeout_minutes)

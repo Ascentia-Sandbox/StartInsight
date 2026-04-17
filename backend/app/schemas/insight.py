@@ -131,7 +131,13 @@ class InsightResponse(BaseModel):
     proposed_solution: str
     market_size_estimate: str
     relevance_score: float = Field(ge=0.0, le=1.0)
-    competitor_analysis: list[dict[str, Any]]
+    competitor_analysis: list[dict[str, Any]] = Field(default_factory=list)
+
+    @field_validator("competitor_analysis", mode="before")
+    @classmethod
+    def coerce_competitor_analysis(cls, v: Any) -> list:
+        return v if v is not None else []
+
     created_at: datetime
 
     # Optional: include raw signal summary

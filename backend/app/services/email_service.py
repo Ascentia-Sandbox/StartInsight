@@ -493,7 +493,7 @@ async def send_email(
         }
 
     except Exception as e:
-        logger.error(f"Failed to send email: {e}")
+        logger.warning(f"Failed to send email: {e}")
         return {"status": "error", "error": str(e)}
 
 
