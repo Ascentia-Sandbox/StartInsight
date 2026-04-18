@@ -24,6 +24,14 @@ StartInsight is a daily, automated intelligence platform that discovers, validat
 
 ---
 
+## 📍 Current Phase (2026-04-18)
+
+**Engineering freeze: 2026-04-18 → 2026-06-17.** Phase 1-10 + GTM Phase 1-5 are complete and running on autopilot (6 scrapers, 8 agents, automated content pipeline, social posting, email nurture). Active work for the next 60 days is user discovery and distribution only — no feature work.
+
+See `memory-bank/active-context.md` for the wedge test + distribution sprint plan, `memory-bank/gtm-automation-plan.md` for the 90-day operational playbook, and `memory-bank/daily-operations.md` for the daily checklist and metrics tracker.
+
+---
+
 ## 🎯 What is StartInsight?
 
 Unlike traditional brainstorming tools, StartInsight relies on **real-time market signals** to identify genuine market gaps and consumer pain points. The system operates on an automated **"Collect → Analyze → Present"** loop, functioning as an analyst that never sleeps.

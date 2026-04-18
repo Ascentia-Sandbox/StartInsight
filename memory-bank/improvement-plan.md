@@ -4,10 +4,22 @@
 **Read When:** Before planning any growth, content, monitoring, or testing work
 **Dependencies:** Read active-context.md first
 **Purpose:** Phase 6 data pipeline resilience & intelligence roadmap
-**Last Updated:** 2026-03-20
+**Last Updated:** 2026-04-18
 ---
 
 # StartInsight - Improvement Plan
+
+## 🛑 ENGINEERING FREEZE (2026-04-18 → 2026-06-17)
+
+**/office-hours diagnostic on 2026-04-18 triggered a 60-day engineering freeze.** No commits to `main` until 2026-06-17. No new improvements, no Phase 7, no feature work. The bottleneck is not capability — it's the absence of a named user. See `memory-bank/active-context.md` and `memory-bank/gtm-automation-plan.md` (2026-04-18 pivot section) for the wedge test + distribution sprint that replaces engineering work during the freeze.
+
+**Permitted exception (Day 0 only):** Regenerate Twitter OAuth tokens at developer.x.com (Read+Write scope), update Railway env vars. Must happen by 2026-04-20.
+
+**Violation of the freeze triggers Approach C (honest sunset).** Founder's own `learnings.jsonl` captured "engineering-avoidance-after-ship" as the observed failure pattern on 2026-04-04 — the freeze exists to prevent a repeat.
+
+**The roadmap below is paused, not cancelled.** If the wedge test or distribution sprint surfaces a named paying user by Freeze Day 60 (2026-06-17), improvement work resumes from wherever this plan left off — informed by what that user actually needs, not hypothetical resilience targets.
+
+---
 
 ## Status: Phase 6 — Data Pipeline Resilience & Intelligence (COMPLETE ✅ — 2026-03-20)
 

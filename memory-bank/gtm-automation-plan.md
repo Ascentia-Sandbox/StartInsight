@@ -4,13 +4,71 @@
 **Read When:** Before any marketing, distribution, or growth work
 **Dependencies:** Read active-context.md and project-brief.md first
 **Purpose:** Complete GTM + GEO operational playbook — 90-day strategy for first paying customer
-**Last Updated:** 2026-04-05
+**Last Updated:** 2026-04-18
 ---
 
 # StartInsight — Complete GTM + GEO Strategy
 
-**Status:** All engineering shipped (Phase 1-5). Now in OPERATIONAL mode.
+**Status:** ENGINEERING FREEZE (2026-04-18 → 2026-06-17). /office-hours diagnosed solution-in-search-of-problem on 2026-04-18. Wedge test + distribution sprint only, no code.
 **Revenue:** $0 | Paying Customers: 0 | Traffic: ~0 external visitors
+
+---
+
+## 2026-04-18 PIVOT — Wedge Test + Engineering Freeze
+
+The original operational playbook below (Week 1-2 activation, Week 2-4 monitoring, Day 30/60/90 decisions) was written on 2026-04-05 on the assumption that distribution into founder communities would surface demand. As of Day 13 (2026-04-18), zero community distribution has actually happened — and the `/office-hours` diagnostic surfaced the deeper issue: there is no specific named user, no current workflow being replaced, and the origin was "AI/tech capability looking for a use case." The plan below is still the correct 90-day scaffolding. This section adds the Week-1 wedge test that runs inside it.
+
+**Full design doc:** `~/.gstack/projects/Ascentia-Sandbox-StartInsight/wysetime-pcc-main-design-20260418-142849.md`
+
+### Approach A — Narrowest Wedge (Days 13-20, 2026-04-18 → 2026-04-25)
+
+| # | Action | Target | By |
+|---|--------|--------|-----|
+| 1 | Identify 5 MY/SG founder Telegram groups | 5 groups | 2026-04-19 |
+| 2 | Google Doc "StartInsight Wedge Test — Week 1" with 20 real names | 20 named founders | 2026-04-20 |
+| 3 | First DM sent (screenshot → `memory-bank/daily-operations.md`) | 1 sent | 2026-04-20 |
+| 4 | 20 personalized DMs sent | 20 sent | 2026-04-22 |
+| 5 | 3 paid RM49 memo sales | 3 paid | 2026-04-25 |
+| 6 | 3 memos delivered (48h SLA each) | 3 delivered | 2026-04-25 |
+
+**Wedge offer script:** "Hey [name], I built an AI platform that ingests 6 startup-idea sources every 6h. I'll hand-write you a 3-page validated idea memo for your industry (market size, competitors, the wedge I'd pick, first-10-users plan) for RM49 cash. 48h turnaround. 3 slots this week."
+
+**Post-delivery question (record verbatim):** "If I built a product that did this automatically for RM49/month, would you pay?"
+
+### Approach B — 60-Day Distribution Sprint (Days 13-73, 2026-04-18 → 2026-06-17)
+
+Zero engineering. Human work only. Daily rhythm:
+- 5 community posts (value-add, not sales) — Telegram, Reddit, WhatsApp, LinkedIn
+- 10 cold DMs to named founders
+- 1 user interview call (30 min, free)
+- Weekly: update `memory-bank/daily-operations.md` metrics table honestly
+
+### Engineering Freeze (2026-04-18 → 2026-06-17)
+
+- **No commits to `main`** for 60 days. Violation triggers Approach C (sunset).
+- **One-time exception:** regenerate Twitter OAuth tokens at developer.x.com (Read+Write scope), update Railway `TWITTER_ACCESS_TOKEN` + `TWITTER_ACCESS_SECRET`. Must be done by 2026-04-20. No other engineering permitted.
+- **Automation continues running unchanged:** scrapers (every 6h), analyzer, content generator, social posting, email nurture, digests. All autopilot.
+- **If urge to code returns:** re-read office-hours design doc "What I noticed about how you think" section. `learnings.jsonl` named "engineering-avoidance-after-ship" pattern on 2026-04-04.
+
+### Kill Criteria (strict, non-negotiable)
+
+| Marker | Date | Trigger | Action |
+|--------|------|---------|--------|
+| Week 1 end | 2026-04-25 | 0 paid memos after 20 DMs | Pivot segment (max 3 pivots) |
+| Week 1 end | 2026-04-25 | Fewer than 20 DMs sent | Honesty check in next /office-hours |
+| Freeze Day 30 | 2026-05-18 | 0 paying + 0 `report_category_viewed` + 0 inbound DMs | Pivot B's targeting OR Approach C |
+| Freeze Day 60 | 2026-06-17 | <5 paying customers total | Approach C (honest sunset). No extensions. |
+
+### Next /office-hours — 2026-04-25
+
+First question: "Show me the Google Sheet." Outcomes:
+- 20 names + 3+ paid → design follow-on around the segment you found
+- 20 names + 0 paid → design segment pivot
+- Fewer than 20 names → design Approach C honestly
+
+---
+
+## Original 90-Day Playbook (archived 2026-04-06 → now, still the scaffolding)
 
 ---
 
@@ -332,4 +390,4 @@ CHECK: PostHog + report_requests + social_posts + GSC impressions
 
 ---
 
-**Last Updated:** 2026-04-05
+**Last Updated:** 2026-04-18 (pivot added)

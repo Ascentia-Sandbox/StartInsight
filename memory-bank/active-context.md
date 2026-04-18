@@ -4,23 +4,73 @@
 **Read When:** Before every task to understand current phase status
 **Dependencies:** Read project-brief.md first for context
 **Purpose:** Current phase tracking, immediate tasks, blockers, what's working/next
-**Last Updated:** 2026-04-04
+**Last Updated:** 2026-04-18
 ---
 
 # Active Context: StartInsight Development
 
 ## Current Phase
-**Status:** ✅ LIVE IN PRODUCTION — GTM Phase 1 complete, Phase 2 next
-**Completed:** Phase 1-10 + A-L + Q1-Q9 + Security + Sentry + Redis + Domain + Favicon + Phase 6 + GTM Phase 1
+**Status:** 🛑 ENGINEERING FREEZE (60 days, 2026-04-18 → 2026-06-17) — Wedge Test + Distribution Sprint
+**Completed:** Phase 1-10 + A-L + Q1-Q9 + Security + Sentry + Redis + Domain + Favicon + Phase 6 + GTM Phase 1-5
 **Testing:** 454 backend tests passing (47% coverage), 47 E2E tests (5 browsers)
 **Database:** 70 tables, 235+ API endpoints, 8 AI agents, 6 active scrapers
-**Revenue:** $0 — demand experiment in progress
+**Revenue:** $0 — /office-hours on 2026-04-18 diagnosed "solution in search of a problem." Pivot to user discovery.
 
-## Current Focus: GTM + GEO OPERATIONAL MODE (2026-04-06)
+## Current Focus: WEDGE TEST + DISTRIBUTION SPRINT (2026-04-18)
 
-**Full plan:** `memory-bank/gtm-automation-plan.md` (consolidated 90-day playbook)
+**Full plan:** `memory-bank/gtm-automation-plan.md` + office-hours design doc at `~/.gstack/projects/Ascentia-Sandbox-StartInsight/wysetime-pcc-main-design-20260418-142849.md`
 **Daily ops:** `memory-bank/daily-operations.md` (daily checklist + health check commands)
-**Status:** ALL ENGINES ACTIVATED. Monitoring + distribution phase.
+**Status:** ENGINEERING FROZEN. Human work only for 60 days.
+
+### /office-hours Diagnostic (2026-04-18)
+
+Honest answers surfaced during the session:
+- **Q1 Demand:** "Cannot name a single person" — no specific human has shown pull
+- **Q2 Status Quo:** "No real status quo — 'nothing' is the alternative" — success requires creating new behavior
+- **Q3 Origin:** "AI/tech capability looking for a use case" — platform came first, customer second
+- **Q4 Wedge:** "All offerings assume the platform exists" — cannot conceive of product without automation
+
+**Diagnosis:** Solution in search of a problem. Technical demo dressed as a product. Engineering six months ahead of user discovery.
+
+**Accepted premises (1/2/3/6):** Engineering is done; no specific human; no current workflow being replaced; burn is cheap ($33/mo), attention is expensive.
+
+**Pushed back (4/5):** Distribution hasn't been tested with real manual effort yet. Day 6 is before GSC/AI-citation data windows open. Earned the right to run the 60-day test.
+
+### Recommended Approach: A + B in Parallel
+
+**Approach A — Narrowest Wedge (Days 1-7):** DM 20 specific MY/SG founders. Sell 3 RM49 hand-written "validated startup idea memos" (3-page, 48h turnaround). Platform becomes internal research engine, not the product. Binary outcome by 2026-04-25.
+
+**Approach B — 60-Day Distribution Sprint (Days 1-60):** Zero engineering. 5 community posts/day + 10 cold DMs/day + 1 user interview/day. Honor GTM plan's Day 30 / 60 / 90 decision points. Kill criteria hard-enforced.
+
+### The Assignment (by Sunday 2026-04-20)
+
+1. **Regenerate Twitter tokens** at developer.x.com (Read+Write scope). Update `TWITTER_ACCESS_TOKEN` + `TWITTER_ACCESS_SECRET` in Railway. Trigger test post. ~15 min. This is the last permitted engineering action for 60 days.
+2. **Open "StartInsight Wedge Test — Week 1" Google Doc.** Write 20 real MY/SG founder names. Not placeholders. If you can't fill 20, that's the first data point.
+3. **Send the first DM** before end of Sunday 2026-04-20. Screenshot it into `memory-bank/daily-operations.md`.
+
+Failure to hit all 3 by Sunday → next /office-hours opens with Approach C (honest sunset) on the table.
+
+### Kill Criteria (strict)
+
+- **Freeze Day 30 (2026-05-18):** 0 paying + 0 `report_category_viewed` + 0 inbound DMs → pivot B's targeting OR move to Approach C
+- **Freeze Day 60 (2026-06-17):** <5 paying customers → Approach C. No extensions, no "one more week."
+- **Original plan Day 30 (2026-05-06)** and **Day 60 (2026-06-05)** remain the weekly metric review cadence from `gtm-automation-plan.md`.
+
+### Engineering Freeze Rules (2026-04-18 → 2026-06-17)
+
+- **No commits to `main`** (violating = Approach C trigger)
+- **No feature work** of any kind
+- **One exception:** regenerating Twitter tokens on Day 0 (today/Sunday)
+- **If the urge to code returns:** re-read `/office-hours` design doc's "What I noticed about how you think" section. Own learnings.jsonl named "engineering-avoidance-after-ship" on 2026-04-04.
+
+### Next Session
+
+**2026-04-25** — re-invoke `/office-hours` with wedge test results. First question: "Show me the Google Sheet." Three outcomes:
+- 20 names + 3+ paid → design the follow-on around the segment you found
+- 20 names + 0 paid → design the segment pivot (max 3 pivots)
+- Fewer than 20 names → design Approach C honestly
+
+## Previous Focus: GTM + GEO OPERATIONAL MODE (archived 2026-04-06 → 2026-04-18)
 
 ### Activation Complete (2026-04-06)
 - ✅ Phase 1-5 engineering shipped (54 files, 3,818 insertions)
@@ -247,5 +297,5 @@ All arq tasks now scheduled and running via APScheduler + Railway Redis:
 
 ---
 
-**Last Updated:** 2026-03-25
-**Status:** LIVE IN PRODUCTION — All Tier 1/2/3 improvement tasks complete. 398 backend tests passing (47% coverage). Migrations c001–c016 applied. PostHog live. Sitemap submission + content seeding to 600+ insights for ProductHunt launch pending.
+**Last Updated:** 2026-04-18
+**Status:** ENGINEERING FREEZE through 2026-06-17. /office-hours diagnosed solution-in-search-of-problem. Running Approach A (7-day wedge test, 20 DMs, 3 RM49 memos) + Approach B (60-day distribution sprint). Design doc at `~/.gstack/projects/Ascentia-Sandbox-StartInsight/wysetime-pcc-main-design-20260418-142849.md`. Next /office-hours: 2026-04-25.
