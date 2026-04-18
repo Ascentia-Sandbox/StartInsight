@@ -1,7 +1,7 @@
 """Data retention and audit logging services for compliance."""
 
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import text
@@ -24,7 +24,7 @@ class DataRetentionService:
         """
         try:
             # Calculate cutoff date
-            cutoff_date = datetime.utcnow() - timedelta(days=days_to_keep)
+            cutoff_date = datetime.now(UTC) - timedelta(days=days_to_keep)
 
             # Delete old webhook events
             result = await db.execute(
@@ -56,7 +56,7 @@ class DataRetentionService:
         """
         try:
             # Calculate cutoff date
-            cutoff_date = datetime.utcnow() - timedelta(days=days_to_keep)
+            cutoff_date = datetime.now(UTC) - timedelta(days=days_to_keep)
 
             # Delete old payment history
             result = await db.execute(
@@ -88,7 +88,7 @@ class DataRetentionService:
         """
         try:
             # Calculate cutoff date
-            cutoff_date = datetime.utcnow() - timedelta(days=days_to_keep)
+            cutoff_date = datetime.now(UTC) - timedelta(days=days_to_keep)
 
             # Soft-delete old inactive users (mark as deleted but keep data for compliance)
             # This is a simplified example - in practice, you'd need more sophisticated logic
