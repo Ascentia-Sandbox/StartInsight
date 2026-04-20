@@ -25,7 +25,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Upl
 from pydantic import BaseModel
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import noload, selectinload
 from sse_starlette.sse import EventSourceResponse
 from starlette.responses import StreamingResponse
 
@@ -650,7 +650,12 @@ async def get_review_queue(
     # Build query with eager-load to avoid N+1 on raw_signal
     query = (
         select(Insight)
-        .options(selectinload(Insight.raw_signal))
+        .options(
+            selectinload(Insight.raw_signal),
+            noload(Insight.interactions),
+            noload(Insight.team_shares),
+            noload(Insight.competitors),
+        )
         .order_by(Insight.created_at.desc())
     )
     if status_filter:
@@ -710,7 +715,12 @@ async def list_insights_admin(
     """
     query = (
         select(Insight)
-        .options(selectinload(Insight.raw_signal))
+        .options(
+            selectinload(Insight.raw_signal),
+            noload(Insight.interactions),
+            noload(Insight.team_shares),
+            noload(Insight.competitors),
+        )
         .order_by(Insight.created_at.desc())
     )
 
@@ -923,7 +933,16 @@ async def export_insights(
             detail="Invalid format. Must be 'csv' or 'json'",
         )
 
-    query = select(Insight).order_by(Insight.created_at.desc())
+    query = (
+        select(Insight)
+        .options(
+            noload(Insight.raw_signal),
+            noload(Insight.interactions),
+            noload(Insight.team_shares),
+            noload(Insight.competitors),
+        )
+        .order_by(Insight.created_at.desc())
+    )
 
     if status_filter:
         query = query.where(Insight.admin_status == status_filter)
@@ -1056,7 +1075,16 @@ async def bulk_delete_insights(
             detail="Maximum 100 insights per bulk operation",
         )
 
-    result = await db.execute(select(Insight).where(Insight.id.in_(ids)))
+    result = await db.execute(
+        select(Insight)
+        .options(
+            noload(Insight.raw_signal),
+            noload(Insight.interactions),
+            noload(Insight.team_shares),
+            noload(Insight.competitors),
+        )
+        .where(Insight.id.in_(ids))
+    )
     insights = result.scalars().all()
 
     deleted_count = 0
@@ -1839,11 +1867,18 @@ async def trigger_test_digest(
     api_base_url = "https://api.startinsight.co"
     _utm = "utm_source=email&utm_medium=digest&utm_campaign=weekly_digest&utm_content=admin_test"
 
+    _noload_opts = [
+        noload(Insight.raw_signal),
+        noload(Insight.interactions),
+        noload(Insight.team_shares),
+        noload(Insight.competitors),
+    ]
     async with AsyncSessionLocal() as session:
         # Fetch top 10 insights from the past week for the preview
         one_week_ago = datetime.now(UTC) - timedelta(days=7)
         result = await session.execute(
             sa_select(Insight)
+            .options(*_noload_opts)
             .where(Insight.created_at >= one_week_ago)
             .order_by(desc(Insight.relevance_score))
             .limit(10)
@@ -1853,7 +1888,10 @@ async def trigger_test_digest(
         # Fall back to overall top 10 if nothing was published this week
         if not insights:
             result = await session.execute(
-                sa_select(Insight).order_by(desc(Insight.relevance_score)).limit(10)
+                sa_select(Insight)
+                .options(*_noload_opts)
+                .order_by(desc(Insight.relevance_score))
+                .limit(10)
             )
             insights = result.scalars().all()
 

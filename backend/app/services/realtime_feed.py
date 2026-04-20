@@ -295,7 +295,12 @@ def get_recent_insights(
     events = store.get_recent_events(count=limit)
 
     if since:
-        events = [e for e in events if datetime.fromisoformat(e.timestamp) > since]
+
+        def _parse_ts(ts: str) -> datetime:
+            dt = datetime.fromisoformat(ts)
+            return dt if dt.tzinfo is not None else dt.replace(tzinfo=UTC)
+
+        events = [e for e in events if _parse_ts(e.timestamp) > since]
 
     return events
 
