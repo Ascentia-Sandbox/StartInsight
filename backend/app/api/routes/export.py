@@ -12,6 +12,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import noload
 
 from app.api.deps import get_current_user, get_db
 from app.models import CustomAnalysis, Insight, User
@@ -58,8 +59,15 @@ async def export_insight_as_pdf(
 
     Requires authentication.
     """
-    # Fetch insight
-    result = await db.execute(select(Insight).where(Insight.id == insight_id))
+    # Fetch insight — noload unused relationships to suppress selectin N+1 queries
+    result = await db.execute(
+        select(Insight)
+        .options(
+            noload(Insight.interactions),
+            noload(Insight.team_shares),
+        )
+        .where(Insight.id == insight_id)
+    )
     insight = result.scalar_one_or_none()
 
     if not insight:
@@ -109,14 +117,19 @@ async def export_insights_as_csv(
 
     Requires authentication. Supports filtering by minimum relevance score.
     """
-    # Fetch insights
-    query = (
+    # Fetch insights — noload all relationships (none accessed in CSV serialisation)
+    result = await db.execute(
         select(Insight)
+        .options(
+            noload(Insight.raw_signal),
+            noload(Insight.interactions),
+            noload(Insight.team_shares),
+            noload(Insight.competitors),
+        )
         .where(Insight.relevance_score >= min_score)
         .order_by(Insight.created_at.desc())
         .limit(limit)
     )
-    result = await db.execute(query)
     insights = result.scalars().all()
 
     # Convert to list of dicts
@@ -167,9 +180,15 @@ async def export_analysis_as_pdf(
 
     Requires authentication. Only exports analyses owned by the current user.
     """
-    # Fetch analysis
+    # Fetch analysis — noload unused relationships to suppress selectin queries
     result = await db.execute(
-        select(CustomAnalysis).where(
+        select(CustomAnalysis)
+        .options(
+            noload(CustomAnalysis.user),
+            noload(CustomAnalysis.admin),
+            noload(CustomAnalysis.request),
+        )
+        .where(
             CustomAnalysis.id == analysis_id,
             CustomAnalysis.user_id == current_user.id,
         )
@@ -225,9 +244,15 @@ async def export_analysis_as_json(
 
     Requires authentication. Only exports analyses owned by the current user.
     """
-    # Fetch analysis
+    # Fetch analysis — noload unused relationships to suppress selectin queries
     result = await db.execute(
-        select(CustomAnalysis).where(
+        select(CustomAnalysis)
+        .options(
+            noload(CustomAnalysis.user),
+            noload(CustomAnalysis.admin),
+            noload(CustomAnalysis.request),
+        )
+        .where(
             CustomAnalysis.id == analysis_id,
             CustomAnalysis.user_id == current_user.id,
         )
@@ -286,9 +311,14 @@ async def export_analyses_as_csv(
 
     Requires authentication. Only exports analyses owned by the current user.
     """
-    # Build query
+    # Fetch analyses — noload all relationships (none accessed in CSV serialisation)
     query = (
         select(CustomAnalysis)
+        .options(
+            noload(CustomAnalysis.user),
+            noload(CustomAnalysis.admin),
+            noload(CustomAnalysis.request),
+        )
         .where(CustomAnalysis.user_id == current_user.id)
         .order_by(CustomAnalysis.created_at.desc())
         .limit(limit)
