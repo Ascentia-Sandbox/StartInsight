@@ -790,12 +790,15 @@ async def hourly_trends_update_task(ctx: dict[str, Any]) -> dict[str, Any]:
                     timestamps = signal.extra_metadata["trend_data_realtime"]["timestamps"]
                     values = signal.extra_metadata["trend_data_realtime"]["values"]
 
-                    # Filter out data older than 90 days
-                    filtered_data = [
-                        (ts, val)
-                        for ts, val in zip(timestamps, values)
-                        if datetime.fromisoformat(ts) >= cutoff_date
-                    ]
+                    # Filter out data older than 90 days.
+                    # Guard against naive ISO strings stored before the UTC fix.
+                    filtered_data = []
+                    for ts, val in zip(timestamps, values):
+                        dt = datetime.fromisoformat(ts)
+                        if dt.tzinfo is None:
+                            dt = dt.replace(tzinfo=UTC)
+                        if dt >= cutoff_date:
+                            filtered_data.append((ts, val))
 
                     if filtered_data:
                         signal.extra_metadata["trend_data_realtime"]["timestamps"] = [
