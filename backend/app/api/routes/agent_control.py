@@ -349,13 +349,14 @@ async def get_agent_stats(
         .group_by(AgentExecutionLog.agent_type)
     )
 
-    # Query token/cost totals from extra_metadata JSONB
+    # Query token/cost totals from extra_metadata JSONB.
+    # Use ::numeric before FLOOR to safely handle values stored as floats (e.g. 1234.5).
     token_cost_query = await db.execute(
         select(
             AgentExecutionLog.agent_type,
-            func.coalesce(func.sum(text("(extra_metadata->>'tokens_used')::int")), 0).label(
-                "tokens"
-            ),
+            func.coalesce(
+                func.sum(text("FLOOR((extra_metadata->>'tokens_used')::numeric)::bigint")), 0
+            ).label("tokens"),
             func.coalesce(func.sum(text("(extra_metadata->>'cost_usd')::float")), 0).label("cost"),
         )
         .where(AgentExecutionLog.started_at >= day_ago)
@@ -553,14 +554,16 @@ async def get_agent_cost_analytics(
     start_date = datetime.now(UTC) - timedelta(days=days)
     end_date = datetime.now(UTC)
 
-    # Query daily cost breakdown
-    # Extract cost_usd and tokens_used from extra_metadata JSONB
+    # Query daily cost breakdown.
+    # Extract cost_usd and tokens_used from extra_metadata JSONB.
+    # FLOOR(::numeric)::bigint safely handles values stored as floats (e.g. 1234.5);
+    # plain ::int fails if the JSON string contains a decimal point.
     cost_query = text("""
         SELECT
             DATE(started_at) as date,
             agent_type,
             COUNT(*) as executions,
-            COALESCE(SUM((extra_metadata->>'tokens_used')::int), 0) as tokens_used,
+            COALESCE(SUM(FLOOR((extra_metadata->>'tokens_used')::numeric)::bigint), 0) as tokens_used,
             COALESCE(SUM((extra_metadata->>'cost_usd')::float), 0) as cost_usd
         FROM agent_execution_logs
         WHERE started_at >= :start_date

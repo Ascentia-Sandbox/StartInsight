@@ -172,6 +172,137 @@ async def get_trend_categories(
     return list(categories)
 
 
+# ============================================================================
+# PREDICTION ENDPOINTS (Sprint 3.1)
+# Registered before /{trend_id} so that GET /predictions is not shadowed by
+# the parameterised route (Starlette matches routes in registration order).
+# ============================================================================
+
+
+@router.get("/predictions", response_model=list[TrendPredictionResponse])
+async def get_trend_predictions(
+    limit: Annotated[int, Query(ge=1, le=20, description="Number of trends to predict")] = 10,
+    category: Annotated[str | None, Query(description="Filter by category")] = None,
+    db: AsyncSession = Depends(get_db),
+) -> list[TrendPredictionResponse]:
+    """
+    Get predictions for top trending keywords.
+
+    Returns 7-day ahead forecasts with confidence intervals for the top N trends
+    by search volume. Includes velocity alerts for rapidly accelerating trends.
+
+    - **limit**: Number of trends to generate predictions for (default 10, max 20)
+    - **category**: Filter by trend category
+    """
+    # Get top trends by volume
+    query = select(Trend).where(Trend.is_published == True)
+    if category:
+        query = query.where(Trend.category == category)
+    query = query.order_by(Trend.search_volume.desc()).limit(limit)
+
+    result = await db.execute(query)
+    trends = result.scalars().all()
+
+    if not trends:
+        return []
+
+    predictions = []
+    for trend in trends:
+        try:
+            historical_dates, historical_values = _get_historical_data(trend, days=30)
+
+            prediction_result = await generate_trend_predictions(
+                trend_data={"dates": historical_dates, "values": historical_values},
+                periods=7,
+            )
+
+            velocity_change, velocity_alert = _calculate_velocity(
+                historical_values, trend.growth_percentage or 0
+            )
+
+            predictions.append(
+                TrendPredictionResponse(
+                    keyword=trend.keyword,
+                    current_volume=trend.search_volume or 0,
+                    predictions=prediction_result,
+                    velocity_alert=velocity_alert,
+                    velocity_change=velocity_change,
+                )
+            )
+
+        except Exception as e:
+            logger.warning(f"Failed to generate prediction for {trend.keyword}: {e}")
+            predictions.append(
+                TrendPredictionResponse(
+                    keyword=trend.keyword,
+                    current_volume=trend.search_volume or 0,
+                    predictions={
+                        "dates": [],
+                        "values": [],
+                        "confidence_intervals": {"lower": [], "upper": []},
+                        "model_accuracy": {"mape": 0, "rmse": 0},
+                        "error": str(e),
+                    },
+                    velocity_alert=False,
+                    velocity_change=0.0,
+                )
+            )
+
+    logger.info(f"Generated predictions for {len(predictions)} trends (category={category})")
+    return predictions
+
+
+@router.get("/predictions/{keyword}", response_model=TrendPredictionResponse)
+async def get_trend_prediction_by_keyword(
+    keyword: str,
+    periods: Annotated[int, Query(ge=1, le=30, description="Forecast horizon in days")] = 7,
+    db: AsyncSession = Depends(get_db),
+) -> TrendPredictionResponse:
+    """
+    Get prediction for a specific trend keyword.
+
+    Returns N-day ahead forecast with confidence intervals and model accuracy metrics.
+
+    - **keyword**: Trend keyword to predict
+    - **periods**: Number of days to forecast (default 7, max 30)
+    """
+    # Find trend by keyword
+    query = select(Trend).where(
+        Trend.keyword.ilike(f"%{escape_like(keyword)}%"),
+        Trend.is_published == True,
+    )
+    result = await db.execute(query)
+    trend = result.scalar_one_or_none()
+
+    if not trend:
+        raise HTTPException(status_code=404, detail=f"Trend '{keyword}' not found")
+
+    historical_dates, historical_values = _get_historical_data(trend, days=90)
+
+    try:
+        prediction_result = await generate_trend_predictions(
+            trend_data={"dates": historical_dates, "values": historical_values},
+            periods=periods,
+        )
+    except Exception as e:
+        logger.error(f"Prediction failed for {keyword}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Prediction failed. Please try again.")
+
+    velocity_change, velocity_alert = _calculate_velocity(
+        historical_values, trend.growth_percentage or 0
+    )
+
+    logger.info(f"Generated {periods}-day prediction for '{trend.keyword}'")
+
+    return TrendPredictionResponse(
+        keyword=trend.keyword,
+        current_volume=trend.search_volume or 0,
+        predictions=prediction_result,
+        velocity_alert=velocity_alert,
+        velocity_change=round(velocity_change, 2),
+    )
+
+
 @router.get("/{trend_id}", response_model=TrendResponse)
 async def get_trend(
     trend_id: UUID,
@@ -311,135 +442,6 @@ def _calculate_velocity(historical_values: list[int], fallback: float) -> tuple[
     else:
         velocity_change = fallback
     return round(velocity_change, 2), abs(velocity_change) > 50
-
-
-# ============================================================================
-# PREDICTION ENDPOINTS (Sprint 3.1)
-# ============================================================================
-
-
-@router.get("/predictions", response_model=list[TrendPredictionResponse])
-async def get_trend_predictions(
-    limit: Annotated[int, Query(ge=1, le=20, description="Number of trends to predict")] = 10,
-    category: Annotated[str | None, Query(description="Filter by category")] = None,
-    db: AsyncSession = Depends(get_db),
-) -> list[TrendPredictionResponse]:
-    """
-    Get predictions for top trending keywords.
-
-    Returns 7-day ahead forecasts with confidence intervals for the top N trends
-    by search volume. Includes velocity alerts for rapidly accelerating trends.
-
-    - **limit**: Number of trends to generate predictions for (default 10, max 20)
-    - **category**: Filter by trend category
-    """
-    # Get top trends by volume
-    query = select(Trend).where(Trend.is_published == True)
-    if category:
-        query = query.where(Trend.category == category)
-    query = query.order_by(Trend.search_volume.desc()).limit(limit)
-
-    result = await db.execute(query)
-    trends = result.scalars().all()
-
-    if not trends:
-        return []
-
-    predictions = []
-    for trend in trends:
-        try:
-            historical_dates, historical_values = _get_historical_data(trend, days=30)
-
-            prediction_result = await generate_trend_predictions(
-                trend_data={"dates": historical_dates, "values": historical_values},
-                periods=7,
-            )
-
-            velocity_change, velocity_alert = _calculate_velocity(
-                historical_values, trend.growth_percentage or 0
-            )
-
-            predictions.append(
-                TrendPredictionResponse(
-                    keyword=trend.keyword,
-                    current_volume=trend.search_volume or 0,
-                    predictions=prediction_result,
-                    velocity_alert=velocity_alert,
-                    velocity_change=velocity_change,
-                )
-            )
-
-        except Exception as e:
-            logger.warning(f"Failed to generate prediction for {trend.keyword}: {e}")
-            predictions.append(
-                TrendPredictionResponse(
-                    keyword=trend.keyword,
-                    current_volume=trend.search_volume or 0,
-                    predictions={
-                        "dates": [],
-                        "values": [],
-                        "confidence_intervals": {"lower": [], "upper": []},
-                        "model_accuracy": {"mape": 0, "rmse": 0},
-                        "error": str(e),
-                    },
-                    velocity_alert=False,
-                    velocity_change=0.0,
-                )
-            )
-
-    logger.info(f"Generated predictions for {len(predictions)} trends (category={category})")
-    return predictions
-
-
-@router.get("/predictions/{keyword}", response_model=TrendPredictionResponse)
-async def get_trend_prediction_by_keyword(
-    keyword: str,
-    periods: Annotated[int, Query(ge=1, le=30, description="Forecast horizon in days")] = 7,
-    db: AsyncSession = Depends(get_db),
-) -> TrendPredictionResponse:
-    """
-    Get prediction for a specific trend keyword.
-
-    Returns N-day ahead forecast with confidence intervals and model accuracy metrics.
-
-    - **keyword**: Trend keyword to predict
-    - **periods**: Number of days to forecast (default 7, max 30)
-    """
-    # Find trend by keyword
-    query = select(Trend).where(
-        Trend.keyword.ilike(f"%{escape_like(keyword)}%"),
-        Trend.is_published == True,
-    )
-    result = await db.execute(query)
-    trend = result.scalar_one_or_none()
-
-    if not trend:
-        raise HTTPException(status_code=404, detail=f"Trend '{keyword}' not found")
-
-    historical_dates, historical_values = _get_historical_data(trend, days=90)
-
-    try:
-        prediction_result = await generate_trend_predictions(
-            trend_data={"dates": historical_dates, "values": historical_values},
-            periods=periods,
-        )
-    except Exception as e:
-        logger.error(f"Prediction failed for {keyword}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Prediction failed. Please try again.")
-
-    velocity_change, velocity_alert = _calculate_velocity(
-        historical_values, trend.growth_percentage or 0
-    )
-
-    logger.info(f"Generated {periods}-day prediction for '{trend.keyword}'")
-
-    return TrendPredictionResponse(
-        keyword=trend.keyword,
-        current_volume=trend.search_volume or 0,
-        predictions=prediction_result,
-        velocity_alert=velocity_alert,
-        velocity_change=round(velocity_change, 2),
-    )
 
 
 @router.post("/compare", response_model=TrendComparisonResponse)
