@@ -450,6 +450,33 @@ async def list_users(
     ]
 
 
+@router.get("/users/export")
+async def export_users(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    admin: Annotated[User, Depends(require_admin)],
+    format: str = "csv",
+):
+    """Export user list."""
+    result = await db.execute(select(User).order_by(User.created_at.desc()))
+    users = result.scalars().all()
+
+    # Return as JSON for now (CSV export would need file response)
+    return {
+        "format": format,
+        "count": len(users),
+        "data": [
+            {
+                "id": str(u.id),
+                "email": u.email,
+                "display_name": u.display_name,
+                "tier": u.subscription_tier,
+                "created_at": u.created_at.isoformat(),
+            }
+            for u in users
+        ],
+    }
+
+
 @router.get("/users/{user_id}", response_model=UserDetail)
 async def get_user_detail(
     user_id: UUID,
@@ -700,33 +727,6 @@ async def bulk_user_action(
 
     logger.info(f"Bulk {payload.action} on {affected} users by admin {admin.id}")
     return {"status": "ok", "affected": affected}
-
-
-@router.get("/users/export")
-async def export_users(
-    db: Annotated[AsyncSession, Depends(get_db)],
-    admin: Annotated[User, Depends(require_admin)],
-    format: str = "csv",
-):
-    """Export user list."""
-    result = await db.execute(select(User).order_by(User.created_at.desc()))
-    users = result.scalars().all()
-
-    # Return as JSON for now (CSV export would need file response)
-    return {
-        "format": format,
-        "count": len(users),
-        "data": [
-            {
-                "id": str(u.id),
-                "email": u.email,
-                "display_name": u.display_name,
-                "tier": u.subscription_tier,
-                "created_at": u.created_at.isoformat(),
-            }
-            for u in users
-        ],
-    }
 
 
 # ============================================

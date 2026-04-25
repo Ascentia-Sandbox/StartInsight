@@ -599,6 +599,61 @@ async def get_insight_by_slug(
     return insight_dict
 
 
+@router.get("/correlated")
+async def get_correlated_insights(
+    db: AsyncSession = Depends(get_db),
+    limit: int = Query(default=50, le=100, ge=1),
+):
+    """
+    Phase 6.4B: Get insights grouped by cross-source correlation.
+
+    Returns insights that share similar topics across different sources,
+    ordered by source_count (highest multi-source correlation first).
+    """
+    result = await db.execute(
+        select(Insight)
+        .where(Insight.correlation_group_id.isnot(None))
+        .where(Insight.admin_status == "approved")
+        .order_by(
+            Insight.source_count.desc(),
+            Insight.correlation_score.desc(),
+            Insight.created_at.desc(),
+        )
+        .limit(limit)
+    )
+    insights = result.scalars().all()
+
+    # Group by correlation_group_id
+    groups: dict[str, list] = {}
+    for ins in insights:
+        gid = str(ins.correlation_group_id)
+        if gid not in groups:
+            groups[gid] = []
+        groups[gid].append(
+            {
+                "id": str(ins.id),
+                "title": ins.title,
+                "problem_statement": ins.problem_statement[:200] if ins.problem_statement else None,
+                "relevance_score": ins.relevance_score,
+                "correlation_score": ins.correlation_score,
+                "source": ins.raw_signal.source if ins.raw_signal else None,
+                "created_at": ins.created_at.isoformat() if ins.created_at else None,
+            }
+        )
+
+    return {
+        "groups": [
+            {
+                "group_id": gid,
+                "source_count": len(set(i["source"] for i in members if i["source"])),
+                "insights": members,
+            }
+            for gid, members in groups.items()
+        ],
+        "total_groups": len(groups),
+    }
+
+
 @router.get("/{insight_id}", response_model=InsightResponse)
 @limiter.limit("200/minute")
 async def get_insight(
@@ -1304,59 +1359,4 @@ async def get_insight_engagement(
         "export_count": interaction_counts.get("export", 0),
         "interested_count": interaction_counts.get("interested", 0),
         "evidence_count": evidence_count,
-    }
-
-
-@router.get("/correlated")
-async def get_correlated_insights(
-    db: AsyncSession = Depends(get_db),
-    limit: int = Query(default=50, le=100, ge=1),
-):
-    """
-    Phase 6.4B: Get insights grouped by cross-source correlation.
-
-    Returns insights that share similar topics across different sources,
-    ordered by source_count (highest multi-source correlation first).
-    """
-    result = await db.execute(
-        select(Insight)
-        .where(Insight.correlation_group_id.isnot(None))
-        .where(Insight.admin_status == "approved")
-        .order_by(
-            Insight.source_count.desc(),
-            Insight.correlation_score.desc(),
-            Insight.created_at.desc(),
-        )
-        .limit(limit)
-    )
-    insights = result.scalars().all()
-
-    # Group by correlation_group_id
-    groups: dict[str, list] = {}
-    for ins in insights:
-        gid = str(ins.correlation_group_id)
-        if gid not in groups:
-            groups[gid] = []
-        groups[gid].append(
-            {
-                "id": str(ins.id),
-                "title": ins.title,
-                "problem_statement": ins.problem_statement[:200] if ins.problem_statement else None,
-                "relevance_score": ins.relevance_score,
-                "correlation_score": ins.correlation_score,
-                "source": ins.raw_signal.source if ins.raw_signal else None,
-                "created_at": ins.created_at.isoformat() if ins.created_at else None,
-            }
-        )
-
-    return {
-        "groups": [
-            {
-                "group_id": gid,
-                "source_count": len(set(i["source"] for i in members if i["source"])),
-                "insights": members,
-            }
-            for gid, members in groups.items()
-        ],
-        "total_groups": len(groups),
     }
