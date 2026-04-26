@@ -18,7 +18,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
-from sqlalchemy import select, text, update
+from sqlalchemy import or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
@@ -513,12 +513,26 @@ async def generate_report(
         return  # Cannot proceed without DB write
 
     # ── Step 2: Fetch insights ────────────────────────────────────────────
+    # Insights table has no "category" column; search keywords across text fields instead.
+    _category_keywords: dict[str, list[str]] = {
+        "fintech-malaysia": ["fintech", "payment", "banking", "Malaysia", "lending"],
+        "fnb-malaysia": ["food", "beverage", "F&B", "restaurant", "Malaysia"],
+        "logistics-singapore": ["logistics", "supply chain", "shipping", "Singapore"],
+    }
+    _kws = _category_keywords.get(category, [category.replace("-", " ")])
+    _kw_filters = []
+    for _kw in _kws:
+        _pat = f"%{_kw}%"
+        _kw_filters.append(Insight.title.ilike(_pat))
+        _kw_filters.append(Insight.problem_statement.ilike(_pat))
+        _kw_filters.append(Insight.proposed_solution.ilike(_pat))
+
     try:
         result = await db.execute(
             select(Insight)
             .where(
-                text("category ILIKE :cat").bindparams(cat=f"%{category}%"),
-                Insight.relevance_score >= 7.0,
+                or_(*_kw_filters),
+                Insight.relevance_score >= 0.5,
             )
             .order_by(Insight.relevance_score.desc())
             .limit(10)
