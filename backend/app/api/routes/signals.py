@@ -157,6 +157,36 @@ async def list_signals(
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
+@router.get("/signals/trigger-status")
+async def get_trigger_status(
+    current_user: User = Depends(require_admin),
+):
+    """
+    Get current scraping trigger status (rate limit info).
+
+    **Requires admin authentication.**
+
+    Returns:
+        Current rate limit status
+    """
+    global _last_trigger_time
+
+    if _last_trigger_time:
+        cooldown_end = _last_trigger_time + timedelta(minutes=_trigger_cooldown_minutes)
+        can_trigger = datetime.now(UTC) >= cooldown_end
+        next_allowed = cooldown_end if not can_trigger else None
+    else:
+        can_trigger = True
+        next_allowed = None
+
+    return {
+        "can_trigger": can_trigger,
+        "last_triggered_at": _last_trigger_time.isoformat() if _last_trigger_time else None,
+        "next_allowed_at": next_allowed.isoformat() if next_allowed else None,
+        "cooldown_minutes": _trigger_cooldown_minutes,
+    }
+
+
 @router.get("/signals/{signal_id}", response_model=RawSignalResponse)
 async def get_signal(
     signal_id: UUID,
@@ -307,33 +337,3 @@ async def trigger_scraping(
             status_code=500,
             detail="Failed to queue scraping job. Please try again.",
         )
-
-
-@router.get("/signals/trigger-status")
-async def get_trigger_status(
-    current_user: User = Depends(require_admin),
-):
-    """
-    Get current scraping trigger status (rate limit info).
-
-    **Requires admin authentication.**
-
-    Returns:
-        Current rate limit status
-    """
-    global _last_trigger_time
-
-    if _last_trigger_time:
-        cooldown_end = _last_trigger_time + timedelta(minutes=_trigger_cooldown_minutes)
-        can_trigger = datetime.now(UTC) >= cooldown_end
-        next_allowed = cooldown_end if not can_trigger else None
-    else:
-        can_trigger = True
-        next_allowed = None
-
-    return {
-        "can_trigger": can_trigger,
-        "last_triggered_at": _last_trigger_time.isoformat() if _last_trigger_time else None,
-        "next_allowed_at": next_allowed.isoformat() if next_allowed else None,
-        "cooldown_minutes": _trigger_cooldown_minutes,
-    }

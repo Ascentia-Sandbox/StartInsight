@@ -9,6 +9,7 @@ Uses pytrends (unofficial Google Trends API wrapper).
 
 import asyncio
 import logging
+import math
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -151,9 +152,10 @@ class TrendVerifier:
                 self._cache[cache_key] = result
                 return result
 
-            # Extract values
-            values = interest_df[keyword].values
-            avg_volume = int(values.mean())
+            # Extract values (fillna so NaN from sparse Trends data doesn't crash int())
+            values = interest_df[keyword].fillna(0).values
+            _mean = values.mean()
+            avg_volume = int(_mean) if not math.isnan(float(_mean)) else 0
 
             # Calculate actual growth (last 3 days vs first 3 days)
             actual_growth: float | None = None
@@ -176,7 +178,8 @@ class TrendVerifier:
             # Extract data points for debugging/visualization
             data_points = []
             for idx, row in interest_df.iterrows():
-                data_points.append((str(idx), int(row[keyword])))
+                val = row[keyword]
+                data_points.append((str(idx), int(val) if not math.isnan(float(val)) else 0))
 
             result = TrendVerificationResult(
                 keyword=keyword,

@@ -169,8 +169,8 @@ class GoogleTrendsScraper(BaseScraper):
                 if keyword not in interest_df.columns:
                     continue
 
-                # Extract trend data
-                keyword_data = interest_df[keyword]
+                # Extract trend data (fillna so NaN from sparse Trends data doesn't crash int())
+                keyword_data = interest_df[keyword].fillna(0)
                 avg_interest = int(keyword_data.mean())
                 max_interest = int(keyword_data.max())
                 current_interest = int(keyword_data.iloc[-1])
