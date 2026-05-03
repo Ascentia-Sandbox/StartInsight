@@ -122,11 +122,16 @@ async def run_email_nurture(session: AsyncSession) -> dict:
                     insights_html = await _build_insights_html(session)
                 variables["insights_html"] = insights_html
 
-            await send_email(
+            result = await send_email(
                 to=sub.email,
                 template=template,
                 variables=variables,
             )
+
+            if result.get("status") == "error":
+                errors += 1
+                logger.warning(f"Nurture {template} skipped for {sub.email}: {result.get('error')}")
+                continue
 
             sub.nurture_stage = stage
             sent += 1
