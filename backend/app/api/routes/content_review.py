@@ -373,7 +373,7 @@ async def resolve_duplicate(
         await db.execute(
             update(Insight)
             .where(Insight.id == similarity.similar_insight_id)
-            .values(is_deleted=True)
+            .values(admin_status="rejected")
         )
 
     await db.commit()
