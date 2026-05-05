@@ -1,6 +1,7 @@
 """RSS 2.0 feed of latest insights and market insight articles."""
 
 import logging
+import re
 from datetime import UTC, datetime
 from xml.etree.ElementTree import Element, SubElement, tostring
 
@@ -18,6 +19,16 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["RSS"])
 
 SITE_URL = "https://startinsight.co"
+
+# Characters not allowed in XML 1.0 (control chars except tab/LF/CR, lone surrogates)
+_INVALID_XML_RE = re.compile(r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\uD800-\uDFFF]")
+
+
+def _xml_safe(text: str | None, fallback: str = "") -> str:
+    """Strip XML 1.0-invalid characters from scraped content to prevent 500s."""
+    if not text:
+        return fallback
+    return _INVALID_XML_RE.sub("", text)
 
 
 def _rfc822(dt: datetime | None) -> str:
@@ -71,7 +82,7 @@ async def rss_feed(db: AsyncSession = Depends(get_db)):
     # Add insight items
     for i in insights:
         item = SubElement(channel, "item")
-        title = i.title or i.proposed_solution or "Startup Idea"
+        title = _xml_safe(i.title or i.proposed_solution, "Startup Idea")
         slug = i.slug or str(i.id)
         link = f"{SITE_URL}/insights/{slug}?utm_source=rss&utm_medium=feed"
 
@@ -80,7 +91,7 @@ async def rss_feed(db: AsyncSession = Depends(get_db)):
         SubElement(item, "guid").text = link
         SubElement(item, "pubDate").text = _rfc822(i.created_at)
 
-        desc = i.problem_statement or ""
+        desc = _xml_safe(i.problem_statement)
         if len(desc) > 300:
             desc = desc[:297] + "..."
         SubElement(item, "description").text = desc
@@ -91,12 +102,12 @@ async def rss_feed(db: AsyncSession = Depends(get_db)):
         item = SubElement(channel, "item")
         link = f"{SITE_URL}/market-insights/{a.slug}?utm_source=rss&utm_medium=feed"
 
-        SubElement(item, "title").text = a.title or "Market Insight"
+        SubElement(item, "title").text = _xml_safe(a.title, "Market Insight")
         SubElement(item, "link").text = link
         SubElement(item, "guid").text = link
         SubElement(item, "pubDate").text = _rfc822(a.published_at)
 
-        desc = a.summary or ""
+        desc = _xml_safe(a.summary)
         if len(desc) > 300:
             desc = desc[:297] + "..."
         SubElement(item, "description").text = desc
