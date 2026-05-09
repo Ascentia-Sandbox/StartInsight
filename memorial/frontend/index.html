@@ -1,0 +1,1117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#f3ede2" />
+<title>StartInsight — A Post-Mortem</title>
+<meta name="description" content="In memoriam: a startup-idea-discovery platform that died of a problem it diagnosed in itself. Lifespan 80 days. Revenue $0. The five root causes and three lessons." />
+<meta property="og:title" content="StartInsight — A Post-Mortem" />
+<meta property="og:description" content="A capability in search of a customer. Solution in search of a problem. The honest record of why startinsight.co failed, and the three lessons it cost." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://startinsight.co/" />
+<meta name="robots" content="index, follow" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+<style>
+:root {
+  --paper: #f3ede2;
+  --paper-deep: #ebe2d2;
+  --ink: #1c1812;
+  --ink-soft: #2e2820;
+  --muted: #8a7d6c;
+  --rule: #d4c8b1;
+  --rule-soft: #e3d8c2;
+  --wine: #7a1c2e;
+  --wine-soft: #a14a5c;
+  --display: 'Fraunces', 'Times New Roman', serif;
+  --body: 'Newsreader', Georgia, serif;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  --measure: 38rem;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 18px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+  font-feature-settings: "ss01", "kern", "onum";
+  scroll-behavior: smooth;
+}
+
+@media (max-width: 640px) {
+  html { font-size: 17px; }
+}
+
+body {
+  min-height: 100vh;
+  background-image:
+    radial-gradient(circle at 80% 20%, rgba(122, 28, 46, 0.04) 0%, transparent 40%),
+    radial-gradient(circle at 10% 90%, rgba(28, 24, 18, 0.04) 0%, transparent 50%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.11  0 0 0 0 0.09  0 0 0 0 0.07  0 0 0 0.04 0'/></filter><rect width='240' height='240' filter='url(%23n)' opacity='0.65'/></svg>");
+  background-attachment: fixed;
+  position: relative;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--wine);
+  color: var(--paper);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LAYOUT — newspaper-style centered column
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.shell {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 7rem 1.75rem 8rem;
+}
+
+@media (max-width: 640px) {
+  .shell { padding: 4rem 1.25rem 5rem; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MASTHEAD
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.masthead {
+  text-align: center;
+  margin-bottom: 4.5rem;
+  animation: rise 1.4s cubic-bezier(.2,.7,.2,1) both;
+}
+
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-family: var(--body);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 2.2rem;
+}
+.kicker::before, .kicker::after {
+  content: "";
+  display: block;
+  width: 2.4rem;
+  height: 1px;
+  background: var(--rule);
+}
+
+h1.title {
+  font-family: var(--display);
+  font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 0;
+  font-weight: 360;
+  font-size: clamp(3rem, 9vw, 5.6rem);
+  line-height: 0.96;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  margin-bottom: 1.4rem;
+}
+
+.title em {
+  font-style: italic;
+  font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 1;
+  color: var(--wine);
+  font-weight: 360;
+}
+
+.dek {
+  font-family: var(--display);
+  font-variation-settings: "opsz" 24;
+  font-style: italic;
+  font-weight: 300;
+  font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+  color: var(--ink-soft);
+  line-height: 1.4;
+  max-width: 28rem;
+  margin: 0 auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OBITUARY CARD
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.obituary {
+  position: relative;
+  margin: 4rem auto;
+  padding: 2.4rem 2.6rem 2.6rem;
+  max-width: 30rem;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  box-shadow:
+    0 1px 0 var(--paper-deep),
+    0 16px 40px -12px rgba(28, 24, 18, 0.08);
+  animation: rise 1.4s cubic-bezier(.2,.7,.2,1) 0.2s both;
+}
+
+.obituary::before, .obituary::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: 3.5rem;
+  height: 1px;
+  background: var(--ink);
+  transform: translateX(-50%);
+}
+.obituary::before { top: -0.5rem; }
+.obituary::after { bottom: -0.5rem; }
+
+.obituary-heading {
+  text-align: center;
+  font-family: var(--body);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1.6rem;
+  padding-bottom: 1.2rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.obituary-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.7rem 1.6rem;
+  font-family: var(--body);
+  font-size: 0.95rem;
+}
+
+.obituary-grid dt {
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  align-self: baseline;
+  white-space: nowrap;
+}
+
+.obituary-grid dd {
+  font-family: var(--display);
+  font-variation-settings: "opsz" 14;
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+.obituary-grid dd.wine { color: var(--wine); font-style: italic; }
+.obituary-grid dd.zero { font-variant-numeric: oldstyle-nums; font-feature-settings: "onum"; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SECTIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+section {
+  margin-top: 6rem;
+}
+
+@media (max-width: 640px) {
+  section { margin-top: 4.5rem; }
+}
+
+.section-num {
+  font-family: var(--display);
+  font-variation-settings: "opsz" 144, "SOFT" 30;
+  font-style: italic;
+  font-size: 1.05rem;
+  font-weight: 300;
+  color: var(--wine);
+  letter-spacing: 0.05em;
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+h2 {
+  font-family: var(--display);
+  font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 0;
+  font-weight: 380;
+  font-size: clamp(2rem, 4.5vw, 2.8rem);
+  letter-spacing: -0.018em;
+  line-height: 1.05;
+  color: var(--ink);
+  margin-bottom: 2.2rem;
+  position: relative;
+}
+
+h2::after {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  height: 1px;
+  background: var(--ink);
+  margin-top: 1.2rem;
+}
+
+h3 {
+  font-family: var(--display);
+  font-variation-settings: "opsz" 36;
+  font-weight: 500;
+  font-size: 1.35rem;
+  letter-spacing: -0.005em;
+  line-height: 1.25;
+  color: var(--ink);
+  margin: 2.2rem 0 0.8rem;
+}
+
+p {
+  margin-bottom: 1.3rem;
+  font-feature-settings: "kern", "onum", "liga";
+  hyphens: auto;
+}
+
+p strong { font-weight: 600; color: var(--ink); }
+p em { font-family: var(--display); font-variation-settings: "opsz" 24; font-style: italic; }
+
+a {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--wine-soft);
+  transition: border-color 0.2s, color 0.2s;
+}
+a:hover { color: var(--wine); border-bottom-color: var(--wine); }
+
+/* DROP CAP for opening of verdict */
+.drop-cap::first-letter {
+  font-family: var(--display);
+  font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 0;
+  font-weight: 360;
+  float: left;
+  font-size: 4.6rem;
+  line-height: 0.85;
+  padding: 0.4rem 0.7rem 0 0;
+  color: var(--wine);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PULL QUOTE — the verdict
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.verdict {
+  margin: 3.5rem -2rem;
+  padding: 3rem 2rem;
+  text-align: center;
+  position: relative;
+}
+
+@media (max-width: 640px) {
+  .verdict { margin: 2.5rem 0; padding: 2rem 0; }
+}
+
+.verdict::before {
+  content: "“";
+  position: absolute;
+  top: -1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 5.5rem;
+  color: var(--wine);
+  line-height: 1;
+  opacity: 0.65;
+}
+
+.verdict-line {
+  font-family: var(--display);
+  font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 0;
+  font-style: italic;
+  font-weight: 330;
+  font-size: clamp(1.5rem, 3.5vw, 2.1rem);
+  line-height: 1.3;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+.verdict-line .accent {
+  color: var(--wine);
+  font-style: italic;
+}
+
+.verdict-attrib {
+  margin-top: 1.6rem;
+  font-family: var(--body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FOUR QUESTIONS — Q&A blocks
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.questions {
+  display: grid;
+  gap: 2.4rem;
+  margin-top: 1.5rem;
+}
+
+.qa {
+  display: grid;
+  grid-template-columns: 4rem 1fr;
+  gap: 1.4rem;
+  padding: 1.6rem 0;
+  border-top: 1px solid var(--rule-soft);
+}
+
+@media (max-width: 640px) {
+  .qa { grid-template-columns: 1fr; gap: 0.8rem; }
+}
+
+.qa-num {
+  font-family: var(--display);
+  font-variation-settings: "opsz" 144, "SOFT" 30, "WONK" 1;
+  font-style: italic;
+  font-size: 2.4rem;
+  font-weight: 330;
+  color: var(--wine);
+  line-height: 1;
+}
+
+.qa-question {
+  font-family: var(--body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+
+.qa-answer {
+  font-family: var(--display);
+  font-variation-settings: "opsz" 36;
+  font-style: italic;
+  font-weight: 350;
+  font-size: 1.4rem;
+  line-height: 1.35;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+}
+
+.qa-answer::before { content: "“"; color: var(--wine-soft); }
+.qa-answer::after { content: "”"; color: var(--wine-soft); }
+
+.qa-gloss {
+  margin-top: 0.7rem;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FIVE ROOT CAUSES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cause {
+  margin-top: 3.8rem;
+  position: relative;
+}
+
+.cause-num {
+  font-family: var(--display);
+  font-variation-settings: "opsz" 144, "SOFT" 80, "WONK" 1;
+  font-style: italic;
+  font-weight: 280;
+  font-size: 6rem;
+  line-height: 0.85;
+  color: var(--wine);
+  opacity: 0.8;
+  position: absolute;
+  top: -1.2rem;
+  left: -0.4rem;
+  z-index: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .cause-num { font-size: 4rem; top: -0.6rem; left: -0.2rem; }
+}
+
+.cause-content {
+  position: relative;
+  z-index: 1;
+  padding-left: 4.2rem;
+}
+
+@media (max-width: 640px) {
+  .cause-content { padding-left: 3rem; }
+}
+
+.cause h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.cause-evidence {
+  margin-top: 1.2rem;
+  padding-left: 1.2rem;
+  border-left: 2px solid var(--wine);
+  font-style: italic;
+  font-family: var(--display);
+  font-variation-settings: "opsz" 14;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.cause-evidence strong {
+  font-style: normal;
+  font-family: var(--body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--wine);
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GIT-LOG TIMELINE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.gitlog {
+  margin: 2rem -1rem;
+  padding: 2rem 1.4rem;
+  background: var(--ink);
+  color: #d4c8b1;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  line-height: 1.85;
+  border-radius: 2px;
+  overflow-x: auto;
+  box-shadow: 0 12px 36px -8px rgba(28, 24, 18, 0.18);
+}
+
+@media (max-width: 640px) {
+  .gitlog { font-size: 0.72rem; margin: 2rem 0; padding: 1.5rem 1.1rem; }
+}
+
+.gitlog-line { display: block; white-space: nowrap; }
+.gitlog .sha { color: #c4a058; }
+.gitlog .ann { color: #897f6e; padding-left: 0.5rem; }
+.gitlog .violate { color: #d97a86; }
+.gitlog .fatal { color: #f3ede2; font-weight: 500; }
+.gitlog .freeze { color: #88b894; font-style: italic; }
+.gitlog .silence { color: #6d6555; padding-left: 5.2rem; font-style: italic; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WORKED / DIDN'T (two columns)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.ledger {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  margin-top: 2rem;
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
+
+@media (max-width: 640px) {
+  .ledger { grid-template-columns: 1fr; }
+}
+
+.ledger-col {
+  padding: 1.8rem 1.6rem;
+}
+
+.ledger-col + .ledger-col {
+  border-left: 1px solid var(--rule);
+}
+
+@media (max-width: 640px) {
+  .ledger-col + .ledger-col {
+    border-left: none;
+    border-top: 1px solid var(--rule);
+  }
+}
+
+.ledger-col h4 {
+  font-family: var(--body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1.1rem;
+}
+
+.ledger-col.left h4 { color: #5a8b6a; }
+.ledger-col.right h4 { color: var(--wine); }
+
+.ledger-col ul { list-style: none; }
+
+.ledger-col li {
+  font-family: var(--display);
+  font-variation-settings: "opsz" 14;
+  font-size: 0.96rem;
+  line-height: 1.45;
+  padding: 0.5rem 0;
+  border-bottom: 1px dotted var(--rule);
+  color: var(--ink-soft);
+}
+
+.ledger-col li:last-child { border-bottom: none; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE THREE LESSONS — large, displayed prominently
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.lessons {
+  margin-top: 1rem;
+}
+
+.lesson {
+  display: grid;
+  grid-template-columns: 5rem 1fr;
+  gap: 1.5rem;
+  padding: 2.4rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.lesson:last-child { border-bottom: none; }
+
+@media (max-width: 640px) {
+  .lesson { grid-template-columns: 1fr; gap: 0.6rem; }
+}
+
+.lesson-num {
+  font-family: var(--display);
+  font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 1;
+  font-style: italic;
+  font-weight: 300;
+  font-size: 4.2rem;
+  color: var(--wine);
+  line-height: 0.9;
+}
+
+@media (max-width: 640px) {
+  .lesson-num { font-size: 3rem; }
+}
+
+.lesson-text {
+  padding-top: 0.4rem;
+}
+
+.lesson-headline {
+  font-family: var(--display);
+  font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 0;
+  font-weight: 380;
+  font-size: clamp(1.4rem, 3vw, 1.8rem);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  margin-bottom: 0.9rem;
+}
+
+.lesson-body {
+  font-size: 0.98rem;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FACT-STRIP (cost recap)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  margin: 3rem -1rem;
+  padding: 2rem 0;
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .facts { grid-template-columns: repeat(2, 1fr); margin: 2rem 0; gap: 1.5rem 0; }
+}
+
+.fact {
+  padding: 0 0.4rem;
+  border-right: 1px dotted var(--rule);
+}
+.fact:last-child { border-right: none; }
+
+@media (max-width: 640px) {
+  .fact:nth-child(2n) { border-right: none; }
+}
+
+.fact-value {
+  font-family: var(--display);
+  font-variation-settings: "opsz" 144, "SOFT" 50, "WONK" 0;
+  font-weight: 350;
+  font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+  color: var(--wine);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  font-feature-settings: "onum" 0, "lnum" 1;
+}
+
+.fact-label {
+  font-family: var(--body);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CLOSING
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.closing {
+  margin-top: 6rem;
+  padding-top: 4rem;
+  border-top: 1px solid var(--rule);
+  text-align: center;
+}
+
+.closing-line {
+  font-family: var(--display);
+  font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 0;
+  font-style: italic;
+  font-weight: 350;
+  font-size: clamp(1.4rem, 3.2vw, 1.95rem);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  max-width: 30rem;
+  margin: 0 auto 2.5rem;
+}
+
+.colophon {
+  font-family: var(--body);
+  font-size: 0.78rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  line-height: 1.7;
+}
+
+.colophon p { margin-bottom: 0.4rem; }
+
+.colophon .ornament {
+  display: block;
+  margin: 1.5rem auto 1rem;
+  font-family: var(--display);
+  color: var(--wine);
+  font-size: 1.5rem;
+  font-style: italic;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes drawline {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+[data-rise] {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.9s cubic-bezier(.2,.7,.2,1), transform 0.9s cubic-bezier(.2,.7,.2,1);
+}
+
+[data-rise].in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  [data-rise] { opacity: 1; transform: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MICRO
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.smallcaps {
+  font-variant: small-caps;
+  letter-spacing: 0.05em;
+}
+
+.aside {
+  font-family: var(--display);
+  font-variation-settings: "opsz" 14;
+  font-style: italic;
+  color: var(--muted);
+  font-size: 0.94rem;
+  margin: 1.2rem 0;
+  padding-left: 1.2rem;
+  border-left: 1px solid var(--rule);
+}
+
+.intro {
+  font-family: var(--display);
+  font-variation-settings: "opsz" 24;
+  font-size: 1.08rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.lifespan {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  text-align: center;
+  margin: 0.5rem 0 2rem;
+}
+
+.lifespan .dash {
+  display: inline-block;
+  margin: 0 0.5rem;
+  width: 1.2rem;
+  height: 1px;
+  background: var(--muted);
+  vertical-align: middle;
+}
+
+</style>
+</head>
+<body>
+
+<main class="shell">
+
+  <!-- ════════════════════════════ MASTHEAD ════════════════════════════ -->
+  <header class="masthead">
+    <div class="kicker">A Post-Mortem · No.&nbsp;01</div>
+    <h1 class="title">StartInsight</h1>
+    <p class="lifespan">2026·01·24 <span class="dash"></span> 2026·05·10</p>
+    <p class="dek">A capability in search of a customer. <em>An honest record of how a working product can still be a failed company.</em></p>
+
+    <aside class="obituary" aria-label="In memoriam">
+      <div class="obituary-heading">In Memoriam</div>
+      <dl class="obituary-grid">
+        <dt>Lived</dt>             <dd>80 days in production</dd>
+        <dt>Died of</dt>           <dd class="wine">Solution in search of a problem</dd>
+        <dt>Built</dt>             <dd>70 tables · 235 endpoints · 8 AI agents</dd>
+        <dt>Burned</dt>            <dd>~$34/mo · ~$408/yr</dd>
+        <dt>Revenue</dt>           <dd class="zero">$0</dd>
+        <dt>Customers</dt>         <dd class="zero">0</dd>
+        <dt>Newsletter</dt>        <dd>1 (anonymous)</dd>
+        <dt>Last breath</dt>       <dd>2026·05·09</dd>
+      </dl>
+    </aside>
+  </header>
+
+  <!-- ════════════════════════════ THE VERDICT ════════════════════════════ -->
+  <section data-rise>
+    <span class="section-num">i.</span>
+    <h2>The Verdict</h2>
+    <p class="intro drop-cap">On the eighteenth of April, 2026 &mdash; six months into building, six weeks into &ldquo;going live,&rdquo; six days into a 90-day go-to-market sprint &mdash; the founder of StartInsight ran a forcing-question diagnostic on himself, and answered every question with the hardest&#8209;true option available.</p>
+    <p>The diagnostic produced a single line. It was correct on the day it was written, and it remains correct now. It is the entire post-mortem in twenty&#8209;one words.</p>
+
+    <div class="verdict">
+      <p class="verdict-line">Solution in search of a problem. <span class="accent">Technical demo dressed as a product.</span> Engineering six months ahead of user discovery.</p>
+      <div class="verdict-attrib">— /office-hours, 2026-04-18</div>
+    </div>
+
+    <p>What follows is not the story of how StartInsight was built. The build was good: 398 tests, 47% coverage, clean Sentry, sub&#8209;100ms APAC latency, three commit&#8209;hours of automated GTM scaffolding. The architecture would survive a code review at any company in any quarter.</p>
+    <p>This is the story of why none of that mattered, and the three lessons that the next project must begin with — <em>before any code is written.</em></p>
+  </section>
+
+  <!-- ════════════════════════════ FOUR QUESTIONS ════════════════════════════ -->
+  <section data-rise>
+    <span class="section-num">ii.</span>
+    <h2>Four Questions, Four Hardest-True Answers</h2>
+    <p>Most founders, asked to honestly diagnose their own startup, will pick the soft answer on at least one of the four forcing questions. Picking the hardest-true option <em>four times in a row</em> is unusual self-honesty. It is also the single most useful thing the founder did in the entire eighty days.</p>
+
+    <div class="questions">
+
+      <article class="qa">
+        <div class="qa-num">i</div>
+        <div>
+          <div class="qa-question">Q1. Demand reality &mdash; name a person</div>
+          <div class="qa-answer">I cannot name a single person.</div>
+          <p class="qa-gloss">No specific human had shown pull toward StartInsight. The newsletter subscriber was anonymous. After eighty days live, zero people had been made hungry for the thing.</p>
+        </div>
+      </article>
+
+      <article class="qa">
+        <div class="qa-num">ii</div>
+        <div>
+          <div class="qa-question">Q2. Status quo &mdash; what does it replace</div>
+          <div class="qa-answer">There is no real status quo. &lsquo;Nothing&rsquo; is the alternative.</div>
+          <p class="qa-gloss">Founders looking for startup ideas in 2026 use Twitter scrolling, Product&nbsp;Hunt browsing, ChatGPT, friends. None of those workflows are painful enough that switching to a new tool is net&#8209;positive. StartInsight needed to <em>create</em> a research-first idea-discovery behavior. New behavior is the hardest type of GTM there is.</p>
+        </div>
+      </article>
+
+      <article class="qa">
+        <div class="qa-num">iii</div>
+        <div>
+          <div class="qa-question">Q3. Origin &mdash; why this, why now</div>
+          <div class="qa-answer">AI/tech capability looking for a use case.</div>
+          <p class="qa-gloss">The platform came first; the user, second. Every architectural decision after that &mdash; eight scoring dimensions, six ingestion sources, two&#8209;hundred&#8209;and&#8209;thirty&#8209;five endpoints &mdash; added capability without adding conviction.</p>
+        </div>
+      </article>
+
+      <article class="qa">
+        <div class="qa-num">iv</div>
+        <div>
+          <div class="qa-question">Q4. Narrowest wedge &mdash; without the platform</div>
+          <div class="qa-answer">All my offerings assume the platform exists.</div>
+          <p class="qa-gloss">When the founder could not conceive of the product without its automation, the founder was not selling a product. The founder was selling the existence of the platform itself. That is not a market.</p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ════════════════════════════ FIVE ROOT CAUSES ════════════════════════════ -->
+  <section data-rise>
+    <span class="section-num">iii.</span>
+    <h2>Five Root Causes</h2>
+    <p>The four answers above point at one disease in five forms. The disease was not laziness, taste, or technical inadequacy. It was a problem of <em>sequence</em> — the order in which decisions were made.</p>
+
+    <article class="cause">
+      <div class="cause-num">01</div>
+      <div class="cause-content">
+        <h3>Capability-first origin</h3>
+        <p>StartInsight began with the question <em>&ldquo;what can I build with PydanticAI, Gemini, and Firecrawl?&rdquo;</em> and worked outward toward <em>&ldquo;who would want this?&rdquo;</em>. The user remained a category, never a person. The build accumulated capability in the absence of conviction.</p>
+        <div class="cause-evidence"><strong>Evidence</strong>The project-brief never contained a &ldquo;who specifically buys this and why&rdquo; section &mdash; only an IdeaBrowser feature/price comparison.</div>
+      </div>
+    </article>
+
+    <article class="cause">
+      <div class="cause-num">02</div>
+      <div class="cause-content">
+        <h3>No status quo to replace</h3>
+        <p>Most founders do not actively research startup ideas. They stumble into them through job pain, domain exposure, or copying trends. There was no painful current workflow for StartInsight to displace, which meant success required <em>creating</em> a new behavior — without viral mechanics or a forcing function to power that creation.</p>
+        <div class="cause-evidence"><strong>Evidence</strong>Eighty days live, $0 inbound: no one was switching <em>away</em> from anything to use it.</div>
+      </div>
+    </article>
+
+    <article class="cause">
+      <div class="cause-num">03</div>
+      <div class="cause-content">
+        <h3>Eighty percent automation, twenty percent manual &mdash; and the manual twenty never executed</h3>
+        <p>In a single forty&#8209;eight&#8209;hour build sprint, fifty-four files and three&#8209;thousand&#8209;eight&#8209;hundred lines of GTM automation shipped: a conviction funnel, a social posting agent, a four-stage email nurture, twelve programmatic SEO pages, an llms.txt, an RSS feed, and a GEO-optimized content prompt suite. By Day 13 of the operational sprint, zero community posts had been made by hand.</p>
+        <div class="cause-evidence"><strong>Evidence</strong>From the Day&nbsp;6 status table: external traffic ~0, social posts published 0, conviction funnel events fired 0.</div>
+      </div>
+    </article>
+
+    <article class="cause">
+      <div class="cause-num">04</div>
+      <div class="cause-content">
+        <h3>Engineering-avoidance-after-ship</h3>
+        <p>The founder named the failure pattern in his own <code>learnings.jsonl</code> on the fourth of April: when sales gets uncomfortable, return to code. Two weeks later, the office-hours diagnostic identified the same pattern from the outside. The 60-day engineering freeze was an attempt to break the loop by removing the comfort.</p>
+        <div class="cause-evidence"><strong>Evidence</strong>The session opened with the question &ldquo;<em>what gstack skill should I use next?</em>&rdquo; — the founder&rsquo;s own system, attempting to route him back into engineering one more time.</div>
+      </div>
+    </article>
+
+    <article class="cause">
+      <div class="cause-num">05</div>
+      <div class="cause-content">
+        <h3>The freeze did not hold</h3>
+        <p>Within twenty-four hours of the freeze being declared, commits to <code>main</code> resumed: fourteen <code>fix(sentry):</code> commits before shutdown, each individually defensible, collectively a continuation of the pattern. The wedge test &mdash; twenty named founders, three RM49 memos, by Sunday &mdash; was never started. There is no Google Sheet. There is no DM screenshot in <code>daily-operations.md</code>. The hypothesis under test was never tested.</p>
+        <div class="cause-evidence"><strong>Evidence</strong>The git log between Apr&nbsp;19 and May&nbsp;9 contains zero artifacts of distribution work. It contains fourteen Sentry fixes for software no one was using.</div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ════════════════════════════ TIMELINE ════════════════════════════ -->
+  <section data-rise>
+    <span class="section-num">iv.</span>
+    <h2>A Timeline of the Decline</h2>
+    <p>Read this not as a chronicle, but as evidence. Each line on the right is a commit; each line on the left is what was supposed to be happening instead.</p>
+
+    <pre class="gitlog" aria-label="git log of the freeze period"><span class="gitlog-line"><span class="freeze">2026-04-04   learnings.jsonl  &lt;&lt; engineering-avoidance-after-ship</span></span>
+<span class="gitlog-line"><span class="silence">                  (the founder writes his own warning, two weeks early)</span></span>
+<span class="gitlog-line"></span>
+<span class="gitlog-line"><span class="freeze">2026-04-05   GTM SHIP-DAY    +54 files / 3,818 lines / 4 commits</span></span>
+<span class="gitlog-line"><span class="silence">                  (the marketing system built, before the marketing began)</span></span>
+<span class="gitlog-line"></span>
+<span class="gitlog-line"><span class="freeze">2026-04-12   DAY 6 STATUS    1 newsletter sub · 0 traffic · 0 sales</span></span>
+<span class="gitlog-line"></span>
+<span class="gitlog-line"><span class="freeze">2026-04-18   /office-hours   verdict delivered — 60-day engineering freeze</span></span>
+<span class="gitlog-line"><span class="sha">6330756</span> docs(ops): /office-hours pivot — engineering freeze + wedge test<span class="ann"> ← freeze begins</span></span>
+<span class="gitlog-line"></span>
+<span class="gitlog-line"><span class="violate">2026-04-19   freeze violated &lt;&lt; 14 hours after declaration</span></span>
+<span class="gitlog-line"><span class="sha">7b0e3e5</span> fix(sentry): replace datetime.utcnow() with datetime.now(UTC)<span class="ann"> ← #1</span></span>
+<span class="gitlog-line"><span class="sha">2a62730</span> fix(sentry): 4 bugs — null competitor_analysis crash<span class="ann"> ← #2</span></span>
+<span class="gitlog-line"><span class="sha">2b96277</span> fix(sentry): UTC-aware timestamps in realtime feed<span class="ann"> ← #3</span></span>
+<span class="gitlog-line"><span class="sha">042b3c5</span> fix(sentry): replace non-existent settings.secret_key<span class="ann"> ← #4</span></span>
+<span class="gitlog-line"><span class="sha">2b01ab7</span> fix(sentry): replace func.distinct() with distinct()<span class="ann"> ← #5</span></span>
+<span class="gitlog-line"><span class="sha">1be6aa5</span> fix(sentry): suppress 3 unused selectin loads<span class="ann"> ← #6</span></span>
+<span class="gitlog-line"><span class="sha">a164fd7</span> fix(sentry): suppress N+1 DB queries on admin endpoints<span class="ann"> ← #7</span></span>
+<span class="gitlog-line"><span class="sha">9a3bac7</span> fix(sentry): suppress redundant selectin queries on export<span class="ann"> ← #8</span></span>
+<span class="gitlog-line"><span class="sha">5b1bdde</span> fix(sentry): guard naive ISO timestamps in trend retention<span class="ann"> ← #9</span></span>
+<span class="gitlog-line"><span class="sha">39db277</span> fix(sentry): safe JSONB int cast in agent cost queries<span class="ann"> ← #10</span></span>
+<span class="gitlog-line"><span class="sha">e87eb88</span> fix(sentry): literal routes shadowed by parameterized routes<span class="ann"> ← #11</span></span>
+<span class="gitlog-line"><span class="sha">888ef60</span> fix(sentry): replace non-existent category column<span class="ann"> ← #12</span></span>
+<span class="gitlog-line"><span class="sha">94cf694</span> fix(sentry): NaN crash in Trends int() casts<span class="ann"> ← #13</span></span>
+<span class="gitlog-line"><span class="sha">73f1b0c</span> fix(sentry): skip nurture stage advancement on email error<span class="ann"> ← #14</span></span>
+<span class="gitlog-line"></span>
+<span class="gitlog-line"><span class="freeze">                  (somewhere in here, the wedge test does not happen)</span></span>
+<span class="gitlog-line"><span class="silence">                  no Google Sheet. no DMs. no inbound replies. no test.</span></span>
+<span class="gitlog-line"></span>
+<span class="gitlog-line"><span class="fatal">2026-05-09   shutdown declared — 38 days before kill-criteria date</span></span>
+<span class="gitlog-line"><span class="sha">4f6c193</span> chore(ops): disable CI/CD + scheduled workflows for shutdown<span class="ann"> ← end</span></span>
+<span class="gitlog-line"><span class="fatal">2026-05-10   Supabase project deleted. Railway cancelled. Domain expiring.</span></span></pre>
+
+    <p class="aside">The 2026-06-17 kill-criteria check never happened, because the test it was meant to evaluate was never run. What sunset on May 9th was Approach C — &ldquo;honest sunset&rdquo; — three weeks late, but honest.</p>
+  </section>
+
+  <!-- ════════════════════════════ COST FACTS ════════════════════════════ -->
+  <section data-rise>
+    <span class="section-num">v.</span>
+    <h2>What It Cost — In Numbers</h2>
+    <p>Until shutdown, the documented monthly burn was ~$30. The audit during deletion produced a different picture. The cost was small in absolute terms; the documentation was wrong by a factor of three on the controllable lines. Cost-tracking accuracy is a leading indicator of how recently the founder has talked to a paying user.</p>
+
+    <div class="facts">
+      <div class="fact">
+        <div class="fact-value">$15</div>
+        <div class="fact-label">Railway/mo<br>(documented as $0)</div>
+      </div>
+      <div class="fact">
+        <div class="fact-value">$10</div>
+        <div class="fact-label">Supabase Compute</div>
+      </div>
+      <div class="fact">
+        <div class="fact-value">$8.83</div>
+        <div class="fact-label">Branching Compute</div>
+      </div>
+      <div class="fact">
+        <div class="fact-value">$0</div>
+        <div class="fact-label">Gemini Lifetime<br>(free tier only)</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════ WORKED / DIDN'T ════════════════════════════ -->
+  <section data-rise>
+    <span class="section-num">vi.</span>
+    <h2>Ledger</h2>
+    <p>Worth recording, because the next project should reuse what worked and refuse what didn&rsquo;t.</p>
+
+    <div class="ledger">
+      <div class="ledger-col left">
+        <h4>What Worked</h4>
+        <ul>
+          <li>Glue-coding philosophy. Standard libraries. No custom-LLM-orchestration debt.</li>
+          <li>Resilience patterns adapted from World&nbsp;Monitor &mdash; circuit breakers, stale-on-error caching, source health registry.</li>
+          <li>Sentry-driven self-healing. Daily triage + auto-fix kept production clean with near-zero overhead.</li>
+          <li>Office-hours discipline at the right moment. Forcing-question process beat sunk-cost intuition.</li>
+          <li>Self-honesty under pressure. The hardest-true answer four times in a row.</li>
+        </ul>
+      </div>
+      <div class="ledger-col right">
+        <h4>What Did Not Work</h4>
+        <ul>
+          <li>Building the marketing system <em>before</em> doing any marketing.</li>
+          <li>Trusting automated distribution to surface manual demand.</li>
+          <li>A 90-day plan with no Day&nbsp;7 binary test.</li>
+          <li>Treating a freeze as a calendar rule rather than a hard interlock — no git hook, no enforcement, only a sentence in a markdown file.</li>
+          <li>Letting Sentry-bug urgency override the freeze. Each fix was a decision to <em>not</em> send a DM.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════ THE THREE LESSONS ════════════════════════════ -->
+  <section data-rise>
+    <span class="section-num">vii.</span>
+    <h2>The Three Lessons</h2>
+    <p>These are the only three lessons worth carrying. Everything else is a special case of these. Print them. Write them down somewhere visible. The next project earns its first commit only after all three are obeyed.</p>
+
+    <div class="lessons">
+
+      <article class="lesson">
+        <div class="lesson-num">i</div>
+        <div class="lesson-text">
+          <h3 class="lesson-headline">Begin with a person, not a capability.</h3>
+          <p class="lesson-body">Before any code: name the human. Name their current workflow. Name the precise moment of pain in that workflow. Name what they are willing to <em>pay today</em> to make that pain stop. If those four answers cannot be written down — in real names, with real numbers — the project is not ready to start. Capability without conviction is the same disease, every time.</p>
+        </div>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-num">ii</div>
+        <div class="lesson-text">
+          <h3 class="lesson-headline">The wedge test belongs on Day&nbsp;1, not Day&nbsp;90.</h3>
+          <p class="lesson-body">Sell the manual version of the product before automating it. RM49, hand-written, forty-eight-hour turnaround, three slots. If three humans cannot be persuaded to pay for the manual version in seven days, no amount of automation will sell the automated version later. This is a one-week test that prevents one-year sunk costs.</p>
+        </div>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-num">iii</div>
+        <div class="lesson-text">
+          <h3 class="lesson-headline">Make engineering freezes interlocked, not voluntary.</h3>
+          <p class="lesson-body">A pre-commit hook that blocks pushes to <code>main</code> is enforceable. A sentence in a markdown file is not. If a freeze is the right tool, install the lock at the same moment the freeze is declared. Otherwise the freeze is just a stronger feeling about not committing — and feelings lose to the comfort of typing <code>git commit</code> when sales gets hard.</p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ════════════════════════════ CLOSING ════════════════════════════ -->
+  <section class="closing" data-rise>
+    <p class="closing-line">The next project earns the right to be coded only after a specific human has paid cash for the manual version of what it does.</p>
+
+    <div class="colophon">
+      <span class="ornament">❦</span>
+      <p>StartInsight · 2026·01·24 — 2026·05·10</p>
+      <p>Code archived. Project sunset. Founder-attention freed.</p>
+      <p style="margin-top: 1.2rem;">A memorial maintained at <span class="smallcaps">startinsight.co</span> in lieu of the product that used to live here.</p>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// Subtle reveal-on-scroll for sections.
+// Single observer, single class toggle. No frameworks.
+(function () {
+  if (!('IntersectionObserver' in window)) {
+    document.querySelectorAll('[data-rise]').forEach(el => el.classList.add('in'));
+    return;
+  }
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -80px 0px' });
+
+  document.querySelectorAll('[data-rise]').forEach(el => io.observe(el));
+})();
+</script>
+
+</body>
+</html>
