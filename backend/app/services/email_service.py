@@ -493,8 +493,17 @@ async def send_email(
         }
 
     except Exception as e:
-        logger.warning(f"Failed to send email: {e}")
-        return {"status": "error", "error": str(e)}
+        err_str = str(e)
+        # Config errors (domain unverified, invalid API key) are not actionable via code;
+        # log at DEBUG to keep Sentry Logs clean.
+        if any(
+            phrase in err_str
+            for phrase in ("domain is not verified", "API key is invalid", "not verified")
+        ):
+            logger.debug(f"Failed to send email (config issue): {e}")
+        else:
+            logger.warning(f"Failed to send email: {e}")
+        return {"status": "error", "error": err_str}
 
 
 # ============================================================
