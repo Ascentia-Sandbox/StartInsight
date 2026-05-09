@@ -1,8 +1,10 @@
 name: Create Release
 
 on:
-  push:
-    branches: [main]
+  # Disabled 2026-05-09 during project shutdown — no need to auto-tag releases on a paused project.
+  # push:
+  #   branches: [main]
+  workflow_dispatch: {}
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

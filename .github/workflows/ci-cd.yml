@@ -1,10 +1,13 @@
 name: CI/CD Pipeline
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
+  # Disabled 2026-05-09 during project shutdown to stop auto-deploys to paused Railway/Vercel.
+  # Re-enable push/pull_request triggers to resume CI/CD.
+  # push:
+  #   branches: [main, develop]
+  # pull_request:
+  #   branches: [main]
+  workflow_dispatch: {}
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

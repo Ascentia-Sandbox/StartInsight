@@ -1,9 +1,10 @@
 name: Sentry Daily Triage
 
 on:
-  schedule:
-    # Mon-Fri 9am UTC
-    - cron: '0 9 * * 1-5'
+  # Disabled 2026-05-09 during project shutdown — re-enable to resume daily triage.
+  # schedule:
+  #   # Mon-Fri 9am UTC
+  #   - cron: '0 9 * * 1-5'
   workflow_dispatch: {}
 
 env:
