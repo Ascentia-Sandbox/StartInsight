@@ -350,6 +350,8 @@ async def analyze_competitors_with_retry(
             # Retry with exponential backoff
             await asyncio.sleep(2**attempt)
 
+    raise ValueError(f"Competitive analysis failed after {max_retries} attempts")
+
 
 async def _update_competitor_profiles_with_analysis(
     competitors: list[CompetitorProfile],

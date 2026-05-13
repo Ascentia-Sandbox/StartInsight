@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class QualityValidationError(Exception):
     """Raised when insight data fails quality validation."""
 
-    def __init__(self, message: str, field: str | None = None, value: any = None):
+    def __init__(self, message: str, field: str | None = None, value: object = None):
         self.field = field
         self.value = value
         super().__init__(message)

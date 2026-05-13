@@ -91,7 +91,7 @@ class PollCreate(BaseModel):
     options: dict | None = None
 
 
-class PollResponse(BaseModel):
+class PollDetail(BaseModel):
     id: UUID
     insight_id: UUID
     question: str
@@ -423,7 +423,7 @@ async def upvote_comment(
 # ============================================
 
 
-@router.post("/insights/{insight_id}/polls", response_model=PollResponse)
+@router.post("/insights/{insight_id}/polls", response_model=PollDetail)
 async def create_poll(
     insight_id: UUID,
     poll: PollCreate,
@@ -452,7 +452,7 @@ async def create_poll(
     await db.refresh(new_poll)
 
     logger.info(f"User {current_user.id} created poll on insight {insight_id}")
-    return PollResponse(
+    return PollDetail(
         id=new_poll.id,
         insight_id=new_poll.insight_id,
         question=new_poll.question,
@@ -464,7 +464,7 @@ async def create_poll(
     )
 
 
-@router.get("/insights/{insight_id}/polls", response_model=list[PollResponse])
+@router.get("/insights/{insight_id}/polls", response_model=list[PollDetail])
 async def list_polls(
     insight_id: UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -492,7 +492,7 @@ async def list_polls(
         results = {row[0]: row[1] for row in results_query.fetchall()}
 
         responses.append(
-            PollResponse(
+            PollDetail(
                 id=p.id,
                 insight_id=p.insight_id,
                 question=p.question,
