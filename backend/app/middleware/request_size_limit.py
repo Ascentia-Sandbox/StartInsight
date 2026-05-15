@@ -23,7 +23,11 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
         content_length = request.headers.get("content-length")
 
         if content_length:
-            if int(content_length) > MAX_REQUEST_SIZE:
+            try:
+                parsed_length = int(content_length)
+            except (ValueError, TypeError):
+                parsed_length = 0
+            if parsed_length > MAX_REQUEST_SIZE:
                 return JSONResponse(
                     status_code=413,
                     content={

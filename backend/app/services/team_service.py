@@ -5,7 +5,7 @@ Handles team creation, membership, invitations, and shared insights.
 
 import logging
 import secrets
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -108,7 +108,7 @@ async def create_team(
             "default_role": "member",
             "allow_member_invites": False,
         },
-        "created_at": datetime.now().isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
     }
 
     logger.info(f"Team created: {name} (slug: {slug}) by {owner_id}")
@@ -140,7 +140,7 @@ async def invite_member(
         Invitation details
     """
     token = generate_invitation_token()
-    expires_at = datetime.now() + timedelta(days=7)
+    expires_at = datetime.now(UTC) + timedelta(days=7)
 
     invitation_data = {
         "team_id": str(team_id),
@@ -150,7 +150,7 @@ async def invite_member(
         "invited_by_id": str(inviter_id),
         "status": "pending",
         "expires_at": expires_at.isoformat(),
-        "created_at": datetime.now().isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
     }
 
     # Send invitation email
@@ -189,7 +189,7 @@ async def accept_invitation(
 
     membership_data = {
         "user_id": str(user_id),
-        "joined_at": datetime.now().isoformat(),
+        "joined_at": datetime.now(UTC).isoformat(),
         "status": "accepted",
     }
 
@@ -225,7 +225,7 @@ async def share_insight_with_team(
             "can_comment": True,
             "can_reshare": False,
         },
-        "shared_at": datetime.now().isoformat(),
+        "shared_at": datetime.now(UTC).isoformat(),
     }
 
     logger.info(f"Insight {insight_id} shared with team {team_id}")
