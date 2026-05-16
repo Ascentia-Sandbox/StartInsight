@@ -60,7 +60,7 @@ async def create_chat(
         "pricing_strategy": "Pricing Strategy",
         "competitive": "Competitive Analysis",
     }
-    default_title = f"{mode_labels.get(payload.mode.value, 'Chat')}: {insight.title[:80]}"
+    default_title = f"{mode_labels.get(payload.mode.value, 'Chat')}: {(insight.title or insight.proposed_solution or 'Untitled')[:80]}"
 
     chat = IdeaChat(
         user_id=current_user.id,
