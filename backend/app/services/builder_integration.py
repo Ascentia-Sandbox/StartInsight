@@ -159,7 +159,7 @@ class LovableIntegration:
                     "Content-Type": "application/json",
                 },
                 json={
-                    "name": f"StartInsight - {insight.problem_statement[:50]}",
+                    "name": f"StartInsight - {(insight.problem_statement or '')[:50]}",
                     "description": insight.problem_statement,
                     "prompt": prompt,
                     "framework": "react",  # or next, vue, etc.
@@ -194,7 +194,7 @@ class LovableIntegration:
 - User authentication
 - Dashboard with analytics
 - Mobile-responsive design
-- {insight.problem_statement.split(".")[0]}
+- {(insight.problem_statement or "").split(".")[0]}
 
 **Tech Stack:**
 - Frontend: React with Tailwind CSS
@@ -296,7 +296,7 @@ class ReplitIntegration:
         """
 
         variables = {
-            "title": f"StartInsight - {insight.problem_statement[:50]}",
+            "title": f"StartInsight - {(insight.problem_statement or '')[:50]}",
             "language": "python",  # or nodejs, etc.
             "description": insight.problem_statement,
         }

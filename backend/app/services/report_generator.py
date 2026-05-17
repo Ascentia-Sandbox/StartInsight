@@ -547,9 +547,9 @@ async def generate_report(
     # Build a compact signal summary for the LLM prompt
     signal_lines: list[str] = []
     for ins in insights:
-        title = getattr(ins, "title", None) or ins.proposed_solution[:80]
+        title = getattr(ins, "title", None) or (ins.proposed_solution or "Untitled")[:80]
         score = ins.relevance_score
-        problem = ins.problem_statement[:200]
+        problem = (ins.problem_statement or "")[:200]
         market = ins.market_size_estimate
         signal_lines.append(f"- [{score:.1f}] {title} | Market: {market} | Problem: {problem}")
 

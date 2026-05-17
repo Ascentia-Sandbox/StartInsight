@@ -333,8 +333,8 @@ async def send_weekly_digest_task(ctx: dict[str, Any]) -> dict[str, Any]:
             # Format insights for email template — include per-insight UTM link
             insight_list = [
                 {
-                    "title": i.title or i.proposed_solution[:80],
-                    "problem_statement": i.problem_statement[:150],
+                    "title": i.title or (i.proposed_solution or "Untitled")[:80],
+                    "problem_statement": (i.problem_statement or "")[:150],
                     "relevance_score": f"{(i.relevance_score or 0) * 100:.0f}%",
                     "market_size": i.market_size_estimate or "Unknown",
                     # Absolute insight URL with UTM params (utm_content = insight id)

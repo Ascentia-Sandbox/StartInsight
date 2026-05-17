@@ -324,7 +324,7 @@ async def audit_insights(session: AsyncSession, batch_size: int = 20) -> list[di
             audit_prompt = (
                 f"Audit this startup insight for quality:\n\n"
                 f"Fields: {fields_summary}\n\n"
-                f"Problem (first 500 chars): {insight.problem_statement[:500]}"
+                f"Problem (first 500 chars): {(insight.problem_statement or '')[:500]}"
             )
 
             audit = await _audit_insight_with_retry(audit_prompt)
