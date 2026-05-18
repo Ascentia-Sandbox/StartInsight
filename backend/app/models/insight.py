@@ -386,10 +386,10 @@ class Insight(Base):
         """String representation of Insight."""
         return (
             f"<Insight(id={self.id}, "
-            f"problem='{self.problem_statement[:50]}...', "
+            f"problem='{(self.problem_statement or '')[:50]}...', "
             f"score={self.relevance_score})>"
         )
 
     def __str__(self) -> str:
         """Human-readable string representation."""
-        return f"Insight: {self.problem_statement[:100]}"
+        return f"Insight: {(self.problem_statement or '')[:100]}"
