@@ -1,8 +1,7 @@
 """Unit tests for scrapers with mocked responses."""
 
 import pytest
-from unittest.mock import AsyncMock, Mock, patch
-from pydantic import HttpUrl
+from unittest.mock import Mock, patch
 
 from app.scrapers.firecrawl_client import ScrapeResult, FirecrawlClient
 from app.scrapers.base_scraper import BaseScraper
@@ -18,10 +17,10 @@ class TestFirecrawlClient:
         client = FirecrawlClient()
 
         # Mock the Firecrawl client response
-        with patch.object(client.client, 'scrape_url') as mock_scrape:
+        with patch.object(client.client, "scrape_url") as mock_scrape:
             mock_scrape.return_value = {
                 "metadata": {"title": "Test Page"},
-                "markdown": "# Test Content\n\nThis is test content."
+                "markdown": "# Test Content\n\nThis is test content.",
             }
 
             result = await client.scrape_url("https://example.com")
@@ -36,11 +35,8 @@ class TestFirecrawlClient:
         """Test handling of empty content."""
         client = FirecrawlClient()
 
-        with patch.object(client.client, 'scrape_url') as mock_scrape:
-            mock_scrape.return_value = {
-                "metadata": {},
-                "markdown": ""
-            }
+        with patch.object(client.client, "scrape_url") as mock_scrape:
+            mock_scrape.return_value = {"metadata": {}, "markdown": ""}
 
             result = await client.scrape_url("https://example.com")
 

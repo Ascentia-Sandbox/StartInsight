@@ -2,8 +2,6 @@
 
 import asyncio
 import logging
-from datetime import datetime
-from uuid import uuid4
 
 import httpx
 

@@ -179,6 +179,7 @@ def run_all_tests():
         logger.error(f"✗ PHASE 1.8 TESTS FAILED: {e}")
         logger.error("=" * 60)
         import traceback
+
         traceback.print_exc()
         return False
 

@@ -65,14 +65,16 @@ class TestURLValidator:
     @pytest.mark.asyncio
     async def test_validate_url_returns_valid_for_reachable_url(self, validator):
         """Test that reachable URLs return valid result."""
-        with patch.object(validator, '_is_valid_url_format', return_value=(True, None)):
+        with patch.object(validator, "_is_valid_url_format", return_value=(True, None)):
             mock_response = MagicMock()
             mock_response.status_code = 200
             mock_response.url = "https://example.com"
             mock_response.history = []
 
-            with patch('httpx.AsyncClient') as mock_client:
-                mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_client.return_value)
+            with patch("httpx.AsyncClient") as mock_client:
+                mock_client.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_client.return_value
+                )
                 mock_client.return_value.__aexit__ = AsyncMock(return_value=None)
                 mock_client.return_value.head = AsyncMock(return_value=mock_response)
 
@@ -84,11 +86,15 @@ class TestURLValidator:
     @pytest.mark.asyncio
     async def test_validate_url_returns_invalid_for_timeout(self, validator):
         """Test that timeout returns invalid result."""
-        with patch.object(validator, '_is_valid_url_format', return_value=(True, None)):
-            with patch('httpx.AsyncClient') as mock_client:
-                mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_client.return_value)
+        with patch.object(validator, "_is_valid_url_format", return_value=(True, None)):
+            with patch("httpx.AsyncClient") as mock_client:
+                mock_client.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_client.return_value
+                )
                 mock_client.return_value.__aexit__ = AsyncMock(return_value=None)
-                mock_client.return_value.head = AsyncMock(side_effect=httpx.TimeoutException("Timeout"))
+                mock_client.return_value.head = AsyncMock(
+                    side_effect=httpx.TimeoutException("Timeout")
+                )
 
                 result = await validator.validate_url("https://slow-site.com")
 
@@ -98,14 +104,16 @@ class TestURLValidator:
     @pytest.mark.asyncio
     async def test_validate_url_returns_invalid_for_404(self, validator):
         """Test that 404 responses return invalid result."""
-        with patch.object(validator, '_is_valid_url_format', return_value=(True, None)):
+        with patch.object(validator, "_is_valid_url_format", return_value=(True, None)):
             mock_response = MagicMock()
             mock_response.status_code = 404
             mock_response.url = "https://example.com/not-found"
             mock_response.history = []
 
-            with patch('httpx.AsyncClient') as mock_client:
-                mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_client.return_value)
+            with patch("httpx.AsyncClient") as mock_client:
+                mock_client.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_client.return_value
+                )
                 mock_client.return_value.__aexit__ = AsyncMock(return_value=None)
                 mock_client.return_value.head = AsyncMock(return_value=mock_response)
 
@@ -117,14 +125,16 @@ class TestURLValidator:
     @pytest.mark.asyncio
     async def test_validate_url_follows_redirects(self, validator):
         """Test that redirects are followed and final URL returned."""
-        with patch.object(validator, '_is_valid_url_format', return_value=(True, None)):
+        with patch.object(validator, "_is_valid_url_format", return_value=(True, None)):
             mock_response = MagicMock()
             mock_response.status_code = 200
             mock_response.url = "https://www.example.com"  # After redirect
             mock_response.history = [MagicMock()]  # One redirect
 
-            with patch('httpx.AsyncClient') as mock_client:
-                mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_client.return_value)
+            with patch("httpx.AsyncClient") as mock_client:
+                mock_client.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_client.return_value
+                )
                 mock_client.return_value.__aexit__ = AsyncMock(return_value=None)
                 mock_client.return_value.head = AsyncMock(return_value=mock_response)
 
@@ -145,16 +155,27 @@ class TestURLValidator:
         async def mock_validate(url, **kwargs):
             if "good" in url:
                 return URLValidationResult(
-                    url=url, valid=True, final_url=url, status_code=200,
-                    redirect_count=0, response_time_ms=100
+                    url=url,
+                    valid=True,
+                    final_url=url,
+                    status_code=200,
+                    redirect_count=0,
+                    response_time_ms=100,
                 )
             return URLValidationResult(
-                url=url, valid=False, final_url=None, status_code=None,
-                redirect_count=0, response_time_ms=None, error="Not found"
+                url=url,
+                valid=False,
+                final_url=None,
+                status_code=None,
+                redirect_count=0,
+                response_time_ms=None,
+                error="Not found",
             )
 
-        with patch.object(validator, 'validate_url', side_effect=mock_validate):
-            valid, valid_count, invalid_count = await validator.validate_competitors(competitors)
+        with patch.object(validator, "validate_url", side_effect=mock_validate):
+            valid, valid_count, invalid_count = await validator.validate_competitors(
+                competitors
+            )
 
             assert valid_count == 1
             assert invalid_count == 1
@@ -181,8 +202,12 @@ class TestURLValidator:
     def test_clear_cache(self, validator):
         """Test cache clearing."""
         validator._cache["test"] = URLValidationResult(
-            url="test", valid=True, final_url="test",
-            status_code=200, redirect_count=0, response_time_ms=50
+            url="test",
+            valid=True,
+            final_url="test",
+            status_code=200,
+            redirect_count=0,
+            response_time_ms=50,
         )
 
         validator.clear_cache()

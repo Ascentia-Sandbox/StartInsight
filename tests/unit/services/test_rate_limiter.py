@@ -8,7 +8,6 @@ Tests per-source rate limiting:
 """
 
 import asyncio
-from datetime import datetime, timedelta
 
 import pytest
 
@@ -164,6 +163,7 @@ class TestRateLimiter:
     @pytest.mark.asyncio
     async def test_concurrent_access_is_safe(self, limiter):
         """Test that concurrent access doesn't cause issues."""
+
         async def make_requests():
             for _ in range(3):
                 await limiter.acquire("test_source")

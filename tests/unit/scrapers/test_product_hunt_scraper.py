@@ -23,7 +23,7 @@ class TestProductHuntScraper:
     @pytest.fixture
     def scraper(self):
         """Create Product Hunt scraper instance."""
-        with patch.object(ProductHuntScraper, '__init__', lambda x: None):
+        with patch.object(ProductHuntScraper, "__init__", lambda x: None):
             scraper = ProductHuntScraper.__new__(ProductHuntScraper)
             scraper.source_name = "product_hunt"
             scraper.days_back = 1
@@ -138,7 +138,9 @@ class TestProductHuntScraper:
             metadata={"source": "product_hunt"},
         )
 
-        with patch.object(scraper, '_scrape_daily_products', new_callable=AsyncMock) as mock_scrape:
+        with patch.object(
+            scraper, "_scrape_daily_products", new_callable=AsyncMock
+        ) as mock_scrape:
             mock_scrape.return_value = [mock_result]
 
             results = await scraper.scrape()
@@ -216,7 +218,7 @@ class TestProductHuntHTMLParsing:
     @pytest.fixture
     def scraper(self):
         """Create scraper for HTML tests."""
-        with patch.object(ProductHuntScraper, '__init__', lambda x: None):
+        with patch.object(ProductHuntScraper, "__init__", lambda x: None):
             scraper = ProductHuntScraper.__new__(ProductHuntScraper)
             scraper.source_name = "product_hunt"
             scraper.PRODUCT_HUNT_BASE_URL = "https://www.producthunt.com"
@@ -268,7 +270,9 @@ class TestProductHuntHTMLParsing:
         soup = BeautifulSoup(html, "html.parser")
         card = soup.select_one("[data-test='post-item']")
 
-        result = scraper._parse_product_card(card, "2024-01-15", "https://www.producthunt.com")
+        result = scraper._parse_product_card(
+            card, "2024-01-15", "https://www.producthunt.com"
+        )
 
         assert result is not None
         assert result.title == "Amazing Product"
@@ -285,6 +289,8 @@ class TestProductHuntHTMLParsing:
         soup = BeautifulSoup(html, "html.parser")
         card = soup.select_one("[data-test='post-item']")
 
-        result = scraper._parse_product_card(card, "2024-01-15", "https://www.producthunt.com")
+        result = scraper._parse_product_card(
+            card, "2024-01-15", "https://www.producthunt.com"
+        )
 
         assert result is None

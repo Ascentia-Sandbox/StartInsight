@@ -3,7 +3,6 @@
 import asyncio
 import logging
 from unittest.mock import AsyncMock, Mock, patch
-from uuid import uuid4
 
 from app.agents.analyzer import InsightSchema
 from app.core.config import settings

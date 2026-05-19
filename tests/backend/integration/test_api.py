@@ -105,7 +105,7 @@ class TestSignalsWithData:
             url="https://reddit.com/r/startups/test",
             content="# Test Signal\n\nThis is a test signal.",
             extra_metadata={"upvotes": 100, "comments": 50},
-            processed=False
+            processed=False,
         )
         db_session.add(signal)
         await db_session.commit()

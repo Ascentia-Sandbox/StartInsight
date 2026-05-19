@@ -568,9 +568,9 @@ async def send_analysis_ready_email(
         variables={
             "name": name or "there",
             "idea_title": idea_title[:100],
-            "opportunity_score": f"{scores.get('opportunity_score', 0) * 100:.0f}",
-            "market_fit_score": f"{scores.get('market_fit_score', 0) * 100:.0f}",
-            "execution_readiness": f"{scores.get('execution_readiness', 0) * 100:.0f}",
+            "opportunity_score": f"{(scores.get('opportunity_score') or 0) * 100:.0f}",
+            "market_fit_score": f"{(scores.get('market_fit_score') or 0) * 100:.0f}",
+            "execution_readiness": f"{(scores.get('execution_readiness') or 0) * 100:.0f}",
             "analysis_url": analysis_url,
         },
     )

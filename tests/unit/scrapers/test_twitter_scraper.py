@@ -10,7 +10,6 @@ Tests:
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from pydantic import HttpUrl
 
 from app.scrapers.sources.twitter_scraper import (
     TwitterScraper,
@@ -26,7 +25,7 @@ class TestTwitterScraper:
     @pytest.fixture
     def scraper(self):
         """Create Twitter scraper instance with mocked client."""
-        with patch.object(TwitterScraper, '__init__', lambda x: None):
+        with patch.object(TwitterScraper, "__init__", lambda x: None):
             scraper = TwitterScraper.__new__(TwitterScraper)
             scraper.source_name = "twitter"
             scraper.client = MagicMock()
@@ -57,7 +56,9 @@ class TestTwitterScraper:
     @pytest.mark.asyncio
     async def test_scrape_returns_scrape_result_list(self, scraper, sample_tweet):
         """Test that scrape returns list[ScrapeResult]."""
-        with patch.object(scraper, 'get_startup_discussions', new_callable=AsyncMock) as mock:
+        with patch.object(
+            scraper, "get_startup_discussions", new_callable=AsyncMock
+        ) as mock:
             mock.return_value = [sample_tweet]
 
             results = await scraper.scrape()
@@ -87,7 +88,9 @@ class TestTwitterScraper:
             reply_count=0,
         )
 
-        with patch.object(scraper, 'get_startup_discussions', new_callable=AsyncMock) as mock:
+        with patch.object(
+            scraper, "get_startup_discussions", new_callable=AsyncMock
+        ) as mock:
             mock.return_value = [low_engagement_tweet]
 
             results = await scraper.scrape(min_engagement=5)
@@ -97,7 +100,9 @@ class TestTwitterScraper:
     @pytest.mark.asyncio
     async def test_scrape_includes_high_engagement(self, scraper, sample_tweet):
         """Test that high engagement tweets are included."""
-        with patch.object(scraper, 'get_startup_discussions', new_callable=AsyncMock) as mock:
+        with patch.object(
+            scraper, "get_startup_discussions", new_callable=AsyncMock
+        ) as mock:
             mock.return_value = [sample_tweet]
 
             results = await scraper.scrape(min_engagement=5)
@@ -107,7 +112,9 @@ class TestTwitterScraper:
     @pytest.mark.asyncio
     async def test_scrape_includes_correct_metadata(self, scraper, sample_tweet):
         """Test that ScrapeResult has correct metadata."""
-        with patch.object(scraper, 'get_startup_discussions', new_callable=AsyncMock) as mock:
+        with patch.object(
+            scraper, "get_startup_discussions", new_callable=AsyncMock
+        ) as mock:
             mock.return_value = [sample_tweet]
 
             results = await scraper.scrape()
@@ -122,7 +129,9 @@ class TestTwitterScraper:
     @pytest.mark.asyncio
     async def test_scrape_generates_correct_url(self, scraper, sample_tweet):
         """Test that tweet URL is correctly generated."""
-        with patch.object(scraper, 'get_startup_discussions', new_callable=AsyncMock) as mock:
+        with patch.object(
+            scraper, "get_startup_discussions", new_callable=AsyncMock
+        ) as mock:
             mock.return_value = [sample_tweet]
 
             results = await scraper.scrape()

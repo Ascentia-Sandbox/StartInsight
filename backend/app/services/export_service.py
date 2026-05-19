@@ -339,7 +339,7 @@ def export_analysis_pdf(analysis: dict[str, Any]) -> str:
                     "TAM": market.get("tam", "N/A"),
                     "SAM": market.get("sam", "N/A"),
                     "SOM": market.get("som", "N/A"),
-                    "Growth Rate": f"{market.get('growth_rate', 0) * 100:.1f}%",
+                    "Growth Rate": f"{(market.get('growth_rate') or 0) * 100:.1f}%",
                     "Maturity": market.get("market_maturity", "N/A"),
                     "Key Trends": ", ".join(market.get("key_trends", [])),
                 },
@@ -357,7 +357,7 @@ def export_analysis_pdf(analysis: dict[str, Any]) -> str:
                     "Perceived Likelihood": f"{value.get('perceived_likelihood_score', 0)}/10",
                     "Time Delay": f"{value.get('time_delay_score', 0)}/10",
                     "Effort/Sacrifice": f"{value.get('effort_sacrifice_score', 0)}/10",
-                    "Value Score": f"{value.get('value_score', 0):.2f}",
+                    "Value Score": f"{(value.get('value_score') or 0):.2f}",
                     "Analysis": value.get("analysis", "N/A"),
                 },
             }
@@ -403,7 +403,7 @@ def export_analysis_pdf(analysis: dict[str, Any]) -> str:
                     "Market Risk": f"{risk.get('market_risk', 0)}/10",
                     "Team Risk": f"{risk.get('team_risk', 0)}/10",
                     "Financial Risk": f"{risk.get('financial_risk', 0)}/10",
-                    "Overall Risk": f"{risk.get('overall_risk', 0) * 100:.0f}%",
+                    "Overall Risk": f"{(risk.get('overall_risk') or 0) * 100:.0f}%",
                 },
             }
         )
@@ -413,9 +413,9 @@ def export_analysis_pdf(analysis: dict[str, Any]) -> str:
         {
             "heading": "Summary Scores",
             "content": {
-                "Opportunity Score": f"{analysis.get('opportunity_score', 0) * 100:.0f}%",
-                "Market Fit Score": f"{analysis.get('market_fit_score', 0) * 100:.0f}%",
-                "Execution Readiness": f"{analysis.get('execution_readiness', 0) * 100:.0f}%",
+                "Opportunity Score": f"{(analysis.get('opportunity_score') or 0) * 100:.0f}%",
+                "Market Fit Score": f"{(analysis.get('market_fit_score') or 0) * 100:.0f}%",
+                "Execution Readiness": f"{(analysis.get('execution_readiness') or 0) * 100:.0f}%",
             },
         }
     )

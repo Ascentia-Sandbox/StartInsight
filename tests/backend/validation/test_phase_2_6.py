@@ -76,7 +76,7 @@ def test_track_llm_call():
     )
 
     assert len(tracker.metrics.llm_calls) == 1
-    assert tracker.metrics.llm_calls[0].success == True
+    assert tracker.metrics.llm_calls[0].success
     assert tracker.metrics.llm_calls[0].input_tokens == 10
     assert tracker.metrics.llm_calls[0].output_tokens == 5
 
@@ -210,12 +210,12 @@ async def test_analyzer_metrics_integration():
         mock_get_agent.return_value = mock_agent
 
         # Analyze signal
-        insight = await analyze_signal(signal)
+        await analyze_signal(signal)
 
         # Verify metrics were tracked
         assert tracker.metrics.total_insights_generated == 1
         assert len(tracker.metrics.llm_calls) == 1
-        assert tracker.metrics.llm_calls[0].success == True
+        assert tracker.metrics.llm_calls[0].success
         assert tracker.metrics.relevance_scores[0] == 0.75
 
     logger.info("✓ Analyzer metrics integration works")

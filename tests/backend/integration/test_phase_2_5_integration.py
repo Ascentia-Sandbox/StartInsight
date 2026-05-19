@@ -20,7 +20,10 @@ async def test_phase_2_1_passed():
     )
 
     assert result.returncode == 0, "Phase 2.1 tests failed"
-    assert "ALL PHASE 2.1 TESTS PASSED" in result.stdout or "ALL PHASE 2.1 TESTS PASSED" in result.stderr
+    assert (
+        "ALL PHASE 2.1 TESTS PASSED" in result.stdout
+        or "ALL PHASE 2.1 TESTS PASSED" in result.stderr
+    )
 
     logger.info("✓ Phase 2.1 tests passed")
 
@@ -38,7 +41,10 @@ async def test_phase_2_2_passed():
     )
 
     assert result.returncode == 0, "Phase 2.2 tests failed"
-    assert "ALL PHASE 2.2 TESTS PASSED" in result.stdout or "ALL PHASE 2.2 TESTS PASSED" in result.stderr
+    assert (
+        "ALL PHASE 2.2 TESTS PASSED" in result.stdout
+        or "ALL PHASE 2.2 TESTS PASSED" in result.stderr
+    )
 
     logger.info("✓ Phase 2.2 tests passed")
 
@@ -56,7 +62,10 @@ async def test_phase_2_3_passed():
     )
 
     assert result.returncode == 0, "Phase 2.3 tests failed"
-    assert "ALL PHASE 2.3 TESTS PASSED" in result.stdout or "ALL PHASE 2.3 TESTS PASSED" in result.stderr
+    assert (
+        "ALL PHASE 2.3 TESTS PASSED" in result.stdout
+        or "ALL PHASE 2.3 TESTS PASSED" in result.stderr
+    )
 
     logger.info("✓ Phase 2.3 tests passed")
 

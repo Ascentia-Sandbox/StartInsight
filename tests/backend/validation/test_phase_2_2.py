@@ -5,7 +5,6 @@ import logging
 from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
-from pydantic import HttpUrl
 
 from app.agents.analyzer import (
     Competitor,
@@ -103,7 +102,7 @@ def test_insight_schema_validation_errors():
             title="Test",
         )
         assert False, "Should have raised ValidationError for invalid market_size"
-    except Exception as e:
+    except Exception:
         logger.info("✓ Catches invalid market_size_estimate")
 
     # Test too many competitors (> 3)
@@ -125,7 +124,10 @@ def test_insight_schema_validation_errors():
         )
         assert False, "Should have raised ValidationError for >3 competitors"
     except Exception as e:
-        assert "competitor_analysis" in str(e).lower() or "at most 3 items" in str(e).lower()
+        assert (
+            "competitor_analysis" in str(e).lower()
+            or "at most 3 items" in str(e).lower()
+        )
         logger.info("✓ Catches >3 competitors")
 
 

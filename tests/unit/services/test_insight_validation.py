@@ -10,7 +10,6 @@ Tests quality gates for LLM-generated insight data:
 import pytest
 
 from app.schemas.insight_validation import (
-    QualityValidationError,
     ValidatedInsightSchema,
     calculate_quality_score,
     validate_insight_data,

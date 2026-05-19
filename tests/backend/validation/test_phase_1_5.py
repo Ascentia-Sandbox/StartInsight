@@ -104,8 +104,7 @@ async def test_filter_by_source():
 
     async with httpx.AsyncClient() as client:
         response = await client.get(
-            f"{API_BASE_URL}/api/signals",
-            params={"source": "reddit"}
+            f"{API_BASE_URL}/api/signals", params={"source": "reddit"}
         )
 
         assert response.status_code == 200
@@ -115,7 +114,9 @@ async def test_filter_by_source():
         for signal in data["signals"]:
             assert signal["source"] == "reddit"
 
-        logger.info(f"✓ Filter by source working (found {len(data['signals'])} reddit signals)")
+        logger.info(
+            f"✓ Filter by source working (found {len(data['signals'])} reddit signals)"
+        )
 
 
 async def test_pagination():
@@ -125,8 +126,7 @@ async def test_pagination():
     async with httpx.AsyncClient() as client:
         # Get first page
         response1 = await client.get(
-            f"{API_BASE_URL}/api/signals",
-            params={"limit": 5, "offset": 0}
+            f"{API_BASE_URL}/api/signals", params={"limit": 5, "offset": 0}
         )
 
         assert response1.status_code == 200
@@ -136,8 +136,7 @@ async def test_pagination():
 
         # Get second page
         response2 = await client.get(
-            f"{API_BASE_URL}/api/signals",
-            params={"limit": 5, "offset": 5}
+            f"{API_BASE_URL}/api/signals", params={"limit": 5, "offset": 5}
         )
 
         assert response2.status_code == 200
@@ -183,6 +182,7 @@ async def run_all_tests():
         logger.error(f"✗ PHASE 1.5 TESTS FAILED: {e}")
         logger.error("=" * 60)
         import traceback
+
         traceback.print_exc()
         return False
 

@@ -1,7 +1,6 @@
 """Test Phase 1.6: Environment & Configuration."""
 
 import logging
-import os
 from pathlib import Path
 
 from app.core.config import settings
@@ -108,7 +107,9 @@ def test_database_url_format():
     db_url = str(settings.database_url)
 
     # Should use asyncpg driver
-    assert "asyncpg" in db_url, "Database URL should use asyncpg driver for async support"
+    assert "asyncpg" in db_url, (
+        "Database URL should use asyncpg driver for async support"
+    )
 
     # Should be postgresql
     assert db_url.startswith("postgresql"), "Database URL should be PostgreSQL"
@@ -174,6 +175,7 @@ def run_all_tests():
         logger.error(f"✗ PHASE 1.6 TESTS FAILED: {e}")
         logger.error("=" * 60)
         import traceback
+
         traceback.print_exc()
         return False
 
