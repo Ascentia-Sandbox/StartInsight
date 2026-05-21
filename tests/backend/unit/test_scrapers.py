@@ -1,10 +1,11 @@
 """Unit tests for scrapers with mocked responses."""
 
-import pytest
 from unittest.mock import Mock, patch
 
-from app.scrapers.firecrawl_client import ScrapeResult, FirecrawlClient
+import pytest
+
 from app.scrapers.base_scraper import BaseScraper
+from app.scrapers.firecrawl_client import FirecrawlClient, ScrapeResult
 from app.scrapers.sources.reddit_scraper import RedditScraper
 
 

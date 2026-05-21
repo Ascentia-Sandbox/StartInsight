@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.raw_signal import RawSignal
 
-
 pytestmark = pytest.mark.asyncio
 
 

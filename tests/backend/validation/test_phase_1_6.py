@@ -41,7 +41,7 @@ def test_env_example_content():
         "ANALYSIS_BATCH_SIZE",
     ]
 
-    with open(".env.example", "r") as f:
+    with open(".env.example") as f:
         content = f.read()
 
     missing_vars = []

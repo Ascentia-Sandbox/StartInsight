@@ -5,6 +5,7 @@ import logging
 from unittest.mock import AsyncMock, Mock, patch
 
 from app.agents.analyzer import InsightSchema
+
 from app.core.config import settings
 from app.db.session import AsyncSessionLocal
 from app.models.raw_signal import RawSignal

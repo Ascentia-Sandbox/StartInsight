@@ -8,13 +8,13 @@ Tests:
 5. URL slugification
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from pydantic import HttpUrl
 
-from app.scrapers.sources.product_hunt_scraper import ProductHuntScraper
 from app.scrapers.firecrawl_client import ScrapeResult
+from app.scrapers.sources.product_hunt_scraper import ProductHuntScraper
 
 
 class TestProductHuntScraper:

@@ -10,10 +10,9 @@ Tests per-source rate limiting:
 import asyncio
 
 import pytest
-
 from app.services.rate_limiter import (
-    RateLimiter,
     RateLimitConfig,
+    RateLimiter,
     RateLimitStatus,
     get_rate_limiter,
 )

@@ -5,13 +5,13 @@ import logging
 from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
-
 from app.agents.analyzer import (
     Competitor,
     InsightSchema,
     analyze_signal,
     analyze_signal_with_retry,
 )
+
 from app.models.raw_signal import RawSignal
 
 logging.basicConfig(level=logging.INFO)

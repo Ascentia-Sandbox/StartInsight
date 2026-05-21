@@ -35,7 +35,7 @@ def test_backend_readme_content():
         "## Development Status",
     ]
 
-    with open("README.md", "r") as f:
+    with open("README.md") as f:
         content = f.read()
 
     missing_sections = []
@@ -52,7 +52,7 @@ def test_env_example_documented():
     """Test that .env.example is referenced in README."""
     logger.info("Testing .env.example documentation...")
 
-    with open("README.md", "r") as f:
+    with open("README.md") as f:
         content = f.read()
 
     assert ".env.example" in content
@@ -67,7 +67,7 @@ def test_api_endpoints_documented():
     """Test that API endpoints are documented."""
     logger.info("Testing API endpoints documentation...")
 
-    with open("README.md", "r") as f:
+    with open("README.md") as f:
         content = f.read()
 
     documented_endpoints = [
@@ -91,7 +91,7 @@ def test_phase_1_status_documented():
     """Test that Phase 1 completion is documented."""
     logger.info("Testing Phase 1 status documentation...")
 
-    with open("README.md", "r") as f:
+    with open("README.md") as f:
         content = f.read()
 
     required_phases = [
@@ -119,7 +119,7 @@ def test_troubleshooting_section():
     """Test that troubleshooting section has helpful content."""
     logger.info("Testing troubleshooting section...")
 
-    with open("README.md", "r") as f:
+    with open("README.md") as f:
         content = f.read()
 
     troubleshooting_topics = [
@@ -143,7 +143,7 @@ def test_docker_services_documented():
     """Test that Docker services are documented."""
     logger.info("Testing Docker services documentation...")
 
-    with open("README.md", "r") as f:
+    with open("README.md") as f:
         content = f.read()
 
     assert "PostgreSQL 16" in content

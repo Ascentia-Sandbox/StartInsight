@@ -7,16 +7,16 @@ Tests:
 4. Engagement filtering
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 
+from app.scrapers.firecrawl_client import ScrapeResult
 from app.scrapers.sources.twitter_scraper import (
-    TwitterScraper,
     TweetData,
+    TwitterScraper,
     analyze_tweet_sentiment,
 )
-from app.scrapers.firecrawl_client import ScrapeResult
 
 
 class TestTwitterScraper:

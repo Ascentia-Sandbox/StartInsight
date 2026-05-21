@@ -6,6 +6,7 @@ from datetime import datetime
 from unittest.mock import AsyncMock, Mock, patch
 
 from app.agents.analyzer import InsightSchema, analyze_signal
+
 from app.models.raw_signal import RawSignal
 from app.monitoring.metrics import (
     LLMCallMetrics,

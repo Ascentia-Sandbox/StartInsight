@@ -7,14 +7,14 @@ Tests competitor URL validation:
 4. Error handling
 """
 
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
+import pytest
 
 from app.services.url_validator import (
-    URLValidator,
     URLValidationResult,
+    URLValidator,
     get_url_validator,
 )
 
