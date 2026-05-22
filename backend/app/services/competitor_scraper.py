@@ -4,6 +4,7 @@ import logging
 import re
 from datetime import UTC, datetime
 from typing import Any
+from urllib.parse import urlparse
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -92,7 +93,7 @@ class CompetitorScraperService:
             # Extract company name from metadata or URL
             company_name = scrape_result.title.split("|")[0].strip() if scrape_result.title else ""
             if not company_name:
-                company_name = url.split("//")[1].split("/")[0].replace("www.", "")
+                company_name = urlparse(url).netloc.replace("www.", "") or url
 
             # Parse competitor data from markdown content
             competitor_data = self._parse_competitor_data(
@@ -149,7 +150,7 @@ class CompetitorScraperService:
                 # Create minimal profile with error
                 profile = CompetitorProfile(
                     insight_id=insight_id,
-                    name=url.split("//")[1].split("/")[0].replace("www.", ""),
+                    name=urlparse(url).netloc.replace("www.", "") or url,
                     url=url,
                     scrape_status="failed",
                     scrape_error=str(e),
@@ -187,7 +188,7 @@ class CompetitorScraperService:
         # Extract company name
         company_name = metadata.get("title", "").split("|")[0].strip()
         if not company_name:
-            company_name = url.split("//")[1].split("/")[0].replace("www.", "")
+            company_name = urlparse(url).netloc.replace("www.", "") or url
 
         # Extract description
         description = metadata.get("description", "")
