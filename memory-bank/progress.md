@@ -13,6 +13,13 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-05-23)
+
+- [2026-05-23] [SENTRY-AUTOFIX]: Replace non-existent user.full_name with user.display_name
+  - Files: gamification.py, community.py
+  - Tech: User model has display_name not full_name; 3 AttributeError crash sites fixed
+  - Status: [✓ Complete]
+
 ## Recent Progress (2026-04-18)
 
 - [2026-04-18] [OFFICE-HOURS]: Strategic diagnostic — solution in search of problem
