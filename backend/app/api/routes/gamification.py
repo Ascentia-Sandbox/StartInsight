@@ -287,7 +287,7 @@ async def get_points_leaderboard(
         entries.append(
             LeaderboardEntry(
                 user_id=points.user_id,
-                display_name=user.full_name or user.email.split("@")[0],
+                display_name=user.display_name or user.email.split("@")[0],
                 total_points=points.total_points,
                 level=points.level,
                 rank=i,
@@ -315,7 +315,7 @@ async def get_streak_leaderboard(
         entries.append(
             LeaderboardEntry(
                 user_id=points.user_id,
-                display_name=user.full_name or user.email.split("@")[0],
+                display_name=user.display_name or user.email.split("@")[0],
                 total_points=points.current_streak,  # Using points field for streak
                 level=points.level,
                 rank=i,

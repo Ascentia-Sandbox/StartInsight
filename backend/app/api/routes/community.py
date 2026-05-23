@@ -271,7 +271,7 @@ async def create_comment(
         is_pinned=new_comment.is_pinned,
         created_at=new_comment.created_at,
         updated_at=new_comment.updated_at,
-        author_name=current_user.full_name or current_user.email,
+        author_name=current_user.display_name or current_user.email,
     )
 
 
