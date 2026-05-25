@@ -1287,3 +1287,8 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: memory-bank/active-context.md, memory-bank/daily-operations.md
   - Tech: Sentry 0 issues; Twitter 403 root cause confirmed (read-only tokens); X Premium $5 purchased; tokens must be regenerated after permission change
   - Status: [→ In Progress] — awaiting Railway env var update with new TWITTER_ACCESS_TOKEN + TWITTER_ACCESS_SECRET
+
+- [2026-05-25] [SENTRY-AUTOFIX]: Daily triage — all clear
+  - Files: memory-bank/progress.md
+  - Tech: ruff 291 files clean; route shadow scan clean; no None/attr bugs found; no code changes
+  - Status: [✓ Complete]
