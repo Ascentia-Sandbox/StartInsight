@@ -8,7 +8,7 @@ Provides endpoints for:
 """
 
 import logging
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 
@@ -179,7 +179,7 @@ async def daily_check_in(
         return {"status": "already_checked_in", "streak": points.current_streak}
 
     # Calculate streak
-    yesterday = date.today().replace(day=today.day - 1) if today.day > 1 else None
+    yesterday = date.today() - timedelta(days=1)
     if points.last_activity_date == yesterday:
         points.current_streak += 1
     else:

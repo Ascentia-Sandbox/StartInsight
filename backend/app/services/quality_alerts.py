@@ -12,7 +12,7 @@ Alert channels:
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any
 
@@ -344,8 +344,7 @@ class QualityAlertService:
 
     def _cleanup_old_alerts(self) -> None:
         """Remove alerts older than 24 hours."""
-        cutoff = datetime.now(UTC).replace(microsecond=0)
-        cutoff = cutoff.replace(day=cutoff.day - 1 if cutoff.day > 1 else 1)
+        cutoff = datetime.now(UTC) - timedelta(hours=24)
 
         self._recent_alerts = [a for a in self._recent_alerts if a.timestamp >= cutoff]
 
