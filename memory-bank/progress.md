@@ -1292,3 +1292,8 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: memory-bank/progress.md
   - Tech: ruff 291 files clean; route shadow scan clean; no None/attr bugs found; no code changes
   - Status: [✓ Complete]
+
+- [2026-05-26] [SENTRY-AUTOFIX]: Fix month-boundary crash in date arithmetic
+  - Files: backend/app/api/routes/gamification.py, backend/app/services/quality_alerts.py
+  - Tech: Replaced `.replace(day=today.day-1)` with `timedelta(days=1)` to fix ValueError on 1st of month
+  - Status: [✓ Complete]
