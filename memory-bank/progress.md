@@ -13,6 +13,13 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-05-27)
+
+- [2026-05-27] [SENTRY-AUTOFIX]: Recovered 6 orphaned commits + static analysis all clear
+  - Files: memory-bank/progress.md
+  - Tech: Cherry-picked 3 bug fixes (full_name→display_name, month-boundary crash x2) back to main; ruff 291 files clean
+  - Status: [✓ Complete — All clear]
+
 ## Recent Progress (2026-05-24)
 
 - [2026-05-24] [SENTRY-AUTOFIX]: No issues found — full static analysis pass
