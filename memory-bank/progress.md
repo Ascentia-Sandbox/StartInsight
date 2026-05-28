@@ -13,6 +13,13 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-05-28)
+
+- [2026-05-28] [SENTRY-AUTOFIX]: Fix midnight-hour duplicate-alert detection bug
+  - Files: backend/app/services/quality_alerts.py
+  - Tech: Replace fragile `.replace(hour=hour-1)` with `timedelta(hours=1)` — at hour 0 old code set one_hour_ago to 23:xx same day (future), suppressing all dedup
+  - Status: [✓ Complete]
+
 ## Recent Progress (2026-05-27)
 
 - [2026-05-27] [SENTRY-AUTOFIX]: Recovered 6 orphaned commits + static analysis all clear

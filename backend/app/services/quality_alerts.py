@@ -304,10 +304,7 @@ class QualityAlertService:
 
     def _is_duplicate_alert(self, alert: Alert) -> bool:
         """Check if alert is a duplicate of a recent alert."""
-        one_hour_ago = datetime.now(UTC).replace(microsecond=0)
-        one_hour_ago = one_hour_ago.replace(
-            hour=one_hour_ago.hour - 1 if one_hour_ago.hour > 0 else 23
-        )
+        one_hour_ago = datetime.now(UTC) - timedelta(hours=1)
 
         for recent in self._recent_alerts:
             if (
