@@ -1323,3 +1323,8 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: backend/app/api/routes/gamification.py, backend/app/services/quality_alerts.py
   - Tech: Replaced `.replace(day=today.day-1)` with `timedelta(days=1)` to fix ValueError on 1st of month
   - Status: [✓ Complete]
+
+- [2026-06-01] [SENTRY-AUTOFIX]: Daily triage — all clear
+  - Files: memory-bank/progress.md
+  - Tech: ruff 291 files clean; full AST scan for None/attr/date bugs; no new issues found
+  - Status: [✓ Complete]
