@@ -13,6 +13,13 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-06-03)
+
+- [2026-06-03] [SENTRY-AUTOFIX]: Static analysis + ruff — all clear
+  - Files: memory-bank/progress.md
+  - Tech: ruff 291 files clean; no new bugs found in routes, tasks, scrapers, or frontend
+  - Status: [✓ Complete — All clear]
+
 ## Recent Progress (2026-06-02)
 
 - [2026-06-02] [SENTRY-AUTOFIX]: Static analysis — all clear
