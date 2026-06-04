@@ -18,7 +18,7 @@ from app.core.config import settings
 
 # Context variable for correlation ID
 correlation_id_var: ContextVar[str] = ContextVar("correlation_id", default="")
-request_context_var: ContextVar[dict] = ContextVar("request_context", default={})
+request_context_var: ContextVar[dict | None] = ContextVar("request_context", default=None)
 
 
 class JSONFormatter(logging.Formatter):

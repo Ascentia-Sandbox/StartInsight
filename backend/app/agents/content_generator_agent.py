@@ -277,7 +277,7 @@ async def generate_blog_post(
 async def generate_social_content(
     insight_id: UUID,
     session: AsyncSession,
-    platforms: list[str] = ["twitter", "linkedin"],
+    platforms: list[str] | None = None,
 ) -> list[SocialPost]:
     """
     Generate social media posts from an insight.
@@ -293,6 +293,8 @@ async def generate_social_content(
     Raises:
         ValueError: If insight not found
     """
+    if platforms is None:
+        platforms = ["twitter", "linkedin"]
     logger.info(f"Generating social content for insight {insight_id}")
 
     # Fetch insight

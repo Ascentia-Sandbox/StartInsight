@@ -13,6 +13,13 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-06-04)
+
+- [2026-06-04] [SENTRY-AUTOFIX]: Fix mutable default arg + mutable ContextVar default
+  - Files: app/agents/content_generator_agent.py, app/core/logging.py
+  - Tech: B006 (shared mutable list default) + B039 (shared mutable dict ContextVar default)
+  - Status: [✓ Complete]
+
 ## Recent Progress (2026-06-03)
 
 - [2026-06-03] [SENTRY-AUTOFIX]: Static analysis + ruff — all clear
