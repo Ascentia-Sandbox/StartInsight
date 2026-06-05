@@ -13,6 +13,13 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-06-05)
+
+- [2026-06-05] [SENTRY-AUTOFIX]: Static analysis + ruff — all clear
+  - Files: (none modified)
+  - Tech: ruff clean; request_context_var callers verified safe after yesterday's fix
+  - Status: [✓ Complete]
+
 ## Recent Progress (2026-06-04)
 
 - [2026-06-04] [SENTRY-AUTOFIX]: Fix mutable default arg + mutable ContextVar default
