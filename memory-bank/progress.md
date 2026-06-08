@@ -13,6 +13,13 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-06-08)
+
+- [2026-06-08] [SENTRY-AUTOFIX]: Fix base64 padding bug in email open tracking
+  - Files: app/api/routes/email_tracking.py
+  - Tech: `"==" * n` → `"=" * n` — wrong multiplier caused silent decode failures for many tokens
+  - Status: [✓ Complete]
+
 ## Recent Progress (2026-06-06)
 
 - [2026-06-06] [SENTRY-AUTOFIX]: Static analysis + ruff — all clear

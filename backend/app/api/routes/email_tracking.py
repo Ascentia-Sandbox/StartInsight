@@ -96,7 +96,7 @@ async def track_email_open(token: str) -> Response:
     """
     try:
         # Pad the token to a valid base64 length (urlsafe_b64decode requires correct padding)
-        padded = token + "==" * ((-len(token)) % 4 if len(token) % 4 else 0)
+        padded = token + "=" * (-len(token) % 4)
         data: dict = json.loads(base64.urlsafe_b64decode(padded).decode("utf-8"))
 
         user_id = data.get("user_id", "unknown")
