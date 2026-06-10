@@ -1380,3 +1380,8 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: memory-bank/progress.md
   - Tech: ruff 291 files clean; full static scan; last GitHub triage issue #40 (2026-05-05) is stale — all referenced bugs (RSS, MarketInsight.status, email config) fixed in prior sessions
   - Status: [✓ Complete]
+
+- [2026-06-10] [SENTRY-AUTOFIX]: Daily triage — all clear
+  - Files: memory-bank/progress.md
+  - Tech: ruff 183 files clean; full static scan of marketing module, middleware, worker, agents — no bugs found
+  - Status: [✓ Complete]
