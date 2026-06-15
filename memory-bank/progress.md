@@ -13,6 +13,13 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-06-15)
+
+- [2026-06-15] [SENTRY-AUTOFIX]: Full static analysis sweep — all clear
+  - Files: (none modified)
+  - Tech: ruff check (183 files clean), division-by-zero guards, datetime.fromisoformat guards, .one() safety, GitHub Actions CI all confirmed passing (tests OK; only DB migration step failed — expected app-shutdown)
+  - Status: [✓ Complete]
+
 ## Recent Progress (2026-06-14)
 
 - [2026-06-14] [SENTRY-AUTOFIX]: Full static analysis sweep — all clear
