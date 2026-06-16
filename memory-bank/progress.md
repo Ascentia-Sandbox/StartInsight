@@ -13,6 +13,13 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-06-16)
+
+- [2026-06-16] [SENTRY-AUTOFIX]: Sentry triage + static analysis — all clear
+  - Files: (none modified)
+  - Tech: No Sentry token in env; GitHub triage issues all stale (Apr-May); static analysis of MarketInsight, feed, insights routes clean
+  - Status: [✓ Complete]
+
 ## Recent Progress (2026-06-15)
 
 - [2026-06-15] [SENTRY-AUTOFIX]: Full static analysis sweep — all clear
