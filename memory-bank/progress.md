@@ -1422,3 +1422,8 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: memory-bank/progress.md
   - Tech: ruff 183 files clean; AST parse OK; scanned division guards, scalar() calls, datetime parsing, JSON parsing, mutable defaults, SQLAlchemy relationships — no bugs found
   - Status: [✓ Complete]
+
+- [2026-06-17] [SENTRY-AUTOFIX]: Fix DuplicateColumnError in Alembic migration c019
+  - Files: alembic/versions/c019_add_nurture_stage_to_newsletter_subscribers.py
+  - Tech: Switched op.add_column to raw SQL with IF NOT EXISTS to make migration idempotent
+  - Status: [✓ Complete]
