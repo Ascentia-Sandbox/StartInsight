@@ -7,7 +7,6 @@ Create Date: 2026-05-09
 
 from collections.abc import Sequence
 
-import sqlalchemy as sa
 from alembic import op
 
 revision: str = "c019"
@@ -17,14 +16,10 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "newsletter_subscribers",
-        sa.Column(
-            "nurture_stage",
-            sa.Integer(),
-            nullable=False,
-            server_default="0",
-        ),
+    # Use IF NOT EXISTS to handle the case where the column was added manually
+    # before this migration was tracked (caused DuplicateColumnError in CI 2026-05-09)
+    op.execute(
+        "ALTER TABLE newsletter_subscribers ADD COLUMN IF NOT EXISTS nurture_stage INTEGER NOT NULL DEFAULT 0"
     )
 
 
