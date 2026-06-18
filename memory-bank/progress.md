@@ -1427,3 +1427,8 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: alembic/versions/c019_add_nurture_stage_to_newsletter_subscribers.py
   - Tech: Switched op.add_column to raw SQL with IF NOT EXISTS to make migration idempotent
   - Status: [✓ Complete]
+
+- [2026-06-18] [SENTRY-AUTOFIX]: Daily triage — all clear
+  - Files: memory-bank/progress.md
+  - Tech: AST parse OK; no syntax errors; no mutable defaults or bare excepts; stale Sentry issues (MarketInsight.status, RSS 500, migration error) all confirmed fixed in prior sessions
+  - Status: [✓ Complete]
