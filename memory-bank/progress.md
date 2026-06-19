@@ -1432,3 +1432,8 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: memory-bank/progress.md
   - Tech: AST parse OK; no syntax errors; no mutable defaults or bare excepts; stale Sentry issues (MarketInsight.status, RSS 500, migration error) all confirmed fixed in prior sessions
   - Status: [✓ Complete]
+
+- [2026-06-19] [SENTRY-AUTOFIX]: Daily triage — all clear
+  - Files: memory-bank/progress.md
+  - Tech: ruff 291 files clean; scanned div-by-zero guards, unguarded scalar()/one() calls, index access on empty lists, raw SQL text() patterns — no bugs found; local main fast-forwarded to match origin/main
+  - Status: [✓ Complete]
