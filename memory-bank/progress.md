@@ -1437,3 +1437,8 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: memory-bank/progress.md
   - Tech: ruff 291 files clean; scanned div-by-zero guards, unguarded scalar()/one() calls, index access on empty lists, raw SQL text() patterns — no bugs found; local main fast-forwarded to match origin/main
   - Status: [✓ Complete]
+
+- [2026-06-20] [SENTRY-AUTOFIX]: Daily triage — all clear
+  - Files: memory-bank/progress.md
+  - Tech: ruff 291 files clean (format + lint); GH Sentry issues reviewed — 27 open issues all pre-May-9 shutdown; no new fixable code bugs found
+  - Status: [✓ Complete]
