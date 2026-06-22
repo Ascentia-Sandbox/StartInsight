@@ -1447,3 +1447,9 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: memory-bank/progress.md
   - Tech: sentry.io blocked by network policy; GH triage issues (27 open, all pre-May-9); ruff clean; all known issues (email errors, DuplicateColumnError, RSS 500, MarketInsight.status) confirmed fixed
   - Status: [✓ Complete]
+
+- [2026-06-22] [SENTRY-AUTOFIX]: Daily triage — all clear
+  - Files: memory-bank/progress.md
+  - Tech: ruff 291 files clean; GH Sentry issues 27 open all pre-May-9 shutdown; CI DuplicateColumnError fixed 2026-06-17; no new bugs found
+  - Status: [✓ Complete]
+  - Status: [✓ Complete]
