@@ -1452,4 +1452,8 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: memory-bank/progress.md
   - Tech: ruff 291 files clean; GH Sentry issues 27 open all pre-May-9 shutdown; CI DuplicateColumnError fixed 2026-06-17; no new bugs found
   - Status: [✓ Complete]
+
+- [2026-06-23] [SENTRY-AUTOFIX]: Daily triage — all clear
+  - Files: memory-bank/progress.md
+  - Tech: ruff clean; Sentry token unavailable; GH issues 27 open all pre-May-9; div-by-zero guards confirmed; no new bugs found
   - Status: [✓ Complete]
