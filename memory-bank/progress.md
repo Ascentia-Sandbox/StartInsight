@@ -1503,3 +1503,8 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: memory-bank/progress.md
   - Tech: ruff 291 files clean, format 291 files OK; Sentry token in GH Actions only; no new code changes since 2026-07-01; no new bugs found
   - Status: [✓ Complete]
+
+- [2026-07-03] [SENTRY-AUTOFIX]: Daily triage — all clear
+  - Files: memory-bank/progress.md
+  - Tech: ruff 291 files clean, format 291 files OK; 27 GH Sentry issues all pre-May-9 shutdown; MarketInsight.status bug absent; no new bugs found
+  - Status: [✓ Complete]
