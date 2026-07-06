@@ -1520,3 +1520,8 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: memory-bank/progress.md
   - Tech: ruff 183 files clean, format OK; Sentry triage disabled since May-9; no new code commits; no bugs found
   - Status: [✓ Complete]
+
+- [2026-07-06] [SENTRY-AUTOFIX]: Daily triage — all clear
+  - Files: memory-bank/progress.md
+  - Tech: ruff 291 files clean, format OK; Python AST syntax clean; div-by-zero guards verified; 27 GH Sentry issues all pre-May-9 shutdown; no new code changes; no bugs found
+  - Status: [✓ Complete]
