@@ -12,6 +12,7 @@ Endpoints:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any
@@ -242,7 +243,8 @@ async def create_report_checkout(
         )
 
     try:
-        session = stripe.checkout.Session.create(
+        session = await asyncio.to_thread(
+            stripe.checkout.Session.create,
             mode="payment",
             payment_method_types=["card"],
             line_items=[{"price": price_id, "quantity": 1}],

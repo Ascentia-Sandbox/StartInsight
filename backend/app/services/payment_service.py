@@ -3,6 +3,7 @@
 Handles subscription management, checkout sessions, and webhooks.
 """
 
+import asyncio
 import logging
 from datetime import UTC, datetime
 from typing import Any
@@ -192,7 +193,8 @@ async def create_checkout_session(
             logger.error(f"No price ID configured for tier: {tier}")
             return None
 
-        session = stripe.checkout.Session.create(
+        session = await asyncio.to_thread(
+            stripe.checkout.Session.create,
             mode="subscription",
             payment_method_types=["card"],
             line_items=[{"price": price_id, "quantity": 1}],
@@ -234,7 +236,8 @@ async def create_customer_portal_session(
         return {"url": return_url, "status": "mock"}
 
     try:
-        session = stripe.billing_portal.Session.create(
+        session = await asyncio.to_thread(
+            stripe.billing_portal.Session.create,
             customer=stripe_customer_id,
             return_url=return_url,
         )

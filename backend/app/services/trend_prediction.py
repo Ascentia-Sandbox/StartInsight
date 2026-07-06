@@ -10,6 +10,7 @@ Phase 9.1: AI-Powered Trend Prediction
 - Cache predictions for 24 hours
 """
 
+import asyncio
 import logging
 from datetime import UTC, datetime
 from typing import Any
@@ -98,13 +99,13 @@ class TrendPredictionService:
                 f"Training Prophet model on {len(df)} data points "
                 f"(from {df['ds'].min()} to {df['ds'].max()})"
             )
-            self.model.fit(df)
+            await asyncio.to_thread(self.model.fit, df)
 
             # Generate future dataframe for next N days
             future = self.model.make_future_dataframe(periods=periods)
 
             # Make predictions
-            forecast = self.model.predict(future)
+            forecast = await asyncio.to_thread(self.model.predict, future)
 
             # Extract prediction values (last N rows)
             prediction_rows = forecast.tail(periods)
