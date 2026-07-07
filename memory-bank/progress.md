@@ -13,6 +13,13 @@ This file tracks all significant changes made to the project. Each entry follows
 
 ---
 
+## Recent Progress (2026-07-07)
+
+- [2026-07-07] [SENTRY-AUTOFIX]: Sentry triage — all clear
+  - Files: (none modified)
+  - Tech: Ruff clean; blocking I/O fix (b8e9fd1) verified correct; no new Sentry issues; stale GitHub issues #31-40 all pre-shutdown
+  - Status: [✓ Complete]
+
 ## Recent Progress (2026-07-04)
 
 - [2026-07-04] [SENTRY-AUTOFIX]: Sentry triage — all clear
