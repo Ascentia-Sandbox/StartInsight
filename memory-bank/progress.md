@@ -1537,3 +1537,8 @@ This file tracks all significant changes made to the project. Each entry follows
   - Files: services/trend_prediction.py, services/payment_service.py, api/routes/reports.py
   - Tech: asyncio.to_thread wraps Prophet fit/predict and 3 Stripe SDK calls to prevent event loop freeze
   - Status: [✓ Complete]
+
+- [2026-07-08] [SENTRY-AUTOFIX]: Daily triage — all clear
+  - Files: memory-bank/progress.md
+  - Tech: ruff 291 files clean; 27 GH Sentry issues all pre-May-9 shutdown; blocking I/O fix already on main; no new bugs found
+  - Status: [✓ Complete]
